@@ -135,8 +135,6 @@ _SCANCODE_QWERTY_ = {
     0x7C: "<TAB_JP>",
     0x7D: "<BACKSLASH_JP>",
     0x7E: "<ABNT_C2>",
-    0x71: "<HANJA>",
-    0x72: "<HANGUL>"
 }
         
 def scancodeToChar(code):
