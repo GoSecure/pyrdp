@@ -338,6 +338,9 @@ class RDPInfo(CompositeType):
         #working directory for session
         self.workingDir = String(readLen = CallableValue(lambda:self.cbWorkingDir.value + 2), unicode = True)
         self.extendedInfo = RDPExtendedInfo(conditional = extendedInfoConditional)
+    
+    def __getitem__(self, item):
+        return getattr(self, item).value
         
 class RDPExtendedInfo(CompositeType):
     """
@@ -354,6 +357,9 @@ class RDPExtendedInfo(CompositeType):
         self.clientTimeZone = String("\x00" * 172)
         self.clientSessionId = UInt32Le()
         self.performanceFlags = UInt32Le()
+
+    def __getitem__(self, item):
+        return getattr(self, item).value
 
 class SecLayer(LayerAutomata, IStreamSender, tpkt.IFastPathListener, tpkt.IFastPathSender, mcs.IGCCConfig):
     """
