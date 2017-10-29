@@ -1034,6 +1034,17 @@ class FactoryType(Type):
         """
         return sizeof(self._value)
 
+    def __iter__(self):
+        self.current = 0
+        return self
+
+    def next(self):
+        if self.current >= len(self._typeName):
+            raise StopIteration
+        else:
+            self.current += 1
+            return self._typeName[self.current-1]
+
 def CheckValueOnRead(cls):
     """
     @summary:  Wrap read method of class

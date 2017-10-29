@@ -341,6 +341,17 @@ class RDPInfo(CompositeType):
     
     def __getitem__(self, item):
         return getattr(self, item).value
+
+    def __iter__(self):
+        self.current = 0
+        return self
+
+    def next(self):
+        if self.current >= len(self._typeName):
+            raise StopIteration
+        else:
+            self.current += 1
+            return self._typeName[self.current-1]
         
 class RDPExtendedInfo(CompositeType):
     """
@@ -360,6 +371,17 @@ class RDPExtendedInfo(CompositeType):
 
     def __getitem__(self, item):
         return getattr(self, item).value
+
+    def __iter__(self):
+        self.current = 0
+        return self
+
+    def next(self):
+        if self.current >= len(self._typeName):
+            raise StopIteration
+        else:
+            self.current += 1
+            return self._typeName[self.current-1]
 
 class SecLayer(LayerAutomata, IStreamSender, tpkt.IFastPathListener, tpkt.IFastPathSender, mcs.IGCCConfig):
     """
