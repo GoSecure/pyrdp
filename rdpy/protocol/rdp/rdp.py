@@ -450,6 +450,12 @@ class RDPServerController(pdu.layer.PDUServerListener):
         """
         return self._secLayer._info
 
+    def getGCCCClientCoreData(self):
+        """
+        @return:
+        """
+        return self._secLayer.getGCCClientSettings().getBlock(gcc.MessageType.CS_CORE)
+
     def addServerObserver(self, observer):
         """
         @summary: Add observer to RDP protocol

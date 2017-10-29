@@ -268,6 +268,9 @@ class ClientCoreData(CompositeType):
         self.pad1octet = UInt8(optional = True)
         self.serverSelectedProtocol = UInt32Le(optional = True)
     
+    def __getitem__(self, item):
+        return getattr(self, item).value
+
 class ServerCoreData(CompositeType):
     """
     @summary: Server side core settings structure
