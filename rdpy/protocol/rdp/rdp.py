@@ -443,7 +443,13 @@ class RDPServerController(pdu.layer.PDUServerListener):
         """
         bitmapCap = self._pduLayer._clientCapabilities[pdu.caps.CapsType.CAPSTYPE_BITMAP].capability
         return (bitmapCap.desktopWidth.value, bitmapCap.desktopHeight.value)
-    
+
+    def getClientDetails(self):
+        """
+        @return: 
+        """
+        return self._secLayer._info
+
     def addServerObserver(self, observer):
         """
         @summary: Add observer to RDP protocol
