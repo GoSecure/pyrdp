@@ -57,6 +57,7 @@ class Channel:
     """
     @summary: Channel id of main channels use in RDP
     """
+    MCS_RDPDR_CHANNEL = 1004
     MCS_GLOBAL_CHANNEL = 1003
     MCS_USERCHANNEL_BASE = 1001
     
