@@ -924,19 +924,26 @@ class StringStream(StringIO):
         value.write(self)
 
 class SocketStream:
-    def __init__(self, sock):
+    def __init__(self, sock, buffer_size = 4096):
         self.sock = sock
         self.is_eof = False
+        self.buffer = ""
+        self.buffer_size = buffer_size
     
     def eof(self):
         return self.is_eof
     
     def read(self, count):
-        data = self.sock.recv(count)
+        while count > len(self.buffer) and not self.eof():
+            data = self.sock.recv(self.buffer_size)
 
-        if data == "":
-            self.is_eof = True
-        
+            if data == "":
+                self.is_eof = True
+            
+            self.buffer += data
+
+        data = self.buffer[: count]
+        self.buffer = self.buffer[count :]
         return data
     
     def write(self, data):
