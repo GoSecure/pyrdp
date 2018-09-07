@@ -7,3 +7,5 @@ README.md~
 dist/*
 build/*
 rdpy.egg-info/*
+out/
+.idea/
