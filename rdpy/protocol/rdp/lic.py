@@ -22,7 +22,7 @@
 @see: http://msdn.microsoft.com/en-us/library/cc241880.aspx
 """
 
-from rdpy.core.type import CompositeType, CallableValue, UInt8, UInt16Le, UInt32Le, String, sizeof, FactoryType, ArrayType, Stream
+from rdpy.core.type import CompositeType, CallableValue, UInt8, UInt16Le, UInt32Le, String, sizeof, FactoryType, ArrayType, StringStream
 from rdpy.core.error import InvalidExpectedDataException
 import rdpy.core.log as log
 import sec
@@ -306,7 +306,7 @@ class LicenseManager(object):
         if self._transport.getGCCServerSettings().SC_SECURITY.serverCertificate._is_readed:
             serverCertificate = self._transport.getGCCServerSettings().SC_SECURITY.serverCertificate
         else:
-            s = Stream(licenseRequest.serverCertificate.blobData.value)
+            s = StringStream(licenseRequest.serverCertificate.blobData.value)
             serverCertificate = gcc.ServerCertificate()
             s.readType(serverCertificate)
         
@@ -339,7 +339,7 @@ class LicenseManager(object):
             raise InvalidExpectedDataException("bad license server challenge")
         
         #generate hwid
-        s = Stream()
+        s = StringStream()
         s.writeType((UInt32Le(2), String(self._hostname + self._username + "\x00" * 16)))
         hwid = s.getvalue()[:20]
         

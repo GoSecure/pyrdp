@@ -27,7 +27,7 @@ import sspi
 import rdpy.security.pyDes as pyDes
 import rdpy.security.rc4 as rc4
 from rdpy.security.rsa_wrapper import random
-from rdpy.core.type import CompositeType, CallableValue, String, UInt8, UInt16Le, UInt24Le, UInt32Le, sizeof, Stream
+from rdpy.core.type import CompositeType, CallableValue, String, UInt8, UInt16Le, UInt24Le, UInt32Le, sizeof, StringStream
 from rdpy.core import filetimes, error
 
 class MajorVersion(object):
@@ -200,7 +200,7 @@ class ChallengeMessage(CompositeType):
         @return: {map(AvId, str)}
         """
         result = {}
-        s = Stream(self.getTargetInfo())
+        s = StringStream(self.getTargetInfo())
         while(True):
             avPair = AvPair()
             s.readType(avPair)
@@ -468,7 +468,7 @@ def MAC(handle, SigningKey, SeqNum, Message):
     signature.SeqNum.value = SeqNum
     
     #write the SeqNum
-    s = Stream()
+    s = StringStream()
     s.writeType(signature.SeqNum)
     
     signature.Checksum.value = rc4.crypt(handle, HMAC_MD5(SigningKey, s.getvalue() + Message)[:8])
@@ -484,7 +484,7 @@ def MIC(ExportedSessionKey, negotiateMessage, challengeMessage, authenticateMess
     @return: {str} signature
     @see: https://msdn.microsoft.com/en-us/library/cc236676.aspx 
     """
-    s = Stream()
+    s = StringStream()
     s.writeType((negotiateMessage, challengeMessage, authenticateMessage))
     return HMAC_MD5(ExportedSessionKey, s.getvalue())
     
@@ -607,7 +607,7 @@ class NTLMv2SecurityInterface(sspi.IGenericSecurityService):
         encryptedData = rc4.crypt(self._encryptHandle, data)
         signature = MAC(self._encryptHandle, self._signingKey, self._seqNum, data)
         self._seqNum += 1
-        s = Stream()
+        s = StringStream()
         s.writeType(signature)
         return s.getvalue() + encryptedData
     
@@ -618,7 +618,7 @@ class NTLMv2SecurityInterface(sspi.IGenericSecurityService):
         """
         signature = MessageSignatureEx()
         message = String()
-        s = Stream(data)
+        s = StringStream(data)
         s.readType((signature, message))
         
         #decrypt message
@@ -626,7 +626,7 @@ class NTLMv2SecurityInterface(sspi.IGenericSecurityService):
         checksum = rc4.crypt(self._decryptHandle, signature.Checksum.value)
         
         #recompute checksum
-        t = Stream()
+        t = StringStream()
         t.writeType(signature.SeqNum)
         verify = HMAC_MD5(self._verifyKey, t.getvalue() + plaintextMessage)[:8]
         if verify != checksum:

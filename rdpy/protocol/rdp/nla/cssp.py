@@ -27,7 +27,7 @@ import pyasn1.codec.der.encoder as der_encoder
 import pyasn1.codec.der.decoder as der_decoder
 import pyasn1.codec.ber.encoder as ber_encoder
 
-from rdpy.core.type import Stream
+from rdpy.core.type import StringStream
 from twisted.internet import protocol
 from OpenSSL import crypto
 from rdpy.security import x509
@@ -128,7 +128,7 @@ def encodeDERTRequest(negoTypes = [], authInfo = None, pubKeyAuth = None):
     #fill nego data tokens
     i = 0
     for negoType in negoTypes:
-        s = Stream()
+        s = StringStream()
         s.writeType(negoType)
         negoToken = NegoToken()
         negoToken.setComponentByPosition(0, s.getvalue())
@@ -158,7 +158,7 @@ def decodeDERTRequest(s):
 
 def getNegoTokens(tRequest):
     negoData = tRequest.getComponentByName("negoTokens")
-    return [Stream(negoData.getComponentByPosition(i).getComponentByPosition(0).asOctets()) for i in range(len(negoData))]
+    return [StringStream(negoData.getComponentByPosition(i).getComponentByPosition(0).asOctets()) for i in range(len(negoData))]
     
 def getPubKeyAuth(tRequest):
     return tRequest.getComponentByName("pubKeyAuth").asOctets()

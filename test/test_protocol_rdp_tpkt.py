@@ -65,7 +65,7 @@ class TPKTTest(unittest.TestCase):
             
         message = type.String("test_tpkt_layer_recv")
         
-        s = type.Stream()
+        s = type.StringStream()
         s.writeType((type.UInt8(tpkt.Action.FASTPATH_ACTION_X224), type.UInt8(), type.UInt16Be(type.sizeof(message) + 4), message))
         
         layer = tpkt.TPKT(Presentation())
@@ -85,7 +85,7 @@ class TPKTTest(unittest.TestCase):
             
         message = type.String("test_tpkt_layer_recv_fastpath")
         
-        s = type.Stream()
+        s = type.StringStream()
         s.writeType((type.UInt8(tpkt.Action.FASTPATH_ACTION_FASTPATH), type.UInt8(type.sizeof(message) + 2), message))
         
         layer = tpkt.TPKT(None)
@@ -106,7 +106,7 @@ class TPKTTest(unittest.TestCase):
             
         message = type.String("test_tpkt_layer_recv_fastpath_ext_length")
         
-        s = type.Stream()
+        s = type.StringStream()
         s.writeType((type.UInt8(tpkt.Action.FASTPATH_ACTION_FASTPATH), type.UInt16Be((type.sizeof(message) + 3) | 0x8000), message))
         
         layer = tpkt.TPKT(None)

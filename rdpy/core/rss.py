@@ -23,7 +23,7 @@ Private protocol format to save events
 """
 import socket
 
-from rdpy.core.type import CompositeType, FactoryType, UInt8, UInt16Le, UInt32Le, String, sizeof, Stream
+from rdpy.core.type import CompositeType, FactoryType, UInt8, UInt16Le, UInt32Le, String, sizeof, StringStream
 from rdpy.core import log, error
 import time
 
@@ -178,8 +178,13 @@ class FileRecorder(object):
         #timestamp is time since last event
         e.timestamp.value = now - self._lastEventTimer
         self._lastEventTimer = now
+<<<<<<< HEAD
 
         s = Stream()
+=======
+        
+        s = StringStream()
+>>>>>>> Rename Stream to StringStream
         s.writeType(e)
 
         self._write_method(s.getvalue())
@@ -287,8 +292,7 @@ class FileReader(object):
         """
         @param f: {file} file pointer use to read
         """
-        self._s = Stream(f.read())
-
+        self._s = StringStream(f.read())
     def nextEvent(self):
         """
         @summary: read next event and return it

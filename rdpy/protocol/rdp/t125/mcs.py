@@ -25,7 +25,7 @@ The main channel is the graphical channel.
 It exist channel for file system order, audio channel, clipboard etc...
 """
 from rdpy.core.layer import LayerAutomata, IStreamSender, Layer
-from rdpy.core.type import sizeof, Stream, UInt8, UInt16Le, String
+from rdpy.core.type import sizeof, StringStream, UInt8, UInt16Le, String
 from rdpy.core.error import InvalidExpectedDataException, InvalidValue, InvalidSize, CallPureVirtualFuntion
 from ber import writeLength
 import rdpy.core.log as log
@@ -437,7 +437,7 @@ class Client(MCSLayer):
         client automata function
         """
         ccReq = gcc.writeConferenceCreateRequest(self._clientSettings)
-        ccReqStream = Stream()
+        ccReqStream = StringStream()
         ccReqStream.writeType(ccReq)
         
         tmp = (ber.writeOctetstring("\x01"), ber.writeOctetstring("\x01"), ber.writeBoolean(True),
@@ -517,7 +517,7 @@ class Server(MCSLayer):
         self.readDomainParams(data)
         self.readDomainParams(data)
         self.readDomainParams(data)
-        self._clientSettings = gcc.readConferenceCreateRequest(Stream(ber.readOctetString(data)))
+        self._clientSettings = gcc.readConferenceCreateRequest(StringStream(ber.readOctetString(data)))
         
         if not self._clientSettings.CS_NET is None:
             i = 1
@@ -595,7 +595,7 @@ class Server(MCSLayer):
         @summary: Send connect response
         """
         ccReq = gcc.writeConferenceCreateResponse(self._serverSettings)
-        ccReqStream = Stream()
+        ccReqStream = StringStream()
         ccReqStream.writeType(ccReq)
         
         tmp = (ber.writeEnumerated(0), ber.writeInteger(0), self.writeDomainParams(22, 3, 0, 0xfff8), 

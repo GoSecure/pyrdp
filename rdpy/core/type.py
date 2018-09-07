@@ -858,7 +858,7 @@ def decodeUnicode(s):
         i += 1
     return r
 
-class Stream(StringIO):
+class StringStream(StringIO):
     """
     @summary:  Stream use to read all types
     """

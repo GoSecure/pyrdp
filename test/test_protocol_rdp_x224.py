@@ -57,7 +57,7 @@ class X224Test(unittest.TestCase):
                 raise X224Test.X224_PASS()
                 
         layer = x224.X224Layer(Presentation())
-        s = type.Stream()
+        s = type.StringStream()
         s.writeType((x224.X224DataHeader(), type.String('test_x224_layer_recvData')))
         #reinit position
         s.pos = 0
@@ -70,7 +70,7 @@ class X224Test(unittest.TestCase):
         """
         class Transport(object):
             def send(self, data):
-                s = type.Stream()
+                s = type.StringStream()
                 s.writeType(data)
                 s.pos = 0
                 s.readType(x224.X224DataHeader())
@@ -88,7 +88,7 @@ class X224Test(unittest.TestCase):
         """
         class Transport(object):
             def send(self, data):
-                s = type.Stream()
+                s = type.StringStream()
                 s.writeType(data)
                 s.pos = 0
                 t = x224.ClientConnectionRequestPDU()
@@ -114,7 +114,7 @@ class X224Test(unittest.TestCase):
         """
         message = x224.ServerConnectionConfirm()
         message.protocolNeg.code.value = x224.NegociationType.TYPE_RDP_NEG_FAILURE
-        s = type.Stream()
+        s = type.StringStream()
         s.writeType(message)
         s.pos = 0
         layer = x224.Client(None)
@@ -144,7 +144,7 @@ class X224Test(unittest.TestCase):
         message = x224.ServerConnectionConfirm()
         message.protocolNeg.selectedProtocol.value = x224.Protocols.PROTOCOL_SSL
         
-        s = type.Stream()
+        s = type.StringStream()
         s.writeType(message)
         s.pos = 0
         layer = x224.Client(Presentation())
@@ -174,7 +174,7 @@ class X224Test(unittest.TestCase):
         
         message = x224.ClientConnectionRequestPDU()
         message.protocolNeg.selectedProtocol.value = x224.Protocols.PROTOCOL_HYBRID
-        s = type.Stream()
+        s = type.StringStream()
         s.writeType(message)
         s.pos = 0
         
@@ -216,7 +216,7 @@ class X224Test(unittest.TestCase):
                 
         message = x224.ClientConnectionRequestPDU()
         message.protocolNeg.selectedProtocol.value = x224.Protocols.PROTOCOL_SSL | x224.Protocols.PROTOCOL_RDP
-        s = type.Stream()
+        s = type.StringStream()
         s.writeType(message)
         s.pos = 0
         

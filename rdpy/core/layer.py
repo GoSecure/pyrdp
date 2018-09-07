@@ -107,7 +107,7 @@ class LayerAutomata(Layer, IStreamListener):
 from twisted.internet import protocol
 from twisted.internet.abstract import FileDescriptor
 #first that handle stream     
-from type import Stream
+from type import StringStream
 
 class RawLayerClientFactory(protocol.ClientFactory):
     """
@@ -202,7 +202,7 @@ class RawLayer(protocol.Protocol, LayerAutomata, IStreamSender):
         #while buffer have expected size call local callback
         while self._expectedLen > 0 and len(self._buffer) >= self._expectedLen:
             #expected data is first expected bytes
-            expectedData = Stream(self._buffer[0:self._expectedLen])
+            expectedData = StringStream(self._buffer[0:self._expectedLen])
             #rest is for next event of automata
             self._buffer = self._buffer[self._expectedLen:]
             #call recv function
@@ -255,6 +255,6 @@ class RawLayer(protocol.Protocol, LayerAutomata, IStreamSender):
                     And send it to transport layer
         @param message: (tuple | Type)
         """
-        s = Stream()
+        s = StringStream()
         s.writeType(message)
         self.transport.write(s.getvalue())
