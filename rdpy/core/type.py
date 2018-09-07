@@ -256,9 +256,15 @@ class SimpleType(Type, CallableValue):
         @param s: Stream that will be read
         @raise InvalidSize: if there is not enough data in stream
         """
-        if s.dataLen() < self._typeSize:
-            raise InvalidSize("Stream is too small to read expected SimpleType")
-        self.value = struct.unpack(self._structFormat, s.read(self._typeSize))[0]
+        data = ""
+        while len(data) < self._typeSize:
+            if s.eof():
+                raise InvalidSize("Stream is too small to read expected SimpleType")
+            
+            read_size = self._typeSize - len(data)
+            data += s.read(read_size)
+
+        self.value = struct.unpack(self._structFormat, data)[0]
       
     def mask(self):
         """
@@ -811,7 +817,7 @@ class String(Type, CallableValue):
                 self.value = s.getvalue()[s.pos:]
             else:
                 self.value = ""
-                while self.value[-len(self._until):] != self._until and s.dataLen() != 0:
+                while self.value[-len(self._until):] != self._until and not s.eof():
                     self.value += s.read(1)
         else:
             self.value = s.read(self._readLen.value)
@@ -852,15 +858,15 @@ def decodeUnicode(s):
         i += 1
     return r
 
-class Stream(StringIO):
+class StringStream(StringIO):
     """
     @summary:  Stream use to read all types
     """
-    def dataLen(self):
+    def eof(self):
         """
-        @return: not yet read length
+        @return: whether the stream has reached its end
         """
-        return self.len - self.pos
+        return self.pos == self.len
     
     def readLen(self):
         """
@@ -891,7 +897,7 @@ class Stream(StringIO):
             return
         
         #optional value not present
-        if self.dataLen() == 0 and value._optional:
+        if self.eof() and value._optional:
             return
 
         value.read(self)
@@ -916,7 +922,60 @@ class Stream(StringIO):
                 self.writeType(element)
             return
         value.write(self)
+
+class SocketStream:
+    def __init__(self, sock):
+        self.sock = sock
+        self.is_eof = False
+    
+    def eof(self):
+        return self.is_eof
+    
+    def read(self, count):
+        data = self.sock.recv(count)
+
+        if data == "":
+            self.is_eof = True
         
+        return data
+    
+    def write(self, data):
+        self.sock.send(data)
+    
+    def readType(self, value):
+        """
+        @summary:  call specific read on type object
+                    or iterate over tuple elements
+                    rollback read if error occurred during read value
+        @param value: (tuple | Type) object
+        """
+        #read each tuple
+        if isinstance(value, tuple) or isinstance(value, list):
+            for element in value:
+                self.readType(element)
+            return
+        
+        #optional value not present
+        if self.eof() and value._optional:
+            return
+
+        value.read(self)
+    
+    def writeType(self, value):
+        """
+        @summary:  Call specific write on type object
+                    or iterate over tuple element
+        @param value: (tuple | Type)
+        """
+        #write each element of tuple
+        if isinstance(value, tuple) or isinstance(value, list):
+            for element in value:
+                self.writeType(element)
+            return
+        
+        value.write(self)
+
+
 class ArrayType(Type):
     """
     @summary: Factory af n element

@@ -90,7 +90,7 @@ class TestLic(unittest.TestCase):
     
     def test_valid_client_licensing_error_message(self):
         l = lic.LicenseManager(None)
-        s = type.Stream()
+        s = type.StringStream()
         s.writeType(lic.createValidClientLicensingErrorMessage())
         #reinit position
         s.pos = 0
@@ -104,7 +104,7 @@ class TestLic(unittest.TestCase):
             def sendFlagged(self, flag, message):
                 if flag != sec.SecurityFlag.SEC_LICENSE_PKT:
                     return
-                s = type.Stream()
+                s = type.StringStream()
                 s.writeType(message)
                 s.pos = 0
                 s.readType(lic.LicPacket(lic.ClientNewLicenseRequest()))
@@ -124,6 +124,6 @@ class TestLic(unittest.TestCase):
         t = Transport()
         l = lic.LicenseManager(t)
         
-        s = type.Stream(SERVERREQUEST.decode("base64"))
+        s = type.StringStream(SERVERREQUEST.decode("base64"))
         
         self.assertFalse(l.recv(s) and t._state, "Bad message after license request")

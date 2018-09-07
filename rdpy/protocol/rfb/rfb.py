@@ -289,7 +289,7 @@ class RFB(RawLayer):
         @param data: Stream that contains well formed packet
         """
         securityList = []
-        while data.dataLen() > 0:
+        while not data.eof():
             securityElement = UInt8()
             data.readType(securityElement)
             securityList.append(securityElement)

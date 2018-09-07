@@ -24,7 +24,7 @@ RDP Standard security layer
 import sha, md5
 import lic, tpkt
 from t125 import gcc, mcs
-from rdpy.core.type import CompositeType, CallableValue, Stream, UInt32Le, UInt16Le, String, sizeof, UInt8
+from rdpy.core.type import CompositeType, CallableValue, StringStream, UInt32Le, UInt16Le, String, sizeof, UInt8
 from rdpy.core.layer import LayerAutomata, IStreamSender
 from rdpy.core.error import InvalidExpectedDataException
 from rdpy.core import log
@@ -165,7 +165,7 @@ def macData(macSaltKey, data):
     md5Digest = md5.new()
     
     #encode length
-    dataLength = Stream()
+    dataLength = StringStream()
     dataLength.writeType(UInt32Le(len(data)))
     
     sha1Digest.update(macSaltKey)
@@ -193,10 +193,10 @@ def macSaltedData(macSaltKey, data, encryptionCount):
     md5Digest = md5.new()
     
     #encode length
-    dataLengthS = Stream()
+    dataLengthS = StringStream()
     dataLengthS.writeType(UInt32Le(len(data)))
     
-    encryptionCountS = Stream()
+    encryptionCountS = StringStream()
     encryptionCountS.writeType(UInt32Le(encryptionCount))
     
     sha1Digest.update(macSaltKey)
@@ -452,7 +452,7 @@ class SecLayer(LayerAutomata, IStreamSender, tpkt.IFastPathListener, tpkt.IFastP
         #count
         self._nbDecryptedPacket += 1
 
-        return Stream(decrypted)
+        return StringStream(decrypted)
     
     def writeEncryptedPayload(self, data, saltedMacGeneration):
         """
@@ -470,7 +470,7 @@ class SecLayer(LayerAutomata, IStreamSender, tpkt.IFastPathListener, tpkt.IFastP
             
         self._nbEncryptedPacket += 1
         
-        s = Stream()
+        s = StringStream()
         s.writeType(data)
         
         if saltedMacGeneration:

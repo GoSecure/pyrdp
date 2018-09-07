@@ -23,7 +23,7 @@ Private protocol format to save events
 """
 import socket
 
-from rdpy.core.type import CompositeType, FactoryType, UInt8, UInt16Le, UInt32Le, String, sizeof, Stream
+from rdpy.core.type import CompositeType, FactoryType, UInt8, UInt16Le, UInt32Le, String, sizeof, StringStream, SocketStream
 from rdpy.core import log, error
 import time
 
@@ -178,8 +178,8 @@ class FileRecorder(object):
         #timestamp is time since last event
         e.timestamp.value = now - self._lastEventTimer
         self._lastEventTimer = now
-
-        s = Stream()
+        
+        s = StringStream()
         s.writeType(e)
 
         self._write_method(s.getvalue())
@@ -281,22 +281,42 @@ class SocketRecorder(FileRecorder):
 
 class FileReader(object):
     """
-    @summary: RSR File reader
+    @summary: RSS File reader
     """
     def __init__(self, f):
         """
         @param f: {file} file pointer use to read
         """
-        self._s = Stream(f.read())
-
+        self._s = StringStream(f.read())
     def nextEvent(self):
         """
         @summary: read next event and return it
         """
-        if self._s.dataLen() == 0:
+        if self._s.eof():
             return None
         e = Event()
         self._s.readType(e)
+        return e
+
+class SocketReader:
+    """
+    @summary: RSS Socket reader
+    """
+    def __init__(self, sock):
+        """
+        @param sock: {socket} socket used to read
+        """
+        self.stream = SocketStream(sock)
+    
+    def nextEvent(self):
+        """
+        @summary: read next event and return it
+        """
+        if self.stream.eof():
+            return None
+        
+        e = Event()
+        self.stream.readType(e)
         return e
 
 def createRecorder(path):
@@ -318,7 +338,7 @@ def createSocketRecorder(ip, port):
     """
     return SocketRecorder(ip, port)
 
-def createReader(path):
+def createFileReader(path):
     """
     @summary: open file from path and return FileReader
     @param path: {str} path of input file

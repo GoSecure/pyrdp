@@ -23,7 +23,7 @@ http://msdn.microsoft.com/en-us/library/cc240508.aspx
 """
 
 import md5
-from rdpy.core.type import UInt8, UInt16Le, UInt32Le, CompositeType, CallableValue, String, Stream, sizeof, FactoryType, ArrayType
+from rdpy.core.type import UInt8, UInt16Le, UInt32Le, CompositeType, CallableValue, String, StringStream, sizeof, FactoryType, ArrayType
 import per, mcs
 from rdpy.core.error import InvalidExpectedDataException
 from rdpy.core import log
@@ -373,7 +373,7 @@ class ProprietaryServerCertificate(CompositeType):
         """
         @summary: compute hash
         """
-        s = Stream()
+        s = StringStream()
         s.writeType(UInt32Le(self.__class__._TYPE_))
         s.writeType(self.dwSigAlgId)
         s.writeType(self.dwKeyAlgId)
@@ -591,7 +591,7 @@ def writeConferenceCreateRequest(userData):
     @param userData: Settings for client
     @return: GCC packet
     """
-    userDataStream = Stream()
+    userDataStream = StringStream()
     userDataStream.writeType(userData)
     
     return (per.writeChoice(0), per.writeObjectIdentifier(t124_02_98_oid),
@@ -606,7 +606,7 @@ def writeConferenceCreateResponse(serverData):
     @param serverData: Settings for server
     @return: gcc packet
     """
-    serverDataStream = Stream()
+    serverDataStream = StringStream()
     serverDataStream.writeType(serverData)
     
     return (per.writeChoice(0), per.writeObjectIdentifier(t124_02_98_oid),

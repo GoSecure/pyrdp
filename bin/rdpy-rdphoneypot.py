@@ -55,7 +55,7 @@ class HoneyPotServer(rdp.RDPServerObserver):
             size = width * height
             rssFilePath = sorted(self._rssFileSizeList, key = lambda x: abs(x[0][0] * x[0][1] - size))[0][1]
             log.info("select file (%s, %s) -> %s"%(width, height, rssFilePath))
-            self._rssFile = rss.createReader(rssFilePath)
+            self._rssFile = rss.createFileReader(rssFilePath)
         
         domain, username, password = self._controller.getCredentials()
         hostname = self._controller.getHostname()
@@ -133,7 +133,7 @@ def readSize(filePath):
     @summary: read size event in rss file
     @param filePath: path of rss file
     """
-    r = rss.createReader(filePath)
+    r = rss.createFileReader(filePath)
     while True:
         e = r.nextEvent()
         if e is None:

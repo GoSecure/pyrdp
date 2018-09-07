@@ -113,13 +113,19 @@ if __name__ == '__main__':
             help()
             sys.exit()
             
-    filepath = args[0]
     #create application
     app = QtGui.QApplication(sys.argv)
     
     mainWindow = RssPlayerWindow()
     mainWindow.show()
-    
-    rssFile = rss.createFileReader(filepath)
-    start(mainWindow, rssFile)
+
+    HOST = ""
+    PORT = 42069
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind((HOST, PORT))
+    server.listen(True)
+    sock, addr = server.accept()
+
+    reader = rss.SocketReader(sock)
+    start(mainWindow, reader)
     sys.exit(app.exec_())
