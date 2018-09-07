@@ -273,6 +273,7 @@ class SocketRecorder(FileRecorder):
     """
 
     def __init__(self, ip, port):
+        log.debug("Opening socket...")
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((ip, port))
         super(SocketRecorder, self).__init__(s, s.send)
