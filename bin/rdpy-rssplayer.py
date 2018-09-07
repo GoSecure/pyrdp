@@ -120,6 +120,6 @@ if __name__ == '__main__':
     mainWindow = RssPlayerWindow()
     mainWindow.show()
     
-    rssFile = rss.createReader(filepath)
+    rssFile = rss.createFileReader(filepath)
     start(mainWindow, rssFile)
     sys.exit(app.exec_())
