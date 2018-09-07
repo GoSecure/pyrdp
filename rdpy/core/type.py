@@ -922,7 +922,60 @@ class StringStream(StringIO):
                 self.writeType(element)
             return
         value.write(self)
+
+class SocketStream:
+    def __init__(self, sock):
+        self.sock = sock
+        self.eof = False
+    
+    def eof(self):
+        return self.eof
+    
+    def read(self, count):
+        data = self.sock.recv(count)
+
+        if data == "":
+            self.eof = True
         
+        return data
+    
+    def write(self, data):
+        self.sock.send(data)
+    
+    def readType(self, value):
+        """
+        @summary:  call specific read on type object
+                    or iterate over tuple elements
+                    rollback read if error occurred during read value
+        @param value: (tuple | Type) object
+        """
+        #read each tuple
+        if isinstance(value, tuple) or isinstance(value, list):
+            for element in value:
+                self.readType(element)
+            return
+        
+        #optional value not present
+        if self.eof() and value._optional:
+            return
+
+        value.read(self)
+    
+    def writeType(self, value):
+        """
+        @summary:  Call specific write on type object
+                    or iterate over tuple element
+        @param value: (tuple | Type)
+        """
+        #write each element of tuple
+        if isinstance(value, tuple) or isinstance(value, list):
+            for element in value:
+                self.writeType(element)
+            return
+        
+        value.write(self)
+
+
 class ArrayType(Type):
     """
     @summary: Factory af n element
