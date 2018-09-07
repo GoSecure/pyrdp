@@ -9,3 +9,4 @@ build/*
 rdpy.egg-info/*
 out/
 .idea/
+.vscode
