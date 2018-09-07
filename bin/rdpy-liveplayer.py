@@ -21,7 +21,7 @@
 rss file player
 """
 
-import sys, os, getopt, socket
+import sys, os, getopt, socket, threading
 
 from PyQt4 import QtGui, QtCore
 
@@ -29,6 +29,19 @@ from rdpy.core import log, rss
 from rdpy.ui.qt4 import QRemoteDesktop, RDPBitmapToQtImage
 from rdpy.core.scancode import scancodeToChar
 log._LOG_LEVEL = log.Level.INFO
+
+class ReaderThread(QtCore.QThread):
+    event_received = QtCore.pyqtSignal(object)
+
+    def __init__(self, reader):
+        super(QtCore.QThread, self).__init__()
+        self.reader = reader
+        self.done = False
+    
+    def run(self):
+        while not self.done:
+            event = self.reader.nextEvent()
+            self.event_received.emit(event)
 
 class RssPlayerWidget(QRemoteDesktop):
     """
@@ -68,40 +81,34 @@ class RssPlayerWindow(QtGui.QWidget):
         self.setLayout(layout)
         
         self.setGeometry(0, 0, 800, 600)
-
-def help():
-    print "Usage: rdpy-rssplayer [-h] rss_filepath"
-
-def start(widget, rssFile):
-    loop(widget, rssFile, rssFile.nextEvent())
-  
-def loop(widget, rssFile, nextEvent):
-    """
-    @summary: timer function
-    @param widget: {QRemoteDesktop}
-    @param rssFile: {rss.FileReader}
-    """
-   
-    if nextEvent.type.value == rss.EventType.UPDATE:
-        image = RDPBitmapToQtImage(nextEvent.event.width.value, nextEvent.event.height.value, nextEvent.event.bpp.value, nextEvent.event.format.value == rss.UpdateFormat.BMP, nextEvent.event.data.value);
-        widget._viewer.notifyImage(nextEvent.event.destLeft.value, nextEvent.event.destTop.value, image, nextEvent.event.destRight.value - nextEvent.event.destLeft.value + 1, nextEvent.event.destBottom.value - nextEvent.event.destTop.value + 1)
-        
-    elif nextEvent.type.value == rss.EventType.SCREEN:
-        widget._viewer.resize(nextEvent.event.width.value, nextEvent.event.height.value)
-        
-    elif nextEvent.type.value == rss.EventType.INFO:
-        widget._text.append("Domain : %s\nUsername : %s\nPassword : %s\nHostname : %s\n" % (
-                            nextEvent.event.domain.value, nextEvent.event.username.value, nextEvent.event.password.value, nextEvent.event.hostname.value))
-    elif nextEvent.type.value == rss.EventType.KEY_SCANCODE:
-        if nextEvent.event.isPressed.value == 0:
-            widget._text.moveCursor(QtGui.QTextCursor.End)
-            widget._text.insertPlainText(scancodeToChar(nextEvent.event.code.value))
-        
-    elif nextEvent.type.value == rss.EventType.CLOSE:
-        return
     
-    e = rssFile.nextEvent()
-    QtCore.QTimer.singleShot(e.timestamp.value,lambda:loop(widget, rssFile, e))
+    def start(self, reader):
+        self.thread = ReaderThread(reader)
+        self.thread.event_received.connect(self.on_event_received)
+        self.thread.start()
+    
+    def on_event_received(self, event):
+        if event.type.value == rss.EventType.UPDATE:
+            image = RDPBitmapToQtImage(event.event.width.value, event.event.height.value, event.event.bpp.value, event.event.format.value == rss.UpdateFormat.BMP, event.event.data.value);
+            self._viewer.notifyImage(event.event.destLeft.value, event.event.destTop.value, image, event.event.destRight.value - event.event.destLeft.value + 1, event.event.destBottom.value - event.event.destTop.value + 1)
+            
+        elif event.type.value == rss.EventType.SCREEN:
+            self._viewer.resize(event.event.width.value, event.event.height.value)
+            
+        elif event.type.value == rss.EventType.INFO:
+            self._text.append("Domain : %s\nUsername : %s\nPassword : %s\nHostname : %s\n" % (
+                                event.event.domain.value, event.event.username.value, event.event.password.value, event.event.hostname.value))
+        elif event.type.value == rss.EventType.KEY_SCANCODE:
+            if event.event.isPressed.value == 0:
+                self._text.moveCursor(QtGui.QTextCursor.End)
+                self._text.insertPlainText(scancodeToChar(event.event.code.value))
+            
+        elif event.type.value == rss.EventType.CLOSE:
+            pass
+    
+    def close_event(self, event):
+        self.thread.done = True
+        event.accept()
 
 if __name__ == '__main__':
     try:
@@ -127,5 +134,5 @@ if __name__ == '__main__':
     sock, addr = server.accept()
 
     reader = rss.SocketReader(sock)
-    start(mainWindow, reader)
+    mainWindow.start(reader)
     sys.exit(app.exec_())
