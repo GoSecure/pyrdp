@@ -368,9 +368,11 @@ class Client(MCSLayer):
         if not ber.readUniversalTag(data, ber.Tag.BER_TAG_OCTET_STRING, False):
             raise InvalidExpectedDataException("invalid expected BER tag")
         gccRequestLength = ber.readLength(data)
-        if data.dataLen() != gccRequestLength:
+        
+        try:
+            self._serverSettings = gcc.readConferenceCreateResponse(data)
+        except InvalidSize:
             raise InvalidSize("bad size of GCC request")
-        self._serverSettings = gcc.readConferenceCreateResponse(data)
         
         #send domain request
         self.sendErectDomainRequest()

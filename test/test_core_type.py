@@ -197,7 +197,7 @@ class TypeTest(unittest.TestCase):
         t = rdpy.core.type.UInt8()
         s.readType(t)
         self.assertEqual(t.value, 1, "invalid stream read value")
-        self.assertEqual(s.dataLen(), 0, "not read all stream")
+        self.assertEqual(s.eof(), True, "not read all stream")
         
     def test_stream_read_uint16Le_type(self):
         """
@@ -207,7 +207,7 @@ class TypeTest(unittest.TestCase):
         t = rdpy.core.type.UInt16Le()
         s.readType(t)
         self.assertEqual(t.value, 1, "invalid stream read value")
-        self.assertEqual(s.dataLen(), 0, "not read all stream")
+        self.assertEqual(s.eof(), True, "not read all stream")
         
     def test_stream_read_uint16Be_type(self):
         """
@@ -217,7 +217,7 @@ class TypeTest(unittest.TestCase):
         t = rdpy.core.type.UInt16Be()
         s.readType(t)
         self.assertEqual(t.value, 1, "invalid stream read value")
-        self.assertEqual(s.dataLen(), 0, "not read all stream")
+        self.assertEqual(s.eof(), True, "not read all stream")
         
     def test_stream_read_uint24Le_type(self):
         """
@@ -227,7 +227,7 @@ class TypeTest(unittest.TestCase):
         t = rdpy.core.type.UInt24Le()
         s.readType(t)
         self.assertEqual(t.value, 1, "invalid stream read value")
-        self.assertEqual(s.dataLen(), 0, "not read all stream")
+        self.assertEqual(s.eof(), True, "not read all stream")
         
     def test_stream_read_uint24Be_type(self):
         """
@@ -237,7 +237,7 @@ class TypeTest(unittest.TestCase):
         t = rdpy.core.type.UInt24Be()
         s.readType(t)
         self.assertEqual(t.value, 1, "invalid stream read")
-        self.assertEqual(s.dataLen(), 0, "not read all stream")
+        self.assertEqual(s.eof(), True, "not read all stream")
         
     def test_stream_read_uint32Le_type(self):
         """
@@ -245,9 +245,9 @@ class TypeTest(unittest.TestCase):
         """
         s = rdpy.core.type.Stream('\x01\x00\x00\x00')
         t = rdpy.core.type.UInt32Le()
-        s.readType(t)
+        s.readType(t)``
         self.assertEqual(t.value, 1, "invalid stream read value")
-        self.assertEqual(s.dataLen(), 0, "not read all stream")
+        self.assertEqual(s.eof(), True, "not read all stream")
         
     def test_stream_read_uint32Be_type(self):
         """
@@ -257,7 +257,7 @@ class TypeTest(unittest.TestCase):
         t = rdpy.core.type.UInt32Be()
         s.readType(t)
         self.assertEqual(t.value, 1, "invalid stream read")
-        self.assertEqual(s.dataLen(), 0, "not read all stream")
+        self.assertEqual(s.eof(), True, "not read all stream")
         
     def test_stream_read_optional_singletype(self):
         """
@@ -370,7 +370,7 @@ class TypeTest(unittest.TestCase):
                 self.padding = rdpy.core.type.UInt32Le(0)
         s = rdpy.core.type.Stream("\x00" * 10)
         s.readType(TestReadLength(rdpy.core.type.UInt8(10)))
-        self.assertEqual(s.dataLen(), 0, "invalid stream read trash data as padding")
+        self.assertEqual(s.eof(), True, "invalid stream read trash data as padding")
         
     def test_stream_read_with_static_length_inferior(self):
         """

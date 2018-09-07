@@ -293,7 +293,7 @@ class FileReader(object):
         """
         @summary: read next event and return it
         """
-        if self._s.dataLen() == 0:
+        if self._s.eof():
             return None
         e = Event()
         self._s.readType(e)
