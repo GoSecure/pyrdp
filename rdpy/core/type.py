@@ -926,16 +926,16 @@ class StringStream(StringIO):
 class SocketStream:
     def __init__(self, sock):
         self.sock = sock
-        self.eof = False
+        self.is_eof = False
     
     def eof(self):
-        return self.eof
+        return self.is_eof
     
     def read(self, count):
         data = self.sock.recv(count)
 
         if data == "":
-            self.eof = True
+            self.is_eof = True
         
         return data
     
