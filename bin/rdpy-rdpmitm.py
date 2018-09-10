@@ -141,17 +141,22 @@ class ProxyServerFactory(rdp.ServerFactory):
     """
     @summary: Factory on listening events
     """
-    def __init__(self, target, ouputDir, privateKeyFilePath, certificateFilePath, clientSecurity):
+    def __init__(self, target, ouputDir, privateKeyFilePath, certificateFilePath, clientSecurity,
+                 destination_ip, destination_port):
         """
         @param target: {tuple(ip, prt)}
         @param privateKeyFilePath: {str} file contain server private key (if none -> back to standard RDP security)
         @param certificateFilePath: {str} file contain server certificate (if none -> back to standard RDP security)
         @param clientSecurity: {str(ssl|rdp)} security layer use in client connection side
+        @param destination_ip: {str} destination ip for the socketRecorder. No socket recorder if this is None.
+        @param destination_port: {int} destination port for the socketRecorder.
         """
         rdp.ServerFactory.__init__(self, 16, privateKeyFilePath, certificateFilePath)
         self._target = target
         self._ouputDir = ouputDir
         self._clientSecurity = clientSecurity
+        self._destination_ip = destination_ip
+        self._destination_port = destination_port
         #use produce unique file by connection
         self._uniqueId = 0
 
@@ -162,7 +167,11 @@ class ProxyServerFactory(rdp.ServerFactory):
         @see: rdp.ServerFactory.buildObserver
         """
         self._uniqueId += 1
-        return ProxyServer(controller, self._target, self._clientSecurity, [rss.createSocketRecorder("127.0.0.1", 42069), rss.createRecorder(os.path.join(self._ouputDir, "%s_%s_%s.rss"%(time.strftime('%Y%m%d%H%M%S'), addr.host, self._uniqueId)))])
+        recorders = []
+        if self._destination_ip:
+            recorders.append(rss.createSocketRecorder(self._destination_ip, self._destination_port))
+        recorders.append(rss.createRecorder(os.path.join(self._ouputDir, "%s_%s_%s.rss" % (time.strftime('%Y%m%d%H%M%S'), addr.host, self._uniqueId))))
+        return ProxyServer(controller, self._target, self._clientSecurity, recorders)
 
 
 class ProxyClient(rdp.RDPClientObserver):
@@ -292,9 +301,9 @@ if __name__ == '__main__':
     parser.add_argument("target", help="IP:port of the target RDP machine (ex: 129.168.0.2:3390)")
     parser.add_argument("-l", "--listen", help="Port number to listen to. Default 3389", default=3389)
     parser.add_argument("-o", "--output", help="Output folder for .rss files")
-    parser.add_argument("-i", "--ip", help="Destination IP address to send RDP events to (for live player). "
-                                           "If not specified, doesn't send the RDP events "
-                                           "over the network.")
+    parser.add_argument("-i", "--destination-ip", help="Destination IP address to send RDP events to (for live player)."
+                                                       " If not specified, doesn't send the RDP events "
+                                                       "over the network.")
     parser.add_argument("-d", "--destination-port", help="Destination port number (for live player). Default 3000",
                         default=3000)
     parser.add_argument("-k", "--private-key", help="Path to private key (for SSL)")
@@ -318,5 +327,6 @@ if __name__ == '__main__':
         clientSecurity = rdp.SecurityLevel.RDP_LEVEL_RDP
 
     reactor.listenTCP(args.listen, ProxyServerFactory(parseIpPort(args.target), args.output, args.private_key,
-                                                      args.certificate, clientSecurity))
+                                                      args.certificate, clientSecurity,
+                                                      args.destination_ip, int(args.destination_port)))
     reactor.run()
