@@ -50,7 +50,7 @@ class ReaderThread(QtCore.QThread):
             else:
                 self.event_received.emit(event)
 
-class RssPlayerWidget(QRemoteDesktop):
+class LivePlayerWidget(QRemoteDesktop):
     """
     @summary: special rss player widget
     """
@@ -66,15 +66,15 @@ class RssPlayerWidget(QRemoteDesktop):
                 """ Not Handle """
         QRemoteDesktop.__init__(self, width, height, RssAdaptor())
         
-class RssPlayerWindow(QtGui.QWidget):
+class LivePlayerWindow(QtGui.QWidget):
     """
     @summary: main window of rss player
     """
     def __init__(self):
-        super(RssPlayerWindow, self).__init__()
+        super(LivePlayerWindow, self).__init__()
 
         self._write_in_caps = False
-        self._viewer = RssPlayerWidget(800, 600)
+        self._viewer = LivePlayerWidget(800, 600)
         self._text = QtGui.QTextEdit()
         self._text.setReadOnly(True)
         self._text.setFixedHeight(150)
@@ -142,7 +142,7 @@ if __name__ == '__main__':
     #create application
     app = QtGui.QApplication(sys.argv)
     
-    mainWindow = RssPlayerWindow()
+    mainWindow = LivePlayerWindow()
     mainWindow.show()
 
     HOST = ""
