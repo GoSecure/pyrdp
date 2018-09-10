@@ -316,7 +316,12 @@ class SocketReader:
             return None
         
         e = Event()
-        self.stream.readType(e)
+        
+        try:
+            self.stream.readType(e)
+        except error.InvalidSize:
+            return None
+        
         return e
 
 def createRecorder(path):
