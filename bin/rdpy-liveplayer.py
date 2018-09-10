@@ -20,7 +20,7 @@
 """
 rss file player
 """
-
+import argparse
 import sys, os, getopt, socket
 
 from PyQt4 import QtGui, QtCore
@@ -103,16 +103,13 @@ def loop(widget, rssFile, nextEvent):
     e = rssFile.nextEvent()
     QtCore.QTimer.singleShot(e.timestamp.value,lambda:loop(widget, rssFile, e))
 
+
 if __name__ == '__main__':
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "h")
-    except getopt.GetoptError:
-        help()
-    for opt, arg in opts:
-        if opt == "-h":
-            help()
-            sys.exit()
-            
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p", "--port", help="Port to listen to for incoming connections", default=3000)
+
+    args = parser.parse_args()
+
     #create application
     app = QtGui.QApplication(sys.argv)
     
@@ -120,9 +117,8 @@ if __name__ == '__main__':
     mainWindow.show()
 
     HOST = ""
-    PORT = 42069
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((HOST, PORT))
+    server.bind((HOST, args.port))
     server.listen(True)
     sock, addr = server.accept()
 

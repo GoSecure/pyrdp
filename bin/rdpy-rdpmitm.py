@@ -28,7 +28,7 @@ Client RDP -> | ProxyServer | ProxyClient | -> Server RDP
                    | Record Session |
                    -----------------
 """
-
+import argparse
 import sys, os, getopt, time
 
 from rdpy.core import log, error, rss
@@ -287,39 +287,36 @@ def parseIpPort(interface, defaultPort = "3389"):
 
 
 if __name__ == '__main__':
-    listen = "3389"
-    privateKeyFilePath = None
-    certificateFilePath = None
-    ouputDirectory = None
-    #for anonymous authentication
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("target", help="IP:port of the target RDP machine (ex: 129.168.0.2:3390)")
+    parser.add_argument("-l", "--listen", help="Port number to listen to. Default 3389", default=3389)
+    parser.add_argument("-o", "--output", help="Output folder for .rss files")
+    parser.add_argument("-i", "--ip", help="Destination IP address to send RDP events to. "
+                                           "If not specified, doesn't send the RDP events "
+                                           "over the network.")
+    parser.add_argument("-d", "--destination-port", help="Destination port number. Default 3000",
+                        default=3000)
+    parser.add_argument("-k", "--private-key", help="Path to private key (for SSL)")
+    parser.add_argument("-c", "--certificate", help="Path to certificate (for SSL)")
+    parser.add_argument("-r", "--standard-security", help="RDP standard security (XP or server 2003 client or older)",
+                        action="store_true")
+    parser.add_argument("-n", "--nla", help="For NLA client authentication (need to provide credentials)",
+                        action="store_true")
+
+    args = parser.parse_args()
+
     clientSecurity = rdp.SecurityLevel.RDP_LEVEL_SSL
 
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "hl:k:c:o:rn")
-    except getopt.GetoptError:
-        help()
-        sys.exit()
-    for opt, arg in opts:
-        if opt == "-h":
-            help()
-            sys.exit()
-        elif opt == "-l":
-            listen = arg
-        elif opt == "-k":
-            privateKeyFilePath = arg
-        elif opt == "-c":
-            certificateFilePath = arg
-        elif opt == "-o":
-            ouputDirectory = arg
-        elif opt == "-r":
-            clientSecurity = rdp.SecurityLevel.RDP_LEVEL_RDP
-        elif opt == "-n":
-            clientSecurity = rdp.SecurityLevel.RDP_LEVEL_NLA
+    if args.output is None or not os.path.dirname(args.output):
+        log.error("{} is an invalid output directory".format(args.output))
+        parser.print_help()
+        exit(1)
+    if args.nla:
+        clientSecurity = rdp.SecurityLevel.RDP_LEVEL_NLA
+    elif args.standard_security:
+        clientSecurity = rdp.SecurityLevel.RDP_LEVEL_RDP
 
-    if ouputDirectory is None or not os.path.dirname(ouputDirectory):
-        log.error("%s is an invalid output directory"%ouputDirectory)
-        help()
-        sys.exit()
-
-    reactor.listenTCP(int(listen), ProxyServerFactory(parseIpPort(args[0]), ouputDirectory, privateKeyFilePath, certificateFilePath, clientSecurity))
+    reactor.listenTCP(args.listen, ProxyServerFactory(parseIpPort(args[0]), args.output, args.private_key,
+                                                      args.certificate, clientSecurity))
     reactor.run()
