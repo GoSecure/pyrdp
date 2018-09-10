@@ -292,10 +292,10 @@ if __name__ == '__main__':
     parser.add_argument("target", help="IP:port of the target RDP machine (ex: 129.168.0.2:3390)")
     parser.add_argument("-l", "--listen", help="Port number to listen to. Default 3389", default=3389)
     parser.add_argument("-o", "--output", help="Output folder for .rss files")
-    parser.add_argument("-i", "--ip", help="Destination IP address to send RDP events to. "
+    parser.add_argument("-i", "--ip", help="Destination IP address to send RDP events to (for live player). "
                                            "If not specified, doesn't send the RDP events "
                                            "over the network.")
-    parser.add_argument("-d", "--destination-port", help="Destination port number. Default 3000",
+    parser.add_argument("-d", "--destination-port", help="Destination port number (for live player). Default 3000",
                         default=3000)
     parser.add_argument("-k", "--private-key", help="Path to private key (for SSL)")
     parser.add_argument("-c", "--certificate", help="Path to certificate (for SSL)")
@@ -317,6 +317,6 @@ if __name__ == '__main__':
     elif args.standard_security:
         clientSecurity = rdp.SecurityLevel.RDP_LEVEL_RDP
 
-    reactor.listenTCP(args.listen, ProxyServerFactory(parseIpPort(args[0]), args.output, args.private_key,
+    reactor.listenTCP(args.listen, ProxyServerFactory(parseIpPort(args.target), args.output, args.private_key,
                                                       args.certificate, clientSecurity))
     reactor.run()

@@ -126,7 +126,7 @@ if __name__ == '__main__':
 
     HOST = ""
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((HOST, args.port))
+    server.bind((HOST, int(args.port)))
     server.listen(True)
     sock, addr = server.accept()
 
