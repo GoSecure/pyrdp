@@ -34,7 +34,8 @@ setup(name='rdpy',
 			'bin/rdpy-rdpscreenshot.py', 
 			'bin/rdpy-rssplayer.py',
 			'bin/rdpy-vncclient.py', 
-			'bin/rdpy-vncscreenshot.py'
+			'bin/rdpy-vncscreenshot.py',
+			'bin/rdpy-liveplayer.py'
 		],
 	install_requires=[
 			'twisted',
