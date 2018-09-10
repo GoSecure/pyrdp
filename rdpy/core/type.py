@@ -474,7 +474,6 @@ class CompositeType(Type):
                         raise InvalidSize("Impossible to read type %s : read length is too small"%(self.__class__))
                 
             except Exception as e:
-                log.error("Error during read %s::%s"%(self.__class__, name))
                 #roll back already read
                 for tmpName in self._typeName:
                     if tmpName == name:
@@ -496,7 +495,6 @@ class CompositeType(Type):
             try:
                 s.writeType(self.__dict__[name])
             except Exception as e:
-                log.error("Error during write %s::%s"%(self.__class__, name))
                 raise e
             
     def __sizeof__(self):
