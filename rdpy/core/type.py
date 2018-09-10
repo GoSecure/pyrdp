@@ -939,6 +939,7 @@ class SocketStream:
 
             if data == "":
                 self.is_eof = True
+                break
             
             self.buffer += data
 
