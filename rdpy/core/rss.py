@@ -278,6 +278,7 @@ class SocketRecorder(FileRecorder):
         self._ip = ip
         self._port = port
         self._send_thread = Thread(target=self._handle_send)
+        self._send_thread.daemon = True
         self._send_queue = Queue()
         self._continue_sending = True
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
