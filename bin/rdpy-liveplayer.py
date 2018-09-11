@@ -26,6 +26,8 @@ import socket
 
 from PyQt4 import QtGui, QtCore
 
+import notify2
+
 from rdpy.core import log, rss
 from rdpy.ui.qt4 import QRemoteDesktop, RDPBitmapToQtImage
 from rdpy.ui.event import RSSEventHandler
@@ -58,28 +60,28 @@ class ReaderThread(QtCore.QThread):
         self.done = True
 
 class ServerThread(QtCore.QThread):
-    connection_received = QtCore.pyqtSignal(object)
+    connection_received = QtCore.pyqtSignal(object, object)
 
     def __init__(self, port):
         super(QtCore.QThread, self).__init__()
         self.host = ""
         self.port = port
         self.done = False
+
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.bind((self.host, self.port))
+        self.server.listen(5)
+        self.server.settimeout(0.5)
     
     def run(self):
-        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server.bind((self.host, self.port))
-        server.listen(5)
-        server.settimeout(0.5)
-
         while not self.done:
             try:
-                sock, addr = server.accept()
-                self.connection_received.emit(sock)
+                sock, addr = self.server.accept()
+                self.connection_received.emit(sock, addr)
             except socket.timeout:
                 pass
         
-        server.close()
+        self.server.close()
     
     def stop(self):
         self.done = True
@@ -150,10 +152,13 @@ class LivePlayerWindow(QtGui.QTabWidget):
         self._server.start()
         self.max_tabs = max_tabs
     
-    def on_connection_received(self, sock):
+    def on_connection_received(self, sock, addr):
         if self.count() >= self.max_tabs:
             return
         
+        notification = notify2.Notification("RDPY Liveplayer", "New connection from %s:%d" % addr)
+        notification.show()
+
         tab = LivePlayerTab(sock)
         tab.connection_closed.connect(self.on_connection_closed)
         self.addTab(tab, "New tab")
@@ -170,7 +175,10 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    #create application
+    # initialize notify2
+    notify2.init("rdpy-liveplayer")
+
+    # create application
     app = QtGui.QApplication(sys.argv)
     
     mainWindow = LivePlayerWindow(int(args.port))

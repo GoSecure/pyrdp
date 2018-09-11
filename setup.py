@@ -44,5 +44,6 @@ setup(name='rdpy',
           	'qt4reactor',
           	'rsa',
           	'pyasn1',
+			'notify2',
 	  	],
 )
