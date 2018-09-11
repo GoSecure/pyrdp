@@ -1,3 +1,5 @@
+from PyQt4 import QtGui
+
 from rdpy.core import rss
 from rdpy.core.scancode import scancodeToChar
 from rdpy.ui.qt4 import RDPBitmapToQtImage
