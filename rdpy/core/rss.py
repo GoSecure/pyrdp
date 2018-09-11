@@ -280,9 +280,9 @@ class SocketRecorder(FileRecorder):
         self._send_thread = Thread(target=self._handle_send)
         self._send_queue = Queue()
         self._continue_sending = True
-        self._send_thread.start()
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         super(SocketRecorder, self).__init__(s, s.send)
+        self._send_thread.start()
 
     def rec(self, event):
         """
