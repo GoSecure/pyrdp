@@ -153,4 +153,7 @@ if __name__ == '__main__':
 
     reader = rss.SocketReader(sock)
     mainWindow.start(reader)
-    sys.exit(app.exec_())
+    exit_code = app.exec_()
+    reader.close()
+    server.close()
+    sys.exit(exit_code)

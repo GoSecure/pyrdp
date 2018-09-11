@@ -966,6 +966,10 @@ class SocketStream:
             return
 
         value.read(self)
+
+    def close(self):
+        self.sock.close()
+        self.is_eof = True
     
     def writeType(self, value):
         """

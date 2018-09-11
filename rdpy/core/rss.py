@@ -323,6 +323,9 @@ class SocketReader:
             return None
         
         return e
+    
+    def close(self):
+        return self.stream.close()
 
 def createRecorder(path):
     """
