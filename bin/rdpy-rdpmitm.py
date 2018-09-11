@@ -72,6 +72,14 @@ class ProxyServer(rdp.RDPServerObserver):
         if self._client is None:
             #try a connection
             domain, username, password = self._controller.getCredentials()
+            hostname = self._controller.getHostname()
+            log.info("""Credentials:
+            \tdomain : %s
+            \tusername : %s
+            \tpassword : %s
+            \thostname : %s
+            """%(domain, username, password, hostname))
+
             for recorder in self._rss_recorders:
                 recorder.credentials(username, password, domain, self._controller.getHostname())
 

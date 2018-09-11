@@ -33,6 +33,7 @@ log._LOG_LEVEL = log.Level.INFO
 
 class ReaderThread(QtCore.QThread):
     event_received = QtCore.pyqtSignal(object)
+    connection_closed = QtCore.pyqtSignal()
 
     def __init__(self, reader):
         super(QtCore.QThread, self).__init__()
@@ -42,9 +43,14 @@ class ReaderThread(QtCore.QThread):
     def run(self):
         while not self.done:
             event = self.reader.nextEvent()
-            self.event_received.emit(event)
 
-class RssPlayerWidget(QRemoteDesktop):
+            if event is None:
+                self.connection_closed.emit()
+                break
+            else:
+                self.event_received.emit(event)
+
+class LivePlayerWidget(QRemoteDesktop):
     """
     @summary: special rss player widget
     """
@@ -60,15 +66,15 @@ class RssPlayerWidget(QRemoteDesktop):
                 """ Not Handle """
         QRemoteDesktop.__init__(self, width, height, RssAdaptor())
         
-class RssPlayerWindow(QtGui.QWidget):
+class LivePlayerWindow(QtGui.QWidget):
     """
     @summary: main window of rss player
     """
     def __init__(self):
-        super(RssPlayerWindow, self).__init__()
+        super(LivePlayerWindow, self).__init__()
 
         self._write_in_caps = False
-        self._viewer = RssPlayerWidget(800, 600)
+        self._viewer = LivePlayerWidget(800, 600)
         self._text = QtGui.QTextEdit()
         self._text.setReadOnly(True)
         self._text.setFixedHeight(150)
@@ -87,6 +93,7 @@ class RssPlayerWindow(QtGui.QWidget):
     def start(self, reader):
         self.thread = ReaderThread(reader)
         self.thread.event_received.connect(self.on_event_received)
+        self.thread.connection_closed.connect(self.on_connection_closed)
         self.thread.start()
 
     def on_event_received(self, event):
@@ -118,6 +125,9 @@ class RssPlayerWindow(QtGui.QWidget):
         elif event.type.value == rss.EventType.CLOSE:
             pass
     
+    def on_connection_closed(self):
+        self.close()
+    
     def close_event(self, event):
         self.thread.done = True
         event.accept()
@@ -132,7 +142,7 @@ if __name__ == '__main__':
     #create application
     app = QtGui.QApplication(sys.argv)
     
-    mainWindow = RssPlayerWindow()
+    mainWindow = LivePlayerWindow()
     mainWindow.show()
 
     HOST = ""
