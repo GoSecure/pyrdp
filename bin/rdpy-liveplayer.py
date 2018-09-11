@@ -36,9 +36,9 @@ class ReaderThread(QtCore.QThread):
     event_received = QtCore.pyqtSignal(object)
     connection_closed = QtCore.pyqtSignal()
 
-    def __init__(self, reader):
+    def __init__(self, sock):
         super(QtCore.QThread, self).__init__()
-        self.reader = reader
+        self.reader = rss.SocketReader(sock)
         self.done = False
 
     def run(self):
@@ -50,6 +50,40 @@ class ReaderThread(QtCore.QThread):
                 break
             else:
                 self.event_received.emit(event)
+        
+        self.reader.close()
+    
+    def stop(self):
+        self.reader.close()
+        self.done = True
+
+class ServerThread(QtCore.QThread):
+    connection_received = QtCore.pyqtSignal(object)
+
+    def __init__(self, port):
+        super(QtCore.QThread, self).__init__()
+        self.host = ""
+        self.port = port
+        self.done = False
+    
+    def run(self):
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.bind((self.host, self.port))
+        server.listen(5)
+        server.settimeout(0.5)
+
+        while not self.done:
+            try:
+                sock, addr = server.accept()
+                self.connection_received.emit(sock)
+            except socket.timeout:
+                pass
+        
+        server.close()
+    
+    def stop(self):
+        self.done = True
+
 
 class LivePlayerWidget(QRemoteDesktop):
     """
@@ -67,13 +101,16 @@ class LivePlayerWidget(QRemoteDesktop):
                 """ Not Handle """
         QRemoteDesktop.__init__(self, width, height, RssAdaptor())
 
-class LivePlayerWindow(QtGui.QWidget):
+class LivePlayerTab(QtGui.QWidget):
     """
     @summary: main window of rss player
     """
 
-    def __init__(self):
-        super(LivePlayerWindow, self).__init__()
+    connection_closed = QtCore.pyqtSignal(object)
+
+    def __init__(self, sock):
+        super(LivePlayerTab, self).__init__()
+        QtGui.qApp.aboutToQuit.connect(self.handle_close)
 
         self._write_in_caps = False
         self._viewer = LivePlayerWidget(800, 600)
@@ -81,6 +118,11 @@ class LivePlayerWindow(QtGui.QWidget):
         self._text.setReadOnly(True)
         self._text.setFixedHeight(150)
         self._handler = RSSEventHandler(self._viewer, self._text)
+
+        self.thread = ReaderThread(sock)
+        self.thread.event_received.connect(self._handler.on_event_received)
+        self.thread.connection_closed.connect(self.on_connection_closed)
+        self.thread.start()
 
         scrollViewer = QtGui.QScrollArea()
         scrollViewer.setWidget(self._viewer)
@@ -91,20 +133,36 @@ class LivePlayerWindow(QtGui.QWidget):
         
         self.setLayout(layout)
         self.setGeometry(0, 0, 800, 600)
-
-    def start(self, reader):
-        self.thread = ReaderThread(reader)
-        self.thread.event_received.connect(self._handler.on_event_received)
-        self.thread.connection_closed.connect(self.on_connection_closed)
-        self.thread.start()
     
     def on_connection_closed(self):
-        self.close()
+        self.connection_closed.emit(self)
     
-    def close_event(self, event):
-        self.thread.done = True
-        event.accept()
+    def handle_close(self):
+        self.thread.stop()
 
+class LivePlayerWindow(QtGui.QTabWidget):
+    def __init__(self, port, max_tabs = 5):
+        super(LivePlayerWindow, self).__init__()
+        QtGui.qApp.aboutToQuit.connect(self.handle_close)
+
+        self._server = ServerThread(port)
+        self._server.connection_received.connect(self.on_connection_received)
+        self._server.start()
+        self.max_tabs = max_tabs
+    
+    def on_connection_received(self, sock):
+        if self.count() >= self.max_tabs:
+            return
+        
+        tab = LivePlayerTab(sock)
+        tab.connection_closed.connect(self.on_connection_closed)
+        self.addTab(tab, "New tab")
+    
+    def on_connection_closed(self, tab):
+        self.removeTab(self.indexOf(tab))
+    
+    def handle_close(self):
+        self._server.stop()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -115,18 +173,8 @@ if __name__ == '__main__':
     #create application
     app = QtGui.QApplication(sys.argv)
     
-    mainWindow = LivePlayerWindow()
+    mainWindow = LivePlayerWindow(int(args.port))
     mainWindow.show()
 
-    HOST = ""
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((HOST, int(args.port)))
-    server.listen(True)
-    sock, addr = server.accept()
-
-    reader = rss.SocketReader(sock)
-    mainWindow.start(reader)
     exit_code = app.exec_()
-    reader.close()
-    server.close()
     sys.exit(exit_code)
