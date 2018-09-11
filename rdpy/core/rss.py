@@ -22,6 +22,8 @@ Remote Session Scenario File format
 Private protocol format to save events
 """
 import socket
+from Queue import Queue
+from threading import Thread
 
 from rdpy.core.type import CompositeType, FactoryType, UInt8, UInt16Le, UInt32Le, String, sizeof, StringStream, SocketStream
 from rdpy.core import log, error
@@ -161,7 +163,7 @@ class FileRecorder(object):
         @param f: {file} file pointer use to write
         @param write_method: {callable} Method to call when writing to the recorder (ex socket.send(), file.write())
         """
-        self._file = f
+        self._stream = f
         self._write_method = write_method
         #init timer
         self._lastEventTimer = timeMs()
@@ -273,10 +275,34 @@ class SocketRecorder(FileRecorder):
     """
 
     def __init__(self, ip, port):
-        log.debug("Opening socket...")
+        self._ip = ip
+        self._port = port
+        self._send_thread = Thread(target=self._handle_send)
+        self._send_queue = Queue()
+        self._continue_sending = True
+        self._send_thread.start()
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((ip, port))
         super(SocketRecorder, self).__init__(s, s.send)
+
+    def rec(self, event):
+        """
+            Put the event in a send queue to be sent asynchronously.
+            :param event: The event to eventually send.
+        """
+        self._send_queue.put(event)
+
+    def _handle_send(self):
+        """
+            Thread method that continuously queries the send queue to find
+            events to send.
+        """
+        log.debug("Opening socket...")
+        self._stream.connect((self._ip, self._port))
+        log.debug("Socket opened.")
+        while self._continue_sending:
+            if not self._send_queue.empty():
+                super(SocketRecorder, self).rec(self._send_queue.get())
+        self._stream.close()
 
 
 class FileReader(object):
