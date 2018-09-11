@@ -300,10 +300,24 @@ class SocketRecorder(FileRecorder):
         log.debug("Opening socket...")
         self._stream.connect((self._ip, self._port))
         log.debug("Socket opened.")
-        while self._continue_sending:
-            if not self._send_queue.empty():
-                super(SocketRecorder, self).rec(self._send_queue.get())
+
+        while True:
+            event = self._send_queue.get()
+
+            if event is None:
+                break
+            else:
+                super(SocketRecorder, self).rec(event)
+
+        self._stream.shutdown(socket.SHUT_RDWR)
         self._stream.close()
+    
+    def close(self):
+        """
+            Close the socket recorder.
+        """
+        self._send_queue.put(None)
+        super(SocketRecorder, self).close()
 
 
 class FileReader(object):
