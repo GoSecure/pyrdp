@@ -281,21 +281,6 @@ class ProxyClientFactory(rdp.ClientFactory):
         return ProxyClient(controller, self._server)
 
 
-def help():
-    """
-    @summary: Print help in console
-    """
-    print """
-    Usage:  rdpy-rdpmitm.py -o output_directory target
-            [-l listen_port default 3389] 
-            [-k private_key_file_path (mandatory for SSL)] 
-            [-c certificate_file_path (mandatory for SSL)] 
-            [-o output directory for recoded files] 
-            [-r RDP standard security (XP or server 2003 client or older)] 
-            [-n For NLA Client authentication (need to provide credentials)] 
-    """
-
-
 def parseIpPort(interface, defaultPort = "3389"):
     if ':' in interface:
         return interface.split(':')
