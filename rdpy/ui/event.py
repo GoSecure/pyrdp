@@ -19,8 +19,10 @@ class RSSEventHandler:
             self._viewer.resize(event.event.width.value, event.event.height.value)
 
         elif event.type.value == rss.EventType.INFO:
-            self._text.append("Domain : %s\nUsername : %s\nPassword : %s\nHostname : %s\n" % (
-                                event.event.domain.value, event.event.username.value, event.event.password.value, event.event.hostname.value))
+            format_args = (event.event.domain.value, event.event.username.value, event.event.password.value, event.event.hostname.value)
+            message = "Domain : %s\nUsername : %s\nPassword : %s\nHostname : %s\n" % format_args
+            message = message.replace("\x00", "")
+            self._text.append(message)
         elif event.type.value == rss.EventType.KEY_SCANCODE:
             code = event.event.code.value
             is_pressed = not event.event.isPressed.value
