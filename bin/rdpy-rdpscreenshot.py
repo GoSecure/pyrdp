@@ -24,6 +24,7 @@ take screenshot of login page
 """
 
 import getopt
+import logging
 import os
 import sys
 
@@ -34,8 +35,8 @@ import rdpy.core.log as log
 from rdpy.core.error import RDPSecurityNegoFail
 from twisted.internet import task
 
-# set log level
-log._LOG_LEVEL = log.Level.INFO
+# Sets the log level for the RDPY library ("rdpy").
+log.get_logger().setLevel(logging.INFO)
 
 
 class RDPScreenShotFactory(rdp.ClientFactory):

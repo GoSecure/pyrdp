@@ -21,14 +21,15 @@
 """
 RDP Honey pot use Rss scenario file to simulate RDP server
 """
-
+import logging
 import sys, os, getopt, time
 
 from rdpy.core import log, error, rss
 from rdpy.protocol.rdp import rdp
 from twisted.internet import reactor
 
-log._LOG_LEVEL = log.Level.INFO
+# Sets the log level for the RDPY library ("rdpy").
+log.get_logger().setLevel(logging.INFO)
 
 class HoneyPotServer(rdp.RDPServerObserver):
     def __init__(self, controller, rssFileSizeList):

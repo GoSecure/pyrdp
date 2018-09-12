@@ -37,7 +37,8 @@ from rdpy.core import error, rss, log
 from rdpy.protocol.rdp import rdp
 from twisted.internet import reactor
 
-log._LOG_LEVEL = logging.INFO
+# Sets the log level for the RDPY library ("rdpy").
+log.get_logger().setLevel(logging.INFO)
 
 
 class ProxyServer(rdp.RDPServerObserver):
@@ -76,17 +77,19 @@ class ProxyServer(rdp.RDPServerObserver):
             #try a connection
             domain, username, password = self._controller.getCredentials()
             hostname = self._controller.getHostname()
-            clog.warning("NEW SUCCESSFUL CONNECTION")
-            clog.warning("Credentials: domain : {} username : {} "
-                         "password : {} hostname : {}".format(domain, username, password, hostname))
+            clog.warning("NEW CONNECTION ATTEMPT")
+            clog.warning("Credentials: domain : {} | username : {} | "
+                         "password : {} | hostname : {}".format(domain, username, password if password else "<none>", hostname))
 
             for recorder in self._rss_recorders:
                 recorder.credentials(username, password, domain, self._controller.getHostname())
 
             width, height = self._controller.getScreen()
             for recorder in self._rss_recorders:
+                clog.info("Screen size: {}x{}".format(width, height))
                 recorder.screen(width, height, self._controller.getColorDepth())
 
+            mlog.info("Connection received. Connecting to target VM.")
             reactor.connectTCP(self._target[0], int(self._target[1]), ProxyClientFactory(self, width, height,
                                                             domain, username, password,self._clientSecurityLevel))
 
@@ -95,6 +98,7 @@ class ProxyServer(rdp.RDPServerObserver):
         @summary: Call when human client close connection
         @see: rdp.RDPServerObserver.onClose
         """
+        clog.info("Connection getting closed.")
         #end scenario
         for recorder in self._rss_recorders:
             recorder.close()
@@ -301,7 +305,7 @@ def parseIpPort(interface, defaultPort = "3389"):
 
 def prepare_loggers():
     """
-        Sets up the "rdp-mitm" and the "rdp-mitm.connections" loggers to print
+        Sets up the "mitm" and the "mitm.connections" loggers to print
         messages and send notifications on connect.
     """
     if not os.path.exists("log"):

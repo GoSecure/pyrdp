@@ -20,7 +20,7 @@
 """
 rss file player
 """
-
+import logging
 import sys, os, getopt, socket
 
 from PyQt4 import QtGui, QtCore
@@ -28,7 +28,8 @@ from PyQt4 import QtGui, QtCore
 from rdpy.core import log, rss
 from rdpy.ui.qt4 import QRemoteDesktop, RDPBitmapToQtImage
 from rdpy.core.scancode import scancodeToChar
-log._LOG_LEVEL = log.Level.INFO
+# Sets the log level for the RDPY library ("rdpy").
+log.get_logger().setLevel(logging.INFO)
 
 class RssPlayerWidget(QRemoteDesktop):
     """

@@ -21,14 +21,15 @@
 """
 example of use rdpy as VNC client
 """
-
+import logging
 import sys, os, getopt
 from PyQt4 import QtGui
 from rdpy.ui.qt4 import RFBClientQt
 from rdpy.protocol.rfb import rfb
 
 import rdpy.core.log as log
-log._LOG_LEVEL = log.Level.INFO
+# Sets the log level for the RDPY library ("rdpy").
+log.get_logger().setLevel(logging.INFO)
         
 class RFBClientQtFactory(rfb.ClientFactory):
     """

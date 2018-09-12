@@ -33,7 +33,9 @@ from rdpy.core import log, rss
 from rdpy.ui.qt4 import QRemoteDesktop, RDPBitmapToQtImage
 from rdpy.ui.event import RSSEventHandler
 import logging, logging.handlers
-log._LOG_LEVEL = log.Level.INFO
+
+# Sets the log level for the RDPY library ("rdpy").
+log.get_logger().setLevel(logging.INFO)
 
 
 class ReaderThread(QtCore.QThread):
@@ -205,7 +207,7 @@ class NotifyHandler(logging.StreamHandler):
 
 def prepare_loggers():
     """
-        Sets up the "liveplayer" logger to print messages and send notifications on connect.
+        Sets up the "liveplayer" and "liveplayer.ui" loggers to print messages and send notifications on connect.
     """
     if not os.path.exists("log"):
         os.makedirs("log")

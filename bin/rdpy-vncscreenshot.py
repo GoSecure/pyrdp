@@ -22,7 +22,7 @@
 example of use rdpy
 take screenshot of login page
 """
-
+import logging
 import sys, os, getopt
 from PyQt4 import QtCore, QtGui
 from rdpy.protocol.rfb import rfb
@@ -30,8 +30,8 @@ import rdpy.core.log as log
 from rdpy.ui.qt4 import qtImageFormatFromRFBPixelFormat
 from twisted.internet import task
 
-#set log level
-log._LOG_LEVEL = log.Level.INFO
+# Sets the log level for the RDPY library ("rdpy").
+log.get_logger().setLevel(logging.INFO)
 
 class RFBScreenShotFactory(rfb.ClientFactory):
     """
