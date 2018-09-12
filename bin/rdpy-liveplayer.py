@@ -31,8 +31,9 @@ import notify2
 from rdpy.core import log, rss
 from rdpy.ui.qt4 import QRemoteDesktop, RDPBitmapToQtImage
 from rdpy.ui.event import RSSEventHandler
-from rdpy.core.scancode import scancodeToChar
+import logging
 log._LOG_LEVEL = log.Level.INFO
+
 
 class ReaderThread(QtCore.QThread):
     event_received = QtCore.pyqtSignal(object)
@@ -58,6 +59,7 @@ class ReaderThread(QtCore.QThread):
     def stop(self):
         self.reader.close()
         self.done = True
+
 
 class ServerThread(QtCore.QThread):
     connection_received = QtCore.pyqtSignal(object, object)
@@ -104,6 +106,7 @@ class LivePlayerWidget(QRemoteDesktop):
                 """ Not Handle """
         QRemoteDesktop.__init__(self, width, height, RssAdaptor())
 
+
 class LivePlayerTab(QtGui.QWidget):
     """
     @summary: main window of rss player
@@ -143,6 +146,7 @@ class LivePlayerTab(QtGui.QWidget):
     def handle_close(self):
         self.thread.stop()
 
+
 class LivePlayerWindow(QtGui.QTabWidget):
     def __init__(self, port, max_tabs = 5):
         super(LivePlayerWindow, self).__init__()
@@ -156,9 +160,7 @@ class LivePlayerWindow(QtGui.QTabWidget):
     def on_connection_received(self, sock, addr):
         if self.count() >= self.max_tabs:
             return
-        
-        notification = notify2.Notification("RDPY Liveplayer", "New connection from %s:%d" % addr)
-        notification.show()
+        logger.critical("RDPY Liveplayer - New connection from {}:{}".format(addr[0], addr[1]))
 
         tab = LivePlayerTab(sock)
         tab.connection_closed.connect(self.on_connection_closed)
@@ -170,14 +172,48 @@ class LivePlayerWindow(QtGui.QTabWidget):
     def handle_close(self):
         self._server.stop()
 
+
+class NotifyHandler(logging.StreamHandler):
+    """
+        Logging handler that sends desktop (OS) notifications.
+    """
+
+    def __init__(self):
+        # initialize notify2
+        notify2.init("rdpy-liveplayer")
+        super(NotifyHandler, self).__init__()
+
+    def emit(self, record):
+        """
+            Sends a notification to the OS to display.
+            :param record: the LogRecord object
+        """
+        notification = notify2.Notification(record.getMessage())
+        notification.show()
+
+
+def prepare_loggers():
+    """
+        Sets up the "liveplayer" logger to print messages and send notifications on connect.
+    """
+    liveplayer_logger = logging.getLogger("liveplayer")
+    liveplayer_logger.setLevel(logging.DEBUG)
+    stream_handler = logging.StreamHandler()
+    liveplayer_logger.addHandler(stream_handler)
+    notify_handler = NotifyHandler()
+    notify_handler.setLevel(logging.CRITICAL)
+    notify_handler.setFormatter(logging.Formatter("[%(asctime)s] - %(message)s"))
+    liveplayer_logger.addHandler(notify_handler)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--port", help="Port to listen to for incoming connections", default=3000)
 
     args = parser.parse_args()
 
-    # initialize notify2
-    notify2.init("rdpy-liveplayer")
+    prepare_loggers()
+    logger = logging.getLogger("liveplayer")
 
     # create application
     app = QtGui.QApplication(sys.argv)

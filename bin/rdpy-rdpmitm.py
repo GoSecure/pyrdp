@@ -29,6 +29,7 @@ Client RDP -> | ProxyServer | ProxyClient | -> Server RDP
                    -----------------
 """
 import argparse
+import signal
 import sys, os, getopt, time
 
 from rdpy.core import log, error, rss
@@ -46,13 +47,14 @@ class ProxyServer(rdp.RDPServerObserver):
         """
         @param controller: {RDPServerController}
         @param target: {tuple(ip, port)}
-        @param rssRecorder: {rss.FileRecorder} use to record session
+        @param rssRecorders: {list[rss.FileRecorder]} use to record session
         """
         rdp.RDPServerObserver.__init__(self, controller)
         self._target = target
         self._client = None
         self._rss_recorders = rssRecorders
         self._clientSecurityLevel = clientSecurityLevel
+        signal.signal(signal.SIGINT, self.sigint_handler)
 
     def setClient(self, client):
         """
@@ -143,6 +145,15 @@ class ProxyServer(rdp.RDPServerObserver):
         if self._client is None:
             return
         self._client._controller.sendPointerEvent(x, y, button, isPressed)
+
+    def sigint_handler(self, sig, frame):
+        """
+            Closes everything gracefully and exits the program.
+            :param sig: Not needed
+            :param frame: Not needed
+        """
+        self.onClose()
+        exit(0)
 
 
 class ProxyServerFactory(rdp.ServerFactory):
