@@ -8,5 +8,6 @@ dist/*
 build/*
 rdpy.egg-info/*
 out/
+log/
 .idea/
 .vscode
