@@ -153,8 +153,7 @@ class ProxyServer(rdp.RDPServerObserver):
             :param frame: Not needed
         """
         self.onClose()
-        exit(0)
-
+        reactor.stop()
 
 class ProxyServerFactory(rdp.ServerFactory):
     """
