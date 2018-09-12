@@ -216,8 +216,12 @@ def prepare_loggers():
     liveplayer_ui_logger = logging.getLogger("liveplayer.ui")
     liveplayer_ui_logger.setLevel(logging.INFO)
 
+    formatter = logging.Formatter("[%(asctime)s] - LIVEPLAYER - %(levelname)s - %(message)s")
+
     stream_handler = logging.StreamHandler()
     file_handler = logging.FileHandler("log/liveplayer.log")
+    stream_handler.setFormatter(formatter)
+    file_handler.setFormatter(formatter)
     liveplayer_logger.addHandler(stream_handler)
     liveplayer_logger.addHandler(file_handler)
 
