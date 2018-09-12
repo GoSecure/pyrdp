@@ -25,6 +25,10 @@ Use to build correct size packet and handle slow path and fast path mode
 from rdpy.core.layer import RawLayer
 from rdpy.core.type import UInt8, UInt16Be, sizeof
 from rdpy.core.error import CallPureVirtualFuntion
+from rdpy.core import log
+
+logger = log.get_logger()
+
 
 class Action(object):
     """
@@ -125,12 +129,17 @@ class TPKT(RawLayer, IFastPathSender):
         @summary:  Call when transport layer connection
                     is made (inherit from RawLayer)
         """
+
+        if hasattr(self.transport, "client"):
+            logger.info("New RDP network connection from {}:{}."
+                        " Uses TLS: {}".format(self.transport.client[0], self.transport.client[1],
+                                               "yes" if self.transport.TLS else "no"))
+
         #header is on two bytes
         self.expect(2, self.readHeader)
         #no connection automata on this layer
-        if not self._presentation is None:
+        if self._presentation is not None:
             self._presentation.connect()
-        
     def readHeader(self, data):
         """
         @summary: Read header of TPKT packet

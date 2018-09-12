@@ -317,7 +317,7 @@ def prepare_loggers():
     mitm_connections_logger = logging.getLogger("mitm.connections")
     mitm_connections_logger.setLevel(logging.INFO)
 
-    formatter = logging.Formatter("[%(asctime)s] - MITM       - %(levelname)s - %(message)s")
+    formatter = logging.Formatter("[%(asctime)s] - %(name)s - %(levelname)s - %(message)s")
 
     stream_handler = logging.StreamHandler()
     file_handler = logging.FileHandler("log/mitm.log")
@@ -325,6 +325,9 @@ def prepare_loggers():
     file_handler.setFormatter(formatter)
     mitm_logger.addHandler(stream_handler)
     mitm_logger.addHandler(file_handler)
+
+    rdpy_logger = logging.getLogger("rdpy")
+    rdpy_logger.addHandler(file_handler)
 
 
 if __name__ == '__main__':
