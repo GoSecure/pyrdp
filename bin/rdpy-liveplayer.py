@@ -64,15 +64,15 @@ class ReaderThread(QtCore.QThread):
 class ServerThread(QtCore.QThread):
     connection_received = QtCore.pyqtSignal(object, object)
 
-    def __init__(self, port):
+    def __init__(self, address, port):
         super(QtCore.QThread, self).__init__()
-        self.host = ""
+        self.address = address
         self.port = port
         self.done = False
 
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.server.bind((self.host, self.port))
+        self.server.bind((self.address, self.port))
         self.server.listen(5)
         self.server.settimeout(0.5)
     
@@ -148,11 +148,11 @@ class LivePlayerTab(QtGui.QWidget):
 
 
 class LivePlayerWindow(QtGui.QTabWidget):
-    def __init__(self, port, max_tabs = 5):
+    def __init__(self, address, port, max_tabs = 5):
         super(LivePlayerWindow, self).__init__()
         QtGui.qApp.aboutToQuit.connect(self.handle_close)
 
-        self._server = ServerThread(port)
+        self._server = ServerThread(address, port)
         self._server.connection_received.connect(self.on_connection_received)
         self._server.start()
         self.max_tabs = max_tabs
@@ -208,7 +208,8 @@ def prepare_loggers():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-p", "--port", help="Port to listen to for incoming connections", default=3000)
+    parser.add_argument("-b", "--bind", help="Bind address (default: 127.0.0.1)", default="127.0.0.1")
+    parser.add_argument("-p", "--port", help="Bind port (default: 3000)", default=3000)
 
     args = parser.parse_args()
 
@@ -218,7 +219,7 @@ if __name__ == '__main__':
     # create application
     app = QtGui.QApplication(sys.argv)
     
-    mainWindow = LivePlayerWindow(int(args.port))
+    mainWindow = LivePlayerWindow(args.bind, int(args.port))
     mainWindow.show()
 
     exit_code = app.exec_()
