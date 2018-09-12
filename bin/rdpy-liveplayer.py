@@ -21,6 +21,7 @@
 rss file player
 """
 import argparse
+import os
 import sys
 import socket
 
@@ -31,7 +32,7 @@ import notify2
 from rdpy.core import log, rss
 from rdpy.ui.qt4 import QRemoteDesktop, RDPBitmapToQtImage
 from rdpy.ui.event import RSSEventHandler
-import logging
+import logging, logging.handlers
 log._LOG_LEVEL = log.Level.INFO
 
 
@@ -196,14 +197,24 @@ def prepare_loggers():
     """
         Sets up the "liveplayer" logger to print messages and send notifications on connect.
     """
+    if not os.path.exists("log"):
+        os.makedirs("log")
+
     liveplayer_logger = logging.getLogger("liveplayer")
     liveplayer_logger.setLevel(logging.DEBUG)
+
+    liveplayer_ui_logger = logging.getLogger("liveplayer.ui")
+    liveplayer_ui_logger.setLevel(logging.INFO)
+
     stream_handler = logging.StreamHandler()
+    file_handler = logging.FileHandler("log/liveplayer.log")
     liveplayer_logger.addHandler(stream_handler)
+    liveplayer_logger.addHandler(file_handler)
+
     notify_handler = NotifyHandler()
     notify_handler.setLevel(logging.CRITICAL)
     notify_handler.setFormatter(logging.Formatter("[%(asctime)s] - %(message)s"))
-    liveplayer_logger.addHandler(notify_handler)
+    liveplayer_ui_logger.addHandler(notify_handler)
 
 
 if __name__ == '__main__':
