@@ -167,7 +167,7 @@ class LivePlayerWindow(QtGui.QTabWidget):
 
         tab = LivePlayerTab(sock)
         tab.connection_closed.connect(self.on_connection_closed)
-        self.addTab(tab, "New tab")
+        self.addTab(tab, "%s:%d" % addr)
     
     def on_connection_closed(self, tab):
         index = self.indexOf(tab)
