@@ -141,6 +141,7 @@ class LivePlayerTab(QtGui.QWidget):
         self.setGeometry(0, 0, 800, 600)
     
     def on_connection_closed(self):
+        self._text.append("<Connection closed>")
         self.connection_closed.emit(self)
     
     def handle_close(self):
@@ -156,6 +157,8 @@ class LivePlayerWindow(QtGui.QTabWidget):
         self._server.connection_received.connect(self.on_connection_received)
         self._server.start()
         self.max_tabs = max_tabs
+        self.setTabsClosable(True)
+        self.tabCloseRequested.connect(self.on_tab_closed)
     
     def on_connection_received(self, sock, addr):
         if self.count() >= self.max_tabs:
@@ -167,7 +170,14 @@ class LivePlayerWindow(QtGui.QTabWidget):
         self.addTab(tab, "New tab")
     
     def on_connection_closed(self, tab):
-        self.removeTab(self.indexOf(tab))
+        index = self.indexOf(tab)
+        text = self.tabText(index)
+        self.setTabText(index, text + " - Closed")
+    
+    def on_tab_closed(self, index):
+        tab = self.widget(index)
+        tab.handle_close()
+        self.removeTab(index)
     
     def handle_close(self):
         self._server.stop()

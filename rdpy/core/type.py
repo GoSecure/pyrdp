@@ -475,10 +475,11 @@ class CompositeType(Type):
                 
             except Exception as e:
                 #roll back already read
-                for tmpName in self._typeName:
-                    if tmpName == name:
-                        break
-                    s.pos -= sizeof(self.__dict__[tmpName])
+                if isinstance(s, StringStream):
+                    for tmpName in self._typeName:
+                        if tmpName == name:
+                            break
+                        s.pos -= sizeof(self.__dict__[tmpName])
                 raise e
             
         if not self._readLen is None and readLen < self._readLen.value:
