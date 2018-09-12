@@ -164,7 +164,7 @@ class LivePlayerWindow(QtGui.QTabWidget):
     def on_connection_received(self, sock, addr):
         if self.count() >= self.max_tabs:
             return
-        logger.critical("RDPY Liveplayer - New connection from {}:{}".format(addr[0], addr[1]))
+        ulog.info("RDPY Liveplayer - New connection from {}:{}".format(addr[0], addr[1]))
 
         tab = LivePlayerTab(sock)
         tab.connection_closed.connect(self.on_connection_closed)
@@ -216,13 +216,16 @@ def prepare_loggers():
     liveplayer_ui_logger = logging.getLogger("liveplayer.ui")
     liveplayer_ui_logger.setLevel(logging.INFO)
 
+    formatter = logging.Formatter("[%(asctime)s] - LIVEPLAYER - %(levelname)s - %(message)s")
+
     stream_handler = logging.StreamHandler()
     file_handler = logging.FileHandler("log/liveplayer.log")
+    stream_handler.setFormatter(formatter)
+    file_handler.setFormatter(formatter)
     liveplayer_logger.addHandler(stream_handler)
     liveplayer_logger.addHandler(file_handler)
 
     notify_handler = NotifyHandler()
-    notify_handler.setLevel(logging.CRITICAL)
     notify_handler.setFormatter(logging.Formatter("[%(asctime)s] - %(message)s"))
     liveplayer_ui_logger.addHandler(notify_handler)
 
@@ -235,7 +238,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     prepare_loggers()
-    logger = logging.getLogger("liveplayer")
+    mlog = logging.getLogger("liveplayer")
+    ulog = logging.getLogger("liveplayer.ui")
 
     # create application
     app = QtGui.QApplication(sys.argv)

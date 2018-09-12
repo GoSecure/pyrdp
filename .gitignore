@@ -11,3 +11,4 @@ out/
 log/
 .idea/
 .vscode
+*.log
