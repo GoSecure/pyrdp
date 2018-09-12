@@ -10,3 +10,4 @@ rdpy.egg-info/*
 out/
 .idea/
 .vscode
+*.log
