@@ -368,7 +368,7 @@ if __name__ == '__main__':
     mlog.info("Starting MITM. Listen on port {}. "
               "Target VM: {}. send to livePlayer: {}:{}".format(args.listen, args.target, args.destination_ip,
                                                                 args.destination_port))
-    reactor.listenTCP(args.listen, ProxyServerFactory(parseIpPort(args.target), args.output, args.private_key,
+    reactor.listenTCP(int(args.listen), ProxyServerFactory(parseIpPort(args.target), args.output, args.private_key,
                                                       args.certificate, clientSecurity,
                                                       args.destination_ip, int(args.destination_port)))
     reactor.run()
