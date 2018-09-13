@@ -20,6 +20,7 @@
 """
 rss file player
 """
+import argparse
 import logging
 import sys, os, getopt, socket
 
@@ -28,6 +29,8 @@ from PyQt4 import QtGui, QtCore
 from rdpy.core import log, rss
 from rdpy.ui.qt4 import QRemoteDesktop, RDPBitmapToQtImage
 from rdpy.core.scancode import scancodeToChar
+from rdpy.ui.event import RSSEventHandler
+
 # Sets the log level for the RDPY library ("rdpy").
 log.get_logger().setLevel(logging.INFO)
 
@@ -67,11 +70,7 @@ class RssPlayerWindow(QtGui.QWidget):
         layout.addWidget(self._text, 2)
         
         self.setLayout(layout)
-        
         self.setGeometry(0, 0, 800, 600)
-
-def help():
-    print "Usage: rdpy-rssplayer [-h] rss_filepath"
 
 def start(widget, rssFile):
     loop(widget, rssFile, rssFile.nextEvent())
@@ -105,22 +104,16 @@ def loop(widget, rssFile, nextEvent):
     QtCore.QTimer.singleShot(e.timestamp.value,lambda:loop(widget, rssFile, e))
 
 if __name__ == '__main__':
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "h")
-    except getopt.GetoptError:
-        help()
-    for opt, arg in opts:
-        if opt == "-h":
-            help()
-            sys.exit()
-            
-    filepath = args[0]
-    #create application
+    parser = argparse.ArgumentParser()
+    parser.add_argument("rss_file")
+    args = parser.parse_args()
+    file_path = args.rss_file
+
+    # Create application
     app = QtGui.QApplication(sys.argv)
-    
     mainWindow = RssPlayerWindow()
     mainWindow.show()
     
-    rssFile = rss.createFileReader(filepath)
+    rssFile = rss.createFileReader(file_path)
     start(mainWindow, rssFile)
     sys.exit(app.exec_())
