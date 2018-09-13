@@ -167,6 +167,7 @@ class LivePlayerWindow(QtGui.QTabWidget):
         if self.count() >= self.max_tabs:
             return
         ulog.info("RDPY Liveplayer - New connection from {}:{}".format(addr[0], addr[1]))
+        os.system("beep")
 
         tab = LivePlayerTab(sock)
         tab.connection_closed.connect(self.on_connection_closed)
