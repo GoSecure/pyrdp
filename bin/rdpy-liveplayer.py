@@ -21,6 +21,7 @@
 rss file player
 """
 import argparse
+import errno
 import os
 import sys
 import socket
@@ -86,6 +87,9 @@ class ServerThread(QtCore.QThread):
                 self.connection_received.emit(sock, addr)
             except socket.timeout:
                 pass
+            except socket.error as (code, msg):
+                if code != errno.EINTR:
+                    raise
         
         self.server.close()
     
