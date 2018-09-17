@@ -194,7 +194,7 @@ class TPKT(RawLayer, IFastPathSender):
         @param data: {Stream} from twisted layer
         """
         self._fastPathListener.recvFastPath(self._secFlag, data)
-        self.expect(2, self.readHeader)
+        self.expect(2, self._read_header_hook)
     
     def readData(self, data):
         """
