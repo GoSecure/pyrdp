@@ -111,6 +111,7 @@ class TPKT(RawLayer, IFastPathSender):
         """
         RawLayer.__init__(self, presentation)
         #length may be coded on more than 1 bytes
+        self._read_header_hook = self.readHeader
         self._lastShortLength = UInt8()
         #fast path listener
         self._fastPathListener = None
@@ -200,9 +201,10 @@ class TPKT(RawLayer, IFastPathSender):
         @summary: Read classic TPKT packet, last state in tpkt automata
         @param data: {Stream} with correct size
         """
+
         #next state is pass to 
         self._presentation.recv(data)
-        self.expect(2, self.readHeader)
+        self.expect(2, self._read_header_hook)
         
     def send(self, message):
         """
@@ -224,6 +226,26 @@ class TPKT(RawLayer, IFastPathSender):
         @param sslContext: {ssl.ClientContextFactory | ssl.DefaultOpenSSLContextFactory} context use for TLS protocol
         """
         self.transport.startTLS(sslContext)
+        self._read_header_hook = self._log_ssl_secrets
+
+    def _log_ssl_secrets(self, data):
+        """
+            Logs the ssl CLIENT_RANDOM and MASTER_SECRET to a file for
+            later decryption. Then, call readHeader() normally and
+            make sure this method is not called for the remaining of
+            the network connection.
+
+            :param data: Data to be read by the readHeader method.
+        """
+
+        try:
+            ssl_logger = log.get_ssl_logger()
+            ssl_logger.info(self.transport.protocol._tlsConnection.client_random(),
+                            self.transport.protocol._tlsConnection.master_key())
+        except AttributeError:
+            pass
+        self.readHeader(data)
+        self._read_header_hook = self.readHeader
        
     def startNLA(self, sslContext, callback):
         """

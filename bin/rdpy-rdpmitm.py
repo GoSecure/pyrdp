@@ -90,8 +90,9 @@ class ProxyServer(rdp.RDPServerObserver):
                 recorder.screen(width, height, self._controller.getColorDepth())
 
             mlog.info("Connection received. Connecting to target VM.")
-            reactor.connectTCP(self._target[0], int(self._target[1]), ProxyClientFactory(self, width, height,
-                                                            domain, username, password,self._clientSecurityLevel))
+            reactor.connectTCP(self._target[0], int(self._target[1]),
+                               ProxyClientFactory(self, width, height, domain, username, password,
+                                                  self._clientSecurityLevel))
 
     def onClose(self):
         """

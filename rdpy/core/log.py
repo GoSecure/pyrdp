@@ -18,6 +18,7 @@
 #
 
 import logging
+import binascii
 
 
 def get_formatter():
@@ -27,16 +28,52 @@ def get_formatter():
     return logging.Formatter("[%(asctime)s] - %(name)s - %(levelname)s - %(message)s")
 
 
-logger = logging.getLogger("rdpy")
-logger.setLevel(logging.WARNING)
+def prepare_rdpy_logger():
+    """
+        Prepare the "rdpy" logger to be used by the library.
+    """
+    global logger
+    logger = logging.getLogger("rdpy")
+    logger.setLevel(logging.WARNING)
+    stream_handler = logging.StreamHandler()
+    formatter = get_formatter()
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
 
 
-stream_handler = logging.StreamHandler()
+prepare_rdpy_logger()
+
+class SslSecretFormatter(logging.Formatter):
+    """
+        Custom formatter to log SSL client randoms and master secrets.
+    """
+
+    def __init__(self):
+        super(SslSecretFormatter, self).__init__("format")
+
+    def format(self, record):
+        return "CLIENT_RANDOM {} {}".format(binascii.hexlify(record.msg),
+                                            binascii.hexlify(record.args[0]))
 
 
-formatter = get_formatter()
-stream_handler.setFormatter(formatter)
-logger.addHandler(stream_handler)
+def prepare_ssl_session_logger():
+    """
+        Prepares the ssl master secret logger. Used to log
+        TLS sessions secrets to decrypt traffic latter.
+    """
+
+    ssl_logger = logging.getLogger("ssl")
+    ssl_logger.setLevel(logging.INFO)
+    handler = logging.FileHandler("log/ssl_master_secret.log")
+    formatter = SslSecretFormatter()
+    handler.setFormatter(formatter)
+    ssl_logger.addHandler(handler)
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+    ssl_logger.addHandler(stream_handler)
+
+
+prepare_ssl_session_logger()
 
 
 def get_logger():
@@ -44,6 +81,10 @@ def get_logger():
         :return: The logger to use in the library.
     """
     return logger
+
+
+def get_ssl_logger():
+    return logging.getLogger("ssl")
 
 
 def debug(message):
