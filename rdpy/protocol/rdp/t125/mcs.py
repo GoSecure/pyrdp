@@ -530,8 +530,9 @@ class Server(MCSLayer):
                 i += 1
         
         self.sendConnectResponse()
-        self.setNextState(self.recvErectDomainRequest)
-        
+        self.setNextState(self.recvAttachUserRequest)
+#        self.setNextState(self.recvErectDomainRequest)
+
     def recvErectDomainRequest(self, data):
         """
         @summary: Receive erect domain request
@@ -540,16 +541,16 @@ class Server(MCSLayer):
         """
         opcode = UInt8()
         data.readType(opcode)
-        
+
         if not self.readMCSPDUHeader(opcode.value, DomainMCSPDU.ERECT_DOMAIN_REQUEST):
             log.error("Received invalid packet when reading MCSPDUHeader: {}".format(opcode.value))
             raise InvalidExpectedDataException("Invalid MCS PDU : ERECT_DOMAIN_REQUEST expected")
         
         per.readInteger(data)
         per.readInteger(data)
-        
+
         self.setNextState(self.recvAttachUserRequest)
-        
+
     def recvAttachUserRequest(self, data):
         """
         @summary: Receive Attach user request
