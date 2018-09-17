@@ -542,6 +542,7 @@ class Server(MCSLayer):
         data.readType(opcode)
         
         if not self.readMCSPDUHeader(opcode.value, DomainMCSPDU.ERECT_DOMAIN_REQUEST):
+            log.error("Received invalid packet when reading MCSPDUHeader: {}".format(opcode.value))
             raise InvalidExpectedDataException("Invalid MCS PDU : ERECT_DOMAIN_REQUEST expected")
         
         per.readInteger(data)
