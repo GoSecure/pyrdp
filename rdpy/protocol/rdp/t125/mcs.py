@@ -170,7 +170,7 @@ class MCSLayer(LayerAutomata):
         self._clientSettings = gcc.clientSettings()
         self._serverSettings = gcc.serverSettings()
         #default user Id
-        self._userId = 1 + Channel.MCS_USERCHANNEL_BASE
+        self._userId = 4 + Channel.MCS_USERCHANNEL_BASE
         #list of channel use in this layer and connection state
         self._channels = {Channel.MCS_GLOBAL_CHANNEL: presentation}
         #virtual channels
