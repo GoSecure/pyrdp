@@ -163,10 +163,15 @@ class LivePlayerWindow(QtGui.QTabWidget):
         self._server = ServerThread(address, port)
         self._server.connection_received.connect(self.on_connection_received)
         self._server.start()
+        self._shortcut = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+W"), self, self.close_current_tab)
         self.max_tabs = max_tabs
         self.setTabsClosable(True)
         self.tabCloseRequested.connect(self.on_tab_closed)
     
+    def close_current_tab(self):
+        if self.count() > 0:
+            self.on_tab_closed(self.currentIndex())
+
     def on_connection_received(self, sock, addr):
         if self.count() >= self.max_tabs:
             return
