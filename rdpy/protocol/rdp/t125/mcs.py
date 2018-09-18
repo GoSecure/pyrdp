@@ -531,10 +531,14 @@ class Server(MCSLayer):
         
         self.sendConnectResponse()
         self.setNextState(self.recvMCSPdu)
-        #self.setNextState(self.recvAttachUserRequest)
-        #self.setNextState(self.recvErectDomainRequest)
 
     def recvMCSPdu(self, data):
+        """
+            Read the first byte of the MCS PDU (op code) and determine how
+            to handle it.
+            :param data: The MCS PDU to parse
+        """
+
         op_code = UInt8()
         data.readType(op_code)
         if self.readMCSPDUHeader(op_code, DomainMCSPDU.ERECT_DOMAIN_REQUEST):
@@ -552,7 +556,6 @@ class Server(MCSLayer):
     def recvErectDomainRequest(self, data):
         """
         @summary: Receive erect domain request
-        Wait Attach User Request
         @param data: {Stream}
         """
 
@@ -563,7 +566,6 @@ class Server(MCSLayer):
         """
         @summary: Receive Attach user request
         Send Attach User Confirm
-        Wait Channel Join Request
         @param data: {Stream}
         """
 
