@@ -530,8 +530,24 @@ class Server(MCSLayer):
                 i += 1
         
         self.sendConnectResponse()
-        self.setNextState(self.recvAttachUserRequest)
-#        self.setNextState(self.recvErectDomainRequest)
+        self.setNextState(self.recvMCSPdu)
+        #self.setNextState(self.recvAttachUserRequest)
+        #self.setNextState(self.recvErectDomainRequest)
+
+    def recvMCSPdu(self, data):
+        op_code = UInt8()
+        data.readType(op_code)
+        if self.readMCSPDUHeader(op_code, DomainMCSPDU.ERECT_DOMAIN_REQUEST):
+            self.recvErectDomainRequest(data)
+            self.setNextState(self.recvMCSPdu)
+        elif self.readMCSPDUHeader(op_code, DomainMCSPDU.ATTACH_USER_REQUEST):
+            self.recvAttachUserRequest(data)
+            self.setNextState(self.recvMCSPdu)
+        elif self.readMCSPDUHeader(op_code, DomainMCSPDU.CHANNEL_JOIN_REQUEST):
+            self.recvChannelJoinRequest(data)
+        else:
+            log.error("Received unknown MCS PDU header: {}".format(op_code.value))
+
 
     def recvErectDomainRequest(self, data):
         """
@@ -539,17 +555,9 @@ class Server(MCSLayer):
         Wait Attach User Request
         @param data: {Stream}
         """
-        opcode = UInt8()
-        data.readType(opcode)
 
-        if not self.readMCSPDUHeader(opcode.value, DomainMCSPDU.ERECT_DOMAIN_REQUEST):
-            log.error("Received invalid packet when reading MCSPDUHeader: {}".format(opcode.value))
-            raise InvalidExpectedDataException("Invalid MCS PDU : ERECT_DOMAIN_REQUEST expected")
-        
         per.readInteger(data)
         per.readInteger(data)
-
-        self.setNextState(self.recvAttachUserRequest)
 
     def recvAttachUserRequest(self, data):
         """
@@ -558,14 +566,8 @@ class Server(MCSLayer):
         Wait Channel Join Request
         @param data: {Stream}
         """
-        opcode = UInt8()
-        data.readType(opcode)
-        
-        if not self.readMCSPDUHeader(opcode.value, DomainMCSPDU.ATTACH_USER_REQUEST):
-            raise InvalidExpectedDataException("Invalid MCS PDU : ATTACH_USER_REQUEST expected")
-        
+
         self.sendAttachUserConfirm()
-        self.setNextState(self.recvChannelJoinRequest)
         
     def recvChannelJoinRequest(self, data):
         """
@@ -574,12 +576,7 @@ class Server(MCSLayer):
         @param data: {Stream}
         
         """
-        opcode = UInt8()
-        data.readType(opcode)
-        
-        if not self.readMCSPDUHeader(opcode.value, DomainMCSPDU.CHANNEL_JOIN_REQUEST):
-            raise InvalidExpectedDataException("Invalid MCS PDU : CHANNEL_JOIN_REQUEST expected")
-        
+
         userId = per.readInteger16(data, Channel.MCS_USERCHANNEL_BASE)
         if self._userId != userId:
             raise InvalidExpectedDataException("Invalid MCS User Id")
