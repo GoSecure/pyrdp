@@ -57,10 +57,12 @@ class Channel:
     """
     @summary: Channel id of main channels use in RDP
     """
-    MCS_RDPDR_CHANNEL = 1004
-    MCS_GLOBAL_CHANNEL = 1003
     MCS_USERCHANNEL_BASE = 1001
-    
+    MCS_GLOBAL_CHANNEL = 1003
+    MCS_RDPDR_CHANNEL = 1004  # Not handled by RDPY
+    MCS_CLIPRDR_CHANNEL = 1005  # Not handled by RDPY
+    MCS_RDPSND_CHANNEL = 1006  # Not handled by RDPY
+
 class IGCCConfig(object):
     """
     @summary: Channel information
@@ -581,13 +583,18 @@ class Server(MCSLayer):
 
         userId = per.readInteger16(data, Channel.MCS_USERCHANNEL_BASE)
         if self._userId != userId:
-            raise InvalidExpectedDataException("Invalid MCS User Id")
+            log.warning("Invalid MCS user ID received, sending failed Channel Join Confirm response")
+            # raise InvalidExpectedDataException("Invalid MCS User Id")
         
         channelId = per.readInteger16(data)
-        #actually algo support virtual channel but RDPY have no virtual channel
-        confirm = 0 if channelId in self._channels.keys() or channelId == self._userId else 1
+        # actually algo support virtual channel but RDPY have no virtual channel
+        if (channelId in self._channels.keys() or channelId == self._userId) \
+                and self._userId == userId:
+            confirm = 0
+            self._nbChannelConfirmed += 1
+        else:
+            confirm = 14
         self.sendChannelJoinConfirm(channelId, confirm)
-        self._nbChannelConfirmed += 1
         if self._nbChannelConfirmed == self._serverSettings.getBlock(gcc.MessageType.SC_NET).channelCount.value + 2:
             self.allChannelConnected()
         
