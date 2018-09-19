@@ -463,15 +463,12 @@ class CompositeType(Type):
         readLen = 0
         for name in self._typeName:            
             try:
+                if self._readLen is not None and readLen >= self._readLen.value:
+                    if not self.__dict__[name]._optional:
+                        raise InvalidSize("Impossible to read type %s : read length is too small" % (self.__class__))
+                    break
                 s.readType(self.__dict__[name])
                 readLen += sizeof(self.__dict__[name])
-                #read is ok but read out of bound
-                if not self._readLen is None and readLen > self._readLen.value:
-                    #roll back
-                    s.pos -= sizeof(self.__dict__[name])
-                    #and notify if not optional
-                    if not self.__dict__[name]._optional:
-                        raise InvalidSize("Impossible to read type %s : read length is too small"%(self.__class__))
                 
             except Exception as e:
                 #roll back already read

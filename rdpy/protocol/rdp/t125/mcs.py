@@ -213,13 +213,14 @@ class MCSLayer(LayerAutomata):
                               UInt8(0x70), 
                               per.writeLength(sizeof(data)), data))
         
-    def recvData(self, data):
+    def recvData(self, data, opcode = None):
         """
         @summary: Main receive method
         @param data: {Stream} 
         """
-        opcode = UInt8()
-        data.readType(opcode)
+        if opcode is None:
+            opcode = UInt8()
+            data.readType(opcode)
         
         if self.readMCSPDUHeader(opcode.value, DomainMCSPDU.DISCONNECT_PROVIDER_ULTIMATUM):
             log.info("MCS DISCONNECT_PROVIDER_ULTIMATUM")
@@ -595,7 +596,9 @@ class Server(MCSLayer):
         else:
             confirm = 14
         self.sendChannelJoinConfirm(channelId, confirm)
+
         if self._nbChannelConfirmed == self._serverSettings.getBlock(gcc.MessageType.SC_NET).channelCount.value + 2:
+            log.debug("All MCS Channels connected. Proceed with normal reception of packets.")
             self.allChannelConnected()
         
     def sendConnectResponse(self):
