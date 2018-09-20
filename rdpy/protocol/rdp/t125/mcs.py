@@ -485,7 +485,7 @@ class Server(MCSLayer):
         """
         MCSLayer.__init__(self, presentation, DomainMCSPDU.SEND_DATA_REQUEST, DomainMCSPDU.SEND_DATA_INDICATION, virtualChannels)
         #nb channel requested
-        self._nbChannelConfirmed = 0
+        self._nbChannelJoinRequests = 0
         
     def connect(self):
         """
@@ -589,15 +589,15 @@ class Server(MCSLayer):
         
         channelId = per.readInteger16(data)
         # actually algo support virtual channel but RDPY have no virtual channel
-        if (channelId in self._channels.keys() or channelId == self._userId) \
-                and self._userId == userId:
+        if (channelId in self._channels.keys() or channelId == self._userId) and self._userId == userId:
             confirm = 0
-            self._nbChannelConfirmed += 1
         else:
             confirm = 14
-        self.sendChannelJoinConfirm(channelId, confirm)
 
-        if self._nbChannelConfirmed == self._serverSettings.getBlock(gcc.MessageType.SC_NET).channelCount.value + 2:
+        self.sendChannelJoinConfirm(channelId, confirm)
+        self._nbChannelJoinRequests += 1
+        
+        if self._nbChannelJoinRequests == self._serverSettings.getBlock(gcc.MessageType.SC_NET).channelCount.value + 2:
             log.debug("All MCS Channels connected. Proceed with normal reception of packets.")
             self.allChannelConnected()
         
