@@ -65,9 +65,9 @@ class Type(object):
         #use to record read state
         #if type is optional and not present during read
         #this boolean stay false
-        self._is_readed = False
+        self._was_read = False
         #use to know if type was written
-        self._is_writed = False
+        self._was_written = False
         
     def write(self, s):
         """
@@ -75,8 +75,8 @@ class Type(object):
                     before call __write__ function 
         @param s: Stream that will be written
         """
-        self._is_writed = self._conditional()
-        if not self._is_writed:
+        self._was_written = self._conditional()
+        if not self._was_written:
             return
         self.__write__(s)
     
@@ -88,8 +88,8 @@ class Type(object):
         @param s: Stream
         @raise InvalidExpectedDataException: if constness is not respected
         """
-        self._is_readed = self._conditional()
-        if not self._is_readed:
+        self._was_read = self._conditional()
+        if not self._was_read:
             return
         
         #not constant mode direct reading
@@ -500,7 +500,7 @@ class CompositeType(Type):
         @summary: Call sizeof on each sub type
         @return: sum of sizeof of each Type attributes
         """
-        if self._is_readed and not self._readLen is None:
+        if self._was_read and not self._readLen is None:
             return self._readLen.value
         
         size = 0
@@ -1018,7 +1018,7 @@ class ArrayType(Type):
             element = self._typeFactory()
             element._optional = self._readLen is None
             s.readType(element)
-            if not element._is_readed:
+            if not element._was_read:
                 break
             self._array.append(element)
             i += 1

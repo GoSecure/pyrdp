@@ -79,7 +79,7 @@ class ClientConnectionRequestPDU(CompositeType):
         self.len = UInt8(lambda:sizeof(self) - 1)
         self.code = UInt8(MessageType.X224_TPDU_CONNECTION_REQUEST, constant = True)
         self.padding = (UInt16Be(), UInt16Be(), UInt8())
-        self.cookie = String(until = "\x0d\x0a", conditional = lambda:(self.len._is_readed and self.len.value > 14))
+        self.cookie = String(until = "\x0d\x0a", conditional = lambda:(self.len._was_read and self.len.value > 14))
         #read if there is enough data
         self.protocolNeg = Negotiation(optional = True)
 
@@ -195,11 +195,11 @@ class Client(X224Layer):
         message = ServerConnectionConfirm()
         data.readType(message)
         
-        if message.protocolNeg.failureCode._is_readed:
+        if message.protocolNeg.failureCode._was_read:
             raise RDPSecurityNegoFail("negotiation failure code %x"%message.protocolNeg.failureCode.value)
         
         #check presence of negotiation response
-        if message.protocolNeg._is_readed:
+        if message.protocolNeg._was_read:
             self._selectedProtocol = message.protocolNeg.selectedProtocol.value
         else:
             self._selectedProtocol = Protocols.PROTOCOL_RDP
@@ -265,7 +265,7 @@ class Server(X224Layer):
         message = ClientConnectionRequestPDU()
         data.readType(message)
         
-        if not message.protocolNeg._is_readed:
+        if not message.protocolNeg._was_read:
             self._requestedProtocol = Protocols.PROTOCOL_RDP
         else:
             self._requestedProtocol = message.protocolNeg.selectedProtocol.value
