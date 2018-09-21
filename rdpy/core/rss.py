@@ -312,7 +312,11 @@ class SocketRecorder(FileRecorder):
             if event is None:
                 break
             else:
-                super(SocketRecorder, self).rec(event)
+                try:
+                    super(SocketRecorder, self).rec(event)
+                except Exception as e:
+                    log.error("Connection to liveplayer was aborted.")
+                    self._continue_sending = False
 
         try:
             self._stream.shutdown(socket.SHUT_RDWR)
