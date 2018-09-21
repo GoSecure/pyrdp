@@ -529,6 +529,22 @@ class CompositeType(Type):
         @return: False if each subtype are equals
         """
         return not self.__eq__(other)
+    
+    def __iter__(self):
+        return CompositeTypeIterator(self._typeName)
+
+class CompositeTypeIterator:
+    def __init__(self, fields):
+        self.index = 0
+        self.fields = fields
+    
+    def __next__(self):
+        if self.index >= len(self.fields):
+            raise StopIteration
+        else:
+            field = self.fields[self.index]
+            self.index += 1
+            return field
 
 """
 All simple Raw type use in RDPY
@@ -1100,17 +1116,6 @@ class FactoryType(Type):
         @return: Size of of object returned by factory
         """
         return sizeof(self._value)
-
-    def __iter__(self):
-        self.current = 0
-        return self
-
-    def next(self):
-        if self.current >= len(self._typeName):
-            raise StopIteration
-        else:
-            self.current += 1
-            return self._typeName[self.current-1]
 
 def CheckValueOnRead(cls):
     """
