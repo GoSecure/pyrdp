@@ -1,7 +1,4 @@
-from StringIO import StringIO
-
 from pdu import TPKTParser, TPKTPDU
-from rdpy.core.type import StringStream
 
 class TPKTLayer:
     """
