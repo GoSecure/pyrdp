@@ -61,10 +61,10 @@ class X224Data(X224PDU):
     """
     @summary: X224 Data PDU
     """
-    def __init__(self, code, sequence, payload):
+    def __init__(self, roa, eot, payload):
         super(X224PDU, self).__init__(2, X224Header.X224_TPDU_DATA, payload)
-        self.code = code
-        self.sequence = sequence
+        self.roa = roa
+        self.eot = eot
 
 class X224Error(X224PDU):
     """
@@ -147,7 +147,7 @@ class X224Parser:
         sequence = Uint8.read(data[2])
         payload = data[3 :]
         
-        return X224Data(code, sequence, payload)
+        return X224Data(code & 1 == 1, sequence & 0x80 == 0x80, payload)
     
     def parseError(self, data, length):
         if length < 4:
@@ -191,9 +191,9 @@ class X224Parser:
         self.writeConnectionPDU(stream, pdu.header, pdu.destination, pdu.source, pdu.reason)
     
     def writeData(self, stream, pdu):
-        header = (pdu.header << 4) | (pdu.code & 0xf)
+        header = (pdu.header << 4) | int(pdu.roa)
         stream.write(header)
-        stream.write(pdu.sequence)
+        stream.write(int(pdu.eot) << 8)
     
     def writeError(self, stream, pdu):
         stream.write(pdu.header)
