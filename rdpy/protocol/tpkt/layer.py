@@ -14,7 +14,7 @@ class TPKTLayer:
         pdu = self.parser.parse(data)
 
         if self.next is not None:
-            self.next.dataReceived(pdu.payload)
+            self.next.recv(pdu.payload)
     
     def send(self, data):
         pdu = TPKTPDU(3, len(data), data)
