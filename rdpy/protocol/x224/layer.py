@@ -1,9 +1,11 @@
 from abc import abstractmethod, ABCMeta
 
 from rdpy.core import log
+from rdpy.core.layer import Layer
+from rdpy.core.subject import Subject
 from pdu import X224Parser, X224Data, X224Header, X224ConnectionRequest, X224ConnectionConfirm, X224DisconnectRequest
 
-class X224Controller:
+class X224Observer:
     __metaclass__ = ABCMeta
 
     @abstractmethod
@@ -22,21 +24,23 @@ class X224Controller:
     def error(self, pdu):
         pass
 
-class X224Layer:
+class X224Layer(Layer, Subject):
     """
     @summary: Layer for handling X224 related traffic
     """
 
-    def __init__(self, controller):
-        self.previous = None
-        self.next = None
+    def __init__(self):
+        super(X224Layer, self).__init__()
+        super(X224Layer, self).__init__()
         self.parser = X224Parser()
-        self.controller = controller
+    
+    def setObserver(self, observer):
+        super(X224Layer, self).setObserver(observer)
         self.handlers = {
-            X224Header.X224_TPDU_CONNECTION_REQUEST: self.controller.connectionRequest,
-            X224Header.X224_TPDU_CONNECTION_CONFIRM: self.controller.connectionConfirm,
-            X224Header.X224_TPDU_DISCONNECT_REQUEST: self.controller.disconnectRequest,
-            X224Header.X224_TPDU_ERROR: self.controller.error
+            X224Header.X224_TPDU_CONNECTION_REQUEST: self.observer.connectionRequest,
+            X224Header.X224_TPDU_CONNECTION_CONFIRM: self.observer.connectionConfirm,
+            X224Header.X224_TPDU_DISCONNECT_REQUEST: self.observer.disconnectRequest,
+            X224Header.X224_TPDU_ERROR: self.observer.error
         }
     
     def recv(self, data):
