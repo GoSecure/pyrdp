@@ -1,67 +1,86 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABCMeta
 
 from rdpy.core import log
-from pdu import X224Parser, X224Data, X224Header, X224ConnectionRequest
+from pdu import X224Parser, X224Data, X224Header, X224ConnectionRequest, X224ConnectionConfirm, X224DisconnectRequest
+
+class X224Controller:
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def connectionRequest(self, pdu):
+        pass
+    
+    @abstractmethod
+    def connectionConfirm(self, pdu):
+        pass
+    
+    @abstractmethod
+    def disconnectRequest(self, pdu):
+        pass
+    
+    @abstractmethod
+    def error(self, pdu):
+        pass
 
 class X224Layer:
     """
     @summary: Layer for handling X224 related traffic
     """
 
-    def __init__(self):
+    def __init__(self, controller):
         self.previous = None
         self.next = None
         self.parser = X224Parser()
+        self.controller = controller
+        self.handlers = {
+            X224Header.X224_TPDU_CONNECTION_REQUEST: self.controller.connectionRequest,
+            X224Header.X224_TPDU_CONNECTION_CONFIRM: self.controller.connectionConfirm,
+            X224Header.X224_TPDU_DISCONNECT_REQUEST: self.controller.disconnectRequest,
+            X224Header.X224_TPDU_ERROR: self.controller.error
+        }
     
     def recv(self, data):
         pdu = self.parser.parse(data)
 
         if pdu.header == X224Header.X224_TPDU_DATA:
             self.next.recv(pdu.payload)
+        elif pdu.header in self.handlers:
+            self.handlers[pdu.header](pdu)
         else:
-            self.recvPDU(pdu)
-
-    @abstractmethod
-    def recvPDU(pdu):
-        pass    
+            raise Exception("Unhandled PDU received")
     
-    def send(self, data):
-        pdu = X224Data(False, True, data)
+    def send(self, payload, **kwargs):
+        roa = kwargs.pop("roa", False)
+        eot = kwargs.pop("eot", True)
+        
+        pdu = X224Data(roa, eot, payload)
         self.previous.send(self.parser.write(pdu))
     
-class X224ClientLayer:
-    """
-    @summary: Layer for client-side X224 traffic
-    """
+    def sendConnectionPDU(self, factory, payload, **kwargs):
+        credit = kwargs.pop("credit", 0)
+        destination = kwargs.pop("destination", 0)
+        source = kwargs.pop("source", 0)
+        options = kwargs.pop("options", 0)
 
-    def __init__(self):
-        super(X224Layer, self).__init__()
-        self.connecting = False
-        self.connected = False
-    
-    def recvPDU(self, pdu):
-        if pdu.header == X224Header.X224_TPDU_CONNECTION_CONFIRM:
-            if self.connecting:
-                self.connected = True
-            else:
-                log.warning("Received a Connection Confirm PDU without sending a Connection Request")
-        elif pdu.header == X224Header.X224_TPDU_DISCONNECT_REQUEST:
-            self.connected = False
-            log.warning("Received disconnect request")
-        elif pdu.header == X224Header.X224_TPDU_ERROR:
-            log.error("Received error PDU, cause: 0x%lx" % pdu.cause)
-        else:
-            log.error("Unhandled PDU received")
-        
-        self.connecting = False
-    
-    def send(self, data):
-        if not self.connected:
-            raise Exception("Cannot send data when not connected")
-        
-        super(X224Layer, self).send(data)
-
-    def sendConnectionRequest(self, payload):
-        pdu = X224ConnectionRequest(0, 0, 0, 0 payload)
+        pdu = factory(credit, destination, source, options, payload)
         self.previous.send(self.parser.write(pdu))
-        self.connecting = True
+
+    def sendConnectionRequest(self, payload, **kwargs):
+        self.sendConnectionPDU(X224ConnectionRequest, payload, **kwargs)
+    
+    def sendConnectionConfirm(self, payload, **kwargs):
+        self.sendConnectionPDU(X224ConnectionConfirm, payload, **kwargs)
+    
+    def sendDisconnectRequest(self, reason, **kwargs):
+        destination = kwargs.pop("destination", 0)
+        source = kwargs.pop("source", 0)
+        payload = kwargs.pop("payload", "")
+
+        pdu = X224DisconnectRequest(destination, source, reason, payload)
+        self.previous.send(self.parser.write(pdu))
+    
+    def sendError(self, cause, **kwargs):
+        destination = kwargs.pop("destination", 0)
+
+        pdu = X224Error(destination, cause)
+        self.previous.send(self.parser.write(pdu))
