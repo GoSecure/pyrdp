@@ -62,6 +62,11 @@ class X224Data(X224PDU):
     @summary: X224 Data PDU
     """
     def __init__(self, roa, eot, payload):
+        """
+        @param roa: request of acknowledgement (this is False unless agreed upon during connection)
+        @param eot: end of transmission (True if this is the last packet in a sequence)
+        @param payload: the data payload
+        """
         super(X224PDU, self).__init__(2, X224Header.X224_TPDU_DATA, payload)
         self.roa = roa
         self.eot = eot
