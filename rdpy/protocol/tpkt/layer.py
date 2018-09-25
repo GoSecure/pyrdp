@@ -11,10 +11,10 @@ class TPKTLayer:
         self.parser = TPKTParser()
     
     def recv(self, data):
-        pdu = self.parser.parse(data)
-
-        if self.next is not None:
+        while len(data) > 0:
+            pdu = self.parser.parse(data)
             self.next.recv(pdu.payload)
+            data = data[pdu.length :]
     
     def send(self, data):
         pdu = TPKTPDU(3, len(data), data)
