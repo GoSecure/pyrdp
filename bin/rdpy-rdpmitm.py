@@ -45,7 +45,7 @@ class ProxyServer(rdp.RDPServerObserver):
     """
     @summary: Server side of proxy
     """
-    def __init__(self, controller, target, clientSecurityLevel, rssRecorders):
+    def __init__(self, controller, target, clientSecurityLevel, rssRecorders, username, password):
         """
         @param controller: {RDPServerController}
         @param target: {tuple(ip, port)}
@@ -56,6 +56,8 @@ class ProxyServer(rdp.RDPServerObserver):
         self._client = None
         self._rss_recorders = rssRecorders
         self._clientSecurityLevel = clientSecurityLevel
+        self._username = username
+        self._password = password
         signal.signal(signal.SIGINT, self.sigint_handler)
 
     def setClient(self, client):
@@ -88,6 +90,10 @@ class ProxyServer(rdp.RDPServerObserver):
             for recorder in self._rss_recorders:
                 clog.info("Screen size: {}x{}".format(width, height))
                 recorder.screen(width, height, self._controller.getColorDepth())
+
+            username = self._username if self._username is not None else username
+            password = self._password if self._password is not None else password
+
 
             mlog.info("Connection received. Connecting to target VM.")
             reactor.connectTCP(self._target[0], int(self._target[1]),
@@ -164,7 +170,7 @@ class ProxyServerFactory(rdp.ServerFactory):
     @summary: Factory on listening events
     """
     def __init__(self, target, ouputDir, privateKeyFilePath, certificateFilePath, clientSecurity,
-                 destination_ip, destination_port):
+                 destination_ip, destination_port, username, password):
         """
         @param target: {tuple(ip, prt)}
         @param privateKeyFilePath: {str} file contain server private key (if none -> back to standard RDP security)
@@ -172,6 +178,8 @@ class ProxyServerFactory(rdp.ServerFactory):
         @param clientSecurity: {str(ssl|rdp)} security layer use in client connection side
         @param destination_ip: {str} destination ip for the socketRecorder. No socket recorder if this is None.
         @param destination_port: {int} destination port for the socketRecorder.
+        @param username: {str} Username to use instead of the one sent by the client.
+        @param password: {str} Password to use instead of the one sent by the client.
         """
         rdp.ServerFactory.__init__(self, 16, privateKeyFilePath, certificateFilePath)
         self._target = target
@@ -179,6 +187,8 @@ class ProxyServerFactory(rdp.ServerFactory):
         self._clientSecurity = clientSecurity
         self._destination_ip = destination_ip
         self._destination_port = destination_port
+        self._username = username
+        self._password = password
         #use produce unique file by connection
         self._uniqueId = 0
 
@@ -195,7 +205,7 @@ class ProxyServerFactory(rdp.ServerFactory):
                                                                               self._destination_port))
             recorders.append(rss.createSocketRecorder(self._destination_ip, self._destination_port))
         recorders.append(rss.createRecorder(os.path.join(self._ouputDir, "%s_%s_%s.rss" % (time.strftime('%Y%m%d%H%M%S'), addr.host, self._uniqueId))))
-        return ProxyServer(controller, self._target, self._clientSecurity, recorders)
+        return ProxyServer(controller, self._target, self._clientSecurity, recorders, self._username, self._password)
 
 
 class ProxyClient(rdp.RDPClientObserver):
@@ -352,6 +362,10 @@ if __name__ == '__main__':
                         action="store_true")
     parser.add_argument("-n", "--nla", help="For NLA client authentication (need to provide credentials)",
                         action="store_true")
+    parser.add_argument("-u", "--username", help="Username to use to connect to the target VM (instead of the username "
+                                                 "the client sent)")
+    parser.add_argument("-p", "--password", help="Password to use to connect to the target VM (instead of the password "
+                                                 "the client sent)")
 
     args = parser.parse_args()
 
@@ -370,6 +384,6 @@ if __name__ == '__main__':
               "Target VM: {}. send to livePlayer: {}:{}".format(args.listen, args.target, args.destination_ip,
                                                                 args.destination_port))
     reactor.listenTCP(int(args.listen), ProxyServerFactory(parseIpPort(args.target), args.output, args.private_key,
-                                                      args.certificate, clientSecurity,
-                                                      args.destination_ip, int(args.destination_port)))
+                                                           args.certificate, clientSecurity, args.destination_ip,
+                                                           int(args.destination_port), args.username, args.password))
     reactor.run()

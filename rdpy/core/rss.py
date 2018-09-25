@@ -180,7 +180,7 @@ class FileRecorder(object):
         #timestamp is time since last event
         e.timestamp.value = now - self._lastEventTimer
         self._lastEventTimer = now
-        
+
         s = StringStream()
         s.writeType(e)
 
@@ -290,28 +290,40 @@ class SocketRecorder(FileRecorder):
             Put the event in a send queue to be sent asynchronously.
             :param event: The event to eventually send.
         """
-        self._send_queue.put(event)
+        if self._continue_sending:
+            self._send_queue.put(event)
 
     def _handle_send(self):
         """
             Thread method that continuously queries the send queue to find
             events to send.
         """
-        log.debug("Opening socket...")
-        self._stream.connect((self._ip, self._port))
-        log.debug("Socket opened.")
+        try:
+            log.debug("Opening socket...")
+            self._stream.connect((self._ip, self._port))
+            log.debug("Socket opened.")
+        except Exception as e:
+            log.error("Unable to connect to the liveplayer at {}:{}".format(self._ip, self._port))
+            self._continue_sending = False
 
-        while True:
+        while self._continue_sending:
             event = self._send_queue.get()
 
             if event is None:
                 break
             else:
-                super(SocketRecorder, self).rec(event)
+                try:
+                    super(SocketRecorder, self).rec(event)
+                except Exception as e:
+                    log.error("Connection to liveplayer was aborted.")
+                    self._continue_sending = False
 
-        self._stream.shutdown(socket.SHUT_RDWR)
+        try:
+            self._stream.shutdown(socket.SHUT_RDWR)
+        except Exception as e:
+            pass
         self._stream.close()
-    
+
     def close(self):
         """
             Close the socket recorder.
@@ -348,23 +360,23 @@ class SocketReader:
         @param sock: {socket} socket used to read
         """
         self.stream = SocketStream(sock)
-    
+
     def nextEvent(self):
         """
         @summary: read next event and return it
         """
         if self.stream.eof():
             return None
-        
+
         e = Event()
-        
+
         try:
             self.stream.readType(e)
         except error.InvalidSize:
             return None
-        
+
         return e
-    
+
     def close(self):
         return self.stream.close()
 
