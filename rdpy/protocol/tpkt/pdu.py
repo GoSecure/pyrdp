@@ -19,13 +19,13 @@ class TPKTParser:
     """
 
     def parse(self, data):
-        version = Uint8.read(self.data[0 : 1])
-        padding = Uint8.read(self.data[1 : 2])
-        length = Uint16BE.read(self.data[2 : 4])
-        payload = self.data[4 :]
+        version = Uint8.read(data[0 : 1])
+        padding = Uint8.read(data[1 : 2])
+        length = Uint16BE.read(data[2 : 4])
+        payload = data[4 : length]
 
-        if len(payload) + 4 != length:
-            raise Exception("TPKT length field does not match payload length")
+        if len(payload) != length - 4:
+            raise Exception("Payload is too short for TPKT length field")
         
         return TPKTPDU(version, payload)
     
