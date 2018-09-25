@@ -16,7 +16,7 @@ class X224Header:
 
 
 
-class X224PDU:
+class X224PDU(object):
     """
     @summary: Base class for X224 PDUs
     """
@@ -30,7 +30,7 @@ class X224ConnectionRequest(X224PDU):
     @summary: X224 Connection Request PDU
     """
     def __init__(self, credit, destination, source, options, payload):
-        super(X224PDU, self).__init__(len(payload) + 6, X224Header.X224_TPDU_CONNECTION_REQUEST, payload)
+        super(X224ConnectionRequest, self).__init__(len(payload) + 6, X224Header.X224_TPDU_CONNECTION_REQUEST, payload)
         self.credit = credit
         self.destination = destination
         self.source = source
@@ -41,7 +41,7 @@ class X224ConnectionConfirm(X224PDU):
     @summary: X224 Connection Confirm PDU
     """
     def __init__(self, credit, destination, source, options, payload):
-        super(X224PDU, self).__init__(len(payload) + 6, X224Header.X224_TPDU_CONNECTION_CONFIRM, payload)
+        super(X224ConnectionConfirm, self).__init__(len(payload) + 6, X224Header.X224_TPDU_CONNECTION_CONFIRM, payload)
         self.credit = credit
         self.destination = destination
         self.source = source
@@ -52,7 +52,7 @@ class X224DisconnectRequest(X224PDU):
     @summary: X224 Disconnect Request PDU
     """
     def __init__(self, destination, source, reason, payload):
-        super(X224PDU, self).__init__(len(payload) + 6, X224Header.X224_TPDU_DISCONNECT_REQUEST, payload)
+        super(X224DisconnectRequest, self).__init__(len(payload) + 6, X224Header.X224_TPDU_DISCONNECT_REQUEST, payload)
         self.destination = destination
         self.source = source
         self.reason = reason
@@ -67,7 +67,7 @@ class X224Data(X224PDU):
         @param eot: end of transmission (True if this is the last packet in a sequence)
         @param payload: the data payload
         """
-        super(X224PDU, self).__init__(2, X224Header.X224_TPDU_DATA, payload)
+        super(X224Data, self).__init__(2, X224Header.X224_TPDU_DATA, payload)
         self.roa = roa
         self.eot = eot
 
@@ -76,7 +76,7 @@ class X224Error(X224PDU):
     @summary: X224 Error PDU
     """
     def __init__(self, destination, cause):
-        super(X224PDU, self).__init__(len(payload) + 4, X224Header.X224_TPDU_ERROR, payload)
+        super(X224Error, self).__init__(len(payload) + 4, X224Header.X224_TPDU_ERROR, payload)
         self.destination = destination
         self.cause = cause
 
@@ -108,7 +108,7 @@ class X224Parser:
         length = Uint8.read(data[0])
         header = Uint8.read(data[1]) >> 4
 
-        if length < 2 or len(steam) < length:
+        if length < 2 or len(data) < length:
             raise Exception("Invalid X224 length indicator")
 
         if header not in self.parsers:
@@ -125,18 +125,18 @@ class X224Parser:
         options = Uint8.read(data[6])
         payload = data[7 :]
 
-        if length(payload) != length - 6:
+        if len(payload) != length - 6:
             raise Exception("Invalid length indicator for X224 %s" % name)
         
         return source, destination, options, payload
     
     def parseConnectionRequest(self, data, length):
-        credit = data[1] & 0xf
+        credit = Uint8.read(data[1]) & 0xf
         destination, source, options, payload = self.parseConnectionPDU(data, length, "Connection Request")
         return X224ConnectionRequest(credit, destination, source, options, payload)
     
     def parseConnectionConfirm(self, data, length):
-        credit = data[1] & 0xf
+        credit = Uint8.read(data[1]) & 0xf
         destination, source, options, payload = self.parseConnectionPDU(data, length, "Connection Confirm")
         return X224ConnectionConfirm(credit, destination, source, options, payload)
     
@@ -169,12 +169,12 @@ class X224Parser:
         
     def write(self, pdu):
         stream = StringIO()
-        stream.write(pdu.length)
+        stream.write(Uint8.write(pdu.length))
         
         if pdu.header not in self.writers:
             raise Exception("Unknown X224 header")
         
-        self.writers[pdu.header].write(stream, pdu)
+        self.writers[pdu.header](stream, pdu)
         stream.write(pdu.payload)
         return stream.getvalue()
     

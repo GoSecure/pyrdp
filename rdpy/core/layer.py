@@ -52,33 +52,16 @@ class Layer(object):
     @summary:  A simple double linked list with presentation and transport layer
                 and a subset of event (connect and close)
     """
-    def __init__(self, presentation = None):
+    def __init__(self):
         """
         @param presentation: presentation layer
         """
-        #presentation layer higher layer in model
-        self._presentation = presentation
-        #transport layer under layer in model
-        self._transport = None
-        #auto set transport layer of own presentation layer
-        if not self._presentation is None:
-            self._presentation._transport = self
+        self.previous = None
+        self.next = None
     
-    def connect(self):
-        """
-        @summary:  Call when transport layer is connected
-                    default is send connect event to presentation layer
-        """
-        if not self._presentation is None:
-            self._presentation.connect()
-    
-    def close(self):
-        """
-        @summary:  Close layer event
-                    default is sent to transport layer
-        """
-        if not self._transport is None:
-            self._transport.close()
+    def setNext(self, layer):
+        self.next = layer
+        layer.previous = self
             
 class LayerAutomata(Layer, IStreamListener):
     """
