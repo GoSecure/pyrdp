@@ -4,9 +4,9 @@
 README.md~
 *.so
 *.os
-dist/*
-build/*
-rdpy.egg-info/*
+dist/
+build/
+rdpy.egg-info/
 out/
 log/
 .idea/
