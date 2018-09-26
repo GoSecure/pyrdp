@@ -105,8 +105,8 @@ class X224Parser:
         }
 
     def parse(self, data):
-        length = Uint8.read(data[0])
-        header = Uint8.read(data[1]) >> 4
+        length = Uint8.unpack(data[0])
+        header = Uint8.unpack(data[1]) >> 4
 
         if length < 2 or len(data) < length:
             raise Exception("Invalid X224 length indicator")
@@ -120,9 +120,9 @@ class X224Parser:
         if length < 6:
             raise Exception("Invalid %s" % name)
         
-        destination = Uint16BE.read(data[2 : 4])
-        source = Uint16BE.read(data[4 : 6])
-        options = Uint8.read(data[6])
+        destination = Uint16BE.unpack(data[2 : 4])
+        source = Uint16BE.unpack(data[4 : 6])
+        options = Uint8.unpack(data[6])
         payload = data[7 :]
 
         if len(payload) != length - 6:
@@ -131,12 +131,12 @@ class X224Parser:
         return source, destination, options, payload
     
     def parseConnectionRequest(self, data, length):
-        credit = Uint8.read(data[1]) & 0xf
+        credit = Uint8.unpack(data[1]) & 0xf
         destination, source, options, payload = self.parseConnectionPDU(data, length, "Connection Request")
         return X224ConnectionRequest(credit, destination, source, options, payload)
     
     def parseConnectionConfirm(self, data, length):
-        credit = Uint8.read(data[1]) & 0xf
+        credit = Uint8.unpack(data[1]) & 0xf
         destination, source, options, payload = self.parseConnectionPDU(data, length, "Connection Confirm")
         return X224ConnectionConfirm(credit, destination, source, options, payload)
     
@@ -148,8 +148,8 @@ class X224Parser:
         if length != 2:
             raise Exception("Invalid length indicator for X224 Data PDU")
         
-        code = Uint8.read(data[1]) & 0xf
-        sequence = Uint8.read(data[2])
+        code = Uint8.unpack(data[1]) & 0xf
+        sequence = Uint8.unpack(data[2])
         payload = data[3 :]
         
         return X224Data(code & 1 == 1, sequence & 0x80 == 0x80, payload)
@@ -158,8 +158,8 @@ class X224Parser:
         if length < 4:
             raise Exception("Invalid X224 Error PDU")
         
-        destination = Uint16BE.read(data[2 : 4])
-        cause = Uint8.read(data[4])
+        destination = Uint16BE.unpack(data[2 : 4])
+        cause = Uint8.unpack(data[4])
         payload = data[5 :]
 
         if len(payload) != length - 4:
@@ -169,7 +169,7 @@ class X224Parser:
         
     def write(self, pdu):
         stream = StringIO()
-        stream.write(Uint8.write(pdu.length))
+        stream.write(Uint8.pack(pdu.length))
         
         if pdu.header not in self.writers:
             raise Exception("Unknown X224 header")
@@ -179,10 +179,10 @@ class X224Parser:
         return stream.getvalue()
     
     def writeConnectionPDU(self, stream, header, destination, source, options):
-        stream.write(Uint8.write(header))
-        stream.write(Uint16BE.write(destination))
-        stream.write(Uint16BE.write(source))
-        stream.write(Uint8.write(options))
+        stream.write(Uint8.pack(header))
+        stream.write(Uint16BE.pack(destination))
+        stream.write(Uint16BE.pack(source))
+        stream.write(Uint8.pack(options))
     
     def writeConnectionRequest(self, stream, pdu):
         header = (pdu.header << 4) | (pdu.credit & 0xf)
