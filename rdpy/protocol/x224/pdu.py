@@ -197,10 +197,10 @@ class X224Parser:
     
     def writeData(self, stream, pdu):
         header = (pdu.header << 4) | int(pdu.roa)
-        stream.write(header)
-        stream.write(int(pdu.eot) << 8)
+        stream.write(Uint8.pack(header))
+        stream.write(Uint8.pack(int(pdu.eot) << 8))
     
     def writeError(self, stream, pdu):
-        stream.write(pdu.header)
-        stream.write(pdu.destination)
-        stream.write(pdu.cause)
+        stream.write(Uint8.pack(pdu.header))
+        stream.write(Uint16.pack(pdu.destination))
+        stream.write(Uint8.pack(pdu.cause))
