@@ -19,9 +19,9 @@ class TPKTParser:
     """
 
     def parse(self, data):
-        version = Uint8.read(data[0 : 1])
-        padding = Uint8.read(data[1 : 2])
-        length = Uint16BE.read(data[2 : 4])
+        version = Uint8.unpack(data[0 : 1])
+        padding = Uint8.unpack(data[1 : 2])
+        length = Uint16BE.unpack(data[2 : 4])
         payload = data[4 : length]
 
         if len(payload) != length - 4:
@@ -31,9 +31,9 @@ class TPKTParser:
     
     def write(self, pdu):
         stream = StringIO()
-        stream.write(Uint8.write(pdu.version))
-        stream.write(Uint8.write(pdu.padding))
-        stream.write(Uint16BE.write(pdu.length))
+        stream.write(Uint8.pack(pdu.version))
+        stream.write(Uint8.pack(pdu.padding))
+        stream.write(Uint16BE.pack(pdu.length))
         stream.write(pdu.payload)
         
         return stream.getvalue()

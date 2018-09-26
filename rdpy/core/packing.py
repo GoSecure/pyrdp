@@ -3,11 +3,11 @@ import struct
 
 class Integer:
     @classmethod
-    def read(cls, data):
+    def unpack(cls, data):
         return struct.unpack(cls.FORMAT, data)[0]
 
     @classmethod
-    def write(cls, data):
+    def pack(cls, data):
         return struct.pack(cls.FORMAT, data)
 
 # 8 bits
