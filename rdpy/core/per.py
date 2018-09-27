@@ -105,7 +105,7 @@ def readEnumeration(s):
     """
     return Uint8.unpack(s.read(1))
 
-def writeEnumerate(enum):
+def writeEnumeration(enum):
     """
     @summary: Encode PER enumeration
     @param enum: enumeration value
