@@ -82,7 +82,6 @@ class MCSAttachUserRequestPDU(MCSPDU):
     def __init__(self):
         super(MCSAttachUserRequestPDU, self).__init__(MCSPDUType.ATTACH_USER_REQUEST, "")
 
-
 class MCSAttachUserConfirmPDU(MCSPDU):
     def __init__(self, result, initiator = None):
         super(MCSAttachUserConfirmPDU, self).__init__(MCSPDUType.ATTACH_USER_CONFIRM, "")
