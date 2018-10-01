@@ -1,37 +1,15 @@
-from abc import abstractmethod, ABCMeta
-
-from rdpy.core import log
-from rdpy.core.layer import Layer
-from rdpy.core.subject import Subject
-
-from pdu import MCSParser, MCSPDUType, MCSSendDataRequestPDU, MCSErectDomainRequestPDU, MCSDisconnectProviderUltimatumPDU, MCSAttachUserRequestPDU, MCSAttachUserConfirmPDU, MCSChannelJoinRequestPDU, MCSChannelJoinConfirmPDU
-from router import MCSRouter
-
-class MCSChannelLayer(Layer):
-    """
-    @summary: Layer for handling MCS traffic on a particular channel
-    """
-
-    def __init__(self, mcs, channelID):
-        super(MCSChannelLayer, self).__init__(self)
-        self.mcs = mcs
-        self.channelID = channelID
-        self.initiator = None
-    
-    def recv(self, pdu):
-        self.initiator = pdu.initiator
-        self.next.recv(pdu.payload)
-    
-    def send(self, data):
-        pdu = MCSSendDataRequestPDU(self.initiator, self.channelID, 0x70, data)
-        self.mcs.sendPDU(pdu)
+from pdu import MCSParser, MCSPDUType
 
 class MCSLayer(Layer):
     """
-    @summary: Layer for handling MCS related traffic
+    Layer for handling MCS related traffic
     """
 
-    def __init__(self, router = MCSRouter()):
+    def __init__(self, router, wtflol):
+        """
+        :param router: MCSRouter object
+        """
+
         super(MCSLayer, self).__init__(self)
         self.parser = MCSParser()
         self.router = router
@@ -51,6 +29,10 @@ class MCSLayer(Layer):
         self.router.setMCSLayer(self)
     
     def recv(self, data):
+        """
+        Receive MCS data
+        :param data: raw MCS layer bytes
+        """
         pdu = self.parser.parse(data)
 
         if pdu.header not in self.handlers:
@@ -58,5 +40,9 @@ class MCSLayer(Layer):
         
         self.handlers[pdu.header](pdu)
 
-    def sendPDU(self, pdu):
+    def send(self, pdu):
+        """
+        Send an MCS PDU
+        :param pdu: PDU to send
+        """
         self.previous.send(self.parser.write(pdu))
