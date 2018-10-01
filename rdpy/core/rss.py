@@ -158,21 +158,31 @@ class FileRecorder(object):
     """
     @summary: RSR File recorder
     """
-    def __init__(self, f, write_method):
+    def __init__(self, f):
         """
-        @param f: {file} file pointer use to write
-        @param write_method: {callable} Method to call when writing to the recorder (ex socket.send(), file.write())
+        @param f: {str} path for the file to write
         """
-        self._stream = f
-        self._write_method = write_method
+        self.file_name = f
+        self._stream_has_been_opened = False
         #init timer
         self._lastEventTimer = timeMs()
 
+    def _open_stream(self):
+        """
+            Opens the file stream to write in it and sets it to self._stream.
+        """
+        self._stream = open(self.file_name, "wb")
+        self._write_method = self._stream.write
+        self._stream_has_been_opened = True
+
     def rec(self, event):
         """
-        @summary: save event in file
+        @summary: save event in file. Also open the file to write if not already opened
         @param event: {UpdateEvent}
         """
+
+        if not self._stream_has_been_opened:
+            self._open_stream()
 
         now = timeMs()
         #wrap around event message
@@ -281,16 +291,26 @@ class SocketRecorder(FileRecorder):
         self._send_thread.daemon = True
         self._send_queue = Queue()
         self._continue_sending = True
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        super(SocketRecorder, self).__init__(s, s.send)
+        super(SocketRecorder, self).__init__("")
+        self._stream = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._write_method = self._stream.send
+
+    def _open_stream(self):
+        """
+            Starts the sending thread (which also connects the socket)
+        """
         self._send_thread.start()
+        self._stream_has_been_opened = True
 
     def rec(self, event):
         """
             Put the event in a send queue to be sent asynchronously.
+            If the sending thread has not been opened, open it.
             :param event: The event to eventually send.
         """
         if self._continue_sending:
+            if not self._stream_has_been_opened:
+                self._open_stream()
             self._send_queue.put(event)
 
     def _handle_send(self):
@@ -386,8 +406,7 @@ def createRecorder(path):
     @param path: {str} path of output file
     @return: {FileRecorder}
     """
-    file_handle = open(path, "wb")
-    return FileRecorder(file_handle, file_handle.write)
+    return FileRecorder(path)
 
 
 def createSocketRecorder(ip, port):
