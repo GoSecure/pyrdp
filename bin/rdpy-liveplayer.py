@@ -156,7 +156,7 @@ class LivePlayerTab(QtGui.QWidget):
 
 
 class LivePlayerWindow(QtGui.QTabWidget):
-    def __init__(self, address, port, max_tabs = 5):
+    def __init__(self, address, port, max_tabs = 50):
         super(LivePlayerWindow, self).__init__()
         QtGui.qApp.aboutToQuit.connect(self.handle_close)
 
