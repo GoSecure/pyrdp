@@ -132,9 +132,8 @@ class TPKT(RawLayer, IFastPathSender):
         """
 
         if hasattr(self.transport, "client"):
-            logger.info("New RDP network connection from {}:{}."
-                        " Uses TLS: {}".format(self.transport.client[0], self.transport.client[1],
-                                               "yes" if self.transport.TLS else "no"))
+            logger.info("New RDP network connection from {}:{}.".format(self.transport.client[0],
+                                                                        self.transport.client[1]))
 
         #header is on two bytes
         self.expect(2, self.readHeader)
