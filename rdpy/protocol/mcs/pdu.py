@@ -45,7 +45,7 @@ class MCSDomainParams:
 
 
 
-class MCSPDU:
+class MCSPDU(object):
     """
     Base class for MCS PDUs (not actually a PDU)
     """
@@ -155,7 +155,7 @@ class MCSParser:
         """
         stream = StringIO(data)
         header = stream.read(1)
-        if header == Class.BER_CLASS_APPL | BerPc.BER_CONSTRUCT | Tag.BER_TAG_MASK:
+        if header == ber.Class.BER_CLASS_APPL | ber.BerPc.BER_CONSTRUCT | ber.Tag.BER_TAG_MASK:
             header = stream.read(1)
         
         if header not in self.parsers:
@@ -334,7 +334,7 @@ class MCSParser:
         stream = StringIO()
         
         if pdu.header in [MCSPDUType.CONNECT_INITIAL, MCSPDUType.CONNECT_RESPONSE]:
-            stream.write(Uint8.pack(Class.BER_CLASS_APPL | BerPc.BER_CONSTRUCT | Tag.BER_TAG_MASK))
+            stream.write(Uint8.pack(ber.Class.BER_CLASS_APPL | ber.BerPc.BER_CONSTRUCT | ber.Tag.BER_TAG_MASK))
         
         stream.write(pdu.header)
         self.writers[pdu.header](stream, pdu)
@@ -363,8 +363,8 @@ class MCSParser:
         :param stream: the destination stream
         :param pdu: the PDU
         """
-        stream.write(ber.writeOctetString(pdu.callingDomain))
-        stream.write(ber.writeOctetString(pdu.calledDomain))
+        stream.write(per.writeNumericString(pdu.callingDomain, 1))
+        stream.write(per.writeNumericString(pdu.calledDomain, 1))
         stream.write(ber.writeBoolean(pdu.upward))
         self.writeDomainParams(stream, pdu.targetParams)
         self.writeDomainParams(stream, pdu.minParams)
