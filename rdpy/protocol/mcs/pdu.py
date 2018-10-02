@@ -211,7 +211,7 @@ class MCSParser:
         targetParams = self.parseDomainParams(stream)
         minParams = self.parseDomainParams(stream)
         maxParams = self.parseDomainParams(stream)
-        payload = stream.read()
+        payload = ber.readOctetString(stream.read)
         return MCSConnectInitialPDU(callingDomain, calledDomain, upward, targetParams, minParams, maxParams, payload)
     
     def parseConnectResponse(self, stream):
@@ -223,7 +223,7 @@ class MCSParser:
         result = ber.readEnumerated(stream)
         calledConnectID = ber.readInteger(stream)
         domainParams = self.parseDomainParams(stream)
-        payload = stream.read()
+        payload = ber.readOctetString(stream)
         return MCSConnectResponsePDU(result, calledConnectID, domainParams, payload)
     
     def parseErectDomainRequest(self, stream):
@@ -393,7 +393,7 @@ class MCSParser:
         self.writeDomainParams(substream, pdu.targetParams)
         self.writeDomainParams(substream, pdu.minParams)
         self.writeDomainParams(substream, pdu.maxParams)
-        substream.write(pdu.payload)
+        substream.write(ber.writeOctetString(pdu.payload))
         
         data = substream.getvalue()
         stream.write(ber.writeLength(len(data)))
@@ -408,7 +408,7 @@ class MCSParser:
         stream.write(ber.writeEnumerated(pdu.result))
         stream.write(ber.writeInteger(pdu.calledConnectID))
         self.writeDomainParams(pdu.domainParams)
-        stream.write(pdu.payload)
+        stream.write(ber.writeOctetString(pdu.payload))
     
     def writeErectDomainRequest(self, stream, pdu):
         """
