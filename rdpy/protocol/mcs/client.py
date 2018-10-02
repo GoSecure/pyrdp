@@ -10,14 +10,14 @@ class MCSClientConnectionObserver:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def connectionSuccesful(self, pdu):
+    def connectionSuccesful(self, mcs, pdu):
         """
         Method called on successful connections
         """
         pass
     
     @abstractmethod
-    def connectionFailed(self, pdu):
+    def connectionFailed(self, mcs, pdu):
         """
         Method called on failed connections
         """
@@ -93,9 +93,9 @@ class MCSClientRouter(MCSRouter):
         """
         if pdu.result == 0:
             self.connected = True
-            self.connectionObserver.connectionSuccesful(pdu)
+            self.connectionObserver.connectionSuccesful(self.mcs, pdu)
         else:
-            self.connectionObserver.connectionFailed(pdu)
+            self.connectionObserver.connectionFailed(self.mcs, pdu)
 
     @whenConnected
     def attachUserConfirm(self, pdu):

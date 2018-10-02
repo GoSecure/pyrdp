@@ -11,7 +11,7 @@ class MCSServerConnectionObserver:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def connectionReceived(self, pdu):
+    def connectionReceived(self, mcs, pdu):
         """
         Callback for when a Connect Initial PDU is received
         True if the connection is accepted
@@ -62,7 +62,7 @@ class MCSServerRouter(MCSRouter):
         """
         Called when a Connect Initial PDU is received
         """
-        if self.connectionObserver.connectionReceived(pdu):
+        if self.connectionObserver.connectionReceived(self.mcs, pdu):
             self.connected = True
     
     @whenConnected
