@@ -227,7 +227,7 @@ def readOctetStream(s, minValue = 0):
     @return: str
     """
     size = readLength(s) + minValue
-    return "".join(Uint8.unpack(s.read(1)) for _ in range(size))
+    return s.read(size)
 
 def writeOctetStream(oStr, minValue = 0):
     """
