@@ -13,16 +13,16 @@ class MCSClientConnectionObserver:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def connectionSuccesful(self, pdu):
+    def connectResponse(self, pdu):
         """
-        Method called on successful connections
+        Method called on Connect Response PDUs
         """
         pass
     
     @abstractmethod
-    def connectionFailed(self, pdu):
+    def disconnectProviderUltimatum(self, pdu):
         """
-        Method called on failed connections
+        Method called on Disconnect Provider Ultimatum PDUs
         """
         pass
 
@@ -93,11 +93,14 @@ class MCSClientRouter(MCSRouter, Subject):
         Called when a Connect Response PDU is received
         :param pdu: the PDU
         """
-        if pdu.result == 0:
-            self.connected = True
-            self.observer.connectionSuccesful(self.mcs, pdu)
-        else:
-            self.observer.connectionFailed(self.mcs, pdu)
+        self.observer.connectResponse(pdu)
+
+    def disconnectProviderUltimatum(self, pdu):
+        """
+        Called when a Disconnect Provider Ultimatum PDU is received
+        :param pdu: the PDU
+        """
+        self.observer.disconnectProviderUltimatum(pdu)
 
     @whenConnected
     def attachUserConfirm(self, pdu):
