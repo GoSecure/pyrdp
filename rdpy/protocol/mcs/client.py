@@ -10,14 +10,14 @@ class MCSClientConnectionObserver:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def connectionSuccesful(self, mcs, pdu):
+    def connectionSuccesful(self, pdu):
         """
         Method called on successful connections
         """
         pass
     
     @abstractmethod
-    def connectionFailed(self, mcs, pdu):
+    def connectionFailed(self, pdu):
         """
         Method called on failed connections
         """
@@ -48,14 +48,13 @@ class MCSClient(MCSUser):
         """
         self.router.joinChannel(self.userID, channelID)
 
-class MCSClientRouter(MCSRouter):
-    def __init__(self, connectionObserver, factory):
+class MCSClientRouter(MCSRouter, Subject):
+    def __init__(self, factory):
         """
-        :param connectionObserver: client connection observer
         :param factory: channel factory
         """
         super(MCSClientRouter, self).__init__()
-        self.connectionObserver = connectionObserver
+        super(MCSClientRouter, self).__init__()
         self.factory = factory
         self.users = {}
         self.attachingUsers = []
@@ -93,9 +92,9 @@ class MCSClientRouter(MCSRouter):
         """
         if pdu.result == 0:
             self.connected = True
-            self.connectionObserver.connectionSuccesful(self.mcs, pdu)
+            self.observer.connectionSuccesful(self.mcs, pdu)
         else:
-            self.connectionObserver.connectionFailed(self.mcs, pdu)
+            self.observer.connectionFailed(self.mcs, pdu)
 
     @whenConnected
     def attachUserConfirm(self, pdu):
