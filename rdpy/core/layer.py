@@ -61,7 +61,7 @@ class Layer(object):
         #transport layer under layer in model
         self._transport = None
         #auto set transport layer of own presentation layer
-        if not self._presentation is None:
+        if self._presentation is not None:
             self._presentation._transport = self
     
     def connect(self):

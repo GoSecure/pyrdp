@@ -156,7 +156,7 @@ class LivePlayerTab(QtGui.QWidget):
 
 
 class LivePlayerWindow(QtGui.QTabWidget):
-    def __init__(self, address, port, max_tabs = 5):
+    def __init__(self, address, port, max_tabs = 50):
         super(LivePlayerWindow, self).__init__()
         QtGui.qApp.aboutToQuit.connect(self.handle_close)
 
@@ -181,7 +181,8 @@ class LivePlayerWindow(QtGui.QTabWidget):
         tab = LivePlayerTab(sock)
         tab.connection_closed.connect(self.on_connection_closed)
         self.addTab(tab, "%s:%d" % addr)
-    
+        self.setCurrentIndex(self.count() - 1)
+
     def on_connection_closed(self, tab):
         index = self.indexOf(tab)
         text = self.tabText(index)
