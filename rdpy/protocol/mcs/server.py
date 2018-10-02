@@ -11,7 +11,7 @@ class MCSServerConnectionObserver:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def connectionReceived(self, mcs, pdu):
+    def connectionReceived(self, pdu):
         """
         Callback for when a Connect Initial PDU is received
         True if the connection is accepted
@@ -40,18 +40,17 @@ class MCSUserIDGenerator:
         
         return self.next
 
-class MCSServerRouter(MCSRouter):
+class MCSServerRouter(MCSRouter, Subject):
     """
     MCS router for server traffic
     """
-    def __init__(self, connectionObserver, factory, userIDGenerator):
+    def __init__(self, factory, userIDGenerator):
         """
-        :param connectionObserver: the server connection observer
         :param factory: the channel factory
         :param userIDGenerator: the generator used when creating new users
         """
         super(MCSServerRouter, self).__init__()
-        self.connectionObserver = connectionObserver
+        super(MCSServerRouter, self).__init__()
         self.factory = factory
         self.userIDGenerator = userIDGenerator
         self.users = {}
@@ -62,7 +61,7 @@ class MCSServerRouter(MCSRouter):
         """
         Called when a Connect Initial PDU is received
         """
-        if self.connectionObserver.connectionReceived(self.mcs, pdu):
+        if self.observer.connectionReceived(pdu):
             self.connected = True
     
     @whenConnected
