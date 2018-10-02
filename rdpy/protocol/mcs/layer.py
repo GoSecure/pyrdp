@@ -5,7 +5,7 @@ class MCSLayer(Layer):
     Layer for handling MCS related traffic
     """
 
-    def __init__(self, router, wtflol):
+    def __init__(self, router):
         """
         :param router: MCSRouter object
         """
