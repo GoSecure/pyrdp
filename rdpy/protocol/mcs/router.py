@@ -1,8 +1,7 @@
 from abc import ABCMeta, abstractmethod
-from collections from defaultdict
+from collections import defaultdict
 
 from rdpy.core.layer import Layer
-from layer import MCSChannelLayer, MCSUserLayer
 from pdu import MCSChannel, MCSConnectResponsePDU, MCSAttachUserConfirmPDU, MCSAttachUserRequestPDU, MCSChannelJoinConfirmPDU, MCSChannelJoinRequestPDU, MCSSendDataRequestPDU, MCSPDUType
 
 def whenConnected(method):
@@ -36,6 +35,9 @@ class MCSRouter:
     def connectResponse(self, pdu):
         raise Exception("Connect Response is not handled")
     
+    def disconnectProviderUltimatum(self, pdu):
+        raise Exception("Disconnect Provider Ultimatum is not handled")
+
     def erectDomainRequest(self, pdu):
         raise Exception("Erect Domain Request is not handled")
 

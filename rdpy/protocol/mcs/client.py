@@ -1,5 +1,8 @@
-from router import MCSRouter, whenConnected
+from abc import ABCMeta, abstractmethod
 
+from rdpy.core.subject import Subject
+
+from router import MCSRouter, whenConnected
 from pdu import MCSAttachUserRequestPDU, MCSChannelJoinRequestPDU, MCSSendDataRequestPDU, MCSSendDataIndicationPDU
 from user import MCSUser
 

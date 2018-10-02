@@ -1,3 +1,4 @@
+from rdpy.core.layer import Layer
 from pdu import MCSParser, MCSPDUType
 
 class MCSLayer(Layer):
@@ -10,7 +11,7 @@ class MCSLayer(Layer):
         :param router: MCSRouter object
         """
 
-        super(MCSLayer, self).__init__(self)
+        super(MCSLayer, self).__init__()
         self.parser = MCSParser()
         self.router = router
         self.handlers = {
