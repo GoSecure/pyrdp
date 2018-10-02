@@ -1,3 +1,5 @@
+from abc import ABCMeta, abstractmethod
+
 from pdu import MCSSendDataRequestPDU, MCSSendDataIndicationPDU
 
 class MCSChannelFactory:
