@@ -12,6 +12,9 @@ class MCSChannelFactory:
     def buildChannel(self, mcs, userID, channelID):
         """
         Called when a user joins a new channel
+        :param mcs: the MCS layer
+        :param userID: the user ID
+        :param channelID: the channel ID
         :return: An MCSChannel object
         """
         pass

@@ -78,7 +78,7 @@ class MCSServerRouter(MCSRouter, Subject):
         """
         userID = next(self.userIDGenerator)
         user = MCSUser(self, self.factory)
-        user.userAttached(userID)
+        user.attachConfirmed(userID)
         self.users[userID] = user
 
         self.findNextUser()
@@ -95,7 +95,7 @@ class MCSServerRouter(MCSRouter, Subject):
         if userID not in self.users:
             raise Exception("User does not exist")
         
-        self.users[userID].joinedChannel(channelID)
+        self.users[userID].joinedChannel(self.msc, channelID)
         self.mcs.send(MCSChannelJoinConfirmPDU(0, userID, channelID, channelID, ""))
     
     @whenConnected

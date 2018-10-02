@@ -93,6 +93,7 @@ class MCSClientRouter(MCSRouter, Subject):
         Called when a Connect Response PDU is received
         :param pdu: the PDU
         """
+        self.connected = pdu.result == 0
         self.observer.connectResponse(pdu)
 
     def disconnectProviderUltimatum(self, pdu):
@@ -110,8 +111,12 @@ class MCSClientRouter(MCSRouter, Subject):
         """
         userID = pdu.initiator
         user = self.attachingUsers.pop(0)
-        self.users[userID] = user
-        user.userAttached(self.userID)
+
+        if userID is not None:
+            self.users[userID] = user
+            user.attachConfirmed(userID)
+        else:
+            user.attachRefused()
     
     @whenConnected
     def channelJoinConfirm(self, pdu):
@@ -121,7 +126,7 @@ class MCSClientRouter(MCSRouter, Subject):
         """
         userID = pdu.initiator
         channelID = pdu.channelID
-        self.users[userID].channelJoined(channelID)
+        self.users[userID].channelJoined(self.mcs, channelID)
     
     @whenConnected
     def sendDataIndication(self, pdu):

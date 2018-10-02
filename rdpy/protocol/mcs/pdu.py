@@ -154,9 +154,11 @@ class MCSParser:
         :param data: raw bytes to parse
         """
         stream = StringIO(data)
-        header = stream.read(1)
+        header = Uint8.unpack(stream.read(1))
         if header == ber.Class.BER_CLASS_APPL | ber.BerPc.BER_CONSTRUCT | ber.Tag.BER_TAG_MASK:
-            header = stream.read(1)
+            header = Uint8.unpack(stream.read(1))
+        else:
+            header = header >> 2
         
         if header not in self.parsers:
             raise Exception("Unhandled header received")
@@ -172,8 +174,8 @@ class MCSParser:
             raise InvalidValue("Invalid BER tag (%d expected)" % ber.Tag.BER_TAG_SEQUENCE)
         
         length = ber.readLength(stream)
-        if length != 0x19:
-            raise InvalidSize("Invalid size for DomainParameters (%d expected, got %d)" % (0x19, length))
+        if length > len(stream.getvalue()):
+            raise InvalidSize("Invalid size for DomainParameters (got %d, %d bytes left)" % (length, len(stream.getvalue())))
 
         maxChannelIDs = ber.readInteger(stream)
         maxUserIDs = ber.readInteger(stream)
@@ -190,6 +192,7 @@ class MCSParser:
         Parse a Connect Initial PDU
         :param stream: stream containing the data
         """
+        length = ber.readLength(stream)
         callingDomain = ber.readOctetString(stream)
         calledDomain = ber.readOctetString(stream)
         upward = ber.readBoolean(stream)
@@ -204,6 +207,7 @@ class MCSParser:
         Parse a Connect Response PDU
         :param stream: stream containing the data
         """
+        length = ber.readLength(stream)
         result = ber.readEnumerated(stream)
         calledConnectID = ber.readInteger(stream)
         domainParams = self.parseDomainParams(stream)
@@ -335,9 +339,12 @@ class MCSParser:
         
         if pdu.header in [MCSPDUType.CONNECT_INITIAL, MCSPDUType.CONNECT_RESPONSE]:
             stream.write(Uint8.pack(ber.Class.BER_CLASS_APPL | ber.BerPc.BER_CONSTRUCT | ber.Tag.BER_TAG_MASK))
+            stream.write(Uint8.pack(pdu.header))
+        else:
+            stream.write(Uint8.pack(pdu.header << 2))
         
-        stream.write(pdu.header)
         self.writers[pdu.header](stream, pdu)
+        return stream.getvalue()
         
 
     def writeDomainParams(self, stream, params):
@@ -346,16 +353,20 @@ class MCSParser:
         :param stream: the destination stream
         :param params: the domain params
         """
+        substream = StringIO()
+        substream.write(ber.writeInteger(params.maxChannelIDs))
+        substream.write(ber.writeInteger(params.maxUserIDs))
+        substream.write(ber.writeInteger(params.maxTokenIDs))
+        substream.write(ber.writeInteger(params.numPriorities))
+        substream.write(ber.writeInteger(params.minThroughput))
+        substream.write(ber.writeInteger(params.maxHeight))
+        substream.write(ber.writeInteger(params.maxMCSPDUSize))
+        substream.write(ber.writeInteger(params.protocolVersion))
+
+        substream = substream.getvalue()
         stream.write(ber.writeUniversalTag(ber.Tag.BER_TAG_SEQUENCE, True))
-        stream.write(ber.writeLength(0x19))
-        stream.write(ber.writeInteger(params.maxChannelIDs))
-        stream.write(ber.writeInteger(params.maxUserIDs))
-        stream.write(ber.writeInteger(params.maxTokenIDs))
-        stream.write(ber.writeInteger(params.numPriorities))
-        stream.write(ber.writeInteger(params.minThroughput))
-        stream.write(ber.writeInteger(params.maxHeight))
-        stream.write(ber.writeInteger(params.maxMCSPDUSize))
-        stream.write(ber.writeInteger(params.protocolVersion))
+        stream.write(ber.writeLength(len(substream)))
+        stream.write(substream)
     
     def writeConnectInitial(self, stream, pdu):
         """
@@ -363,13 +374,18 @@ class MCSParser:
         :param stream: the destination stream
         :param pdu: the PDU
         """
-        stream.write(per.writeNumericString(pdu.callingDomain, 1))
-        stream.write(per.writeNumericString(pdu.calledDomain, 1))
-        stream.write(ber.writeBoolean(pdu.upward))
-        self.writeDomainParams(stream, pdu.targetParams)
-        self.writeDomainParams(stream, pdu.minParams)
-        self.writeDomainParams(stream, pdu.maxParams)
-        stream.write(pdu.payload)
+        substream = StringIO()
+        substream.write(ber.writeOctetString(pdu.callingDomain))
+        substream.write(ber.writeOctetString(pdu.calledDomain))
+        substream.write(ber.writeBoolean(pdu.upward))
+        self.writeDomainParams(substream, pdu.targetParams)
+        self.writeDomainParams(substream, pdu.minParams)
+        self.writeDomainParams(substream, pdu.maxParams)
+        substream.write(pdu.payload)
+        
+        data = substream.getvalue()
+        stream.write(ber.writeLength(len(data)))
+        stream.write(data)
     
     def writeConnectResponse(self, stream, pdu):
         """
@@ -388,8 +404,8 @@ class MCSParser:
         :param stream: the destination stream
         :param pdu: the PDU
         """
-        stream.write(ber.writeInteger(pdu.subHeight))
-        stream.write(ber.readInteger(pdu.subInterval))
+        stream.write(per.writeInteger(pdu.subHeight))
+        stream.write(per.writeInteger(pdu.subInterval))
         stream.write(pdu.payload)
     
     def writeDisconnectProviderUltimatum(self, stream, pdu):

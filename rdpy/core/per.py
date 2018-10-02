@@ -138,11 +138,11 @@ def writeInteger(value):
     @return: str
     """
     if value <= 0xff:
-        return writeLength(1) + Uint8(value)
+        return writeLength(1) + Uint8.pack(value)
     elif value < 0xffff:
-        return writeLength(2) + Uint16BE(value)
+        return writeLength(2) + Uint16BE.pack(value)
     else:
-        return writeLength(4) + Uint32BE(value)
+        return writeLength(4) + Uint32BE.pack(value)
 
 def readObjectIdentifier(s):
     """
