@@ -7,9 +7,9 @@ class GCCPDUType:
     CREATE_CONFERENCE_REQUEST = 0
     CREATE_CONFERENCE_RESPONSE = 0x14
 
-class GCCPDU:
+class GCCPDU(object):
     def __init__(self, header, payload):
-        self.header = GCCPDUType.CREATE_CONFERENCE_REQUEST
+        self.header = header
         self.payload = payload
 
 class GCCConferenceCreateRequestPDU(GCCPDU):
@@ -52,7 +52,7 @@ class GCCParser:
         oid = per.readObjectIdentifier(stream)
 
         if oid != GCCParser.T124_02_98_OID:
-            raise Exception("Invalid object identifier: %r" % oid)
+            raise Exception("Invalid object identifier: %r, expected %r" % (oid, GCCParser.T124_02_98_OID))
 
         length = per.readLength(stream)
         header = per.readChoice(stream)
@@ -61,13 +61,10 @@ class GCCParser:
             raise Exception("Trying to parse unknown GCC PDU type %d" % header)
         
         pdu = self.parsers[header](stream)
-
-        if len(pdu.payload) != length - 14:
-            raise Exception("Invalid size received in GCC PDU")
         
         return pdu
     
-    def parseConferenceCreateRequest(self, stream, length):
+    def parseConferenceCreateRequest(self, stream):
         property = per.readSelection(stream)
         if property != 8:
             raise Exception("Expected property to be 8 (conference name), got %d" % choice)
@@ -90,7 +87,7 @@ class GCCParser:
         payload = per.readOctetStream(stream)
         return GCCConferenceCreateRequestPDU(conferenceName, payload)
 
-    def parseConferenceCreateResponse(self, stream, length):
+    def parseConferenceCreateResponse(self, stream):
         nodeID = Uint16BE.unpack(stream.read(2)) + 1001
         tag = per.readInteger(stream)
         result = per.readEnumeration(stream)
