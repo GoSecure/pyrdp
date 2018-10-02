@@ -217,7 +217,7 @@ def readOctetString(s):
     size = readLength(s)
     return s.read(size)
 
-def writeOctetstring(value):
+def writeOctetString(value):
     """
     @summary: Encode a BER octet string
     @param value: str
