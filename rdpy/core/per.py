@@ -162,7 +162,7 @@ def readObjectIdentifier(s):
     a_oid[3] = Uint8.unpack(s.read(1))
     a_oid[4] = Uint8.unpack(s.read(1))
     a_oid[5] = Uint8.unpack(s.read(1))
-    return a_oid
+    return tuple(a_oid)
 
 def writeObjectIdentifier(oid):
     """
