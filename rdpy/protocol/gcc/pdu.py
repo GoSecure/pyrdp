@@ -111,14 +111,15 @@ class GCCParser:
     def write(self, pdu):
         if pdu.header not in self.writers:
             raise Exception("Trying to write unknown GCC PDU type %d" % pdu.header)
-    
+
+        stream = StringIO()
         stream.write(per.writeChoice(0))
         stream.write(per.writeObjectIdentifier(GCCParser.T124_02_98_OID))
         stream.write(per.writeLength(len(pdu.payload) + 14))
         stream.write(per.writeChoice(pdu.header))
 
         stream = StringIO()
-        self.writers[pdu.type](stream, pdu)
+        self.writers[pdu.header](stream, pdu)
         return stream.getvalue()
     
     def writeConferenceCreateRequest(self, stream, pdu):
