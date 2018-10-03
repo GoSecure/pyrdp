@@ -275,7 +275,8 @@ class FileRecorder(object):
         """
         @summary: end of scenario
         """
-        self.rec(CloseEvent())
+        if self._stream_has_been_opened:
+            self.rec(CloseEvent())
 
 
 class SocketRecorder(FileRecorder):
