@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 
 from twisted.internet.protocol import Protocol
 
-from rdpy.core.layer import Layer
+from rdpy.core.newlayer import Layer
 from rdpy.core.subject import Subject
 
 class TCPObserver:

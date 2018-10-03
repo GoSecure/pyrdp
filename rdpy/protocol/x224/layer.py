@@ -1,7 +1,7 @@
 from abc import abstractmethod, ABCMeta
 
 from rdpy.core import log
-from rdpy.core.layer import Layer
+from rdpy.core.newlayer import Layer
 from rdpy.core.subject import Subject
 from pdu import X224Parser, X224Data, X224Header, X224ConnectionRequest, X224ConnectionConfirm, X224DisconnectRequest
 

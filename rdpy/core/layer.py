@@ -48,20 +48,37 @@ class IStreamSender(object):
         raise CallPureVirtualFuntion("%s:%s defined by interface %s"%(self.__class__, "send", "IStreamSender"))
     
 class Layer(object):
-    """
-    @summary:  A simple double linked list with presentation and transport layer
-                and a subset of event (connect and close)
-    """
-    def __init__(self):
-        """
-        @param presentation: presentation layer
-        """
-        self.previous = None
-        self.next = None
-    
-    def setNext(self, layer):
-        self.next = layer
-        layer.previous = self
+   """
+   @summary:  A simple double linked list with presentation and transport layer
+               and a subset of event (connect and close)
+   """
+   def __init__(self, presentation = None):
+       """
+       @param presentation: presentation layer
+       """
+       #presentation layer higher layer in model
+       self._presentation = presentation
+       #transport layer under layer in model
+       self._transport = None
+       #auto set transport layer of own presentation layer
+       if self._presentation is not None:
+           self._presentation._transport = self
+   
+   def connect(self):
+       """
+       @summary:  Call when transport layer is connected
+                   default is send connect event to presentation layer
+       """
+       if not self._presentation is None:
+           self._presentation.connect()
+   
+   def close(self):
+       """
+       @summary:  Close layer event
+                   default is sent to transport layer
+       """
+       if not self._transport is None:
+           self._transport.close()
             
 class LayerAutomata(Layer, IStreamListener):
     """
