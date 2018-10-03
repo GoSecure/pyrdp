@@ -4,7 +4,11 @@ import struct
 class Integer:
     @classmethod
     def unpack(cls, data):
-        return struct.unpack(cls.FORMAT, data)[0]
+        if isinstance(data, str):
+            return struct.unpack(cls.FORMAT, data)[0]
+        else:
+            length = {"b": 1, "h": 2, "i": 4}[cls.FORMAT[1].lower()]
+            return struct.unpack(cls.FORMAT, data.read(length))[0]
 
     @classmethod
     def pack(cls, data):
