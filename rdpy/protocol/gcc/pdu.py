@@ -118,7 +118,6 @@ class GCCParser:
         stream.write(per.writeLength(len(pdu.payload) + 14))
         stream.write(per.writeChoice(pdu.header))
 
-        stream = StringIO()
         self.writers[pdu.header](stream, pdu)
         return stream.getvalue()
     
