@@ -38,7 +38,7 @@ class MCSClientConnectionLayer(Layer):
         self.maxParams = MCSDomainParams.createMaximum()
     
     def recv(self, pdu):
-        self.pduReceived(pdu)
+        self.pduReceived(pdu, True)
 
     def send(self, data):
         pdu = MCSConnectInitialPDU(self.callingDomain, self.calledDomain, self.upward, self.targetParams, self.minParams, self.maxParams, data)

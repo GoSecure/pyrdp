@@ -278,10 +278,10 @@ class RDPClientConnectionParser:
 
 
 class RDPServerDataPDU:
-    def __init__(self, core, network, security):
+    def __init__(self, core, security, network):
         self.core = core
-        self.network = network
         self.security = security
+        self.network = network
 
 class ServerCoreData:
     def __init__(self, version, clientRequestedProtocols, earlyCapabilityFlags):
@@ -291,9 +291,9 @@ class ServerCoreData:
         self.earlyCapabilityFlags = earlyCapabilityFlags
 
 class ServerNetworkData:
-    def __init__(self, mcsChannelId, channels):
+    def __init__(self, mcsChannelID, channels):
         self.header = RDPConnectionDataType.SERVER_NETWORK
-        self.mcsChannelId = mcsChannelId
+        self.mcsChannelID = mcsChannelID
         self.channels = channels
     
 class ServerSecurityData:
@@ -374,11 +374,11 @@ class RDPServerConnectionParser:
         return ServerCoreData(version, clientRequestedProtocols, earlyCapabilityFlags)
     
     def parseServerNetworkData(self, stream):
-        mcsChannelId = Uint16LE.unpack(stream)
+        mcsChannelID = Uint16LE.unpack(stream)
         channelCount = Uint16LE.unpack(stream)
         channels = [Uint16LE.unpack(stream) for _ in range(channelCount)]
 
-        return ServerNetworkData(mcsChannelId, channels)
+        return ServerNetworkData(mcsChannelID, channels)
     
     def parseServerSecurityData(self, stream):
         stream = StrictStream(stream)

@@ -1,32 +1,19 @@
 from rdpy.core.newlayer import Layer
-from pdu import GCCParser, GCCPDUType
+from rdpy.protocol.x224.layer import X224Observer
 
-class GCCLayerMode:
-    CLIENT = 0
-    SERVER = 1
+from pdu import GCCParser, GCCConferenceCreateRequestPDU
 
-class GCCLayer(Layer):
-    def __init__(self, mode):
-        super(GCCLayer, self).__init__()
+class GCCClientConnectionLayer(Layer, X224Observer):
+    def __init__(self, conferenceName):
+        Layer.__init__(self)
+        X224Observer.__init__(self)
+        self.conferenceName = conferenceName
         self.parser = GCCParser()
-        
-        if mode == GCCLayerMode.CLIENT:
-            self.recvHeader = GCCPDUType.CREATE_CONFERENCE_RESPONSE
-            self.sendHeader = GCCPDUType.CREATE_CONFERENCE_REQUEST
-        else:
-            self.recvHeader = GCCPDUType.CREATE_CONFERENCE_REQUEST
-            self.sendHeader = GCCPDUType.CREATE_CONFERENCE_RESPONSE
     
     def recv(self, data):
         pdu = self.parser.parse(data)
+        self.pduReceived(pdu, True)
 
-        if pdu.header != self.recvHeader:
-            raise Exception("Invalid GCC PDU type received")
-        
-        self.next.recv(pdu.payload)
-    
-    def send(self, pdu):
-        if pdu.header != self.sendHeader:
-            raise Exception("Trying to send invalid GCC PDU type")
-
+    def send(self, data):
+        pdu = GCCConferenceCreateRequestPDU(self.conferenceName, data)
         self.previous.send(self.parser.write(pdu))
