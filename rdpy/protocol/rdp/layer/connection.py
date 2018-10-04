@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 
 from rdpy.core.newlayer import Layer
 from rdpy.core.subject import Subject
-from rdpy.protocol.rdp.pdu.connection import RDPServerConnectionParser
+from rdpy.protocol.rdp.pdu.connection import RDPClientConnectionParser, RDPServerConnectionParser
 
 class RDPClientConnectionObserver:
     __metaclass__ = ABCMeta
@@ -15,11 +15,12 @@ class RDPClientConnectionLayer(Layer, Subject):
     def __init__(self):
         Layer.__init__(self)
         Subject.__init__(self)
-        self.parser = RDPServerConnectionParser()
+        self.clientRDP = RDPClientConnectionParser()
+        self.serverRDP = RDPServerConnectionParser()
     
     def recv(self, data):
-        pdu = self.parser.parse(data)
+        pdu = self.serverRDP.parse(data)
         self.pduReceived(pdu, True)
     
     def send(self, pdu):
-        self.previous.write(self.parser.write(pdu))
+        self.previous.send(self.clientRDP.write(pdu))
