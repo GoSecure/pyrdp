@@ -4,6 +4,13 @@ class LayerObserver(object):
     """
     Layer observer class, notified whenever a layer receives a PDU.
     """
+    def __init__(self, callback = None):
+        """
+        :param callback: function to be called when a pdu is received (optional, use this if you don't want to inherit from LayerObserver)
+        """
+        if callback is not None:
+            self.pduReceived = callback
+
     def pduReceived(self, pdu):
         """
         Method called when a PDU is received
