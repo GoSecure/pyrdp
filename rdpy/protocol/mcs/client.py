@@ -1,5 +1,3 @@
-from abc import ABCMeta, abstractmethod
-
 from rdpy.core.subject import Subject
 
 from router import MCSRouter, whenConnected
@@ -10,21 +8,17 @@ class MCSClientConnectionObserver:
     """
     Observer class for client connections
     """
-    __metaclass__ = ABCMeta
-
-    @abstractmethod
     def connectResponse(self, pdu):
         """
         Method called on Connect Response PDUs
         """
-        pass
+        raise Exception("Unhandled Connect Response PDU")
     
-    @abstractmethod
     def disconnectProviderUltimatum(self, pdu):
         """
         Method called on Disconnect Provider Ultimatum PDUs
         """
-        pass
+        raise Exception("Unhandled Disconnect Provider Ultimatum PDU")
 
 class MCSClient(MCSUser):
     """

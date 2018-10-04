@@ -1,28 +1,20 @@
-from abc import abstractmethod, ABCMeta
-
 from rdpy.core import log
 from rdpy.core.newlayer import Layer
 from rdpy.core.subject import Subject
 from pdu import X224Parser, X224Data, X224Header, X224ConnectionRequest, X224ConnectionConfirm, X224DisconnectRequest
 
 class X224Observer:
-    __metaclass__ = ABCMeta
-
-    @abstractmethod
     def connectionRequest(self, pdu):
-        pass
-    
-    @abstractmethod
+        raise Exception("Unhandled X224 Connection Request PDU")
+
     def connectionConfirm(self, pdu):
-        pass
+        raise Exception("Unhandled X224 Connection Confirm PDU")
     
-    @abstractmethod
     def disconnectRequest(self, pdu):
-        pass
+        raise Exception("Unhandled X224 Disconnect Request PDU")
     
-    @abstractmethod
     def error(self, pdu):
-        pass
+        raise Exception("Unhandled X224 Error PDU")
 
 class X224Layer(Layer, Subject):
     """

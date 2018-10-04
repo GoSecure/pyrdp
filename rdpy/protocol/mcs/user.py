@@ -1,17 +1,11 @@
-from abc import ABCMeta, abstractmethod
-
 from rdpy.core.subject import Subject
 
 class MCSUserObserver:
-    __metaclass__ = ABCMeta
-
-    @abstractmethod
     def attachConfirmed(self, user):
-        pass
+        raise Exception("Unhandled Attach Confirmed event")
     
-    @abstractmethod
     def attachRefused(self, user):
-        pass
+        raise Exception("Unhandled Attach Refused event")
 
 class MCSUser(Subject):
     def __init__(self, router, factory):
