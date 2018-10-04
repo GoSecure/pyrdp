@@ -24,18 +24,18 @@ class RDPClientDataPDU:
 class ClientCoreData:
     def __init__(self, version, desktopWidth, desktopHeight, colorDepth, sasSequence, keyboardLayout, clientBuild, clientName, keyboardType, keyboardSubType, keyboardFunctionKey, imeFileName):
         self.header = RDPConnectionDataType.CLIENT_CORE
-        self.version = None
-        self.desktopWidth = None
-        self.desktopHeight = None
-        self.colorDepth = None
-        self.sasSequence = None
-        self.keyboardLayout = None
-        self.clientBuild = None
-        self.clientName = None
-        self.keyboardType = None
-        self.keyboardSubType = None
-        self.keyboardFunctionKey = None
-        self.imeFileName = None
+        self.version = version
+        self.desktopWidth = desktopWidth
+        self.desktopHeight = desktopHeight
+        self.colorDepth = colorDepth
+        self.sasSequence = sasSequence
+        self.keyboardLayout = keyboardLayout
+        self.clientBuild = clientBuild
+        self.clientName = clientName
+        self.keyboardType = keyboardType
+        self.keyboardSubType = keyboardSubType
+        self.keyboardFunctionKey = keyboardFunctionKey
+        self.imeFileName = imeFileName
         self.postBeta2ColorDepth = None
         self.clientProductId = None
         self.serialNumber = None
@@ -62,11 +62,14 @@ class ClientChannelDefinition:
     def __init__(self, name, options):
         self.name = name
         self.options = options
+    
+    def __repr__(self):
+        return "%s (0x%lx)" % (self.name, self.options)
 
 class ClientNetworkData:
     def __init__(self, channelDefinitions):
         self.header = RDPConnectionDataType.CLIENT_NETWORK
-        self.channelDefinitions = []
+        self.channelDefinitions = channelDefinitions
 
 class ClientClusterData:
     def __init__(self, flags, redirectedSessionID):
@@ -135,24 +138,25 @@ class RDPClientConnectionParser:
     
     def parseClientCoreData(self, stream):
         stream = StrictStream(stream)
-        core = ClientCoreData()
 
         minor = Uint16LE.unpack(stream.read(2))
         major = Uint16LE.unpack(stream.read(2))
 
         # 128 bytes minimum (excluding header)
-        core.version = (major << 16) | minor
-        core.desktopWidth = Uint16LE.unpack(stream)
-        core.desktopHeight = Uint16LE.unpack(stream)
-        core.colorDepth = Uint16LE.unpack(stream)
-        core.sasSequence = Uint16LE.unpack(stream)
-        core.keyboardLayout = Uint32LE.unpack(stream)
-        core.clientBuild = Uint32LE.unpack(stream)
-        core.clientName = stream.read(32).decode("utf-16").strip("\x00")
-        core.keyboardType = Uint32LE.unpack(stream)
-        core.keyboardSubType = Uint32LE.unpack(stream)
-        core.keyboardFunctionKey = Uint32LE.unpack(stream)
-        core.imeFileName = stream.read(64).decode("utf-16").strip("\x00")
+        version = (major << 16) | minor
+        desktopWidth = Uint16LE.unpack(stream)
+        desktopHeight = Uint16LE.unpack(stream)
+        colorDepth = Uint16LE.unpack(stream)
+        sasSequence = Uint16LE.unpack(stream)
+        keyboardLayout = Uint32LE.unpack(stream)
+        clientBuild = Uint32LE.unpack(stream)
+        clientName = stream.read(32).decode("utf-16le").strip("\x00")
+        keyboardType = Uint32LE.unpack(stream)
+        keyboardSubType = Uint32LE.unpack(stream)
+        keyboardFunctionKey = Uint32LE.unpack(stream)
+        imeFileName = stream.read(64).decode("utf-16le").strip("\x00")
+
+        core = ClientCoreData(version, desktopWidth, desktopHeight, colorDepth, sasSequence, keyboardLayout, clientBuild, clientName, keyboardType, keyboardSubType, keyboardFunctionKey, imeFileName)
 
         # Optional data
         # The optional fields are read in order. If one of them is not present, then all subsequent fields are also not present.
@@ -163,7 +167,7 @@ class RDPClientConnectionParser:
             core.highColorDepth = Uint16LE.unpack(stream)
             core.supportedColorDepths = Uint16LE.unpack(stream)
             core.earlyCapabilityFlags = Uint16LE.unpack(stream)
-            core.clientDigProductId = stream.read(64)
+            core.clientDigProductId = stream.read(64).decode("utf-16le").strip("\x00")
             core.connectionType = Uint8.unpack(stream)
             core.pad1octet = stream.read(1)
             core.serverSelectedProtocol = Uint32LE.unpack(stream)
@@ -185,7 +189,7 @@ class RDPClientConnectionParser:
     
     def parseClientNetworkData(self, stream):
         channelCount = Uint32LE.unpack(stream)
-        data = stream.getvalue()
+        data = stream.getvalue()[4 :]
 
         if len(data) != channelCount * 12:
             raise Exception("Invalid channel array size")
@@ -204,23 +208,29 @@ class RDPClientConnectionParser:
         redirectedSessionID = Uint32LE.unpack(stream)
         return ClientClusterData(flags, redirectedSessionID)
     
-    def write(self, data):
+    def write(self, pdu):
+        stream = StringIO()
+        self.writeStructure(stream, pdu.coreData)
+        self.writeStructure(stream, pdu.securityData)
+        self.writeStructure(stream, pdu.networkData)
+        self.writeStructure(stream, pdu.clusterData)
+        return stream.getvalue()
+
+    def writeStructure(self, stream, data):
         if data.header not in self.writers:
             raise Exception("Trying to write unknown Client Data structure")
         
         substream = StringIO()
-        self.writers[data.header].write(substream, data)
+        self.writers[data.header](substream, data)
 
         substream = substream.getvalue()
 
-        stream = StringIO()
         stream.write(Uint16LE.pack(data.header))
         stream.write(Uint16LE.pack(len(substream) + 4))
         stream.write(substream)
-        return stream.getvalue()
     
     def writeClientCoreData(self, stream, core):
-        major = core.version & 0xffff0000
+        major = core.version >> 16
         minor = core.version & 0xffff
 
         stream.write(Uint16LE.pack(minor))
@@ -231,11 +241,11 @@ class RDPClientConnectionParser:
         stream.write(Uint16LE.pack(core.sasSequence))
         stream.write(Uint32LE.pack(core.keyboardLayout))
         stream.write(Uint32LE.pack(core.clientBuild))
-        stream.write(core.clientName.encode("utf-16").ljust(32, "\x00"))
+        stream.write(core.clientName.encode("utf-16le").ljust(32, "\x00"))
         stream.write(Uint32LE.pack(core.keyboardType))
         stream.write(Uint32LE.pack(core.keyboardSubType))
         stream.write(Uint32LE.pack(core.keyboardFunctionKey))
-        stream.write(core.imeFileName.encode("utf-16").ljust(64, "\x00"))
+        stream.write(core.imeFileName.encode("utf-16le").ljust(64, "\x00"))
         
         try:
             stream.write(Uint16LE.pack(core.postBeta2ColorDepth))
@@ -244,7 +254,7 @@ class RDPClientConnectionParser:
             stream.write(Uint16LE.pack(core.highColorDepth))
             stream.write(Uint16LE.pack(core.supportedColorDepths))
             stream.write(Uint16LE.pack(core.earlyCapabilityFlags))
-            stream.write(core.clientDigProductId.ljust(64, "\x00"))
+            stream.write(core.clientDigProductId.encode("utf-16le").ljust(64, "\x00"))
             stream.write(Uint8.pack(core.connectionType))
             stream.write("\x00")
             stream.write(Uint32LE.pack(core.serverSelectedProtocol))
