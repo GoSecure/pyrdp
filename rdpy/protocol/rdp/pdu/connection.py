@@ -241,11 +241,11 @@ class RDPClientConnectionParser:
         stream.write(Uint16LE.pack(core.sasSequence))
         stream.write(Uint32LE.pack(core.keyboardLayout))
         stream.write(Uint32LE.pack(core.clientBuild))
-        stream.write(core.clientName.encode("utf-16le").ljust(32, "\x00"))
+        stream.write(core.clientName.encode("utf-16le").ljust(32, "\x00")[: 32])
         stream.write(Uint32LE.pack(core.keyboardType))
         stream.write(Uint32LE.pack(core.keyboardSubType))
         stream.write(Uint32LE.pack(core.keyboardFunctionKey))
-        stream.write(core.imeFileName.encode("utf-16le").ljust(64, "\x00"))
+        stream.write(core.imeFileName.encode("utf-16le").ljust(64, "\x00")[: 64])
         
         try:
             stream.write(Uint16LE.pack(core.postBeta2ColorDepth))
@@ -254,7 +254,7 @@ class RDPClientConnectionParser:
             stream.write(Uint16LE.pack(core.highColorDepth))
             stream.write(Uint16LE.pack(core.supportedColorDepths))
             stream.write(Uint16LE.pack(core.earlyCapabilityFlags))
-            stream.write(core.clientDigProductId.encode("utf-16le").ljust(64, "\x00"))
+            stream.write(core.clientDigProductId.encode("utf-16le").ljust(64, "\x00")[: 64])
             stream.write(Uint8.pack(core.connectionType))
             stream.write("\x00")
             stream.write(Uint32LE.pack(core.serverSelectedProtocol))
@@ -278,7 +278,7 @@ class RDPClientConnectionParser:
             if len(channel.name) > 8:
                 raise Exception("Channel name must have 8 characters maximum")
             
-            stream.write(channel.name.ljust(8, "\x00"))
+            stream.write(channel.name.ljust(8, "\x00")[: 8])
             stream.write(Uint32LE.pack(channel.options))
     
     def writeClientClusterData(self, stream, cluster):
