@@ -75,6 +75,9 @@ class ClientClusterData:
         self.redirectedSessionID = redirectedSessionID
 
 class RDPClientConnectionParser:
+    """
+    Parser for Client Data PDUs (i.e: servers).
+    """
     def __init__(self):
         self.parsers = {
             RDPConnectionDataType.CLIENT_CORE: self.parseClientCoreData,
@@ -302,6 +305,10 @@ class ServerSecurityData:
         self.serverCertificate = serverCertificate
 
 class RDPServerConnectionParser:
+    """
+    Parser for Server Data PDUs (i.e: client).
+    """
+
     def __init__(self):
         self.parsers = {
             RDPConnectionDataType.SERVER_CORE: self.parseServerCoreData,
