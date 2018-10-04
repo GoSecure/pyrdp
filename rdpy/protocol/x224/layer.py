@@ -1,9 +1,18 @@
 from rdpy.core import log
-from rdpy.core.newlayer import Layer
+from rdpy.core.newlayer import Layer, LayerStrictRoutedObserver
 from rdpy.core.subject import Subject
 from pdu import X224Parser, X224Data, X224Header, X224ConnectionRequest, X224ConnectionConfirm, X224DisconnectRequest
 
-class X224Observer:
+class X224Observer(LayerStrictRoutedObserver):
+    def __init__(self):
+        LayerStrictRoutedObserver.__init__(self, {
+            X224Header.X224_TPDU_CONNECTION_REQUEST: self.connectionRequest,
+            X224Header.X224_TPDU_CONNECTION_CONFIRM: self.connectionConfirm,
+            X224Header.X224_TPDU_DISCONNECT_REQUEST: self.disconnectRequest,
+            X224Header.X224_TPDU_DATA: self.x224Data,
+            X224Header.X224_TPDU_ERROR: self.error
+        })
+
     def connectionRequest(self, pdu):
         raise Exception("Unhandled X224 Connection Request PDU")
 
@@ -13,6 +22,9 @@ class X224Observer:
     def disconnectRequest(self, pdu):
         raise Exception("Unhandled X224 Disconnect Request PDU")
     
+    def x224Data(self, pdu):
+        pass
+
     def error(self, pdu):
         raise Exception("Unhandled X224 Error PDU")
 
@@ -22,28 +34,13 @@ class X224Layer(Layer, Subject):
     """
 
     def __init__(self):
-        super(X224Layer, self).__init__()
-        super(X224Layer, self).__init__()
+        Layer.__init__(self)
+        Subject.__init__(self)
         self.parser = X224Parser()
-    
-    def setObserver(self, observer):
-        super(X224Layer, self).setObserver(observer)
-        self.handlers = {
-            X224Header.X224_TPDU_CONNECTION_REQUEST: self.observer.connectionRequest,
-            X224Header.X224_TPDU_CONNECTION_CONFIRM: self.observer.connectionConfirm,
-            X224Header.X224_TPDU_DISCONNECT_REQUEST: self.observer.disconnectRequest,
-            X224Header.X224_TPDU_ERROR: self.observer.error
-        }
     
     def recv(self, data):
         pdu = self.parser.parse(data)
-
-        if pdu.header == X224Header.X224_TPDU_DATA:
-            self.next.recv(pdu.payload)
-        elif pdu.header in self.handlers:
-            self.handlers[pdu.header](pdu)
-        else:
-            raise Exception("Unhandled PDU received")
+        self.pduReceived(pdu, pdu.header == X224Header.X224_TPDU_DATA)
     
     def send(self, payload, **kwargs):
         roa = kwargs.pop("roa", False)

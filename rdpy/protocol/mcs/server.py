@@ -44,13 +44,13 @@ class MCSServerRouter(MCSRouter, Subject):
     """
     MCS router for server traffic
     """
-    def __init__(self, factory, userIDGenerator):
+    def __init__(self, mcs, factory, userIDGenerator):
         """
         :param factory: the channel factory
         :param userIDGenerator: the generator used when creating new users
         """
-        super(MCSServerRouter, self).__init__()
-        super(MCSServerRouter, self).__init__()
+        MCSRouter.__init__(mcs)
+        Subject.__init__()
         self.factory = factory
         self.userIDGenerator = userIDGenerator
         self.users = {}

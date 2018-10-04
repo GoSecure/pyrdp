@@ -30,7 +30,7 @@ class MCSClient(MCSUser):
         :param router: the MCS router
         :param factory: channel factory
         """
-        super(MCSClient, self).__init__(router, factory)
+        MCSUser.__init__(self, router, factory)
     
     def attach(self):
         """
@@ -46,12 +46,12 @@ class MCSClient(MCSUser):
         self.router.joinChannel(self.userID, channelID)
 
 class MCSClientRouter(MCSRouter, Subject):
-    def __init__(self, factory):
+    def __init__(self, mcs, factory):
         """
         :param factory: channel factory
         """
-        super(MCSClientRouter, self).__init__()
-        super(MCSClientRouter, self).__init__()
+        MCSRouter.__init__(self, mcs)
+        Subject.__init__(self)
         self.factory = factory
         self.users = {}
         self.attachingUsers = []

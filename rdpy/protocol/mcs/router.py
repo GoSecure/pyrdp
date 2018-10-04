@@ -1,7 +1,6 @@
-from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 
-from rdpy.core.layer import Layer
+from rdpy.core.newlayer import LayerStrictRoutedObserver
 from pdu import MCSChannel, MCSConnectResponsePDU, MCSAttachUserConfirmPDU, MCSAttachUserRequestPDU, MCSChannelJoinConfirmPDU, MCSChannelJoinRequestPDU, MCSSendDataRequestPDU, MCSPDUType
 
 def whenConnected(method):
@@ -17,16 +16,22 @@ def whenConnected(method):
     
     return wrapper
 
-class MCSRouter:
-    def __init__(self):
+class MCSRouter(LayerStrictRoutedObserver):
+    def __init__(self, mcs):
+        LayerStrictRoutedObserver.__init__(self, {
+            MCSPDUType.CONNECT_INITIAL: self.connectInitial,
+            MCSPDUType.CONNECT_RESPONSE: self.connectResponse,
+            MCSPDUType.ERECT_DOMAIN_REQUEST: self.erectDomainRequest,
+            MCSPDUType.DISCONNECT_PROVIDER_ULTIMATUM: self.disconnectProviderUltimatum,
+            MCSPDUType.ATTACH_USER_REQUEST: self.attachUserRequest,
+            MCSPDUType.ATTACH_USER_CONFIRM: self.attachUserConfirm,
+            MCSPDUType.CHANNEL_JOIN_REQUEST: self.channelJoinRequest,
+            MCSPDUType.CHANNEL_JOIN_CONFIRM: self.channelJoinConfirm,
+            MCSPDUType.SEND_DATA_REQUEST: self.sendDataRequest,
+            MCSPDUType.SEND_DATA_INDICATION: self.sendDataIndication,
+        })
+
         self.connected = False
-        self.mcs = None
-    
-    def setMCSLayer(self, mcs):
-        """
-        Set the MCS layer used with the router
-        :param mcs: the MCS layer
-        """
         self.mcs = mcs
 
     def connectInitial(self, pdu):

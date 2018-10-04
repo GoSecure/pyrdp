@@ -7,13 +7,13 @@ class TPKTLayer(Layer):
     """
 
     def __init__(self):
-        super(TPKTLayer, self).__init__()
+        Layer.__init__(self)
         self.parser = TPKTParser()
     
     def recv(self, data):
         while len(data) > 0:
             pdu = self.parser.parse(data)
-            self.next.recv(pdu.payload)
+            self.pduReceived(pdu, True)
             data = data[pdu.length :]
     
     def send(self, data):

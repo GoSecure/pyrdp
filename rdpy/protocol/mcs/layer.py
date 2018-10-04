@@ -1,33 +1,15 @@
 from rdpy.core.newlayer import Layer
-from pdu import MCSParser, MCSPDUType
+from pdu import MCSParser, MCSPDUType, MCSDomainParams, MCSConnectInitialPDU
 
 class MCSLayer(Layer):
     """
-    Layer for handling MCS related traffic
+    Layer for handling MCS related traffic.
+    It doesn't really make sense to assign a single 'next' layer to this, so traffic is never forwarded.
     """
 
-    def __init__(self, router):
-        """
-        :param router: MCSRouter object
-        """
-
-        super(MCSLayer, self).__init__()
+    def __init__(self):
+        Layer.__init__(self)
         self.parser = MCSParser()
-        self.router = router
-        self.handlers = {
-            MCSPDUType.CONNECT_INITIAL: self.router.connectInitial,
-            MCSPDUType.CONNECT_RESPONSE: self.router.connectResponse,
-            MCSPDUType.ERECT_DOMAIN_REQUEST: self.router.erectDomainRequest,
-            MCSPDUType.DISCONNECT_PROVIDER_ULTIMATUM: self.router.disconnectProviderUltimatum,
-            MCSPDUType.ATTACH_USER_REQUEST: self.router.attachUserRequest,
-            MCSPDUType.ATTACH_USER_CONFIRM: self.router.attachUserConfirm,
-            MCSPDUType.CHANNEL_JOIN_REQUEST: self.router.channelJoinRequest,
-            MCSPDUType.CHANNEL_JOIN_CONFIRM: self.router.channelJoinConfirm,
-            MCSPDUType.SEND_DATA_REQUEST: self.router.sendDataRequest,
-            MCSPDUType.SEND_DATA_INDICATION: self.router.sendDataIndication,
-        }
-
-        self.router.setMCSLayer(self)
     
     def recv(self, data):
         """
@@ -35,11 +17,7 @@ class MCSLayer(Layer):
         :param data: raw MCS layer bytes
         """
         pdu = self.parser.parse(data)
-
-        if pdu.header not in self.handlers:
-            raise Exception("Unhandled PDU received")
-        
-        self.handlers[pdu.header](pdu)
+        self.pduReceived(pdu, False)
 
     def send(self, pdu):
         """
@@ -47,3 +25,21 @@ class MCSLayer(Layer):
         :param pdu: PDU to send
         """
         self.previous.send(self.parser.write(pdu))
+
+class MCSClientConnectionLayer(Layer):
+    def __init__(self, mcs):
+        Layer.__init__(self)
+        self.mcs = mcs
+        self.callingDomain = "\x01"
+        self.calledDomain = "\x01"
+        self.upward = True
+        self.targetParams = MCSDomainParams.createTarget(34, 2)
+        self.minParams = MCSDomainParams.createMinimum()
+        self.maxParams = MCSDomainParams.createMaximum()
+    
+    def recv(self, pdu):
+        self.pduReceived(pdu)
+
+    def send(self, data):
+        pdu = MCSConnectInitialPDU(self.callingDomain, self.calledDomain, self.upward, self.targetParams, self.minParams, self.maxParams, data)
+        self.mcs.send(pdu)
