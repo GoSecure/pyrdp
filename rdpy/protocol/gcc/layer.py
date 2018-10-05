@@ -3,10 +3,9 @@ from rdpy.protocol.x224.layer import X224Observer
 
 from pdu import GCCParser, GCCConferenceCreateRequestPDU
 
-class GCCClientConnectionLayer(Layer, X224Observer):
+class GCCClientConnectionLayer(Layer):
     def __init__(self, conferenceName):
         Layer.__init__(self)
-        X224Observer.__init__(self)
         self.conferenceName = conferenceName
         self.parser = GCCParser()
     

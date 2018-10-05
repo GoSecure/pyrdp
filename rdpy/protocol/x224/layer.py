@@ -1,41 +1,42 @@
 from rdpy.core import log
 from rdpy.core.newlayer import Layer, LayerStrictRoutedObserver
-from rdpy.core.subject import Subject
+from rdpy.core.subject import ObservedBy
 from pdu import X224Parser, X224Data, X224Header, X224ConnectionRequest, X224ConnectionConfirm, X224DisconnectRequest
 
 class X224Observer(LayerStrictRoutedObserver):
-    def __init__(self):
+    def __init__(self, **kwargs):
         LayerStrictRoutedObserver.__init__(self, {
-            X224Header.X224_TPDU_CONNECTION_REQUEST: self.connectionRequest,
-            X224Header.X224_TPDU_CONNECTION_CONFIRM: self.connectionConfirm,
-            X224Header.X224_TPDU_DISCONNECT_REQUEST: self.disconnectRequest,
-            X224Header.X224_TPDU_DATA: self.x224Data,
-            X224Header.X224_TPDU_ERROR: self.error
-        })
+            X224Header.X224_TPDU_CONNECTION_REQUEST: "onConnectionRequest",
+            X224Header.X224_TPDU_CONNECTION_CONFIRM: "onConnectionConfirm",
+            X224Header.X224_TPDU_DISCONNECT_REQUEST: "onDisconnectRequest",
+            X224Header.X224_TPDU_DATA: "onData",
+            X224Header.X224_TPDU_ERROR: "onError"
+        }, **kwargs)
 
-    def connectionRequest(self, pdu):
+    def onConnectionRequest(self, pdu):
         raise Exception("Unhandled X224 Connection Request PDU")
 
-    def connectionConfirm(self, pdu):
+    def onConnectionConfirm(self, pdu):
         raise Exception("Unhandled X224 Connection Confirm PDU")
     
-    def disconnectRequest(self, pdu):
+    def onDisconnectRequest(self, pdu):
         raise Exception("Unhandled X224 Disconnect Request PDU")
     
-    def x224Data(self, pdu):
+    def onData(self, pdu):
         pass
 
-    def error(self, pdu):
+    def onError(self, pdu):
         raise Exception("Unhandled X224 Error PDU")
 
-class X224Layer(Layer, Subject):
+@ObservedBy(X224Observer)
+class X224Layer(Layer):
     """
-    @summary: Layer for handling X224 related traffic
+    Layer for handling X224 related traffic
+    ObservedBy: X224Observer
     """
 
     def __init__(self):
         Layer.__init__(self)
-        Subject.__init__(self)
         self.parser = X224Parser()
     
     def recv(self, data):

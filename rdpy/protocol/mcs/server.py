@@ -1,5 +1,3 @@
-from abc import ABCMeta, abstractmethod
-
 from pdu import MCSChannel
 from router import MCSRouter
 from user import MCSUser
@@ -8,9 +6,7 @@ class MCSServerConnectionObserver:
     """
     Observer class for server connections
     """
-    __metaclass__ = ABCMeta
 
-    @abstractmethod
     def connectionReceived(self, pdu):
         """
         Callback for when a Connect Initial PDU is received
@@ -57,7 +53,7 @@ class MCSServerRouter(MCSRouter, Subject):
 
     # PDU handlers
 
-    def connectInitial(self, pdu):
+    def onConnectInitial(self, pdu):
         """
         Called when a Connect Initial PDU is received
         """
@@ -65,14 +61,14 @@ class MCSServerRouter(MCSRouter, Subject):
             self.connected = True
     
     @whenConnected
-    def erectDomainRequest(self, pdu):
+    def onErectDomainRequest(self, pdu):
         """
         Called when an Erect Domain Request PDU is received
         """
         pass
 
     @whenConnected
-    def attachUserRequest(self, pdu):
+    def onAttachUserRequest(self, pdu):
         """
         Called when an Attach User Request PDU is received
         """
@@ -85,7 +81,7 @@ class MCSServerRouter(MCSRouter, Subject):
         self.mcs.send(MCSAttachUserConfirmPDU(0, userID))
     
     @whenConnected
-    def channelJoinRequest(self, pdu):
+    def onChannelJoinRequest(self, pdu):
         """
         Called when a Channel Join Request PDU is received
         """
@@ -99,7 +95,7 @@ class MCSServerRouter(MCSRouter, Subject):
         self.mcs.send(MCSChannelJoinConfirmPDU(0, userID, channelID, channelID, ""))
     
     @whenConnected
-    def sendDataRequest(self, pdu):
+    def onSendDataRequest(self, pdu):
         """
         Called when a Send Data Request PDU is received
         """

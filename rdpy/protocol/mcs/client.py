@@ -1,20 +1,21 @@
-from rdpy.core.subject import Subject
+from rdpy.core.observer import Observer
+from rdpy.core.subject import Subject, ObservedBy
 
 from router import MCSRouter, whenConnected
 from pdu import MCSAttachUserRequestPDU, MCSChannelJoinRequestPDU, MCSSendDataRequestPDU, MCSSendDataIndicationPDU
 from user import MCSUser
 
-class MCSClientConnectionObserver:
+class MCSClientConnectionObserver(Observer):
     """
     Observer class for client connections
     """
-    def connectResponse(self, pdu):
+    def onConnectResponse(self, pdu):
         """
         Method called on Connect Response PDUs
         """
         raise Exception("Unhandled Connect Response PDU")
     
-    def disconnectProviderUltimatum(self, pdu):
+    def onDisconnectProviderUltimatum(self, pdu):
         """
         Method called on Disconnect Provider Ultimatum PDUs
         """
@@ -45,7 +46,13 @@ class MCSClient(MCSUser):
         """
         self.router.joinChannel(self.userID, channelID)
 
+@ObservedBy(MCSClientConnectionObserver)
 class MCSClientRouter(MCSRouter, Subject):
+    """
+    MCS router for clients.
+    ObservedBy: MCSClientConnectionObserver
+    """
+
     def __init__(self, mcs, factory):
         """
         :param factory: channel factory
@@ -82,23 +89,23 @@ class MCSClientRouter(MCSRouter, Subject):
     
     # PDU handlers
 
-    def connectResponse(self, pdu):
+    def onConnectResponse(self, pdu):
         """
         Called when a Connect Response PDU is received
         :param pdu: the PDU
         """
         self.connected = pdu.result == 0
-        self.observer.connectResponse(pdu)
+        self.observer.onConnectResponse(pdu)
 
-    def disconnectProviderUltimatum(self, pdu):
+    def onDisconnectProviderUltimatum(self, pdu):
         """
         Called when a Disconnect Provider Ultimatum PDU is received
         :param pdu: the PDU
         """
-        self.observer.disconnectProviderUltimatum(pdu)
+        self.observer.onDisconnectProviderUltimatum(pdu)
 
     @whenConnected
-    def attachUserConfirm(self, pdu):
+    def onAttachUserConfirm(self, pdu):
         """
         Called when an Attach User Confirm PDU is received
         :param pdu: the PDU
@@ -108,12 +115,12 @@ class MCSClientRouter(MCSRouter, Subject):
 
         if userID is not None:
             self.users[userID] = user
-            user.attachConfirmed(userID)
+            user.onAttachConfirmed(userID)
         else:
-            user.attachRefused()
+            user.onAttachRefused()
     
     @whenConnected
-    def channelJoinConfirm(self, pdu):
+    def onChannelJoinConfirm(self, pdu):
         """
         Called when a Channel Join Confirm PDU is received
         :param pdu: the PDU
@@ -123,7 +130,7 @@ class MCSClientRouter(MCSRouter, Subject):
         self.users[userID].channelJoined(self.mcs, channelID)
     
     @whenConnected
-    def sendDataIndication(self, pdu):
+    def onSendDataIndication(self, pdu):
         """
         Called when a Send Data Indication PDU is received
         :param pdu: the PDU

@@ -1,17 +1,14 @@
-from subject import Subject
+from observer import Observer
+from subject import Subject, ObservedBy
 
-class LayerObserver(object):
+class LayerObserver(Observer):
     """
     Layer observer class, notified whenever a layer receives a PDU.
     """
-    def __init__(self, callback = None):
-        """
-        :param callback: function to be called when a pdu is received (optional, use this if you don't want to inherit from LayerObserver)
-        """
-        if callback is not None:
-            self.pduReceived = callback
+    def __init__(self, **kwargs):
+        Observer.__init__(self, **kwargs)
 
-    def pduReceived(self, pdu):
+    def onPDUReceived(self, pdu):
         """
         Method called when a PDU is received
         """
@@ -21,20 +18,24 @@ class LayerRoutedObserver(LayerObserver):
     """
     Layer observer that routes PDUs to methods by checking the PDU's header.
     """
-    def __init__(self, handlers):
+    def __init__(self, handlers, **kwargs):
         """
-        :param handlers: a dictionary of headers to callbacks (callable objects)
+        :param handlers: a dictionary of headers to method names
         """
-        LayerObserver.__init__(self)
-        self.handlers = handlers
+        LayerObserver.__init__(self, **kwargs)
+        self.handlers = {}
 
-    def pduReceived(self, pdu):
+        for (header, name) in handlers.items():
+            self.handlers[header] = getattr(self, name)
+
+
+    def onPDUReceived(self, pdu):
         if pdu.header not in self.handlers:
-            self.unknownHeader(pdu)
+            self.onUnknownHeader(pdu)
         else:
             self.handlers[pdu.header](pdu)
 
-    def unknownHeader(self, pdu):
+    def onUnknownHeader(self, pdu):
         """
         Method called when a PDU with an unknown header is received
         """
@@ -44,21 +45,23 @@ class LayerStrictRoutedObserver(LayerRoutedObserver):
     """
     Layer observer that throws an exception when an unknown header is received.
     """
-    def __init__(self, handlers):
+    def __init__(self, handlers, **kwargs):
         """
         :param handlers: a dictionary of headers to callbacks (callable objects)
         """
-        LayerRoutedObserver.__init__(self, handlers)
+        LayerRoutedObserver.__init__(self, handlers, **kwargs)
     
-    def unknownHeader(self, pdu):
+    def onUnknownHeader(self, pdu):
         """
         Method called when a PDU with an unknown header is received
         """
         raise Exception("Unknown PDU header received: 0x%lx" % pdu.header)
 
+@ObservedBy(LayerObserver)
 class Layer(Subject):
     """
     A doubly-linked list of network layers. An observer can be attached to capture incoming PDUs.
+    ObservedBy: LayerObserver
     """
     def __init__(self):
         Subject.__init__(self)
@@ -80,7 +83,7 @@ class Layer(Subject):
         :param forward: whether the PDU's payload should be forwarded to the next layer.
         """
         if self.observer is not None:
-            self.observer.pduReceived(pdu)
+            self.observer.onPDUReceived(pdu)
         
         if forward and self.next is not None:
             self.next.recv(pdu.payload)

@@ -19,47 +19,47 @@ def whenConnected(method):
 class MCSRouter(LayerStrictRoutedObserver):
     def __init__(self, mcs):
         LayerStrictRoutedObserver.__init__(self, {
-            MCSPDUType.CONNECT_INITIAL: self.connectInitial,
-            MCSPDUType.CONNECT_RESPONSE: self.connectResponse,
-            MCSPDUType.ERECT_DOMAIN_REQUEST: self.erectDomainRequest,
-            MCSPDUType.DISCONNECT_PROVIDER_ULTIMATUM: self.disconnectProviderUltimatum,
-            MCSPDUType.ATTACH_USER_REQUEST: self.attachUserRequest,
-            MCSPDUType.ATTACH_USER_CONFIRM: self.attachUserConfirm,
-            MCSPDUType.CHANNEL_JOIN_REQUEST: self.channelJoinRequest,
-            MCSPDUType.CHANNEL_JOIN_CONFIRM: self.channelJoinConfirm,
-            MCSPDUType.SEND_DATA_REQUEST: self.sendDataRequest,
-            MCSPDUType.SEND_DATA_INDICATION: self.sendDataIndication,
+            MCSPDUType.CONNECT_INITIAL: "onConnectInitial",
+            MCSPDUType.CONNECT_RESPONSE: "onConnectResponse",
+            MCSPDUType.ERECT_DOMAIN_REQUEST: "onErectDomainRequest",
+            MCSPDUType.DISCONNECT_PROVIDER_ULTIMATUM: "disconnectProviderUltimatum",
+            MCSPDUType.ATTACH_USER_REQUEST: "onAttachUserRequest",
+            MCSPDUType.ATTACH_USER_CONFIRM: "onAttachUserConfirm",
+            MCSPDUType.CHANNEL_JOIN_REQUEST: "onChannelJoinRequest",
+            MCSPDUType.CHANNEL_JOIN_CONFIRM: "onChannelJoinConfirm",
+            MCSPDUType.SEND_DATA_REQUEST: "onSendDataRequest",
+            MCSPDUType.SEND_DATA_INDICATION: "onSendDataIndication",
         })
 
         self.connected = False
         self.mcs = mcs
 
-    def connectInitial(self, pdu):
+    def onConnectInitial(self, pdu):
         raise Exception("Connect Initial is not handled")
 
-    def connectResponse(self, pdu):
+    def onConnectResponse(self, pdu):
         raise Exception("Connect Response is not handled")
     
     def disconnectProviderUltimatum(self, pdu):
         raise Exception("Disconnect Provider Ultimatum is not handled")
 
-    def erectDomainRequest(self, pdu):
+    def onErectDomainRequest(self, pdu):
         raise Exception("Erect Domain Request is not handled")
 
-    def attachUserRequest(self, pdu):
+    def onAttachUserRequest(self, pdu):
         raise Exception("Attach User Request is not handled")
     
-    def attachUserConfirm(self, pdu):
+    def onAttachUserConfirm(self, pdu):
         raise Exception("Attach User Confirm is not handled")
     
-    def channelJoinRequest(self, pdu):
+    def onChannelJoinRequest(self, pdu):
         raise Exception("Channel Join Request is not handled")
     
-    def channelJoinConfirm(self, pdu):
+    def onChannelJoinConfirm(self, pdu):
         raise Exception("Channel Join Confirm is not handled")
     
-    def sendDataRequest(self, pdu):
+    def onSendDataRequest(self, pdu):
         raise Exception("Send Data Request is not handled")
     
-    def sendDataIndication(self, pdu):
+    def onSendDataIndication(self, pdu):
         raise Exception("Send Data Indication is not handled")

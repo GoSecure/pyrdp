@@ -1,13 +1,20 @@
-from rdpy.core.subject import Subject
+from rdpy.core.observer import Observer
+from rdpy.core.subject import Subject, ObservedBy
 
-class MCSUserObserver:
-    def attachConfirmed(self, user):
+class MCSUserObserver(Observer):
+    def onAttachConfirmed(self, user):
         raise Exception("Unhandled Attach Confirmed event")
     
-    def attachRefused(self, user):
+    def onAttachRefused(self, user):
         raise Exception("Unhandled Attach Refused event")
 
+@ObservedBy(MCSUserObserver)
 class MCSUser(Subject):
+    """
+    MCS User class.
+    ObservedBy: MCSUserObserver
+    """
+
     def __init__(self, router, factory):
         """
         :param router: the MCS router
@@ -19,7 +26,7 @@ class MCSUser(Subject):
         self.channels = {}
         self.router = router
     
-    def attachConfirmed(self, userID):
+    def onAttachConfirmed(self, userID):
         """
         Called when a user was attached
         :param userID: the user ID assigned to this user
@@ -27,14 +34,14 @@ class MCSUser(Subject):
         self.userID = userID
 
         if self.observer:
-            self.observer.attachConfirmed(self)
+            self.observer.onAttachConfirmed(self)
     
-    def attachRefused(self):
+    def onAttachRefused(self):
         """
         Called when an Attach Request is refused
         """
         if self.observer:
-            self.observer.attachRefused(self)
+            self.observer.onAttachRefused(self)
     
     def channelJoined(self, mcs, channelID):
         """
