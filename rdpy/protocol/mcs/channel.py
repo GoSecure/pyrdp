@@ -35,17 +35,17 @@ class MCSChannel:
         self.userID = userID
         self.channelID = channelID
     
-    def recvSendDataRequest(self, data):
+    def recvSendDataRequest(self, pdu):
         """
         Called when a Send Data Request PDU is received
         """
-        self.next.recvSendDataRequest(data)
+        raise Exception("Unhandled Send Data Request PDU")
     
-    def recvSendDataIndication(self, data):
+    def recvSendDataIndication(self, pdu):
         """
         Called when a Send Data Indication PDU is received
         """
-        self.next.recvSendDataIndication(data)
+        raise Exception("Unhandled Send Data Indication PDU")
     
     def sendSendDataRequest(self, data):
         """
@@ -62,3 +62,25 @@ class MCSChannel:
         """
         pdu = MCSSendDataIndicationPDU(self.userID, self.channelID, 0x70, data)
         self.mcs.send(pdu)
+
+class MCSClientChannel(MCSChannel, Layer):
+    def __init__(self, mcs, userID, channelID):
+        MCSChannel.__init__(self, mcs, userID, channelID)
+        Layer.__init__()
+    
+    def recvSendDataIndication(self, pdu):
+        self.next.recv(pdu.payload)
+    
+    def send(self, data):
+        self.sendSendDataRequest(data)
+
+class MCSServerChannel(MCSChannel, Layer):
+    def __init__(self, mcs, userID, channelID):
+        MCSChannel.__init__(self, mcs, userID, channelID)
+        Layer.__init__()
+    
+    def recvSendDataRequest(self, pdu):
+        self.next.recv(pdu.payload)
+    
+    def send(self, data):
+        self.sendSendDataIndication(data)
