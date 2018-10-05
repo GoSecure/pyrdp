@@ -1,6 +1,9 @@
 from StringIO import StringIO
 import struct
 
+from Crypto.PublicKey import RSA
+from Crypto.Util.number import bytes_to_long
+
 from rdpy.core.packing import Uint8, Uint16LE, Uint16BE, Uint32LE
 from rdpy.core.StrictStream import StrictStream
 
@@ -314,6 +317,25 @@ class ServerSecurityData:
         self.serverRandom = serverRandom
         self.serverCertificate = serverCertificate
 
+class ServerCertificateType:
+    PROPRIETARY = 1
+    X509 = 2
+
+class ServerCertificate:
+    def __init__(self, type, publicKey, signature):
+        self.type = type
+        self.publicKey = publicKey
+        self.signature = signature
+
+class ProprietaryCertificate(ServerCertificate):
+    def __init__(self, signatureAlgorithmID, keyAlgorithmID, publicKeyType, publicKey, signatureType, signature, padding):
+        ServerCertificate.__init__(self, ServerCertificateType.PROPRIETARY, publicKey, signature)
+        self.signatureAlgorithmID = signatureAlgorithmID
+        self.keyAlgorithmID = keyAlgorithmID
+        self.publicKeyType = publicKeyType
+        self.signatureType = signatureType
+        self.padding = padding
+
 class RDPServerConnectionParser:
     """
     Parser for Server Data PDUs (i.e: client).
@@ -402,7 +424,43 @@ class RDPServerConnectionParser:
             serverCertificateLength = Uint32LE.unpack(stream)
             serverRandom = stream.read(serverRandomLength)
             serverCertificate = stream.read(serverCertificateLength)
+            serverCertificate = self.parseServerCertificate(serverCertificate)
         except EOFError:
             pass
         
         return ServerSecurityData(encryptionMethod, encryptionLevel, serverRandom, serverCertificate)
+    
+    def parseServerCertificate(self, data):
+        stream = StringIO(data)
+        version = Uint32LE.unpack(stream)
+
+        if version == ServerCertificateType.PROPRIETARY:
+            return self.parseProprietaryCertificate(stream)
+        else:
+            raise Exception("Unhandled certificate type")
+        
+    def parseProprietaryCertificate(self, stream):
+        signatureAlgorithmID = Uint32LE.unpack(stream)
+        keyAlgorithmID = Uint32LE.unpack(stream)
+        publicKeyType = Uint16LE.unpack(stream)
+        keyLength = Uint16LE.unpack(stream)
+        publicKey = stream.read(keyLength)
+        signatureType = Uint16LE.unpack(stream)
+        signatureLength = Uint16LE.unpack(stream)
+        signature = stream.read(signatureLength - 8)
+        padding = stream.read()
+
+        stream = StringIO(publicKey)
+        magic = stream.read(4)
+        keyLength = Uint32LE.unpack(stream)
+        bitLength = Uint32LE.unpack(stream)
+        dataLength = Uint32LE.unpack(stream)
+        publicExponent = Uint32LE.unpack(stream)
+        modulus = stream.read(keyLength - 8)
+        padding = stream.read(8)
+
+        modulus = bytes_to_long(modulus)
+        publicExponent = long(publicExponent)
+        publicKey = RSA.construct((modulus, publicExponent))
+
+        return ProprietaryCertificate(signatureAlgorithmID, keyAlgorithmID, publicKeyType, publicKey, signatureType, signature, padding)
