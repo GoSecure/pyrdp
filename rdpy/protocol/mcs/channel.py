@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
+from rdpy.core.newlayer import Layer
 from pdu import MCSSendDataRequestPDU, MCSSendDataIndicationPDU
 
 class MCSChannelFactory:
@@ -66,7 +67,7 @@ class MCSChannel:
 class MCSClientChannel(MCSChannel, Layer):
     def __init__(self, mcs, userID, channelID):
         MCSChannel.__init__(self, mcs, userID, channelID)
-        Layer.__init__()
+        Layer.__init__(self)
     
     def recvSendDataIndication(self, pdu):
         self.next.recv(pdu.payload)
