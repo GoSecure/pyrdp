@@ -46,7 +46,7 @@ class RDPSecurityParser:
         return RDPSecurityExchangePDU(flags, clientRandom)
     
     def write(self, pdu):
-        if pdu.header & RDPSecurityPDUType.SEC_EXCHANGE_PKT == 0:
+        if pdu.header & RDPSecurityFlags.SEC_EXCHANGE_PKT == 0:
             raise Exception("Unknown Security PDU header")
         
         return Uint16LE.pack(pdu.header & 0xffff) + Uint16LE.pack(pdu.header >> 16) + Uint32LE.pack(len(pdu.clientRandom)) + pdu.clientRandom
