@@ -21,15 +21,24 @@
 Use to manage RDP stack in twisted
 """
 
+import pdu.caps
+import pdu.data
+import pdu.layer
+import rdpy.core.log as log
+import sec
+import tpkt
+import x224
+from nla import cssp, ntlm
 from rdpy.core import layer
 from rdpy.core.error import CallPureVirtualFuntion, InvalidValue
-import pdu.layer
-import pdu.data
-import pdu.caps
-import rdpy.core.log as log
-import tpkt, x224, sec
+from rdpy.protocol.mcs.channel import MCSChannelFactory
+from rdpy.protocol.mcs.client import MCSClientRouter
+from rdpy.protocol.mcs.layer import MCSLayer
+from rdpy.protocol.tcp.layer import TCPLayer
+from rdpy.protocol.tpkt.layer import TPKTLayer
+from rdpy.protocol.x224.layer import X224Layer
 from t125 import mcs, gcc
-from nla import cssp, ntlm
+
 
 class SecurityLevel(object):
     """
@@ -354,6 +363,11 @@ class RDPClientController(pdu.layer.PDUClientListener):
         """
         self._pduLayer.close()
 
+
+class ChannelFactory(MCSChannelFactory):
+    def buildChannel(self, mcs, userID, channelID):
+        print("Building channel %d (user: %d)" % (channelID, userID))
+
 class RDPServerController(pdu.layer.PDUServerListener):
     """
     @summary: Controller use in server side mode
@@ -376,14 +390,39 @@ class RDPServerController(pdu.layer.PDUServerListener):
         #transport pdu layer
         self._x224Layer = x224.Server(self._mcsLayer, privateKeyFileName, certificateFileName, False)
         #transport packet (protocol layer)
-        self._tpktLayer = tpkt.TPKT(self._x224Layer)
+        router = MCSClientRouter(ChannelFactory())
+        router.setObserver(self)
+        mcs_layer = MCSLayer(router)
+        #mcs_layer.setNext(gcc_layer)
+        x224_layer = X224Layer()
+        x224_layer.setObserver(self)
+        x224_layer.setNext(mcs_layer)
+        tpkt_layer = TPKTLayer()
+        tpkt_layer.setNext(x224_layer)
+        tcp_layer = TCPLayer()
+        tcp_layer.setNext(tpkt_layer)
+        self._tpktLayer = tcp_layer
         
         #fastpath stack
-        self._pduLayer.initFastPath(self._secLayer)
-        self._secLayer.initFastPath(self._tpktLayer)
+#        self._pduLayer.initFastPath(self._secLayer)
+#        self._secLayer.initFastPath(self._tpktLayer)
         #set color depth of session
         self.setColorDepth(colorDepth)
-        
+
+    ####################
+    def connectionRequest(self, pdu):
+        print "ConnectionRequest {}".format(pdu)
+
+    def connectionConfirm(self, pdu):
+        print "ConnectionConfirm {}".format(pdu)
+
+    def disconnectRequest(self, pdu):
+        print "DisconnectRequest {}".format(pdu)
+
+    def error(self, pdu):
+        print "Ahah error {}".format(pdu)
+    ####################
+
     def close(self):
         """
         @summary: Close protocol stack
@@ -576,6 +615,8 @@ class ClientFactory(layer.RawLayerClientFactory):
         @param addr: destination address
         """
         raise CallPureVirtualFuntion("%s:%s defined by interface %s"%(self.__class__, "buildObserver", "ClientFactory"))
+
+
 
 class ServerFactory(layer.RawLayerServerFactory):
     """

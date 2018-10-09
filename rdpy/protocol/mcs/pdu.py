@@ -1,8 +1,9 @@
 from StringIO import StringIO
 
 from rdpy.core import ber, per
+from rdpy.core.error import InvalidValue, InvalidSize
 from rdpy.core.packing import Uint8, Uint16BE
-from rdpy.core.error import InvalidExpectedDataException, InvalidValue, InvalidSize, CallPureVirtualFuntion
+
 
 class MCSPDUType:
     """
@@ -211,7 +212,7 @@ class MCSParser:
         targetParams = self.parseDomainParams(stream)
         minParams = self.parseDomainParams(stream)
         maxParams = self.parseDomainParams(stream)
-        payload = ber.readOctetString(stream.read)
+        payload = ber.readOctetString(stream)
         return MCSConnectInitialPDU(callingDomain, calledDomain, upward, targetParams, minParams, maxParams, payload)
     
     def parseConnectResponse(self, stream):

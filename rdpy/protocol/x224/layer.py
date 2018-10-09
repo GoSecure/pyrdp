@@ -1,9 +1,10 @@
 from abc import abstractmethod, ABCMeta
 
-from rdpy.core import log
+from pdu import X224Parser, X224Data, X224Header, X224ConnectionRequest, X224ConnectionConfirm, X224DisconnectRequest, \
+    X224Error
 from rdpy.core.newlayer import Layer
 from rdpy.core.subject import Subject
-from pdu import X224Parser, X224Data, X224Header, X224ConnectionRequest, X224ConnectionConfirm, X224DisconnectRequest
+
 
 class X224Observer:
     __metaclass__ = ABCMeta
@@ -33,6 +34,7 @@ class X224Layer(Layer, Subject):
         super(X224Layer, self).__init__()
         super(X224Layer, self).__init__()
         self.parser = X224Parser()
+        self.handlers = {}
     
     def setObserver(self, observer):
         super(X224Layer, self).setObserver(observer)
@@ -51,7 +53,7 @@ class X224Layer(Layer, Subject):
         elif pdu.header in self.handlers:
             self.handlers[pdu.header](pdu)
         else:
-            raise Exception("Unhandled PDU received")
+            raise Exception("Unhandled PDU received: {}".format(pdu))
     
     def send(self, payload, **kwargs):
         roa = kwargs.pop("roa", False)

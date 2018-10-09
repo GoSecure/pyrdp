@@ -1,5 +1,6 @@
-from rdpy.core.newlayer import Layer
 from pdu import TPKTParser, TPKTPDU
+from rdpy.core.newlayer import Layer
+
 
 class TPKTLayer(Layer):
     """
@@ -19,3 +20,6 @@ class TPKTLayer(Layer):
     def send(self, data):
         pdu = TPKTPDU(3, data)
         self.previous.send(self.parser.write(pdu))
+
+    def startTLS(self, tlsContext):
+        self.previous.startTLS(tlsContext)
