@@ -631,7 +631,8 @@ class RDPServerConnectionParser:
         modulus = stream.read(keyLength - 8)
         padding = stream.read(8)
 
-        modulus = bytes_to_long(modulus)
+        # Modulus must be reversed because bytes_to_long expects it to be in big endian format
+        modulus = bytes_to_long(modulus[:: -1])
         publicExponent = long(publicExponent)
         publicKey = RSA.construct((modulus, publicExponent))
 
