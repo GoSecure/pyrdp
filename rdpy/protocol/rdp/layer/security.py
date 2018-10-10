@@ -1,5 +1,5 @@
 from rdpy.core.newlayer import Layer
-from rdpy.protocol.rdp.pdu.security import RDPBasicSecurityPDU, RDPSignedSecurityPDU, RDPFIPSSecurityPDU, RDPSecurityExchangePDU, RDPClientInfoPDU, RDPSecurityParser, RDPSecurityHeaderType, RDPSecurityFlags, FIPSVersion
+from rdpy.protocol.rdp.pdu.security import RDPBasicSecurityPDU, RDPSignedSecurityPDU, RDPFIPSSecurityPDU, RDPSecurityExchangePDU, RDPSecurityParser, RDPSecurityHeaderType, RDPSecurityFlags, FIPSVersion
 
 class RDPSecurityLayer(Layer):
     # Header type used for Client Info and Licensing PDUs if no encryption is used

@@ -4,7 +4,7 @@ from rdpy.core.packing import Uint32LE, Uint16LE
 
 class ClientInfoFlags:
     """
-    Flags for the ClientInfoPDU flags field
+    Flags for the RDPClientInfoPDU flags field
     """
     INFO_MOUSE = 0x00000001
     INFO_DISABLECTRLALTDEL = 0x00000002
@@ -26,7 +26,7 @@ class ClientInfoFlags:
     INFO_VIDEO_DISABLE = 0x00400000
     INFO_CompressionTypeMask = 0x00001E00
 
-class ClientInfoPDU:
+class RDPClientInfoPDU:
     def __init__(self, codePage, flags, domain, username, password, alternateShell, workingDir, extraInfo):
         self.codePage = codePage
         self.flags = flags
@@ -40,8 +40,8 @@ class ClientInfoPDU:
 class RDPSettingsParser:
     def parse(self, data):
         stream = StringIO(data)
-        codePage = Uint16LE.unpack(stream)
-        flags = Uint16LE.unpack(stream)
+        codePage = Uint32LE.unpack(stream)
+        flags = Uint32LE.unpack(stream)
 
         hasNullBytes = codePage == 1252 or flags & ClientInfoFlags.INFO_UNICODE != 0
         nullByteCount = 1 if hasNullBytes else 0
@@ -66,15 +66,15 @@ class RDPSettingsParser:
 
         extraInfo = stream.read()
 
-        return ClientInfoPDU(codePage, flags, domain, username, password, alternateShell, workingDir, extraInfo)
+        return RDPClientInfoPDU(codePage, flags, domain, username, password, alternateShell, workingDir, extraInfo)
     
     def write(self, pdu):
-        if not isinstance(pdu, ClientInfoPDU):
+        if not isinstance(pdu, RDPClientInfoPDU):
             raise Exception("Unknown settings PDU type")
         
         stream = StringIO()
-        stream.write(Uint16LE.pack(pdu.codePage))
-        stream.write(Uint16LE.pack(pdu.flags))
+        stream.write(Uint32LE.pack(pdu.codePage))
+        stream.write(Uint32LE.pack(pdu.flags))
         
         hasNullBytes = pdu.codePage == 1252 or pdu.flags & ClientInfoFlags.INFO_UNICODE != 0
         nullByteCount = 1 if hasNullBytes else 0
