@@ -15,9 +15,8 @@ class RDPSecurityLayer(Layer):
         if self.headerType == RDPSecurityHeaderType.NONE:
             self.next.recv(data)
         else:
-            print(data.encode('hex'))
-            data = self.crypter.decrypt(data)
             pdu = self.parser.parse(data)
+            pdu.payload = self.crypter.decrypt(pdu.payload)
             self.pduReceived(pdu, True)
     
     def send(self, data):
