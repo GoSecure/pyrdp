@@ -136,4 +136,7 @@ class MCSClientRouter(MCSRouter, Subject):
         :param pdu: the PDU
         """
         userID = pdu.initiator
-        self.users[userID].recvSendDataIndication(pdu.channelID, pdu.payload)
+
+        for id, user in self.users.items():
+            if user.isInChannel(pdu.channelID):
+                user.recvSendDataIndication(pdu.channelID, pdu)
