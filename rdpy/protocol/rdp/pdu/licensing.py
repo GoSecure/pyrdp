@@ -6,6 +6,7 @@ class RDPLicensingPDUType:
     LICENSE_INFO = 0x12
     NEW_LICENSE_REQUEST = 0x13
     PLATFORM_CHALLENGE_RESPONSE = 0x15
+    ERROR_ALERT = 0xFF
 
 class RDPLicensingPDU:
     def __init__(self, msgType, flags):

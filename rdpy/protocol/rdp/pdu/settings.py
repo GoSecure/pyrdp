@@ -112,6 +112,5 @@ class RDPSettingsParser:
         stream.write(alternateShell)
         stream.write(workingDir)
         stream.write(pdu.extraInfo)
-        print(stream.getvalue().encode('hex'))
 
         return stream.getvalue()
