@@ -192,7 +192,6 @@ class ClientClusterData:
         self.redirectedSessionID = redirectedSessionID
 
 
-<<<<<<< HEAD
 
 class RDPServerDataPDU:
     def __init__(self, core, security, network):
@@ -236,7 +235,6 @@ class ProprietaryCertificate(ServerCertificate):
         self.signatureType = signatureType
         self.padding = padding
 
-=======
 class RDPNegotiationParser:
     """
     Parse the first two packets of the RDP connection sequence,
@@ -299,7 +297,6 @@ class NegotiationProtocols:
     SSL = 0b00000001
     CRED_SSP = 0b00000010
     EARLY_USER_AUTHORIZATION_RESULT = 0b00001000
->>>>>>> a71bb3c9175e3e90530a2e60e869d14e0dd3b619
 
 
 class RDPClientConnectionParser:
@@ -510,39 +507,7 @@ class RDPClientConnectionParser:
         stream.write(Uint32LE.pack(cluster.flags))
         stream.write(Uint32LE.pack(cluster.redirectedSessionID))
 
-<<<<<<< HEAD
-=======
 
-
-class RDPServerDataPDU:
-    def __init__(self, core, network, security):
-        self.core = core
-        self.network = network
-        self.security = security
-
-class ServerCoreData:
-    def __init__(self, version, clientRequestedProtocols, earlyCapabilityFlags):
-        self.header = RDPConnectionDataType.SERVER_CORE
-        self.version = version
-        self.clientRequestedProtocols = clientRequestedProtocols
-        self.earlyCapabilityFlags = earlyCapabilityFlags
-
-class ServerNetworkData:
-    def __init__(self, mcsChannelId, channels):
-        self.header = RDPConnectionDataType.SERVER_NETWORK
-        self.mcsChannelId = mcsChannelId
-        self.channels = channels
-    
-class ServerSecurityData:
-    def __init__(self, encryptionMethod, encryptionLevel, serverRandom, serverCertificate):
-        self.header = RDPConnectionDataType.SERVER_SECURITY
-        self.encryptionMethod = encryptionMethod
-        self.encryptionLevel = encryptionLevel
-        self.serverRandom = serverRandom
-        self.serverCertificate = serverCertificate
-
-
->>>>>>> a71bb3c9175e3e90530a2e60e869d14e0dd3b619
 class RDPServerConnectionParser:
     """
     Parser for Server Data PDUs (i.e: client).
@@ -617,13 +582,8 @@ class RDPServerConnectionParser:
         channelCount = Uint16LE.unpack(stream)
         channels = [Uint16LE.unpack(stream) for _ in range(channelCount)]
 
-<<<<<<< HEAD
         return ServerNetworkData(mcsChannelID, channels)
     
-=======
-        return ServerNetworkData(mcsChannelId, channels)
-
->>>>>>> a71bb3c9175e3e90530a2e60e869d14e0dd3b619
     def parseServerSecurityData(self, stream):
         stream = StrictStream(stream)
         encryptionMethod = Uint32LE.unpack(stream)
@@ -639,7 +599,6 @@ class RDPServerConnectionParser:
             serverCertificate = self.parseServerCertificate(serverCertificate)
         except EOFError:
             pass
-<<<<<<< HEAD
         
         return ServerSecurityData(encryptionMethod, encryptionLevel, serverRandom, serverCertificate)
     
@@ -677,10 +636,6 @@ class RDPServerConnectionParser:
         publicKey = RSA.construct((modulus, publicExponent))
 
         return ProprietaryCertificate(signatureAlgorithmID, keyAlgorithmID, publicKeyType, publicKey, signatureType, signature, padding)
-=======
-
-        return ServerSecurityData(encryptionMethod, encryptionLevel, serverRandom, serverCertificate)
-
 
 class RDPNegotiationResponsePDU:
     """
@@ -708,4 +663,3 @@ class RDPNegotiationRequestPDU:
         self.tlsSupported = self.requestedProtocols & NegotiationProtocols.SSL != 0
         self.credSspSupported = self.requestedProtocols & NegotiationProtocols.CRED_SSP != 0
         self.earlyUserAuthSupported = self.requestedProtocols & NegotiationProtocols.EARLY_USER_AUTHORIZATION_RESULT != 0
->>>>>>> a71bb3c9175e3e90530a2e60e869d14e0dd3b619
