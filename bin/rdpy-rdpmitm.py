@@ -30,14 +30,17 @@ Client RDP -> | ProxyServer | ProxyClient | -> Server RDP
 """
 import argparse
 import logging
+import os
 import signal
-import sys, os, getopt, time
+import time
 
-from rdpy.core import error, rss, log
-from rdpy.protocol.rdp import rdp
 from twisted.internet import reactor
 
+from rdpy.core import rss, log
+from rdpy.protocol.rdp import rdp
 # Sets the log level for the RDPY library ("rdpy").
+from rdpy.protocol.rdp.rdp2 import RDPServerFactory
+
 log.get_logger().setLevel(logging.INFO)
 
 
@@ -383,7 +386,5 @@ if __name__ == '__main__':
     mlog.info("Starting MITM. Listen on port {}. "
               "Target VM: {}. send to livePlayer: {}:{}".format(args.listen, args.target, args.destination_ip,
                                                                 args.destination_port))
-    reactor.listenTCP(int(args.listen), ProxyServerFactory(parseIpPort(args.target), args.output, args.private_key,
-                                                           args.certificate, clientSecurity, args.destination_ip,
-                                                           int(args.destination_port), args.username, args.password))
+    reactor.listenTCP(int(args.listen), RDPServerFactory(args.private_key, args.certificate))
     reactor.run()

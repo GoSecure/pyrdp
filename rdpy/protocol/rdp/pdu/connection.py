@@ -1,11 +1,14 @@
-from StringIO import StringIO
 import struct
+from StringIO import StringIO
 
 from Crypto.PublicKey import RSA
 from Crypto.Util.number import bytes_to_long
 
 from rdpy.core.packing import Uint8, Uint16LE, Uint16BE, Uint32LE
 from rdpy.core.StrictStream import StrictStream
+from rdpy.core.packing import Uint8, Uint16LE, Uint32LE, Int32LE
+from rdpy.protocol.rdp.x224 import NegociationType
+
 
 class RDPConnectionDataType:
     SERVER_CORE = 0x0C01
@@ -189,6 +192,7 @@ class ClientClusterData:
         self.redirectedSessionID = redirectedSessionID
 
 
+<<<<<<< HEAD
 
 class RDPServerDataPDU:
     def __init__(self, core, security, network):
@@ -232,6 +236,70 @@ class ProprietaryCertificate(ServerCertificate):
         self.signatureType = signatureType
         self.padding = padding
 
+=======
+class RDPNegotiationParser:
+    """
+    Parse the first two packets of the RDP connection sequence,
+    where the security protocol is chosen.
+    """
+
+    def __init__(self):
+
+        self.writers = {
+            NegociationType.TYPE_RDP_NEG_RSP: self.writeNegotiationResponsePDU,
+        }
+
+    def parse(self, data):
+        """
+        Parse RDP Negotiation Request packet. Throws Exceptions if packet is malformed.
+        :param data: The bytes of the RDP Negotiation Request packet.
+        :return: A RDPNegotiationRequestPDU
+        """
+        split_data = data.split("\r\n")
+        if len(split_data) != 2:
+            raise Exception("No mstshash cookie (not an error per se, but not implemented)")
+        cookie = split_data[0]
+        flags = split_data[1]
+        if len(split_data[1]) < 4:
+            raise Exception("RDP negotiation packet not big enough: {} bytes".format(len(split_data[1])))
+        packet_type = Uint16LE.unpack(split_data[1][0 : 2])
+        if packet_type != NegociationType.TYPE_RDP_NEG_REQ:
+            raise Exception("Invalid RDP packet type. Should be {}, is {}".format(NegociationType.TYPE_RDP_NEG_REQ,
+                                                                                  packet_type))
+        length = Uint16LE.unpack(split_data[1][2 : 4])
+        if length < 8:
+            raise Exception("Invalid RDP negotiation packet length: {}".format(length))
+        requested_protocols = Uint32LE.unpack(split_data[1][4: 8])
+        return RDPNegotiationRequestPDU(cookie, flags, requested_protocols)
+
+    def write(self, pdu):
+        """
+        :param pdu: The PDU to write
+        :return: A StringIO of the bytes of the given PDU
+        """
+        if pdu.packetType in self.writers.keys():
+            return self.writers[pdu.packetType](pdu)
+        else:
+            raise Exception("Wrong packet type.")
+
+    def writeNegotiationResponsePDU(self, pdu):
+        """
+        :type pdu: RDPNegotiationResponsePDU
+        """
+        stream = StringIO()
+        stream.write(Uint8.pack(pdu.packetType))
+        stream.write(Uint8.pack(pdu.flags))
+        stream.write(Uint8.pack(8))  # Length
+        stream.write(Uint8.pack(0))  # Empty byte?
+        stream.write(Int32LE.pack(pdu.selected_protocol))
+        return stream.getvalue()
+
+
+class NegotiationProtocols:
+    SSL = 0b00000001
+    CRED_SSP = 0b00000010
+    EARLY_USER_AUTHORIZATION_RESULT = 0b00001000
+>>>>>>> a71bb3c9175e3e90530a2e60e869d14e0dd3b619
 
 
 class RDPClientConnectionParser:
@@ -259,7 +327,7 @@ class RDPClientConnectionParser:
         network = None
         cluster = None
 
-        stream = StringIO(data)
+        stream = StringIO(data.payload)
         while core is None or security is None or network is None or cluster is None:
             structure = self.parseStructure(stream)
 
@@ -442,6 +510,39 @@ class RDPClientConnectionParser:
         stream.write(Uint32LE.pack(cluster.flags))
         stream.write(Uint32LE.pack(cluster.redirectedSessionID))
 
+<<<<<<< HEAD
+=======
+
+
+class RDPServerDataPDU:
+    def __init__(self, core, network, security):
+        self.core = core
+        self.network = network
+        self.security = security
+
+class ServerCoreData:
+    def __init__(self, version, clientRequestedProtocols, earlyCapabilityFlags):
+        self.header = RDPConnectionDataType.SERVER_CORE
+        self.version = version
+        self.clientRequestedProtocols = clientRequestedProtocols
+        self.earlyCapabilityFlags = earlyCapabilityFlags
+
+class ServerNetworkData:
+    def __init__(self, mcsChannelId, channels):
+        self.header = RDPConnectionDataType.SERVER_NETWORK
+        self.mcsChannelId = mcsChannelId
+        self.channels = channels
+    
+class ServerSecurityData:
+    def __init__(self, encryptionMethod, encryptionLevel, serverRandom, serverCertificate):
+        self.header = RDPConnectionDataType.SERVER_SECURITY
+        self.encryptionMethod = encryptionMethod
+        self.encryptionLevel = encryptionLevel
+        self.serverRandom = serverRandom
+        self.serverCertificate = serverCertificate
+
+
+>>>>>>> a71bb3c9175e3e90530a2e60e869d14e0dd3b619
 class RDPServerConnectionParser:
     """
     Parser for Server Data PDUs (i.e: client).
@@ -475,12 +576,12 @@ class RDPServerConnectionParser:
                 security = structure
             elif structure.header == RDPConnectionDataType.SERVER_NETWORK:
                 network = structure
-            
+
             if len(stream.getvalue()) == 0:
                 break
-        
+
         return RDPServerDataPDU(core, security, network)
-    
+
     def parseStructure(self, stream):
         header = Uint16LE.unpack(stream)
         length = Uint16LE.unpack(stream) - 4
@@ -490,12 +591,12 @@ class RDPServerConnectionParser:
             raise Exception("Server Data length field does not match actual size")
 
         substream = StringIO(data)
-        
+
         if header not in self.parsers:
             raise Exception("Unknown server data header")
-        
+
         return self.parsers[header](substream)
-    
+
     def parseServerCoreData(self, stream):
         stream = StrictStream(stream)
 
@@ -508,16 +609,21 @@ class RDPServerConnectionParser:
             earlyCapabilityFlags = Uint32LE.unpack(stream)
         except EOFError:
             pass
-        
+
         return ServerCoreData(version, clientRequestedProtocols, earlyCapabilityFlags)
-    
+
     def parseServerNetworkData(self, stream):
         mcsChannelID = Uint16LE.unpack(stream)
         channelCount = Uint16LE.unpack(stream)
         channels = [Uint16LE.unpack(stream) for _ in range(channelCount)]
 
+<<<<<<< HEAD
         return ServerNetworkData(mcsChannelID, channels)
     
+=======
+        return ServerNetworkData(mcsChannelId, channels)
+
+>>>>>>> a71bb3c9175e3e90530a2e60e869d14e0dd3b619
     def parseServerSecurityData(self, stream):
         stream = StrictStream(stream)
         encryptionMethod = Uint32LE.unpack(stream)
@@ -533,6 +639,7 @@ class RDPServerConnectionParser:
             serverCertificate = self.parseServerCertificate(serverCertificate)
         except EOFError:
             pass
+<<<<<<< HEAD
         
         return ServerSecurityData(encryptionMethod, encryptionLevel, serverRandom, serverCertificate)
     
@@ -570,3 +677,35 @@ class RDPServerConnectionParser:
         publicKey = RSA.construct((modulus, publicExponent))
 
         return ProprietaryCertificate(signatureAlgorithmID, keyAlgorithmID, publicKeyType, publicKey, signatureType, signature, padding)
+=======
+
+        return ServerSecurityData(encryptionMethod, encryptionLevel, serverRandom, serverCertificate)
+
+
+class RDPNegotiationResponsePDU:
+    """
+    Second PDU of the RDP connection sequence. Sent by the server.
+    Important information is the chosen encryption method.
+    """
+
+    def __init__(self, flags, selected_protocol):
+        self.packetType = NegociationType.TYPE_RDP_NEG_RSP
+        self.length = 8
+        self.flags = flags
+        self.selected_protocol = selected_protocol
+
+
+class RDPNegotiationRequestPDU:
+    """
+    First PDU of the RDP connection sequence. Sent by the client.
+    """
+
+    def __init__(self, cookie, flags, requested_protocols):
+        self.cookie = cookie
+        self.flags = flags
+        self.packetType = NegociationType.TYPE_RDP_NEG_REQ
+        self.requestedProtocols = requested_protocols
+        self.tlsSupported = self.requestedProtocols & NegotiationProtocols.SSL != 0
+        self.credSspSupported = self.requestedProtocols & NegotiationProtocols.CRED_SSP != 0
+        self.earlyUserAuthSupported = self.requestedProtocols & NegotiationProtocols.EARLY_USER_AUTHORIZATION_RESULT != 0
+>>>>>>> a71bb3c9175e3e90530a2e60e869d14e0dd3b619

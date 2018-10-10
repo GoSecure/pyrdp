@@ -38,6 +38,7 @@ class X224Layer(Layer):
     def __init__(self):
         Layer.__init__(self)
         self.parser = X224Parser()
+        self.handlers = {}
     
     def recv(self, data):
         pdu = self.parser.parse(data)
