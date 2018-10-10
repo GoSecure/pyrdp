@@ -1,7 +1,12 @@
-from rdpy.core import log
 from rdpy.core.newlayer import Layer, LayerStrictRoutedObserver
 from rdpy.core.subject import ObservedBy
-from pdu import X224Parser, X224Data, X224Header, X224ConnectionRequest, X224ConnectionConfirm, X224DisconnectRequest
+from pdu import X224Parser, X224Data, X224Header, X224ConnectionRequest, X224ConnectionConfirm, X224DisconnectRequest, \
+    X224Error
+from pdu import X224Parser, X224Data, X224Header, X224ConnectionRequest, X224ConnectionConfirm, X224DisconnectRequest, \
+    X224Error
+from rdpy.core.newlayer import Layer, LayerStrictRoutedObserver
+from rdpy.core.subject import ObservedBy
+
 
 class X224Observer(LayerStrictRoutedObserver):
     def __init__(self, **kwargs):
@@ -27,6 +32,7 @@ class X224Observer(LayerStrictRoutedObserver):
 
     def onError(self, pdu):
         raise Exception("Unhandled X224 Error PDU")
+
 
 @ObservedBy(X224Observer)
 class X224Layer(Layer):
