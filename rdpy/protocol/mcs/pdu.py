@@ -328,14 +328,14 @@ class MCSParser:
         Parse a Send Data Request PDU
         :param stream: stream containing the data
         """
-        return parseDataPDU(stream, MCSSendDataRequestPDU)
+        return self.parseDataPDU(stream, MCSSendDataRequestPDU)
     
     def parseSendDataIndication(self, stream):
         """
         Parse a Send Data Indication PDU
         :param stream: stream containing the data
         """
-        return parseDataPDU(stream, MCSSendDataIndicationPDU)
+        return self.parseDataPDU(stream, MCSSendDataIndicationPDU)
     
 
 
