@@ -22,6 +22,7 @@ import sha, md5
 from rdpy.core import rc4
 from rdpy.core.type import StringStream, UInt32Le
 from rdpy.protocol.rdp.pdu.connection import EncryptionMethodFlag
+from rdpy.protocol.rdp.pdu.security import RDPSecurityFlags
 
 """
 Cryptographic utility functions
@@ -49,7 +50,10 @@ class RC4:
             return macData(self.macKey, data)[: 8]
     
     def verify(self, data, signature, salted):
-        pass
+        return signature[: 8] == self.sign(data, salted)
+    
+    def verifyPDU(self, pdu):
+        verified = self.verify(pdu.payload, pdu.signature, pdu.header & RDPSecurityFlags.SEC_SECURE_CHECKSUM != 0)
     
     def increment(self):
         self.operationCount += 1
