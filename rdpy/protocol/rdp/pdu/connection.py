@@ -17,6 +17,113 @@ class RDPConnectionDataType:
     CLIENT_CLUSTER = 0xC004
     CLIENT_MONITOR = 0xC005
 
+class RDPVersion:
+    RDP4 = 0x80001
+    RDP5 = 0x80004
+    RDP10 = 0x80005
+    RDP10_1 = 0x80006
+    RDP10_2 = 0x80007
+    RDP10_3 = 0x80008
+    RDP10_4 = 0x80009
+    RDP10_5 = 0x8000A
+    RDP10_6 = 0x8000B
+
+class ColorDepth:
+    RNS_UD_COLOR_4BPP = 0xCA00
+    RNS_UD_COLOR_8BPP = 0xCA01
+    RNS_UD_COLOR_16BPP_555 = 0xCA02
+    RNS_UD_COLOR_16BPP_565 = 0xCA03
+    RNS_UD_COLOR_24BPP = 0xCA04
+
+class HighColorDepth:
+    HIGH_COLOR_4BPP = 4
+    HIGH_COLOR_8BPP = 8
+    HIGH_COLOR_15BPP = 15
+    HIGH_COLOR_16BPP = 16
+    HIGH_COLOR_24BPP = 24
+
+class KeyboardType:
+    IBM_PC_XT = 1
+    OLIVETTI = 2
+    IBM_PC_AT = 3
+    IBM_ENHANCED = 4
+    NOKIA_1050 = 5
+    NOKIA_9140 = 6
+    JAPANESE = 7
+
+class SupportedColorDepth:
+    RNS_UD_24BPP_SUPPORT = 0x0001
+    RNS_UD_16BPP_SUPPORT = 0x0002
+    RNS_UD_15BPP_SUPPORT = 0x0004
+    RNS_UD_32BPP_SUPPORT = 0x0008
+
+class ClientCapabilityFlag:
+    RNS_UD_CS_SUPPORT_ERRINFO_PDU = 0x0001
+    RNS_UD_CS_WANT_32BPP_SESSION = 0x0002
+    RNS_UD_CS_SUPPORT_STATUSINFO_PDU = 0x0004
+    RNS_UD_CS_STRONG_ASYMMETRIC_KEYS = 0x0008
+    RNS_UD_CS_UNUSED = 0x0010
+    RNS_UD_CS_VALID_CONNECTION_TYPE = 0x0020
+    RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU = 0x0040
+    RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT = 0x0080
+    RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL = 0x0100
+    RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE = 0x0200
+    RNS_UD_CS_SUPPORT_HEARTBEAT_PDU = 0x0400
+
+class ServerCapabilityFlag:
+    RNS_UD_SC_EDGE_ACTIONS_SUPPORTED_V1 = 1
+    RNS_UD_SC_DYNAMIC_DST_SUPPORTED = 2
+    RNS_UD_SC_EDGE_ACTIONS_SUPPORTED_V2 = 4
+
+class ConnectionType:
+    CONNECTION_TYPE_MODEM = 0x01
+    CONNECTION_TYPE_BROADBAND_LOW = 0x02
+    CONNECTION_TYPE_SATELLITE = 0x03
+    CONNECTION_TYPE_BROADBAND_HIGH = 0x04
+    CONNECTION_TYPE_WAN = 0x05
+    CONNECTION_TYPE_LAN = 0x06
+    CONNECTION_TYPE_AUTODETECT = 0x07
+
+class DesktopOrientation:
+    ORIENTATION_LANDSCAPE = 0
+    ORIENTATION_PORTRAIT = 90
+    ORIENTATION_LANDSCAPE_FLIPPED = 180
+    ORIENTATION_PORTRAIT_FLIPPED = 270
+
+class EncryptionMethodFlag:
+    ENCRYPTION_NONE = 0x00
+    ENCRYPTION_40BIT = 0x01
+    ENCRYPTION_128BIT = 0x02
+    ENCRYPTION_56BIT = 0x08
+    ENCRYPTION_FIPS = 0x10
+
+class EncryptionLevel:
+    ENCRYPTION_LEVEL_NONE = 0
+    ENCRYPTION_LEVEL_LOW = 1
+    ENCRYPTION_LEVEL_CLIENT_COMPATIBLE = 2
+    ENCRYPTION_LEVEL_HIGH = 3
+    ENCRYPTION_LEVEL_FIPS = 4
+
+class ClusterFlags:
+    REDIRECTION_SUPPORTED = 0x01
+    REDIRECTED_SESSIONID_FIELD_VALID = 0x02
+    SERVER_SESSION_REDIRECTION_VERSION_MASK = 0x3C
+    REDIRECTED_SMARTCARD = 0x40
+
+class RedirectionVersion:
+    REDIRECTION_VERSION1 = 0
+    REDIRECTION_VERSION2 = 1
+    REDIRECTION_VERSION3 = 2
+    REDIRECTION_VERSION4 = 3
+    REDIRECTION_VERSION5 = 4
+    REDIRECTION_VERSION6 = 5
+
+class ServerCertificateType:
+    PROPRIETARY = 1
+    X509 = 2
+
+
+
 class RDPClientDataPDU:
     def __init__(self, coreData, securityData, networkData, clusterData):
         self.coreData = coreData
@@ -59,6 +166,7 @@ class ClientSecurityData:
     def __init__(self, encryptionMethods, extEncryptionMethods):
         self.header = RDPConnectionDataType.CLIENT_SECURITY
         self.encryptionMethods = encryptionMethods
+        # extEncryptionMethods is used only for the French locale (https://msdn.microsoft.com/en-us/library/cc240511.aspx)
         self.extEncryptionMethods = extEncryptionMethods
 
 class ClientChannelDefinition:
@@ -79,6 +187,52 @@ class ClientClusterData:
         self.header = RDPConnectionDataType.CLIENT_CLUSTER
         self.flags = flags
         self.redirectedSessionID = redirectedSessionID
+
+
+
+class RDPServerDataPDU:
+    def __init__(self, core, security, network):
+        self.core = core
+        self.security = security
+        self.network = network
+
+class ServerCoreData:
+    def __init__(self, version, clientRequestedProtocols, earlyCapabilityFlags):
+        self.header = RDPConnectionDataType.SERVER_CORE
+        self.version = version
+        self.clientRequestedProtocols = clientRequestedProtocols
+        self.earlyCapabilityFlags = earlyCapabilityFlags
+
+class ServerNetworkData:
+    def __init__(self, mcsChannelID, channels):
+        self.header = RDPConnectionDataType.SERVER_NETWORK
+        self.mcsChannelID = mcsChannelID
+        self.channels = channels
+    
+class ServerSecurityData:
+    def __init__(self, encryptionMethod, encryptionLevel, serverRandom, serverCertificate):
+        self.header = RDPConnectionDataType.SERVER_SECURITY
+        self.encryptionMethod = encryptionMethod
+        self.encryptionLevel = encryptionLevel
+        self.serverRandom = serverRandom
+        self.serverCertificate = serverCertificate
+
+class ServerCertificate:
+    def __init__(self, type, publicKey, signature):
+        self.type = type
+        self.publicKey = publicKey
+        self.signature = signature
+
+class ProprietaryCertificate(ServerCertificate):
+    def __init__(self, signatureAlgorithmID, keyAlgorithmID, publicKeyType, publicKey, signatureType, signature, padding):
+        ServerCertificate.__init__(self, ServerCertificateType.PROPRIETARY, publicKey, signature)
+        self.signatureAlgorithmID = signatureAlgorithmID
+        self.keyAlgorithmID = keyAlgorithmID
+        self.publicKeyType = publicKeyType
+        self.signatureType = signatureType
+        self.padding = padding
+
+
 
 class RDPClientConnectionParser:
     """
@@ -287,54 +441,6 @@ class RDPClientConnectionParser:
     def writeClientClusterData(self, stream, cluster):
         stream.write(Uint32LE.pack(cluster.flags))
         stream.write(Uint32LE.pack(cluster.redirectedSessionID))
-
-
-
-class RDPServerDataPDU:
-    def __init__(self, core, security, network):
-        self.core = core
-        self.security = security
-        self.network = network
-
-class ServerCoreData:
-    def __init__(self, version, clientRequestedProtocols, earlyCapabilityFlags):
-        self.header = RDPConnectionDataType.SERVER_CORE
-        self.version = version
-        self.clientRequestedProtocols = clientRequestedProtocols
-        self.earlyCapabilityFlags = earlyCapabilityFlags
-
-class ServerNetworkData:
-    def __init__(self, mcsChannelID, channels):
-        self.header = RDPConnectionDataType.SERVER_NETWORK
-        self.mcsChannelID = mcsChannelID
-        self.channels = channels
-    
-class ServerSecurityData:
-    def __init__(self, encryptionMethod, encryptionLevel, serverRandom, serverCertificate):
-        self.header = RDPConnectionDataType.SERVER_SECURITY
-        self.encryptionMethod = encryptionMethod
-        self.encryptionLevel = encryptionLevel
-        self.serverRandom = serverRandom
-        self.serverCertificate = serverCertificate
-
-class ServerCertificateType:
-    PROPRIETARY = 1
-    X509 = 2
-
-class ServerCertificate:
-    def __init__(self, type, publicKey, signature):
-        self.type = type
-        self.publicKey = publicKey
-        self.signature = signature
-
-class ProprietaryCertificate(ServerCertificate):
-    def __init__(self, signatureAlgorithmID, keyAlgorithmID, publicKeyType, publicKey, signatureType, signature, padding):
-        ServerCertificate.__init__(self, ServerCertificateType.PROPRIETARY, publicKey, signature)
-        self.signatureAlgorithmID = signatureAlgorithmID
-        self.keyAlgorithmID = keyAlgorithmID
-        self.publicKeyType = publicKeyType
-        self.signatureType = signatureType
-        self.padding = padding
 
 class RDPServerConnectionParser:
     """
