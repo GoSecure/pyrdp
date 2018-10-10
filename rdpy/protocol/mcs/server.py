@@ -1,5 +1,6 @@
-from pdu import MCSChannel
-from router import MCSRouter
+from pdu import MCSChannel, MCSChannelJoinConfirmPDU, MCSAttachUserConfirmPDU
+from rdpy.core.subject import Subject
+from router import MCSRouter, whenConnected
 from user import MCSUser
 
 class MCSServerConnectionObserver:
@@ -45,8 +46,8 @@ class MCSServerRouter(MCSRouter, Subject):
         :param factory: the channel factory
         :param userIDGenerator: the generator used when creating new users
         """
-        MCSRouter.__init__(mcs)
-        Subject.__init__()
+        MCSRouter.__init__(self, mcs)
+        Subject.__init__(self)
         self.factory = factory
         self.userIDGenerator = userIDGenerator
         self.users = {}

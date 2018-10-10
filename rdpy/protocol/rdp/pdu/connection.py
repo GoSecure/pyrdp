@@ -1,10 +1,8 @@
 import struct
-from StringIO import StringIO
-
 from Crypto.PublicKey import RSA
 from Crypto.Util.number import bytes_to_long
+from StringIO import StringIO
 
-from rdpy.core.packing import Uint8, Uint16LE, Uint16BE, Uint32LE
 from rdpy.core.StrictStream import StrictStream
 from rdpy.core.packing import Uint8, Uint16LE, Uint32LE, Int32LE
 from rdpy.protocol.rdp.x224 import NegociationType
@@ -129,6 +127,12 @@ class ServerCertificateType:
 
 class RDPClientDataPDU:
     def __init__(self, coreData, securityData, networkData, clusterData):
+        """
+        :type coreData: ClientCoreData
+        :type securityData: ClientSecurityData
+        :type networkData: ClientNetworkData
+        :type clusterData: ClientClusterData
+        """
         self.coreData = coreData
         self.securityData = securityData
         self.networkData = networkData
@@ -316,6 +320,11 @@ class RDPClientConnectionParser:
             RDPConnectionDataType.CLIENT_SECURITY: self.writeClientSecurityData,
             RDPConnectionDataType.CLIENT_NETWORK: self.writeClientNetworkData,
             RDPConnectionDataType.CLIENT_CLUSTER: self.writeClientClusterData,
+
+            RDPConnectionDataType.SERVER_CORE: self.writeServerCoreData,
+            RDPConnectionDataType.SERVER_NETWORK: self.writeServerNetworkData,
+            RDPConnectionDataType.SERVER_SECURITY: self.writeServerSecurityData,
+
         }
 
     def parse(self, data):
@@ -324,8 +333,8 @@ class RDPClientConnectionParser:
         network = None
         cluster = None
 
-        stream = StringIO(data.payload)
-        while core is None or security is None or network is None or cluster is None:
+        stream = StringIO(data)
+        while stream.pos != stream.len and (core is None or security is None or network is None or cluster is None):
             structure = self.parseStructure(stream)
 
             if structure.header == RDPConnectionDataType.CLIENT_CORE:
@@ -432,10 +441,9 @@ class RDPClientConnectionParser:
     
     def write(self, pdu):
         stream = StringIO()
-        self.writeStructure(stream, pdu.coreData)
-        self.writeStructure(stream, pdu.securityData)
-        self.writeStructure(stream, pdu.networkData)
-        self.writeStructure(stream, pdu.clusterData)
+        self.writeStructure(stream, pdu.core)
+        self.writeStructure(stream, pdu.security)
+        self.writeStructure(stream, pdu.network)
         return stream.getvalue()
 
     def writeStructure(self, stream, data):
@@ -506,6 +514,40 @@ class RDPClientConnectionParser:
     def writeClientClusterData(self, stream, cluster):
         stream.write(Uint32LE.pack(cluster.flags))
         stream.write(Uint32LE.pack(cluster.redirectedSessionID))
+
+    def writeServerCoreData(self, stream, data):
+        """
+        :type stream: StringIO
+        :type data: ServerCoreData
+        """
+        stream.write(Uint32LE.pack(data.version))
+        stream.write(Uint32LE.pack(data.clientRequestedProtocols))
+        stream.write(Uint32LE.pack(data.earlyCapabilityFlags))
+
+    def writeServerNetworkData(self, stream, data):
+        """
+        :type stream: StringIO
+        :type data: ServerNetworkData
+        """
+        stream.write(Uint16LE.pack(data.mcsChannelID))
+        stream.write(Uint16LE.pack(len(data.channels)))
+        for channel in data.channels:
+            stream.write(Uint16LE.pack(channel))
+        if len(data.channels) % 2 != 0:
+            stream.write(Uint16LE.pack(0))  # Write 2 empty bytes so we keep a multiple of 4.
+
+    def writeServerSecurityData(self, stream, data):
+        """
+        :type stream: StringIO
+        :type data: ServerSecurityData
+        """
+        stream.write(Uint32LE.pack(data.encryptionMethod))
+        stream.write(Uint32LE.pack(data.encryptionLevel))
+        if data.serverRandom is not None:
+            stream.write(Uint32LE.pack(len(data.serverRandom)))
+            stream.write(Uint32LE.pack(len(data.serverCertificate)))
+            stream.write(data.serverRandom)
+            stream.write(data.serverCertificate)
 
 
 class RDPServerConnectionParser:

@@ -33,6 +33,9 @@ class MCSChannel:
     CLIPRDR_CHANNEL = 1005  # Not handled by RDPY
     RDPSND_CHANNEL = 1006  # Not handled by RDPY
 
+class MCSResult:
+    RT_SUCCESSFUL = 0x00
+
 class MCSDomainParams:
     def __init__(self, maxChannelIDs, maxUserIDs, maxTokenIDs, numPriorities, minThroughput, maxHeight, maxMCSPDUSize, protocolVersion):
         self.maxChannelIDs = maxChannelIDs
@@ -55,7 +58,6 @@ class MCSDomainParams:
     @staticmethod
     def createMaximum():
         return MCSDomainParams(65535, 64535, 65535, 1, 0, 1, 65535, 2)
-
 
 
 class MCSPDU(object):
@@ -355,8 +357,10 @@ class MCSParser:
             stream.write(Uint8.pack(pdu.header))
         else:
             stream.write(Uint8.pack(pdu.header << 2))
-        
-        self.writers[pdu.header](stream, pdu)
+        contentStream = StringIO()
+        self.writers[pdu.header](contentStream, pdu)
+        stream.write(Uint8.pack(len(contentStream.getvalue())))
+        stream.write(contentStream.getvalue())
         return stream.getvalue()
         
 
@@ -408,7 +412,7 @@ class MCSParser:
         """
         stream.write(ber.writeEnumerated(pdu.result))
         stream.write(ber.writeInteger(pdu.calledConnectID))
-        self.writeDomainParams(pdu.domainParams)
+        self.writeDomainParams(stream, pdu.domainParams)
         stream.write(ber.writeOctetString(pdu.payload))
     
     def writeErectDomainRequest(self, stream, pdu):
