@@ -72,6 +72,7 @@ class RDPSecurityLayer(Layer):
         self.previous.send(self.parser.write(pdu))
     
     def sendFIPSSecurity(self, data, header):
+        header |= RDPSecurityFlags.SEC_SECURE_CHECKSUM
         padLength = self.crypter.getPadLength(data)
         signature = self.crypter.sign(data, True)
         data = self.crypter.encrypt(data)
