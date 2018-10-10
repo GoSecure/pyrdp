@@ -76,20 +76,42 @@ class RDPSettingsParser:
         stream.write(Uint32LE.pack(pdu.codePage))
         stream.write(Uint32LE.pack(pdu.flags))
         
-        hasNullBytes = pdu.codePage == 1252 or pdu.flags & ClientInfoFlags.INFO_UNICODE != 0
+        isUnicode = pdu.flags & ClientInfoFlags.INFO_UNICODE != 0
+        hasNullBytes = pdu.codePage == 1252 or isUnicode
         nullByteCount = 1 if hasNullBytes else 0
+        unicodeMultiplier = 2 if isUnicode else 0
 
-        domainLength = len(pdu.domain) + nullByteCount
-        usernameLength = len(pdu.username) + nullByteCount
-        passwordLength = len(pdu.password) + nullByteCount
-        alternateShellLength = len(pdu.alternateShell) + nullByteCount
-        workingDirLength = len(pdu.workingDir) + nullByteCount
+        domain = pdu.domain + "\x00" * nullByteCount
+        username = pdu.username + "\x00" * nullByteCount
+        password = pdu.password + "\x00" * nullByteCount
+        alternateShell = pdu.alternateShell + "\x00" * nullByteCount
+        workingDir = pdu.workingDir + "\x00" * nullByteCount
+
+        if isUnicode:
+            domain = domain.encode("utf-16le")
+            username = username.encode("utf-16le")
+            password = password.encode("utf-16le")
+            alternateShell = alternateShell.encode("utf-16le")
+            workingDir = workingDir.encode("utf-16le")
+
+        domainLength = len(domain) - nullByteCount * unicodeMultiplier
+        usernameLength = len(username) - nullByteCount * unicodeMultiplier
+        passwordLength = len(password) - nullByteCount * unicodeMultiplier
+        alternateShellLength = len(alternateShell) - nullByteCount * unicodeMultiplier
+        workingDirLength = len(workingDir) - nullByteCount * unicodeMultiplier
         
-        stream.write(pdu.domain + "\x00" * nullByteCount)
-        stream.write(pdu.username + "\x00" * nullByteCount)
-        stream.write(pdu.password + "\x00" * nullByteCount)
-        stream.write(pdu.alternateShell + "\x00" * nullByteCount)
-        stream.write(pdu.workingDir + "\x00" * nullByteCount)
+
+        stream.write(Uint16LE.pack(domainLength))
+        stream.write(Uint16LE.pack(usernameLength))
+        stream.write(Uint16LE.pack(passwordLength))
+        stream.write(Uint16LE.pack(alternateShellLength))
+        stream.write(Uint16LE.pack(workingDirLength))
+        stream.write(domain)
+        stream.write(username)
+        stream.write(password)
+        stream.write(alternateShell)
+        stream.write(workingDir)
         stream.write(pdu.extraInfo)
+        print(stream.getvalue().encode('hex'))
 
         return stream.getvalue()
