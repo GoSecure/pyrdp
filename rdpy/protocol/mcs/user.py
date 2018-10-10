@@ -43,6 +43,9 @@ class MCSUser(Subject):
         if self.observer:
             self.observer.onAttachRefused(self)
     
+    def isInChannel(self, channelID):
+        return channelID in self.channels
+    
     def channelJoined(self, mcs, channelID):
         """
         Called when a channel was joined
