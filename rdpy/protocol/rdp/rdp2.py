@@ -1,6 +1,5 @@
 from rdpy.core import log
 from rdpy.core.newlayer import Layer
-from rdpy.protocol.gcc.pdu import GCCParser, GCCConferenceCreateResponsePDU
 from rdpy.protocol.mcs.channel import MCSChannelFactory
 from rdpy.protocol.mcs.client import MCSClientConnectionObserver
 from rdpy.protocol.mcs.layer import MCSLayer
@@ -8,6 +7,9 @@ from rdpy.protocol.mcs.pdu import MCSConnectResponsePDU, MCSDomainParams
 from rdpy.enum.mcs import MCSResult
 from rdpy.protocol.mcs.server import MCSServerRouter, MCSUserIDGenerator
 from rdpy.protocol.mcs.user import MCSUserObserver
+from rdpy.protocol.parser.gcc import GCCParser
+from rdpy.protocol.pdu.gcc import GCCConferenceCreateResponsePDU
+from rdpy.protocol.pdu.mcs import MCSConnectResponsePDU
 from rdpy.protocol.rdp.pdu.connection import RDPClientConnectionParser, RDPNegotiationParser, \
     RDPNegotiationResponsePDU, NegotiationProtocols, RDPServerDataPDU, ServerCoreData, ServerNetworkData, \
     ServerSecurityData, RDPServerConnectionParser

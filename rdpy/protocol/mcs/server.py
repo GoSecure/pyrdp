@@ -1,8 +1,8 @@
-from pdu import MCSChannelJoinConfirmPDU, MCSAttachUserConfirmPDU
-from rdpy.core.subject import Subject
 from rdpy.enum.mcs import MCSChannelID
+from rdpy.protocol.pdu.mcs import MCSAttachUserConfirmPDU, MCSChannelJoinConfirmPDU
 from router import MCSRouter, whenConnected
 from user import MCSUser
+
 
 class MCSServerConnectionObserver:
     """
@@ -44,6 +44,7 @@ class MCSServerRouter(MCSRouter, Subject):
     """
     def __init__(self, mcs, factory, userIDGenerator):
         """
+        :param mcs: MCSLayer
         :param factory: the channel factory
         :param userIDGenerator: the generator used when creating new users
         :type userIDGenerator: MCSUserIDGenerator
@@ -93,7 +94,7 @@ class MCSServerRouter(MCSRouter, Subject):
         if userID not in self.users:
             raise Exception("User does not exist")
         
-        self.users[userID].joinedChannel(self.msc, channelID)
+        self.users[userID].channelJoined(self.mcs, channelID)
         self.mcs.send(MCSChannelJoinConfirmPDU(0, userID, channelID, channelID, ""))
     
     @whenConnected

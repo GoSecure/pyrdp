@@ -2,71 +2,8 @@ from StringIO import StringIO
 
 from rdpy.core.packing import Uint8, Uint16BE
 from rdpy.enum.x224 import X224Header
-
-class X224PDU(object):
-    """
-    @summary: Base class for X224 PDUs
-    """
-    def __init__(self, length, header, payload):
-        self.length = length
-        self.header = header
-        self.payload = payload
-
-class X224ConnectionRequest(X224PDU):
-    """
-    @summary: X224 Connection Request PDU
-    """
-    def __init__(self, credit, destination, source, options, payload):
-        super(X224ConnectionRequest, self).__init__(len(payload) + 6, X224Header.X224_TPDU_CONNECTION_REQUEST, payload)
-        self.credit = credit
-        self.destination = destination
-        self.source = source
-        self.options = options
-
-class X224ConnectionConfirm(X224PDU):
-    """
-    @summary: X224 Connection Confirm PDU
-    """
-    def __init__(self, credit, destination, source, options, payload):
-        super(X224ConnectionConfirm, self).__init__(len(payload) + 6, X224Header.X224_TPDU_CONNECTION_CONFIRM, payload)
-        self.credit = credit
-        self.destination = destination
-        self.source = source
-        self.options = options
-
-class X224DisconnectRequest(X224PDU):
-    """
-    @summary: X224 Disconnect Request PDU
-    """
-    def __init__(self, destination, source, reason, payload):
-        super(X224DisconnectRequest, self).__init__(len(payload) + 6, X224Header.X224_TPDU_DISCONNECT_REQUEST, payload)
-        self.destination = destination
-        self.source = source
-        self.reason = reason
-
-class X224Data(X224PDU):
-    """
-    @summary: X224 Data PDU
-    """
-    def __init__(self, roa, eot, payload):
-        """
-        @param roa: request of acknowledgement (this is False unless agreed upon during connection)
-        @param eot: end of transmission (True if this is the last packet in a sequence)
-        @param payload: the data payload
-        """
-        super(X224Data, self).__init__(2, X224Header.X224_TPDU_DATA, payload)
-        self.roa = roa
-        self.eot = eot
-
-class X224Error(X224PDU):
-    """
-    @summary: X224 Error PDU
-    """
-    def __init__(self, destination, cause, payload):
-        super(X224Error, self).__init__(len(payload) + 4, X224Header.X224_TPDU_ERROR, payload)
-        self.destination = destination
-        self.cause = cause
-
+from rdpy.protocol.pdu.x224 import X224ConnectionConfirm, X224ConnectionRequest, X224DisconnectRequest, X224Data, \
+    X224Error
 
 
 class X224Parser:
@@ -100,13 +37,13 @@ class X224Parser:
 
         if header not in self.parsers:
             raise Exception("Unknown X224 header received")
-        
+
         return self.parsers[header](data, length)
-    
+
     def parseConnectionPDU(self, data, length, name):
         if length < 6:
             raise Exception("Invalid %s" % name)
-        
+
         destination = Uint16BE.unpack(data[2 : 4])
         source = Uint16BE.unpack(data[4 : 6])
         options = Uint8.unpack(data[6])
@@ -114,80 +51,80 @@ class X224Parser:
 
         if len(payload) != length - 6:
             raise Exception("Invalid length indicator for X224 %s" % name)
-        
+
         return source, destination, options, payload
-    
+
     def parseConnectionRequest(self, data, length):
         credit = Uint8.unpack(data[1]) & 0xf
         destination, source, options, payload = self.parseConnectionPDU(data, length, "Connection Request")
         return X224ConnectionRequest(credit, destination, source, options, payload)
-    
+
     def parseConnectionConfirm(self, data, length):
         credit = Uint8.unpack(data[1]) & 0xf
         destination, source, options, payload = self.parseConnectionPDU(data, length, "Connection Confirm")
         return X224ConnectionConfirm(credit, destination, source, options, payload)
-    
+
     def parseDisconnectRequest(self, data, length):
         destination, source, reason, payload = self.parseConnectionPDU(data, length, "Disconnect Request")
         return X224DisconnectRequest(destination, source, reason, payload)
-    
+
     def parseData(self, data, length):
         if length != 2:
             raise Exception("Invalid length indicator for X224 Data PDU")
-        
+
         code = Uint8.unpack(data[1]) & 0xf
         sequence = Uint8.unpack(data[2])
         payload = data[3 :]
-        
+
         return X224Data(code & 1 == 1, sequence & 0x80 == 0x80, payload)
-    
+
     def parseError(self, data, length):
         if length < 4:
             raise Exception("Invalid X224 Error PDU")
-        
+
         destination = Uint16BE.unpack(data[2 : 4])
         cause = Uint8.unpack(data[4])
         payload = data[5 :]
 
         if len(payload) != length - 4:
             raise Exception("Invalid length indicator for X224 Error PDU")
-        
+
         return X224Error(destination, cause, payload)
-        
+
     def write(self, pdu):
         stream = StringIO()
         stream.write(Uint8.pack(pdu.length))
-        
+
         if pdu.header not in self.writers:
             raise Exception("Unknown X224 header")
-        
+
         self.writers[pdu.header](stream, pdu)
         stream.write(pdu.payload)
         return stream.getvalue()
-    
+
     def writeConnectionPDU(self, stream, header, destination, source, options):
         stream.write(Uint8.pack(header))
         stream.write(Uint16BE.pack(destination))
         stream.write(Uint16BE.pack(source))
         stream.write(Uint8.pack(options))
-    
+
     def writeConnectionRequest(self, stream, pdu):
         header = (pdu.header << 4) | (pdu.credit & 0xf)
         self.writeConnectionPDU(stream, header, pdu.destination, pdu.source, pdu.options)
-    
+
     def writeConnectionConfirm(self, stream, pdu):
         header = (pdu.header << 4) | (pdu.credit & 0xf)
         self.writeConnectionPDU(stream, header, pdu.destination, pdu.source, pdu.options)
-    
+
     def writeDisconnectRequest(self, stream, pdu):
         self.writeConnectionPDU(stream, pdu.header, pdu.destination, pdu.source, pdu.reason)
-    
+
     def writeData(self, stream, pdu):
         header = (pdu.header << 4) | int(pdu.roa)
         stream.write(Uint8.pack(header))
         stream.write(Uint8.pack(int(pdu.eot) << 7))
-    
+
     def writeError(self, stream, pdu):
         stream.write(Uint8.pack(pdu.header))
-        stream.write(Uint16BE.pack(pdu.destination))
+        stream.write(Uint16.pack(pdu.destination))
         stream.write(Uint8.pack(pdu.cause))
