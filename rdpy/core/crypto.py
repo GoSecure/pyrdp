@@ -21,8 +21,8 @@ import sha, md5
 
 from rdpy.core import rc4
 from rdpy.core.type import StringStream, UInt32Le
-from rdpy.protocol.rdp.pdu.connection import EncryptionMethodFlag
-from rdpy.protocol.rdp.pdu.security import RDPSecurityFlags
+from rdpy.pdu.rdp.connection import EncryptionMethodFlag
+from rdpy.pdu.rdp.security import RDPSecurityFlags
 
 """
 Cryptographic utility functions

@@ -13,7 +13,7 @@ from rdpy.protocol.mcs.client import MCSClientConnectionObserver
 from rdpy.protocol.mcs.pdu import MCSDomainParams
 from rdpy.protocol.mcs.server import MCSServerRouter, MCSUserIDGenerator
 from rdpy.protocol.mcs.user import MCSUserObserver
-from rdpy.protocol.rdp.pdu.connection import RDPClientConnectionParser, RDPNegotiationParser, \
+from rdpy.pdu.rdp.connection import RDPClientConnectionParser, RDPNegotiationParser, \
     RDPNegotiationResponsePDU, NegotiationProtocols, RDPServerDataPDU, ServerCoreData, ServerNetworkData, \
     ServerSecurityData, RDPServerConnectionParser
 from rdpy.protocol.rdp.rdp import ServerFactory

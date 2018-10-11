@@ -1,7 +1,7 @@
 from rdpy.core.newlayer import Layer
-from rdpy.protocol.rdp.pdu.connection import RDPClientConnectionParser, RDPServerConnectionParser
-from rdpy.protocol.rdp.pdu.licensing import RDPLicensingParser
-from rdpy.protocol.rdp.pdu.security import RDPSecurityHeaderType, RDPSecurityParser, RDPSecurityFlags, \
+from rdpy.pdu.rdp.connection import RDPClientConnectionParser, RDPServerConnectionParser
+from rdpy.pdu.rdp.licensing import RDPLicensingParser
+from rdpy.pdu.rdp.security import RDPSecurityHeaderType, RDPSecurityParser, RDPSecurityFlags, \
     RDPSecurityExchangePDU, RDPBasicSecurityPDU, RDPSignedSecurityPDU, RDPFIPSSecurityPDU, FIPSVersion
 
 
