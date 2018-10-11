@@ -189,5 +189,5 @@ class X224Parser:
     
     def writeError(self, stream, pdu):
         stream.write(Uint8.pack(pdu.header))
-        stream.write(Uint16.pack(pdu.destination))
+        stream.write(Uint16BE.pack(pdu.destination))
         stream.write(Uint8.pack(pdu.cause))
