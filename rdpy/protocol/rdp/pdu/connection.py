@@ -441,9 +441,10 @@ class RDPClientConnectionParser:
     
     def write(self, pdu):
         stream = StringIO()
-        self.writeStructure(stream, pdu.core)
-        self.writeStructure(stream, pdu.security)
-        self.writeStructure(stream, pdu.network)
+        self.writeStructure(stream, pdu.coreData)
+        self.writeStructure(stream, pdu.securityData)
+        self.writeStructure(stream, pdu.networkData)
+        self.writeStructure(stream, pdu.clusterData)
         return stream.getvalue()
 
     def writeStructure(self, stream, data):
