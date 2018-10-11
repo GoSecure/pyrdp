@@ -1,7 +1,6 @@
-from collections import defaultdict
-
+from rdpy.enum.mcs import MCSPDUType
 from rdpy.core.newlayer import LayerStrictRoutedObserver
-from pdu import MCSChannel, MCSConnectResponsePDU, MCSAttachUserConfirmPDU, MCSAttachUserRequestPDU, MCSChannelJoinConfirmPDU, MCSChannelJoinRequestPDU, MCSSendDataRequestPDU, MCSPDUType
+
 
 def whenConnected(method):
     """

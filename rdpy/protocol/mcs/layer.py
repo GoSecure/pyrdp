@@ -1,5 +1,5 @@
+from pdu import MCSParser, MCSDomainParams, MCSConnectInitialPDU
 from rdpy.core.newlayer import Layer
-from pdu import MCSParser, MCSPDUType, MCSDomainParams, MCSConnectInitialPDU
 
 class MCSLayer(Layer):
     """

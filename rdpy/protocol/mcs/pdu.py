@@ -3,38 +3,8 @@ from StringIO import StringIO
 from rdpy.core import ber, per
 from rdpy.core.error import InvalidValue, InvalidSize
 from rdpy.core.packing import Uint8, Uint16BE
+from rdpy.enum.mcs import MCSPDUType, MCSChannelID
 
-
-class MCSPDUType:
-    """
-    MCS PDU Headers
-    """
-    # Connection PDU headers
-    CONNECT_INITIAL = 0x65
-    CONNECT_RESPONSE = 0x66
-
-    # Domain PDU headers
-    ERECT_DOMAIN_REQUEST = 1
-    DISCONNECT_PROVIDER_ULTIMATUM = 8
-    ATTACH_USER_REQUEST = 10
-    ATTACH_USER_CONFIRM = 11
-    CHANNEL_JOIN_REQUEST = 14
-    CHANNEL_JOIN_CONFIRM = 15
-    SEND_DATA_REQUEST = 25
-    SEND_DATA_INDICATION = 26
-
-class MCSChannel:
-    """
-    Channel IDs of the main channels used in RDP
-    """
-    USERCHANNEL_BASE = 1001
-    GLOBAL_CHANNEL = 1003
-    RDPDR_CHANNEL = 1004  # Not handled by RDPY
-    CLIPRDR_CHANNEL = 1005  # Not handled by RDPY
-    RDPSND_CHANNEL = 1006  # Not handled by RDPY
-
-class MCSResult:
-    RT_SUCCESSFUL = 0x00
 
 class MCSDomainParams:
     def __init__(self, maxChannelIDs, maxUserIDs, maxTokenIDs, numPriorities, minThroughput, maxHeight, maxMCSPDUSize, protocolVersion):
@@ -272,7 +242,7 @@ class MCSParser:
         if len(data) == 0:
             initiator = None
         elif len(data) == 2:
-            initiator = Uint16BE.unpack(data) + MCSChannel.USERCHANNEL_BASE
+            initiator = Uint16BE.unpack(data) + MCSChannelID.USERCHANNEL_BASE
         elif len(data) > 2:
             raise Exception("Unexpected payload")
 
@@ -287,7 +257,7 @@ class MCSParser:
         if len(data) < 4:
             raise Exception("Invalid Channel Join Request PDU received")
         
-        initiator = Uint16BE.unpack(data[0 : 2]) + MCSChannel.USERCHANNEL_BASE
+        initiator = Uint16BE.unpack(data[0 : 2]) + MCSChannelID.USERCHANNEL_BASE
         channelID = Uint16BE.unpack(data[2 : 4])
         payload = data[4 :]
         
@@ -310,7 +280,7 @@ class MCSParser:
             channelID = None
             payload = ""
     
-        initiator = Uint16BE.unpack(data[0 : 2]) + MCSChannel.USERCHANNEL_BASE
+        initiator = Uint16BE.unpack(data[0 : 2]) + MCSChannelID.USERCHANNEL_BASE
         requested = Uint16BE.unpack(data[2 : 4])
         return MCSChannelJoinConfirmPDU(result, initiator, requested, channelID, payload)
     
@@ -320,7 +290,7 @@ class MCSParser:
         :param stream: stream containing the data
         :param PDUClass: the actual PDU class
         """
-        initiator = Uint16BE.unpack(stream.read(2)) + MCSChannel.USERCHANNEL_BASE
+        initiator = Uint16BE.unpack(stream.read(2)) + MCSChannelID.USERCHANNEL_BASE
         channelID = Uint16BE.unpack(stream.read(2))
         priority = per.readEnumeration(stream)
         payload = per.readOctetStream(stream)
@@ -452,7 +422,7 @@ class MCSParser:
         stream.write(per.writeEnumeration(pdu.result))
 
         if pdu.initiator is not None:
-            stream.write(Uint16BE.pack(pdu.initiator - MCSChannel.USERCHANNEL_BASE))
+            stream.write(Uint16BE.pack(pdu.initiator - MCSChannelID.USERCHANNEL_BASE))
     
     def writeChannelJoinRequest(self, stream, pdu):
         """
@@ -460,7 +430,7 @@ class MCSParser:
         :param stream: the destination stream
         :param pdu: the PDU
         """
-        stream.write(Uint16BE.pack(pdu.initiator - MCSChannel.USERCHANNEL_BASE))
+        stream.write(Uint16BE.pack(pdu.initiator - MCSChannelID.USERCHANNEL_BASE))
         stream.write(Uint16BE.pack(pdu.channelID))
         stream.write(pdu.payload)
     
@@ -471,7 +441,7 @@ class MCSParser:
         :param pdu: the PDU
         """
         stream.write(per.writeEnumeration(pdu.result))
-        stream.write(Uint16BE.pack(pdu.initiator - MCSChannel.USERCHANNEL_BASE))
+        stream.write(Uint16BE.pack(pdu.initiator - MCSChannelID.USERCHANNEL_BASE))
         stream.write(Uint16BE.pack(pdu.requested))
 
         if pdu.channelID is not None:
@@ -484,7 +454,7 @@ class MCSParser:
         :param stream: the destination stream
         :param pdu: the PDU
         """
-        stream.write(Uint16BE.pack(pdu.initiator - MCSChannel.USERCHANNEL_BASE))
+        stream.write(Uint16BE.pack(pdu.initiator - MCSChannelID.USERCHANNEL_BASE))
         stream.write(Uint16BE.pack(pdu.channelID))
         stream.write(per.writeEnumeration(pdu.priority))
         stream.write(per.writeOctetStream(pdu.payload))

@@ -1,5 +1,6 @@
-from pdu import MCSChannel, MCSChannelJoinConfirmPDU, MCSAttachUserConfirmPDU
+from pdu import MCSChannelJoinConfirmPDU, MCSAttachUserConfirmPDU
 from rdpy.core.subject import Subject
+from rdpy.enum.mcs import MCSChannelID
 from router import MCSRouter, whenConnected
 from user import MCSUser
 
@@ -24,7 +25,7 @@ class MCSUserIDGenerator:
         """
         :param channelIDs: list of channel IDs that can't be used for user IDs
         """
-        self.next_channel = MCSChannel.USERCHANNEL_BASE
+        self.next_channel = MCSChannelID.USERCHANNEL_BASE
         self.channelIDs = channelIDs
     
     def next(self):

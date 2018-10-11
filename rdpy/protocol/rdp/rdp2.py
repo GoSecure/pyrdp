@@ -4,7 +4,8 @@ from rdpy.protocol.gcc.pdu import GCCParser, GCCConferenceCreateResponsePDU
 from rdpy.protocol.mcs.channel import MCSChannelFactory
 from rdpy.protocol.mcs.client import MCSClientConnectionObserver
 from rdpy.protocol.mcs.layer import MCSLayer
-from rdpy.protocol.mcs.pdu import MCSConnectResponsePDU, MCSResult, MCSDomainParams
+from rdpy.protocol.mcs.pdu import MCSConnectResponsePDU, MCSDomainParams
+from rdpy.enum.mcs import MCSResult
 from rdpy.protocol.mcs.server import MCSServerRouter, MCSUserIDGenerator
 from rdpy.protocol.mcs.user import MCSUserObserver
 from rdpy.protocol.rdp.pdu.connection import RDPClientConnectionParser, RDPNegotiationParser, \
