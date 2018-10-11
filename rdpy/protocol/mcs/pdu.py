@@ -234,8 +234,8 @@ class MCSParser:
         Parse an Erect Domain Request PDU
         :param stream: stream containing the data
         """
-        subHeight = ber.readInteger(stream)
-        subInterval = ber.readInteger(stream)
+        subHeight = per.readInteger(stream)
+        subInterval = per.readInteger(stream)
         payload = stream.read()
         return MCSErectDomainRequestPDU(subHeight, subInterval, payload)
     
@@ -357,10 +357,8 @@ class MCSParser:
             stream.write(Uint8.pack(pdu.header))
         else:
             stream.write(Uint8.pack(pdu.header << 2))
-        contentStream = StringIO()
-        self.writers[pdu.header](contentStream, pdu)
-        stream.write(Uint8.pack(len(contentStream.getvalue())))
-        stream.write(contentStream.getvalue())
+
+        self.writers[pdu.header](stream, pdu)
         return stream.getvalue()
         
 
@@ -410,10 +408,14 @@ class MCSParser:
         :param stream: the destination stream
         :param pdu: the PDU
         """
-        stream.write(ber.writeEnumerated(pdu.result))
-        stream.write(ber.writeInteger(pdu.calledConnectID))
-        self.writeDomainParams(stream, pdu.domainParams)
-        stream.write(ber.writeOctetString(pdu.payload))
+        substream = StringIO()
+        substream.write(ber.writeEnumerated(pdu.result))
+        substream.write(ber.writeInteger(pdu.calledConnectID))
+        self.writeDomainParams(substream, pdu.domainParams)
+        substream.write(ber.writeOctetString(pdu.payload))
+        allData = substream.getvalue()
+        stream.write(ber.writeLength(len(allData)))
+        stream.write(allData)
     
     def writeErectDomainRequest(self, stream, pdu):
         """
