@@ -1,5 +1,6 @@
-from pdu import TPKTParser, TPKTPDU
 from rdpy.core.newlayer import Layer
+from rdpy.protocol.parser.tpkt import TPKTParser
+from rdpy.protocol.pdu.tpkt import TPKTPDU
 
 
 class TPKTLayer(Layer):

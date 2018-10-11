@@ -1,11 +1,9 @@
 from rdpy.core.newlayer import Layer, LayerStrictRoutedObserver
 from rdpy.core.subject import ObservedBy
-from pdu import X224Parser, X224Data, X224Header, X224ConnectionRequest, X224ConnectionConfirm, X224DisconnectRequest, \
+from rdpy.protocol.parser.x224 import X224Parser
+from rdpy.protocol.pdu.x224 import X224ConnectionRequest, X224ConnectionConfirm, X224DisconnectRequest, X224Data, \
     X224Error
-from pdu import X224Parser, X224Data, X224Header, X224ConnectionRequest, X224ConnectionConfirm, X224DisconnectRequest, \
-    X224Error
-from rdpy.core.newlayer import Layer, LayerStrictRoutedObserver
-from rdpy.core.subject import ObservedBy
+from rdpy.protocol.x224.pdu import X224Header
 
 
 class X224Observer(LayerStrictRoutedObserver):
