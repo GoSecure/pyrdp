@@ -1,7 +1,5 @@
-from rdpy.core.newlayer import Layer
-from rdpy.protocol.x224.layer import X224Observer
-
 from pdu import GCCParser, GCCConferenceCreateRequestPDU
+from rdpy.core.newlayer import Layer
 
 class GCCClientConnectionLayer(Layer):
     def __init__(self, conferenceName):

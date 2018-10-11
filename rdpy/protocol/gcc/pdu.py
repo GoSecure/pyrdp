@@ -2,10 +2,7 @@ from StringIO import StringIO
 
 from rdpy.core import per
 from rdpy.core.packing import Uint16BE
-
-class GCCPDUType:
-    CREATE_CONFERENCE_REQUEST = 0
-    CREATE_CONFERENCE_RESPONSE = 0x14
+from rdpy.enum.gcc import GCCPDUType
 
 class GCCPDU(object):
     def __init__(self, header, payload):
