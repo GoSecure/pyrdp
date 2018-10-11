@@ -1,5 +1,5 @@
 from rdpy.enum.mcs import MCSChannelID
-from rdpy.protocol.pdu.mcs import MCSAttachUserConfirmPDU, MCSChannelJoinConfirmPDU
+from rdpy.pdu import MCSAttachUserConfirmPDU, MCSChannelJoinConfirmPDU
 from router import MCSRouter, whenConnected
 from user import MCSUser
 

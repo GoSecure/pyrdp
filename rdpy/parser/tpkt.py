@@ -1,7 +1,7 @@
 from StringIO import StringIO
 
 from rdpy.core.packing import Uint8, Uint16BE
-from rdpy.protocol.pdu.tpkt import TPKTPDU
+from rdpy.pdu.tpkt import TPKTPDU
 
 
 class TPKTParser:

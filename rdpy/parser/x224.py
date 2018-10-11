@@ -2,7 +2,7 @@ from StringIO import StringIO
 
 from rdpy.core.packing import Uint8, Uint16BE
 from rdpy.enum.x224 import X224Header
-from rdpy.protocol.pdu.x224 import X224ConnectionConfirm, X224ConnectionRequest, X224DisconnectRequest, X224Data, \
+from rdpy.pdu.x224 import X224ConnectionConfirm, X224ConnectionRequest, X224DisconnectRequest, X224Data, \
     X224Error
 
 

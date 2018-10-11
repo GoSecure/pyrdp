@@ -5,7 +5,7 @@ from rdpy.core.error import InvalidValue, InvalidSize
 from rdpy.core.packing import Uint8, Uint16BE
 from rdpy.enum.mcs import MCSChannelID
 from rdpy.protocol.mcs.pdu import MCSPDUType, MCSDomainParams
-from rdpy.protocol.pdu.mcs import MCSConnectInitialPDU, MCSConnectResponsePDU, MCSErectDomainRequestPDU, \
+from rdpy.pdu.mcs import MCSConnectInitialPDU, MCSConnectResponsePDU, MCSErectDomainRequestPDU, \
     MCSDisconnectProviderUltimatumPDU, MCSAttachUserRequestPDU, MCSAttachUserConfirmPDU, MCSChannelJoinRequestPDU, \
     MCSChannelJoinConfirmPDU, MCSSendDataRequestPDU, MCSSendDataIndicationPDU
 

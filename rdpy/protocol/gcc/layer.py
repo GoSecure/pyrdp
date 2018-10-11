@@ -1,7 +1,7 @@
 from rdpy.core.newlayer import Layer
 
-from rdpy.protocol.parser.gcc import GCCParser
-from rdpy.protocol.pdu.gcc import GCCConferenceCreateRequestPDU
+from rdpy.parser.gcc import GCCParser
+from rdpy.pdu.gcc import GCCConferenceCreateRequestPDU
 
 
 class GCCClientConnectionLayer(Layer):

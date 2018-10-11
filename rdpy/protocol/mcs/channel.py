@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
 from rdpy.core.newlayer import Layer
-from rdpy.protocol.pdu.mcs import MCSSendDataRequestPDU, MCSSendDataIndicationPDU
+from rdpy.pdu.mcs import MCSSendDataRequestPDU, MCSSendDataIndicationPDU
 
 
 class MCSChannelFactory:
