@@ -321,10 +321,6 @@ class RDPClientConnectionParser:
             RDPConnectionDataType.CLIENT_NETWORK: self.writeClientNetworkData,
             RDPConnectionDataType.CLIENT_CLUSTER: self.writeClientClusterData,
 
-            RDPConnectionDataType.SERVER_CORE: self.writeServerCoreData,
-            RDPConnectionDataType.SERVER_NETWORK: self.writeServerNetworkData,
-            RDPConnectionDataType.SERVER_SECURITY: self.writeServerSecurityData,
-
         }
 
     def parse(self, data):
@@ -516,41 +512,6 @@ class RDPClientConnectionParser:
         stream.write(Uint32LE.pack(cluster.flags))
         stream.write(Uint32LE.pack(cluster.redirectedSessionID))
 
-    def writeServerCoreData(self, stream, data):
-        """
-        :type stream: StringIO
-        :type data: ServerCoreData
-        """
-        stream.write(Uint32LE.pack(data.version))
-        stream.write(Uint32LE.pack(data.clientRequestedProtocols))
-        stream.write(Uint32LE.pack(data.earlyCapabilityFlags))
-
-    def writeServerNetworkData(self, stream, data):
-        """
-        :type stream: StringIO
-        :type data: ServerNetworkData
-        """
-        stream.write(Uint16LE.pack(data.mcsChannelID))
-        stream.write(Uint16LE.pack(len(data.channels)))
-        for channel in data.channels:
-            stream.write(Uint16LE.pack(channel))
-        if len(data.channels) % 2 != 0:
-            stream.write(Uint16LE.pack(0))  # Write 2 empty bytes so we keep a multiple of 4.
-
-    def writeServerSecurityData(self, stream, data):
-        """
-        :type stream: StringIO
-        :type data: ServerSecurityData
-        """
-        stream.write(Uint32LE.pack(data.encryptionMethod))
-        stream.write(Uint32LE.pack(data.encryptionLevel))
-        if data.serverRandom is not None:
-            stream.write(Uint32LE.pack(len(data.serverRandom)))
-            stream.write(Uint32LE.pack(len(data.serverCertificate)))
-            stream.write(data.serverRandom)
-            stream.write(data.serverCertificate)
-
-
 class RDPServerConnectionParser:
     """
     Parser for Server Data PDUs (i.e: client).
@@ -563,11 +524,11 @@ class RDPServerConnectionParser:
             RDPConnectionDataType.SERVER_SECURITY: self.parseServerSecurityData,
         }
 
-        # self.writers = {
-        #     RDPConnectionDataType.SERVER_CORE: self.writeServerCoreData,
-        #     RDPConnectionDataType.SERVER_NETWORK: self.writeServerNetworkData,
-        #     RDPConnectionDataType.SERVER_SECURITY: self.writeServerSecurityData,
-        # }
+        self.writers = {
+            RDPConnectionDataType.SERVER_CORE: self.writeServerCoreData,
+            RDPConnectionDataType.SERVER_NETWORK: self.writeServerNetworkData,
+            RDPConnectionDataType.SERVER_SECURITY: self.writeServerSecurityData,
+        }
 
     def parse(self, data):
         core = None
@@ -680,6 +641,68 @@ class RDPServerConnectionParser:
         publicKey = RSA.construct((modulus, publicExponent))
 
         return ProprietaryCertificate(signatureAlgorithmID, keyAlgorithmID, publicKeyType, publicKey, signatureType, signature, padding)
+
+    def write(self, pdu):
+        """
+        :param pdu: The RDP pdu to write
+        :return: StringIO to send to the next network protocol layer
+        """
+        stream = StringIO()
+        self.writeStructure(stream, pdu.core)
+        self.writeStructure(stream, pdu.security)
+        self.writeStructure(stream, pdu.network)
+        return stream.getvalue()
+
+    def writeStructure(self, stream, data):
+        """
+        :param stream: StringIO to write to
+        :param data: The structure to write (ex: ServerCoreData)
+        """
+        if data.header not in self.writers:
+            raise Exception("Trying to write unknown Server Data structure")
+
+        substream = StringIO()
+        self.writers[data.header](substream, data)
+
+        substream = substream.getvalue()
+
+        stream.write(Uint16LE.pack(data.header))
+        stream.write(Uint16LE.pack(len(substream) + 4))
+        stream.write(substream)
+
+    def writeServerCoreData(self, stream, data):
+        """
+        :type stream: StringIO
+        :type data: ServerCoreData
+        """
+        stream.write(Uint32LE.pack(data.version))
+        stream.write(Uint32LE.pack(data.clientRequestedProtocols))
+        stream.write(Uint32LE.pack(data.earlyCapabilityFlags))
+
+    def writeServerNetworkData(self, stream, data):
+        """
+        :type stream: StringIO
+        :type data: ServerNetworkData
+        """
+        stream.write(Uint16LE.pack(data.mcsChannelID))
+        stream.write(Uint16LE.pack(len(data.channels)))
+        for channel in data.channels:
+            stream.write(Uint16LE.pack(channel))
+        if len(data.channels) % 2 != 0:
+            stream.write(Uint16LE.pack(0))  # Write 2 empty bytes so we keep a multiple of 4.
+
+    def writeServerSecurityData(self, stream, data):
+        """
+        :type stream: StringIO
+        :type data: ServerSecurityData
+        """
+        stream.write(Uint32LE.pack(data.encryptionMethod))
+        stream.write(Uint32LE.pack(data.encryptionLevel))
+        if data.serverRandom is not None:
+            stream.write(Uint32LE.pack(len(data.serverRandom)))
+            stream.write(Uint32LE.pack(len(data.serverCertificate)))
+            stream.write(data.serverRandom)
+            stream.write(data.serverCertificate)
 
 class RDPNegotiationResponsePDU:
     """

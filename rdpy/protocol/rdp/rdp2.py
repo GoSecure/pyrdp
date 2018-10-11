@@ -9,7 +9,7 @@ from rdpy.protocol.mcs.server import MCSServerRouter, MCSUserIDGenerator
 from rdpy.protocol.mcs.user import MCSUserObserver
 from rdpy.protocol.rdp.pdu.connection import RDPClientConnectionParser, RDPNegotiationParser, \
     RDPNegotiationResponsePDU, NegotiationProtocols, RDPServerDataPDU, ServerCoreData, ServerNetworkData, \
-    ServerSecurityData
+    ServerSecurityData, RDPServerConnectionParser
 from rdpy.protocol.rdp.rdp import ServerFactory
 from rdpy.protocol.rdp.t125.mcs import Channel
 from rdpy.protocol.rdp.x224 import ServerTLSContext
@@ -41,7 +41,8 @@ class AServer(MCSClientConnectionObserver, MCSUserObserver):
         self.certificateFileName = certificateFileName
         self.privateKeyFileName = privateKeyFileName
         self.gcc = GCCParser()
-        self.rdp = RDPClientConnectionParser()
+        self.rdpClientConnectionParser = RDPClientConnectionParser()
+        self.rdpServerConnectionParser = RDPServerConnectionParser()
         self.rdpNegotiationParser = RDPNegotiationParser()
 
     def connectionReceived(self, pdu):
@@ -54,7 +55,7 @@ class AServer(MCSClientConnectionObserver, MCSUserObserver):
             log.get_ssl_logger().info(self.tpkt.previous.transport.protocol._tlsConnection.client_random(),
                                       self.tpkt.previous.transport.protocol._tlsConnection.master_key())
         gccConferenceCreateRequestPDU = self.gcc.parse(pdu.payload)
-        rdpClientDataPdu = self.rdp.parse(gccConferenceCreateRequestPDU.payload)
+        rdpClientDataPdu = self.rdpClientConnectionParser.parse(gccConferenceCreateRequestPDU.payload)
         serverCoreData = ServerCoreData(11111, 0, 0)
         if rdpClientDataPdu.networkData is not None:
             channels = [0 for _ in rdpClientDataPdu.networkData.channelDefinitions]
@@ -63,10 +64,10 @@ class AServer(MCSClientConnectionObserver, MCSUserObserver):
         serverNetworkData = ServerNetworkData(Channel.MCS_GLOBAL_CHANNEL,
                                               channels)
         serverSecurityData = ServerSecurityData(0, 0, None, None)
-        rdpServerDataPdu = self.rdp.write(RDPServerDataPDU(serverCoreData, serverSecurityData, serverNetworkData))
+        rdpServerDataPdu = self.rdpServerConnectionParser.write(RDPServerDataPDU(serverCoreData, serverSecurityData, serverNetworkData))
         gccCreateResponsePDU = self.gcc.write(GCCConferenceCreateResponsePDU(GCCParser.NODE_ID, 1, 0, rdpServerDataPdu))
         self.mcs.send(MCSConnectResponsePDU(MCSResult.RT_SUCCESSFUL, 0, MCSDomainParams.createTarget(34, 3), gccCreateResponsePDU))
-        pass
+        return True
 
     def onConnection(self):
         print "Connection established"
@@ -114,7 +115,7 @@ class RDPServerFactory(object, ServerFactory):
         x224 = X224Layer()
 
         mcs = MCSLayer()
-        router = MCSServerRouter(mcs, ChannelFactory(), MCSUserIDGenerator([1001, 1002, 1003, 1004]))
+        router = MCSServerRouter(mcs, ChannelFactory(), MCSUserIDGenerator([1002, 1003, 1004, 1005, 1006]))
 
         tcp.setNext(tpkt)
         tpkt.setNext(x224)
