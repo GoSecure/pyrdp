@@ -1,5 +1,6 @@
 from rdpy.core.newlayer import Layer
 from rdpy.protocol.rdp.pdu.security import RDPBasicSecurityPDU, RDPSignedSecurityPDU, RDPFIPSSecurityPDU, RDPSecurityExchangePDU, RDPSecurityParser, RDPSecurityHeaderType, RDPSecurityFlags, FIPSVersion
+from rdpy.protocol.rdp.layer.licensing import RDPLicensingLayer
 
 class RDPSecurityLayer(Layer):
     # Header type used for Client Info and Licensing PDUs if no encryption is used
@@ -9,6 +10,7 @@ class RDPSecurityLayer(Layer):
         Layer.__init__(self)
         self.headerType = headerType
         self.crypter = crypter
+        self.licensing = RDPLicensingLayer()
         self.parser = RDPSecurityParser(headerType)
     
     def recv(self, data):
@@ -16,8 +18,14 @@ class RDPSecurityLayer(Layer):
             self.next.recv(data)
         else:
             pdu = self.parser.parse(data)
-            pdu.payload = self.crypter.decrypt(pdu.payload)
-            self.pduReceived(pdu, True)
+
+            if pdu.header & RDPSecurityFlags.SEC_ENCRYPT != 0:
+                pdu.payload = self.crypter.decrypt(pdu.payload)
+            
+            if pdu.header & RDPSecurityFlags.SEC_LICENSE_PKT != 0:
+                self.licensing.recv(pdu.payload)
+            else:
+                self.pduReceived(pdu, pdu.header & RDPSecurityFlags.SEC_INFO_PKT == 0)
     
     def send(self, data):
         encrypted = self.headerType != RDPSecurityHeaderType.NONE
