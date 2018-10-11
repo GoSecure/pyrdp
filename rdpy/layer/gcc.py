@@ -1,5 +1,4 @@
 from rdpy.core.newlayer import Layer
-
 from rdpy.parser.gcc import GCCParser
 from rdpy.pdu.gcc import GCCConferenceCreateRequestPDU
 
@@ -9,7 +8,7 @@ class GCCClientConnectionLayer(Layer):
         Layer.__init__(self)
         self.conferenceName = conferenceName
         self.parser = GCCParser()
-    
+
     def recv(self, data):
         pdu = self.parser.parse(data)
         self.pduReceived(pdu, True)

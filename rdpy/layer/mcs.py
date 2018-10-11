@@ -1,7 +1,8 @@
-from pdu import MCSDomainParams
 from rdpy.core.newlayer import Layer
 from rdpy.parser.mcs import MCSParser
 from rdpy.pdu.mcs import MCSConnectInitialPDU
+from rdpy.protocol.mcs.pdu import MCSDomainParams
+
 
 class MCSLayer(Layer):
     """
@@ -12,7 +13,7 @@ class MCSLayer(Layer):
     def __init__(self):
         Layer.__init__(self)
         self.parser = MCSParser()
-    
+
     def recv(self, data):
         """
         Receive MCS data
@@ -28,6 +29,7 @@ class MCSLayer(Layer):
         """
         self.previous.send(self.parser.write(pdu))
 
+
 class MCSClientConnectionLayer(Layer):
     def __init__(self, mcs):
         Layer.__init__(self)
@@ -38,7 +40,7 @@ class MCSClientConnectionLayer(Layer):
         self.targetParams = MCSDomainParams.createTarget(34, 2)
         self.minParams = MCSDomainParams.createMinimum()
         self.maxParams = MCSDomainParams.createMaximum()
-    
+
     def recv(self, pdu):
         self.pduReceived(pdu, True)
 

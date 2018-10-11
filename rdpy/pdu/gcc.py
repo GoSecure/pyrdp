@@ -1,4 +1,4 @@
-from rdpy.protocol.gcc.pdu import GCCPDUType
+from rdpy.enum.gcc import GCCPDUType
 
 
 class GCCPDU(object):

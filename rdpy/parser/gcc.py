@@ -2,7 +2,7 @@ from StringIO import StringIO
 
 from rdpy.core import per
 from rdpy.core.packing import Uint16BE
-from rdpy.protocol.gcc.pdu import GCCPDUType
+from rdpy.enum.gcc import GCCPDUType
 from rdpy.pdu.gcc import GCCConferenceCreateRequestPDU, GCCConferenceCreateResponsePDU
 
 

@@ -1,12 +1,15 @@
 from rdpy.core import log
 from rdpy.core.newlayer import Layer
 from rdpy.enum.mcs import MCSResult
+from rdpy.layer.mcs import MCSLayer
+from rdpy.layer.tcp import TCPLayer
+from rdpy.layer.tpkt import TPKTLayer
+from rdpy.layer.x224 import X224Layer
 from rdpy.parser.gcc import GCCParser
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.pdu.mcs import MCSConnectResponsePDU
 from rdpy.protocol.mcs.channel import MCSChannelFactory
 from rdpy.protocol.mcs.client import MCSClientConnectionObserver
-from rdpy.protocol.mcs.layer import MCSLayer
 from rdpy.protocol.mcs.pdu import MCSDomainParams
 from rdpy.protocol.mcs.server import MCSServerRouter, MCSUserIDGenerator
 from rdpy.protocol.mcs.user import MCSUserObserver
@@ -16,9 +19,6 @@ from rdpy.protocol.rdp.pdu.connection import RDPClientConnectionParser, RDPNegot
 from rdpy.protocol.rdp.rdp import ServerFactory
 from rdpy.protocol.rdp.t125.mcs import Channel
 from rdpy.protocol.rdp.x224 import ServerTLSContext
-from rdpy.protocol.tcp.layer import TCPLayer
-from rdpy.protocol.tpkt.layer import TPKTLayer
-from rdpy.protocol.x224.layer import X224Layer
 
 
 class FakeLayer(Layer):
