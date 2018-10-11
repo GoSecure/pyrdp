@@ -27,6 +27,21 @@ class RDPLicenseBinaryBlobType:
     BB_CLIENT_USER_NAME_BLOB = 0x000F
     BB_CLIENT_MACHINE_NAME_BLOB = 0x0010
 
+class RDPLicenseErrorCode:
+    """
+    @summary: License error message code
+    @see: http://msdn.microsoft.com/en-us/library/cc240482.aspx
+    """
+    ERR_INVALID_SERVER_CERTIFICATE = 0x00000001
+    ERR_NO_LICENSE = 0x00000002
+    ERR_INVALID_SCOPE = 0x00000004
+    ERR_NO_LICENSE_SERVER = 0x00000006
+    STATUS_VALID_CLIENT = 0x00000007
+    ERR_INVALID_CLIENT = 0x00000008
+    ERR_INVALID_PRODUCTID = 0x0000000B
+    ERR_INVALID_MESSAGE_LEN = 0x0000000C
+    ERR_INVALID_MAC = 0x00000003
+
 class RDPStateTransition:
     """
     Automata state transition
@@ -39,7 +54,7 @@ class RDPStateTransition:
 
 class RDPLicensingPDU:
     def __init__(self, header, flags):
-        self.header = msgType
+        self.header = header
         self.flags = flags
 
 class RDPLicenseErrorAlertPDU(RDPLicensingPDU):
@@ -69,7 +84,7 @@ class RDPLicensingParser:
         if header not in self.parsers:
             raise Exception("Trying to parse unknown license PDU")
         
-        self.parsers[header](stream, flags)
+        return self.parsers[header](stream, flags)
     
     def parseLicenseBlob(self, stream):
         type = Uint16LE.unpack(stream)
