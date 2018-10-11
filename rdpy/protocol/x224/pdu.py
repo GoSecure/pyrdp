@@ -1,20 +1,7 @@
 from StringIO import StringIO
 
 from rdpy.core.packing import Uint8, Uint16BE
-
-
-
-class X224Header:
-    """
-    @summary: X224 header codes
-    """
-    X224_TPDU_CONNECTION_REQUEST = 0x0E
-    X224_TPDU_CONNECTION_CONFIRM = 0x0D
-    X224_TPDU_DISCONNECT_REQUEST = 0x08
-    X224_TPDU_DATA = 0x0F
-    X224_TPDU_ERROR = 0x07
-
-
+from rdpy.enum.x224 import X224Header
 
 class X224PDU(object):
     """
