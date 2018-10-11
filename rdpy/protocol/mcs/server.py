@@ -24,18 +24,18 @@ class MCSUserIDGenerator:
         """
         :param channelIDs: list of channel IDs that can't be used for user IDs
         """
-        self.next = MCSChannel.USERCHANNEL_BASE
+        self.next_channel = MCSChannel.USERCHANNEL_BASE
         self.channelIDs = channelIDs
     
-    def __next__(self):
+    def next(self):
         """
         Generate the next valid user ID
         """
-        self.next += 1
-        while self.next in self.channelIDs:
-            self.next += 1
+        self.next_channel += 1
+        while self.next_channel in self.channelIDs:
+            self.next_channel += 1
         
-        return self.next
+        return self.next_channel
 
 class MCSServerRouter(MCSRouter, Subject):
     """
@@ -45,6 +45,7 @@ class MCSServerRouter(MCSRouter, Subject):
         """
         :param factory: the channel factory
         :param userIDGenerator: the generator used when creating new users
+        :type userIDGenerator: MCSUserIDGenerator
         """
         MCSRouter.__init__(self, mcs)
         Subject.__init__(self)
@@ -75,10 +76,9 @@ class MCSServerRouter(MCSRouter, Subject):
         """
         userID = next(self.userIDGenerator)
         user = MCSUser(self, self.factory)
-        user.attachConfirmed(userID)
+        user.onAttachConfirmed(userID)
         self.users[userID] = user
 
-        self.findNextUser()
         self.mcs.send(MCSAttachUserConfirmPDU(0, userID))
     
     @whenConnected

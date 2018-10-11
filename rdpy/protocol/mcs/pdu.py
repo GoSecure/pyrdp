@@ -103,7 +103,7 @@ class MCSAttachUserRequestPDU(MCSPDU):
 class MCSAttachUserConfirmPDU(MCSPDU):
     def __init__(self, result, initiator = None):
         super(MCSAttachUserConfirmPDU, self).__init__(MCSPDUType.ATTACH_USER_CONFIRM, "")
-        self.result = result,
+        self.result = result
         self.initiator = initiator
 
 class MCSChannelJoinRequestPDU(MCSPDU):
