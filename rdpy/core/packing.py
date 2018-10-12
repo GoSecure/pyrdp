@@ -11,8 +11,13 @@ class Integer:
             return struct.unpack(cls.FORMAT, data.read(length))[0]
 
     @classmethod
-    def pack(cls, data):
-        return struct.pack(cls.FORMAT, data)
+    def pack(cls, data, stream = None):
+        bytes = struct.pack(cls.FORMAT, data)
+
+        if stream is not None:
+            stream.write(bytes)
+
+        return bytes
 
 # 8 bits
 class Int8(Integer):
