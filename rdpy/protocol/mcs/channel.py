@@ -21,6 +21,7 @@ class MCSChannelFactory:
         """
         pass
 
+
 class MCSChannel:
     """
     Base class for MCS channels
@@ -65,6 +66,7 @@ class MCSChannel:
         pdu = MCSSendDataIndicationPDU(self.userID, self.channelID, 0x70, data)
         self.mcs.send(pdu)
 
+
 class MCSClientChannel(MCSChannel, Layer):
     def __init__(self, mcs, userID, channelID):
         MCSChannel.__init__(self, mcs, userID, channelID)
@@ -76,13 +78,15 @@ class MCSClientChannel(MCSChannel, Layer):
     def send(self, data):
         self.sendSendDataRequest(data)
 
+
 class MCSServerChannel(MCSChannel, Layer):
     def __init__(self, mcs, userID, channelID):
         MCSChannel.__init__(self, mcs, userID, channelID)
-        Layer.__init__()
+        Layer.__init__(self)
+        pass
     
     def recvSendDataRequest(self, pdu):
-        self.next.recv(pdu.payload)
+        self.next.recv(pdu)
     
     def send(self, data):
         self.sendSendDataIndication(data)

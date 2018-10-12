@@ -1,21 +1,25 @@
 from rdpy.core import log
 from rdpy.core.newlayer import Layer
 from rdpy.enum.mcs import MCSResult
-from rdpy.enum.rdp import NegotiationProtocols
+from rdpy.enum.rdp import NegotiationProtocols, RDPSecurityHeaderType
 from rdpy.layer.mcs import MCSLayer
+from rdpy.layer.rdp import RDPSecurityLayer, RDPLicensingLayer
 from rdpy.layer.tcp import TCPLayer
 from rdpy.layer.tpkt import TPKTLayer
 from rdpy.layer.x224 import X224Layer
 from rdpy.parser.gcc import GCCParser
-from rdpy.parser.rdp import RDPNegotiationParser, RDPClientConnectionParser, RDPServerConnectionParser
+from rdpy.parser.rdp import RDPNegotiationParser, RDPClientConnectionParser, RDPServerConnectionParser, \
+    RDPClientInfoParser
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.pdu.mcs import MCSConnectResponsePDU, MCSDomainParams
 from rdpy.pdu.rdp.connection import RDPNegotiationResponsePDU, RDPServerDataPDU, ServerCoreData, ServerNetworkData, \
     ServerSecurityData
-from rdpy.protocol.mcs.channel import MCSChannelFactory
+from rdpy.pdu.rdp.licensing import RDPLicenseErrorAlertPDU, RDPLicenseBinaryBlob
+from rdpy.protocol.mcs.channel import MCSChannelFactory, MCSServerChannel
 from rdpy.protocol.mcs.client import MCSClientConnectionObserver
 from rdpy.protocol.mcs.server import MCSServerRouter, MCSUserIDGenerator
 from rdpy.protocol.mcs.user import MCSUserObserver
+from rdpy.protocol.rdp.lic import ErrorCode, StateTransition, BinaryBlobType
 from rdpy.protocol.rdp.rdp import ServerFactory
 from rdpy.protocol.rdp.t125.mcs import Channel
 from rdpy.protocol.rdp.x224 import ServerTLSContext
@@ -26,13 +30,8 @@ class FakeLayer(Layer):
         print(data)
 
 
-class ChannelFactory(MCSChannelFactory):
-    def buildChannel(self, mcs, userID, channelID):
-        print("Building channel %d (user: %d)" % (channelID, userID))
-
-
-class AServer(MCSClientConnectionObserver, MCSUserObserver):
-    def __init__(self, tpkt, x224, mcs, router, certificateFileName, privateKeyFileName):
+class AServer(MCSClientConnectionObserver, MCSUserObserver, MCSChannelFactory):
+    def __init__(self, tpkt, x224, mcs, certificateFileName, privateKeyFileName):
 
         MCSClientConnectionObserver.__init__(self)
         MCSUserObserver.__init__(self)
@@ -40,10 +39,13 @@ class AServer(MCSClientConnectionObserver, MCSUserObserver):
         self.tpkt = tpkt
         self.x224 = x224
         self.mcs = mcs
-        self.router = router
+        self.io = IOChannel()
+        self.ioSecurityLayer = None
+        self.licensingLayer = RDPLicensingLayer()
         self.certificateFileName = certificateFileName
         self.privateKeyFileName = privateKeyFileName
         self.gcc = GCCParser()
+        self.rdpClientInfoParser = RDPClientInfoParser()
         self.rdpClientConnectionParser = RDPClientConnectionParser()
         self.rdpServerConnectionParser = RDPServerConnectionParser()
         self.rdpNegotiationParser = RDPNegotiationParser()
@@ -85,24 +87,32 @@ class AServer(MCSClientConnectionObserver, MCSUserObserver):
         else:
             raise Exception("bad connection request")
 
+    def onClientInfoReceived(self, pdu):
+        clientInfoPDU = self.rdpClientInfoParser.parse(pdu)
+        licenseErrorAlertPDU = RDPLicenseErrorAlertPDU(0x00, ErrorCode.STATUS_VALID_CLIENT, StateTransition.ST_NO_TRANSITION,
+                                                       RDPLicenseBinaryBlob(BinaryBlobType.BB_ERROR_BLOB, ""))
+        self.ioSecurityLayer.send(self.licensingLayer.parser.write(licenseErrorAlertPDU), isLicensing=True)
 
-    def disconnectRequest(self, pdu):
-        print "Disconnect Request received"
+    def buildChannel(self, mcs, userID, channelID):
+        if channelID == Channel.MCS_GLOBAL_CHANNEL:
+            self.ioSecurityLayer = RDPSecurityLayer(RDPSecurityHeaderType.BASIC, None)
+            self.ioSecurityLayer.setNext(self.io)
+            self.ioSecurityLayer.setObserver(self)
+            channel = MCSServerChannel(mcs, userID, channelID)
+            channel.setNext(self.ioSecurityLayer)
+            return channel
+        else:
+            log.debug("Ignoring building channel {} for user {}".format(channelID, userID))
 
-    def error(self, pdu):
-        print "Error received"
 
-    def connectResponse(self, pdu):
-        print "connect response"
 
-    def disconnectProviderUltimatum(self, pdu):
-        print("Disconnect Provider Ultimatum received")
+class IOChannel(Layer):
+    def __init__(self):
+        Layer.__init__(self)
 
-    def attachConfirmed(self, user):
-        print "attachconfirmed"
-
-    def attachRefused(self, user):
-        print("Could not attach a new user")
+    def recv(self, data):
+        log.info("Security Exchange result: %s" % data.encode('hex'))
+        pass
 
 
 class RDPServerFactory(object, ServerFactory):
@@ -118,13 +128,13 @@ class RDPServerFactory(object, ServerFactory):
         x224 = X224Layer()
 
         mcs = MCSLayer()
-        router = MCSServerRouter(mcs, ChannelFactory(), MCSUserIDGenerator([1002, 1003, 1004, 1005, 1006]))
 
         tcp.setNext(tpkt)
         tpkt.setNext(x224)
         x224.setNext(mcs)
 
-        observer = AServer(tpkt, x224, mcs, router, self._certificateFileName, self._privateKeyFileName)
+        observer = AServer(tpkt, x224, mcs, self._certificateFileName, self._privateKeyFileName)
+        router = MCSServerRouter(mcs, observer, MCSUserIDGenerator([1002, 1003, 1004, 1005, 1006]))
         tcp.createObserver(onConnection=observer.onConnection)
         x224.createObserver(onConnectionRequest=observer.onConnectionRequest)
         mcs.setObserver(router)
