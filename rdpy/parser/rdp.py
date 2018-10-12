@@ -10,7 +10,7 @@ from rdpy.enum.rdp import ClientInfoFlags, RDPSecurityHeaderType, RDPLicensingPD
 from rdpy.pdu.rdp.connection import RDPNegotiationRequestPDU, RDPClientDataPDU, ClientCoreData, ClientSecurityData, \
     ClientChannelDefinition, ClientNetworkData, ClientClusterData, RDPServerDataPDU, ServerCoreData, ServerNetworkData, \
     ServerSecurityData, ProprietaryCertificate
-from rdpy.pdu.rdp.data import RDPSharedControlHeader
+from rdpy.pdu.rdp.data import RDPDemandActivePDU, RDPShareControlHeader
 from rdpy.pdu.rdp.licensing import RDPLicenseBinaryBlob, RDPLicenseErrorAlertPDU
 from rdpy.pdu.rdp.security import RDPBasicSecurityPDU, RDPSignedSecurityPDU, RDPFIPSSecurityPDU, \
     RDPSecurityExchangePDU
@@ -208,36 +208,33 @@ class RDPDataParser:
             RDPDataPDUType.PDUTYPE_DEMANDACTIVEPDU: self.parseDemandActive,
         }
 
-    def parse(self):
-        pass
+    def parse(self, data):
+        stream = StringIO(data)
+        header = self.parseShareControlHeader(stream)
 
-    def parseControlHeader(self, stream):
+        if header.type not in self.parsers:
+            raise Exception("Trying to parse unknown Data PDU type")
+
+        return self.parsers[header.type](stream, header)
+
+
+    def parseShareControlHeader(self, stream):
         length = Uint16LE.unpack(stream)
         type = Uint16LE.unpack(stream)
         source = Uint16LE.unpack(stream)
-        return RDPSharedControlHeader(type & 0b1111, (type >> 4), source)
+        return RDPShareControlHeader(type & 0b1111, (type >> 4), source)
 
-    def parseCapabilitySet(self, stream):
-        type = Uint16LE.unpack(stream)
-        length = Uint16LE.unpack(stream)
-        data = stream.read(length)
-
-    def parseDemandActive(self, stream):
-        header = self.parseControlHeader(stream)
+    def parseDemandActive(self, stream, header):
         shareID = Uint32LE.unpack(stream)
         lengthSourceDescriptor = Uint16LE.unpack(stream)
         lengthCombinedCapabilities = Uint16LE.unpack(stream)
         sourceDescriptor = stream.read(lengthSourceDescriptor)
         numberCapabilities = Uint16LE.unpack(stream)
         pad2Octets = stream.read(2)
-
-        capabilitySets = []
-
-        for _ in range(numberCapabilities):
-            capability = self.parseCapabilitySet(stream)
-            capabilitySets.append(capability)
-
+        capabilitySets = stream.read(lengthCombinedCapabilities - 4)
         sessionID = Uint32LE.unpack(stream)
+
+        return RDPDemandActivePDU(header, shareID, lengthCombinedCapabilities, sourceDescriptor, numberCapabilities, capabilitySets, sessionID)
 
 
 class RDPNegotiationParser:
