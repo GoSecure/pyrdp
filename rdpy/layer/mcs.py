@@ -1,7 +1,6 @@
 from rdpy.core.newlayer import Layer
 from rdpy.parser.mcs import MCSParser
-from rdpy.pdu.mcs import MCSConnectInitialPDU
-from rdpy.protocol.mcs.pdu import MCSDomainParams
+from rdpy.pdu.mcs import MCSConnectInitialPDU, MCSDomainParams
 
 
 class MCSLayer(Layer):

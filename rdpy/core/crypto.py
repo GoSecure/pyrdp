@@ -17,12 +17,12 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import sha, md5
+import md5
+import sha
 
 from rdpy.core import rc4
 from rdpy.core.type import StringStream, UInt32Le
-from rdpy.pdu.rdp.connection import EncryptionMethodFlag
-from rdpy.pdu.rdp.security import RDPSecurityFlags
+from rdpy.enum.rdp import RDPSecurityFlags, EncryptionMethod
 
 """
 Cryptographic utility functions
@@ -253,7 +253,7 @@ def generateKeys(clientRandom, serverRandom, method):
     """
     Generate cryptographic keys based on client and server random values and a method.
     See: http://msdn.microsoft.com/en-us/library/cc240785.aspx
-    :param method: the EncryptionMethodFlag value.
+    :param method: the EncryptionMethod value.
     :param clientRandom: the client random
     :param serverRandom: the server random
     :return: the mac key, the server-client encryption key and the client-server encryption key
@@ -266,13 +266,13 @@ def generateKeys(clientRandom, serverRandom, method):
     initialSecondKey128 = finalHash(sessionKey[32:48], clientRandom, serverRandom)
     
     #generate valid key
-    if method == EncryptionMethodFlag.ENCRYPTION_40BIT:
+    if method == EncryptionMethod.ENCRYPTION_40BIT:
         return gen40bits(macKey128), gen40bits(initialFirstKey128), gen40bits(initialSecondKey128)
     
-    elif method == EncryptionMethodFlag.ENCRYPTION_56BIT:
+    elif method == EncryptionMethod.ENCRYPTION_56BIT:
         return gen56bits(macKey128), gen56bits(initialFirstKey128), gen56bits(initialSecondKey128)
     
-    elif method == EncryptionMethodFlag.ENCRYPTION_128BIT:
+    elif method == EncryptionMethod.ENCRYPTION_128BIT:
         return macKey128, initialFirstKey128, initialSecondKey128
     
     raise InvalidExpectedDataException("Bad encryption method")
@@ -286,14 +286,14 @@ def updateKey(initialKey, currentKey, method):
     @see: http://msdn.microsoft.com/en-us/library/cc240792.aspx
     """
     #generate valid key
-    if method == EncryptionMethodFlag.ENCRYPTION_40BIT:
+    if method == EncryptionMethod.ENCRYPTION_40BIT:
         tempKey128 = tempKey(initialKey[:8], currentKey[:8])
         return gen40bits(rc4.crypt(rc4.RC4Key(tempKey128[:8]), tempKey128[:8]))
     
-    elif method == EncryptionMethodFlag.ENCRYPTION_56BIT:
+    elif method == EncryptionMethod.ENCRYPTION_56BIT:
         tempKey128 = tempKey(initialKey[:8], currentKey[:8])
         return gen56bits(rc4.crypt(rc4.RC4Key(tempKey128[:8]), tempKey128[:8]))
     
-    elif method == EncryptionMethodFlag.ENCRYPTION_128BIT:
+    elif method == EncryptionMethod.ENCRYPTION_128BIT:
         tempKey128 = tempKey(initialKey, currentKey)
         return rc4.crypt(rc4.RC4Key(tempKey128), tempKey128)

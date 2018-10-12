@@ -3,11 +3,10 @@ from StringIO import StringIO
 from rdpy.core import ber, per
 from rdpy.core.error import InvalidValue, InvalidSize
 from rdpy.core.packing import Uint8, Uint16BE
-from rdpy.enum.mcs import MCSChannelID
-from rdpy.protocol.mcs.pdu import MCSPDUType, MCSDomainParams
+from rdpy.enum.mcs import MCSChannelID, MCSPDUType
 from rdpy.pdu.mcs import MCSConnectInitialPDU, MCSConnectResponsePDU, MCSErectDomainRequestPDU, \
     MCSDisconnectProviderUltimatumPDU, MCSAttachUserRequestPDU, MCSAttachUserConfirmPDU, MCSChannelJoinRequestPDU, \
-    MCSChannelJoinConfirmPDU, MCSSendDataRequestPDU, MCSSendDataIndicationPDU
+    MCSChannelJoinConfirmPDU, MCSSendDataRequestPDU, MCSSendDataIndicationPDU, MCSDomainParams
 
 
 class MCSParser:
