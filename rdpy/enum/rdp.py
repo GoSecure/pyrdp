@@ -426,3 +426,211 @@ class VirtualChannelCompressionFlag:
 class SoundFlag:
     NONE = 0x0000
     SOUND_BEEPS_FLAG = 0x0001
+
+
+class ErrorInfo(Enum):
+    ERRINFO_RPC_INITIATED_DISCONNECT = 0x00000001
+    ERRINFO_RPC_INITIATED_LOGOFF = 0x00000002
+    ERRINFO_IDLE_TIMEOUT = 0x00000003
+    ERRINFO_LOGON_TIMEOUT = 0x00000004
+    ERRINFO_DISCONNECTED_BY_OTHERCONNECTION = 0x00000005
+    ERRINFO_OUT_OF_MEMORY = 0x00000006
+    ERRINFO_SERVER_DENIED_CONNECTION = 0x00000007
+    ERRINFO_SERVER_INSUFFICIENT_PRIVILEGES = 0x00000009
+    ERRINFO_SERVER_FRESH_CREDENTIALS_REQUIRED = 0x0000000A
+    ERRINFO_RPC_INITIATED_DISCONNECT_BYUSER = 0x0000000B
+    ERRINFO_LOGOFF_BY_USER = 0x0000000C
+    ERRINFO_LICENSE_INTERNAL = 0x00000100
+    ERRINFO_LICENSE_NO_LICENSE_SERVER = 0x00000101
+    ERRINFO_LICENSE_NO_LICENSE = 0x00000102
+    ERRINFO_LICENSE_BAD_CLIENT_MSG = 0x00000103
+    ERRINFO_LICENSE_HWID_DOESNT_MATCH_LICENSE = 0x00000104
+    ERRINFO_LICENSE_BAD_CLIENT_LICENSE = 0x00000105
+    ERRINFO_LICENSE_CANT_FINISH_PROTOCOL = 0x00000106
+    ERRINFO_LICENSE_CLIENT_ENDED_PROTOCOL = 0x00000107
+    ERRINFO_LICENSE_BAD_CLIENT_ENCRYPTION = 0x00000108
+    ERRINFO_LICENSE_CANT_UPGRADE_LICENSE = 0x00000109
+    ERRINFO_LICENSE_NO_REMOTE_CONNECTIONS = 0x0000010A
+    ERRINFO_CB_DESTINATION_NOT_FOUND = 0x0000400
+    ERRINFO_CB_LOADING_DESTINATION = 0x0000402
+    ERRINFO_CB_REDIRECTING_TO_DESTINATION = 0x0000404
+    ERRINFO_CB_SESSION_ONLINE_VM_WAKE = 0x0000405
+    ERRINFO_CB_SESSION_ONLINE_VM_BOOT = 0x0000406
+    ERRINFO_CB_SESSION_ONLINE_VM_NO_DNS = 0x0000407
+    ERRINFO_CB_DESTINATION_POOL_NOT_FREE = 0x0000408
+    ERRINFO_CB_CONNECTION_CANCELLED = 0x0000409
+    ERRINFO_CB_CONNECTION_ERROR_INVALID_SETTINGS = 0x0000410
+    ERRINFO_CB_SESSION_ONLINE_VM_BOOT_TIMEOUT = 0x0000411
+    ERRINFO_CB_SESSION_ONLINE_VM_SESSMON_FAILED = 0x0000412
+    ERRINFO_UNKNOWNPDUTYPE2 = 0x000010C9
+    ERRINFO_UNKNOWNPDUTYPE = 0x000010CA
+    ERRINFO_DATAPDUSEQUENCE = 0x000010CB
+    ERRINFO_CONTROLPDUSEQUENCE = 0x000010CD
+    ERRINFO_INVALIDCONTROLPDUACTION = 0x000010CE
+    ERRINFO_INVALIDINPUTPDUTYPE = 0x000010CF
+    ERRINFO_INVALIDINPUTPDUMOUSE = 0x000010D0
+    ERRINFO_INVALIDREFRESHRECTPDU = 0x000010D1
+    ERRINFO_CREATEUSERDATAFAILED = 0x000010D2
+    ERRINFO_CONNECTFAILED = 0x000010D3
+    ERRINFO_CONFIRMACTIVEWRONGSHAREID = 0x000010D4
+    ERRINFO_CONFIRMACTIVEWRONGORIGINATOR = 0x000010D5
+    ERRINFO_PERSISTENTKEYPDUBADLENGTH = 0x000010DA
+    ERRINFO_PERSISTENTKEYPDUILLEGALFIRST = 0x000010DB
+    ERRINFO_PERSISTENTKEYPDUTOOMANYTOTALKEYS = 0x000010DC
+    ERRINFO_PERSISTENTKEYPDUTOOMANYCACHEKEYS = 0x000010DD
+    ERRINFO_INPUTPDUBADLENGTH = 0x000010DE
+    ERRINFO_BITMAPCACHEERRORPDUBADLENGTH = 0x000010DF
+    ERRINFO_SECURITYDATATOOSHORT = 0x000010E0
+    ERRINFO_VCHANNELDATATOOSHORT = 0x000010E1
+    ERRINFO_SHAREDATATOOSHORT = 0x000010E2
+    ERRINFO_BADSUPRESSOUTPUTPDU = 0x000010E3
+    ERRINFO_CONFIRMACTIVEPDUTOOSHORT = 0x000010E5
+    ERRINFO_CAPABILITYSETTOOSMALL = 0x000010E7
+    ERRINFO_CAPABILITYSETTOOLARGE = 0x000010E8
+    ERRINFO_NOCURSORCACHE = 0x000010E9
+    ERRINFO_BADCAPABILITIES = 0x000010EA
+    ERRINFO_VIRTUALCHANNELDECOMPRESSIONERR = 0x000010EC
+    ERRINFO_INVALIDVCCOMPRESSIONTYPE = 0x000010ED
+    ERRINFO_INVALIDCHANNELID = 0x000010EF
+    ERRINFO_VCHANNELSTOOMANY = 0x000010F0
+    ERRINFO_REMOTEAPPSNOTENABLED = 0x000010F3
+    ERRINFO_CACHECAPNOTSET = 0x000010F4
+    ERRINFO_BITMAPCACHEERRORPDUBADLENGTH2 = 0x000010F5
+    ERRINFO_OFFSCRCACHEERRORPDUBADLENGTH = 0x000010F6
+    ERRINFO_DNGCACHEERRORPDUBADLENGTH = 0x000010F7
+    ERRINFO_GDIPLUSPDUBADLENGTH = 0x000010F8
+    ERRINFO_SECURITYDATATOOSHORT2 = 0x00001111
+    ERRINFO_SECURITYDATATOOSHORT3 = 0x00001112
+    ERRINFO_SECURITYDATATOOSHORT4 = 0x00001113
+    ERRINFO_SECURITYDATATOOSHORT5 = 0x00001114
+    ERRINFO_SECURITYDATATOOSHORT6 = 0x00001115
+    ERRINFO_SECURITYDATATOOSHORT7 = 0x00001116
+    ERRINFO_SECURITYDATATOOSHORT8 = 0x00001117
+    ERRINFO_SECURITYDATATOOSHORT9 = 0x00001118
+    ERRINFO_SECURITYDATATOOSHORT10 = 0x00001119
+    ERRINFO_SECURITYDATATOOSHORT11 = 0x0000111A
+    ERRINFO_SECURITYDATATOOSHORT12 = 0x0000111B
+    ERRINFO_SECURITYDATATOOSHORT13 = 0x0000111C
+    ERRINFO_SECURITYDATATOOSHORT14 = 0x0000111D
+    ERRINFO_SECURITYDATATOOSHORT15 = 0x0000111E
+    ERRINFO_SECURITYDATATOOSHORT16 = 0x0000111F
+    ERRINFO_SECURITYDATATOOSHORT17 = 0x00001120
+    ERRINFO_SECURITYDATATOOSHORT18 = 0x00001121
+    ERRINFO_SECURITYDATATOOSHORT19 = 0x00001122
+    ERRINFO_SECURITYDATATOOSHORT20 = 0x00001123
+    ERRINFO_SECURITYDATATOOSHORT21 = 0x00001124
+    ERRINFO_SECURITYDATATOOSHORT22 = 0x00001125
+    ERRINFO_SECURITYDATATOOSHORT23 = 0x00001126
+    ERRINFO_BADMONITORDATA = 0x00001129
+    ERRINFO_VCDECOMPRESSEDREASSEMBLEFAILED = 0x0000112A
+    ERRINFO_VCDATATOOLONG = 0x0000112B
+    ERRINFO_BAD_FRAME_ACK_DATA = 0x0000112C
+    ERRINFO_GRAPHICSMODENOTSUPPORTED = 0x0000112D
+    ERRINFO_GRAPHICSSUBSYSTEMRESETFAILED = 0x0000112E
+    ERRINFO_GRAPHICSSUBSYSTEMFAILED = 0x0000112F
+    ERRINFO_TIMEZONEKEYNAMELENGTHTOOSHORT = 0x00001130
+    ERRINFO_TIMEZONEKEYNAMELENGTHTOOLONG = 0x00001131
+    ERRINFO_DYNAMICDSTDISABLEDFIELDMISSING = 0x00001132
+    ERRINFO_VCDECODINGERROR = 0x00001133
+    ERRINFO_UPDATESESSIONKEYFAILED = 0x00001191
+    ERRINFO_DECRYPTFAILED = 0x00001192
+    ERRINFO_ENCRYPTFAILED = 0x00001193
+    ERRINFO_ENCPKGMISMATCH = 0x00001194
+    ERRINFO_DECRYPTFAILED2 = 0x00001195
+
+    MESSAGES_ = {
+        ERRINFO_RPC_INITIATED_DISCONNECT: "The disconnection was initiated by an administrative tool on the server in another session.",
+        ERRINFO_RPC_INITIATED_LOGOFF: "The disconnection was due to a forced logoff initiated by an administrative tool on the server in another session.",
+        ERRINFO_IDLE_TIMEOUT: "The idle session limit timer on the server has elapsed.",
+        ERRINFO_LOGON_TIMEOUT: "The active session limit timer on the server has elapsed.",
+        ERRINFO_DISCONNECTED_BY_OTHERCONNECTION: "Another user connected to the server, forcing the disconnection of the current connection.",
+        ERRINFO_OUT_OF_MEMORY: "The server ran out of available memory resources.",
+        ERRINFO_SERVER_DENIED_CONNECTION: "The server denied the connection.",
+        ERRINFO_SERVER_INSUFFICIENT_PRIVILEGES: "The user cannot connect to the server due to insufficient access privileges.",
+        ERRINFO_SERVER_FRESH_CREDENTIALS_REQUIRED: "The server does not accept saved user credentials and requires that the user enter their credentials for each connection.",
+        ERRINFO_RPC_INITIATED_DISCONNECT_BYUSER: "The disconnection was initiated by an administrative tool on the server running in the user's session.",
+        ERRINFO_LOGOFF_BY_USER: "The disconnection was initiated by the user logging off his or her session on the server.",
+        ERRINFO_LICENSE_INTERNAL: "An internal error has occurred in the Terminal Services licensing component.",
+        ERRINFO_LICENSE_NO_LICENSE_SERVER: "A Remote Desktop License Server ([MS-RDPELE] section 1.1) could not be found to provide a license.",
+        ERRINFO_LICENSE_NO_LICENSE: "There are no Client Access Licenses ([MS-RDPELE] section 1.1) available for the target remote computer.",
+        ERRINFO_LICENSE_BAD_CLIENT_MSG: "The remote computer received an invalid licensing message from the client.",
+        ERRINFO_LICENSE_HWID_DOESNT_MATCH_LICENSE: "The Client Access License ([MS-RDPELE] section 1.1) stored by the client has been modified.",
+        ERRINFO_LICENSE_BAD_CLIENT_LICENSE: "The Client Access License ([MS-RDPELE] section 1.1) stored by the client is in an invalid format",
+        ERRINFO_LICENSE_CANT_FINISH_PROTOCOL: "Network problems have caused the licensing protocol ([MS-RDPELE] section 1.3.3) to be terminated.",
+        ERRINFO_LICENSE_CLIENT_ENDED_PROTOCOL: "The client prematurely ended the licensing protocol ([MS-RDPELE] section 1.3.3).",
+        ERRINFO_LICENSE_BAD_CLIENT_ENCRYPTION: "A licensing message ([MS-RDPELE] sections 2.2 and 5.1) was incorrectly encrypted.",
+        ERRINFO_LICENSE_CANT_UPGRADE_LICENSE: "The Client Access License ([MS-RDPELE] section 1.1) stored by the client could not be upgraded or renewed.",
+        ERRINFO_LICENSE_NO_REMOTE_CONNECTIONS: "The remote computer is not licensed to accept remote connections.",
+        ERRINFO_CB_DESTINATION_NOT_FOUND: "The target endpoint could not be found.",
+        ERRINFO_CB_LOADING_DESTINATION: "The target endpoint to which the client is being redirected is disconnecting from the Connection Broker.",
+        ERRINFO_CB_REDIRECTING_TO_DESTINATION: "An error occurred while the connection was being redirected to the target endpoint.",
+        ERRINFO_CB_SESSION_ONLINE_VM_WAKE: "An error occurred while the target endpoint (a virtual machine) was being awakened.",
+        ERRINFO_CB_SESSION_ONLINE_VM_BOOT: "An error occurred while the target endpoint (a virtual machine) was being started.",
+        ERRINFO_CB_SESSION_ONLINE_VM_NO_DNS: "The IP address of the target endpoint (a virtual machine) cannot be determined.",
+        ERRINFO_CB_DESTINATION_POOL_NOT_FREE: "There are no available endpoints in the pool managed by the Connection Broker.",
+        ERRINFO_CB_CONNECTION_CANCELLED: "Processing of the connection has been cancelled.",
+        ERRINFO_CB_CONNECTION_ERROR_INVALID_SETTINGS: "The settings contained in the routingToken field of the X.224 Connection Request PDU (section 2.2.1.1) cannot be validated.",
+        ERRINFO_CB_SESSION_ONLINE_VM_BOOT_TIMEOUT: "A time-out occurred while the target endpoint (a virtual machine) was being started.",
+        ERRINFO_CB_SESSION_ONLINE_VM_SESSMON_FAILED: "A session monitoring error occurred while the target endpoint (a virtual machine) was being started.",
+        ERRINFO_UNKNOWNPDUTYPE2: "Unknown pduType2 field in a received Share Data Header (section 2.2.8.1.1.1.2).",
+        ERRINFO_UNKNOWNPDUTYPE: "Unknown pduType field in a received Share Control Header (section 2.2.8.1.1.1.1).",
+        ERRINFO_DATAPDUSEQUENCE: "An out-of-sequence Slow-Path Data PDU (section 2.2.8.1.1.1.1) has been received.",
+        ERRINFO_CONTROLPDUSEQUENCE: "An out-of-sequence Slow-Path Non-Data PDU (section 2.2.8.1.1.1.1) has been received.",
+        ERRINFO_INVALIDCONTROLPDUACTION: "A Control PDU (sections 2.2.1.15 and 2.2.1.16) has been received with an invalid action field.",
+        ERRINFO_INVALIDINPUTPDUTYPE: "A Slow-Path Input Event (section 2.2.8.1.1.3.1.1) has been received with an invalid messageType field OR A Fast-Path Input Event (section 2.2.8.1.2.2) has been received with an invalid eventCode field",
+        ERRINFO_INVALIDINPUTPDUMOUSE: "A Slow-Path Mouse Event (section 2.2.8.1.1.3.1.1.3) or Extended Mouse Event (section 2.2.8.1.1.3.1.1.4) has been received with an invalid pointerFlags field OR A Fast-Path Mouse Event (section 2.2.8.1.2.2.3) or Fast-Path Extended Mouse Event (section 2.2.8.1.2.2.4) has been received with an invalid pointerFlags field.",
+        ERRINFO_INVALIDREFRESHRECTPDU: "An invalid Refresh Rect PDU (section 2.2.11.2) has been received.",
+        ERRINFO_CREATEUSERDATAFAILED: "The server failed to construct the GCC Conference Create Response user data (section 2.2.1.4).",
+        ERRINFO_CONNECTFAILED: "Processing during the Channel Connection phase of the RDP Connection Sequence (see section 1.3.1.1 for an overview of the RDP Connection Sequence phases) has failed.",
+        ERRINFO_CONFIRMACTIVEWRONGSHAREID: "A Confirm Active PDU (section 2.2.1.13.2) was received from the client with an invalid shareId field.",
+        ERRINFO_CONFIRMACTIVEWRONGORIGINATOR: "A Confirm Active PDU (section 2.2.1.13.2) was received from the client with an invalid originatorId field.",
+        ERRINFO_PERSISTENTKEYPDUBADLENGTH: "There is not enough data to process a Persistent Key List PDU (section 2.2.1.17).",
+        ERRINFO_PERSISTENTKEYPDUILLEGALFIRST: "A Persistent Key List PDU (section 2.2.1.17) marked as PERSIST_PDU_FIRST (0x01) was received after the reception of a prior Persistent Key List PDU also marked as PERSIST_PDU_FIRST.",
+        ERRINFO_PERSISTENTKEYPDUTOOMANYTOTALKEYS: "A Persistent Key List PDU (section 2.2.1.17) was received which specified a total number of bitmap cache entries larger than 262144.",
+        ERRINFO_PERSISTENTKEYPDUTOOMANYCACHEKEYS: "A Persistent Key List PDU (section 2.2.1.17) was received which specified an invalid total number of keys for a bitmap cache (the number of entries that can be stored within each bitmap cache is specified in the Revision 1 or 2 Bitmap Cache Capability Set (section 2.2.7.1.4) that is sent from client to server).",
+        ERRINFO_INPUTPDUBADLENGTH: "There is not enough data to process Input Event PDU Data (section 2.2.8.1.1.3.1) or a Fast-Path Input Event PDU (section 2.2.8.1.2).",
+        ERRINFO_BITMAPCACHEERRORPDUBADLENGTH: "There is not enough data to process the shareDataHeader, NumInfoBlocks, Pad1, and Pad2 fields of the Bitmap Cache Error PDU Data ([MS-RDPEGDI] section 2.2.2.3.1.1).",
+        ERRINFO_SECURITYDATATOOSHORT: "The dataSignature field of the Fast-Path Input Event PDU (section 2.2.8.1.2) does not contain enough data OR The fipsInformation and dataSignature fields of the Fast-Path Input Event PDU (section 2.2.8.1.2) do not contain enough data.",
+        ERRINFO_VCHANNELDATATOOSHORT: "There is not enough data in the Client Network Data (section 2.2.1.3.4) to read the virtual channel configuration data OR There is not enough data to read a complete Channel PDU Header (section 2.2.6.1.1).",
+        ERRINFO_SHAREDATATOOSHORT: "There is not enough data to process Control PDU Data (section 2.2.1.15.1) OR There is not enough data to read a complete Share Control Header (section 2.2.8.1.1.1.1) OR There is not enough data to read a complete Share Data Header (section 2.2.8.1.1.1.2) of a Slow-Path Data PDU (section 2.2.8.1.1.1.1) OR There is not enough data to process Font List PDU Data (section 2.2.1.18.1).",
+        ERRINFO_BADSUPRESSOUTPUTPDU: "There is not enough data to process Suppress Output PDU Data (section 2.2.11.3.1) OR The allowDisplayUpdates field of the Suppress Output PDU Data (section 2.2.11.3.1) is invalid.",
+        ERRINFO_CONFIRMACTIVEPDUTOOSHORT: "There is not enough data to read the shareControlHeader, shareId, originatorId, lengthSourceDescriptor, and lengthCombinedCapabilities fields of the Confirm Active PDU Data (section 2.2.1.13.2.1) OR There is not enough data to read the sourceDescriptor, numberCapabilities, pad2Octets, and capabilitySets fields of the Confirm Active PDU Data (section 2.2.1.13.2.1).",
+        ERRINFO_CAPABILITYSETTOOSMALL: "There is not enough data to read the capabilitySetType and the lengthCapability fields in a received Capability Set (section 2.2.1.13.1.1.1).",
+        ERRINFO_CAPABILITYSETTOOLARGE: "A Capability Set (section 2.2.1.13.1.1.1) has been received with a lengthCapability field that contains a value greater than the total length of the data received.",
+        ERRINFO_NOCURSORCACHE: "Both the colorPointerCacheSize and pointerCacheSize fields in the Pointer Capability Set (section 2.2.7.1.5) are set to zero OR The pointerCacheSize field in the Pointer Capability Set (section 2.2.7.1.5) is not present, and the colorPointerCacheSize field is set to zero.",
+        ERRINFO_BADCAPABILITIES: "The capabilities received from the client in the Confirm Active PDU (section 2.2.1.13.2) were not accepted by the server.",
+        ERRINFO_VIRTUALCHANNELDECOMPRESSIONERR: "An error occurred while using the bulk compressor (section 3.1.8 and [MS-RDPEGDI] section 3.1.8) to decompress a Virtual Channel PDU (section 2.2.6.1).",
+        ERRINFO_INVALIDVCCOMPRESSIONTYPE: "An invalid bulk compression package was specified in the flags field of the Channel PDU Header (section 2.2.6.1.1).",
+        ERRINFO_INVALIDCHANNELID: "An invalid MCS channel ID was specified in the mcsPdu field of the Virtual Channel PDU (section 2.2.6.1).",
+        ERRINFO_VCHANNELSTOOMANY: "The client requested more than the maximum allowed 31 static virtual channels in the Client Network Data (section 2.2.1.3.4).",
+        ERRINFO_REMOTEAPPSNOTENABLED: "The INFO_RAIL flag (0x00008000) MUST be set in the flags field of the Info Packet (section 2.2.1.11.1.1) as the session on the remote server can only host remote applications.",
+        ERRINFO_CACHECAPNOTSET: "The client sent a Persistent Key List PDU (section 2.2.1.17) without including the prerequisite Revision 2 Bitmap Cache Capability Set (section 2.2.7.1.4.2) in the Confirm Active PDU (section 2.2.1.13.2).",
+        ERRINFO_BITMAPCACHEERRORPDUBADLENGTH2: "The NumInfoBlocks field in the Bitmap Cache Error PDU Data is inconsistent with the amount of data in the Info field ([MS-RDPEGDI] section 2.2.2.3.1.1).",
+        ERRINFO_OFFSCRCACHEERRORPDUBADLENGTH: "There is not enough data to process an Offscreen Bitmap Cache Error PDU ([MS-RDPEGDI] section 2.2.2.3.2).",
+        ERRINFO_GDIPLUSPDUBADLENGTH: "There is not enough data to process a GDI+ Error PDU ([MS-RDPEGDI] section 2.2.2.3.4).",
+        ERRINFO_SECURITYDATATOOSHORT2: "There is not enough data to read a Basic Security Header (section 2.2.8.1.1.2.1).",
+        ERRINFO_SECURITYDATATOOSHORT3: "There is not enough data to read a Non-FIPS Security Header (section 2.2.8.1.1.2.2) or FIPS Security Header (section 2.2.8.1.1.2.3).",
+        ERRINFO_SECURITYDATATOOSHORT4: "There is not enough data to read the basicSecurityHeader and length fields of the Security Exchange PDU Data (section 2.2.1.10.1).",
+        ERRINFO_SECURITYDATATOOSHORT5: "There is not enough data to read the CodePage, flags, cbDomain, cbUserName, cbPassword, cbAlternateShell, cbWorkingDir, Domain, UserName, Password, AlternateShell, and WorkingDir fields in the Info Packet (section 2.2.1.11.1.1).",
+        ERRINFO_SECURITYDATATOOSHORT6: "There is not enough data to read the CodePage, flags, cbDomain, cbUserName, cbPassword, cbAlternateShell, and cbWorkingDir fields in the Info Packet (section 2.2.1.11.1.1).",
+        ERRINFO_SECURITYDATATOOSHORT7: "There is not enough data to read the clientAddressFamily and cbClientAddress fields in the Extended Info Packet (section 2.2.1.11.1.1.1).",
+        ERRINFO_SECURITYDATATOOSHORT8: "There is not enough data to read the clientAddress field in the Extended Info Packet (section 2.2.1.11.1.1.1).",
+        ERRINFO_SECURITYDATATOOSHORT9: "There is not enough data to read the cbClientDir field in the Extended Info Packet (section 2.2.1.11.1.1.1).",
+        ERRINFO_SECURITYDATATOOSHORT10: "There is not enough data to read the clientDir field in the Extended Info Packet (section 2.2.1.11.1.1.1).",
+        ERRINFO_SECURITYDATATOOSHORT11: "There is not enough data to read the clientTimeZone field in the Extended Info Packet (section 2.2.1.11.1.1.1).",
+        ERRINFO_SECURITYDATATOOSHORT12: "There is not enough data to read the clientSessionId field in the Extended Info Packet (section 2.2.1.11.1.1.1).",
+        ERRINFO_SECURITYDATATOOSHORT13: "There is not enough data to read the performanceFlags field in the Extended Info Packet (section 2.2.1.11.1.1.1).",
+        ERRINFO_SECURITYDATATOOSHORT14: "There is not enough data to read the cbAutoReconnectCookie field in the Extended Info Packet (section 2.2.1.11.1.1.1).",
+        ERRINFO_SECURITYDATATOOSHORT15: "There is not enough data to read the autoReconnectCookie field in the Extended Info Packet (section 2.2.1.11.1.1.1).",
+        ERRINFO_SECURITYDATATOOSHORT16: "The cbAutoReconnectCookie field in the Extended Info Packet (section 2.2.1.11.1.1.1) contains a value which is larger than the maximum allowed length of 128 bytes.",
+        ERRINFO_SECURITYDATATOOSHORT17: "There is not enough data to read the clientAddressFamily and cbClientAddress fields in the Extended Info Packet (section 2.2.1.11.1.1.1).",
+        ERRINFO_SECURITYDATATOOSHORT18: "There is not enough data to read the clientAddress field in the Extended Info Packet (section 2.2.1.11.1.1.1).",
+        ERRINFO_SECURITYDATATOOSHORT19: "There is not enough data to read the cbClientDir field in the Extended Info Packet (section 2.2.1.11.1.1.1).",
+        ERRINFO_SECURITYDATATOOSHORT20: "There is not enough data to read the clientDir field in the Extended Info Packet (section 2.2.1.11.1.1.1).",
+        ERRINFO_SECURITYDATATOOSHORT21: "There is not enough data to read the clientTimeZone field in the Extended Info Packet (section 2.2.1.11.1.1.1).",
+        ERRINFO_SECURITYDATATOOSHORT22: "There is not enough data to read the clientSessionId field in the Extended Info Packet (section 2.2.1.11.1.1.1).",
+        ERRINFO_SECURITYDATATOOSHORT23: "There is not enough data to read the Client Info PDU Data (section 2.2.1.11.1).",
+        ERRINFO_BADMONITORDATA: "The monitorCount field in the Client Monitor Data (section 2.2.1.3.6) is invalid.",
+        ERRINFO_VCDECOMPRESSEDREASSEMBLEFAILED: "The server-side decompression buffer is invalid, or the size of the decompressed VC data exceeds the chunking size specified in the Virtual Channel Capability Set (section 2.2.7.1.10).",
+        ERRINFO_VCDATATOOLONG: "The size of a received Virtual Channel PDU (section 2.2.6.1) exceeds the chunking size specified in the Virtual Channel Capability Set (section 2.2.7.1.10).",
+    }

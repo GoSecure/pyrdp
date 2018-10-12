@@ -6,7 +6,7 @@ from StringIO import StringIO
 from rdpy.core.StrictStream import StrictStream
 from rdpy.core.packing import Uint32LE, Uint16LE, Uint8, Int32LE
 from rdpy.enum.rdp import ClientInfoFlags, RDPSecurityHeaderType, RDPLicensingPDUType, RDPDataPDUType, \
-    RDPConnectionDataType, ServerCertificateType, RDPDataPDUSubtype
+    RDPConnectionDataType, ServerCertificateType, RDPDataPDUSubtype, ErrorInfo
 from rdpy.pdu.rdp.connection import RDPNegotiationRequestPDU, RDPClientDataPDU, ClientCoreData, ClientSecurityData, \
     ClientChannelDefinition, ClientNetworkData, ClientClusterData, RDPServerDataPDU, ServerCoreData, ServerNetworkData, \
     ServerSecurityData, ProprietaryCertificate
@@ -368,7 +368,7 @@ class RDPDataParser:
 
     def parseError(self, stream, header):
         errorInfo = Uint32LE.unpack(stream)
-        return RDPSetErrorInfoPDU(header, errorInfo)
+        return RDPSetErrorInfoPDU(header, ErrorInfo(errorInfo))
 
     def writeError(self, stream, pdu):
         Uint32LE.pack(pdu.errorInfo, stream)
