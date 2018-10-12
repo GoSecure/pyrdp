@@ -201,6 +201,32 @@ class RDPLicensingParser:
         blob = self.parseLicenseBlob(stream)
         return RDPLicenseErrorAlertPDU(flags, errorCode, stateTransition, blob)
 
+    def write(self, pdu):
+        stream = StringIO()
+        stream.write(Uint8.pack(pdu.header))
+        stream.write(Uint8.pack(pdu.flags))
+        substream = StringIO()
+        if isinstance(pdu, RDPLicenseErrorAlertPDU):
+            self.writeErrorAlert(substream, pdu)
+        else:
+            raise Exception("Unhandled RDP Licencing PDU: {}".format(pdu))
+        stream.write(Uint16LE.pack(len(substream.getvalue()) + 4))
+        stream.write(substream.getvalue())
+        return stream.getvalue()
+
+    def writeErrorAlert(self, stream, pdu):
+        """
+        Writes LicenceErrorAlertPDU-specific fields to stream
+        :type stream: StringIO
+        :type pdu: RDPLicenseErrorAlertPDU
+        """
+        stream.write(Uint32LE.pack(pdu.errorCode))
+        stream.write(Uint32LE.pack(pdu.stateTransition))
+        stream.write(Uint16LE.pack(pdu.blob.type))
+        stream.write(Uint16LE.pack(0))
+
+
+
 
 class RDPDataParser:
     def __init__(self):
@@ -699,3 +725,37 @@ class RDPServerConnectionParser:
             stream.write(Uint32LE.pack(len(data.serverCertificate)))
             stream.write(data.serverRandom)
             stream.write(data.serverCertificate)
+
+class RDPClientInfoParser:
+
+    def parse(self, pdu):
+        """
+        https://msdn.microsoft.com/en-us/library/cc240475.aspx
+        :type pdu: str
+        :return: RDPClientInfoPDU
+        """
+        # cb = count byte
+        codePage = Uint32LE.unpack(pdu[0 : 4])
+        flags = Uint32LE.unpack(pdu[4 : 8])
+        cbDomain = Uint16LE.unpack(pdu[8 : 10])
+        cbUserName = Uint16LE.unpack(pdu[10 : 12])
+        cbPassword = Uint16LE.unpack(pdu[12 : 14])
+        cbAlternateShell = Uint16LE.unpack(pdu[14 : 16])
+        cbWorkingDir = Uint16LE.unpack(pdu[16 : 18])
+        domainIndexEnd = 18 + cbDomain + 2
+        domain = pdu[18 : domainIndexEnd].decode("utf-16le")
+        userNameIndexEnd = domainIndexEnd + cbUserName + 2
+        username = pdu[domainIndexEnd : userNameIndexEnd].decode("utf-16le")
+        passwordIndexEnd = userNameIndexEnd + cbPassword + 2
+        password = pdu[userNameIndexEnd : passwordIndexEnd].decode("utf-16le")
+        alternateShellIndexEnd = passwordIndexEnd + cbAlternateShell + 2
+        alternateShell = pdu[passwordIndexEnd: alternateShellIndexEnd].decode("utf-16le")
+        workingDirIndexEnd = alternateShellIndexEnd + cbWorkingDir + 2
+        workingDir = pdu[alternateShellIndexEnd: workingDirIndexEnd].decode("utf-16le")
+
+        extraInfo = ""
+        if workingDirIndexEnd + 1 < len(pdu):
+            # Means there is an extraInfo PDU
+            extraInfo = pdu[workingDirIndexEnd : len(pdu)]
+
+        return RDPClientInfoPDU(codePage, flags, domain, username, password, alternateShell, workingDir, extraInfo)

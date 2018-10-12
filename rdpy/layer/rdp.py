@@ -1,3 +1,5 @@
+from rdpy.core import log
+
 from rdpy.core.newlayer import Layer
 from rdpy.enum.rdp import RDPSecurityFlags, RDPSecurityHeaderType, FIPSVersion
 from rdpy.parser.rdp import RDPSecurityParser, RDPLicensingParser, RDPClientConnectionParser, RDPServerConnectionParser
@@ -17,6 +19,15 @@ class RDPClientConnectionLayer(Layer):
     def send(self, pdu):
         self.previous.send(self.clientRDP.write(pdu))
 
+
+class IOChannel(Layer):
+    def __init__(self, security):
+        Layer.__init__(self)
+        self.security = security
+
+    def recv(self, data):
+        log.info("Security Exchange result: %s" % data.encode('hex'))
+        pass
 
 class RDPSecurityLayer(Layer):
     # Header type used for Client Info and Licensing PDUs if no encryption is used
@@ -38,14 +49,22 @@ class RDPSecurityLayer(Layer):
             if pdu.header & RDPSecurityFlags.SEC_ENCRYPT != 0:
                 pdu.payload = self.crypter.decrypt(pdu.payload)
 
-            if pdu.header & RDPSecurityFlags.SEC_LICENSE_PKT != 0:
+            if pdu.header & RDPSecurityFlags.SEC_INFO_PKT != 0:
+                self.observer.onClientInfoReceived(pdu.payload)
+            elif pdu.header & RDPSecurityFlags.SEC_LICENSE_PKT != 0:
                 self.licensing.recv(pdu.payload)
             else:
                 self.pduReceived(pdu, pdu.header & RDPSecurityFlags.SEC_INFO_PKT == 0)
 
-    def send(self, data):
-        encrypted = self.headerType != RDPSecurityHeaderType.NONE
-        self.sendWithHeader(data, self.headerType, RDPSecurityFlags.SEC_ENCRYPT if encrypted else 0)
+    def send(self, data, isLicensing = False):
+        encrypted = self.headerType not in [RDPSecurityHeaderType.NONE, RDPSecurityHeaderType.BASIC]
+        flags = 0
+        if encrypted:
+            flags &= RDPSecurityFlags.SEC_ENCRYPT
+        if isLicensing:
+            self.sendLicensingData(data)
+        else:
+            self.sendWithHeader(data, self.headerType, flags)
 
     def sendSecurityExchange(self, clientRandom):
         pdu = RDPSecurityExchangePDU(RDPSecurityFlags.SEC_EXCHANGE_PKT | RDPSecurityFlags.SEC_LICENSE_ENCRYPT_SC, clientRandom + "\x00" * 8)
@@ -62,7 +81,7 @@ class RDPSecurityLayer(Layer):
     def sendLicensingData(self, data):
         header = RDPSecurityFlags.SEC_LICENSE_PKT
 
-        if self.headerType == RDPSecurityHeaderType.NONE:
+        if self.headerType in [RDPSecurityHeaderType.NONE, RDPSecurityHeaderType.BASIC]:
             self.sendWithHeader(data, RDPSecurityLayer.DEFAULT_HEADER_TYPE, header)
         else:
             self.sendWithHeader(data, self.headerType, header | RDPSecurityFlags.SEC_ENCRYPT)
