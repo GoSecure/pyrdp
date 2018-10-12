@@ -37,6 +37,7 @@ class RDPSecurityLayer(Layer):
 
             if pdu.header & RDPSecurityFlags.SEC_ENCRYPT != 0:
                 pdu.payload = self.crypter.decrypt(pdu.payload)
+                self.crypter.addDecryption()
 
             if pdu.header & RDPSecurityFlags.SEC_LICENSE_PKT != 0:
                 self.licensing.recv(pdu.payload)
@@ -84,6 +85,7 @@ class RDPSecurityLayer(Layer):
     def sendBasicSecurity(self, data, header):
         if header & RDPSecurityFlags.SEC_ENCRYPT != 0:
             data = self.crypter.encrypt(data)
+            self.crypter.addEncryption()
 
         pdu = RDPBasicSecurityPDU(header, data)
         self.previous.send(self.parser.write(pdu))
@@ -92,6 +94,8 @@ class RDPSecurityLayer(Layer):
         header |= RDPSecurityFlags.SEC_SECURE_CHECKSUM
         signature = self.crypter.sign(data, True)
         data = self.crypter.encrypt(data)
+        self.crypter.addEncryption()
+
         pdu = RDPSignedSecurityPDU(header, signature, data)
         self.previous.send(self.parser.write(pdu))
 
@@ -100,6 +104,8 @@ class RDPSecurityLayer(Layer):
         padLength = self.crypter.getPadLength(data)
         signature = self.crypter.sign(data, True)
         data = self.crypter.encrypt(data)
+        self.crypter.addEncryption()
+
         pdu = RDPFIPSSecurityPDU(header, FIPSVersion.TSFIPS_VERSION1, padLength, signature, data)
         self.previous.send(self.parser.write(pdu))
 
