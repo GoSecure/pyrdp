@@ -1,3 +1,4 @@
+from rdpy.core.observer import Observer
 from rdpy.core.subject import Subject
 from rdpy.enum.mcs import MCSChannelID
 from rdpy.pdu.mcs import MCSAttachUserConfirmPDU, MCSChannelJoinConfirmPDU
@@ -5,12 +6,14 @@ from router import MCSRouter, whenConnected
 from user import MCSUser
 
 
-class MCSServerConnectionObserver:
+class MCSServerConnectionObserver(Observer):
     """
     Observer class for server connections
     """
+    def __init__(self, **kwargs):
+        Observer.__init__(self, **kwargs)
 
-    def connectionReceived(self, pdu):
+    def onConnectionReceived(self, pdu):
         """
         Callback for when a Connect Initial PDU is received
         True if the connection is accepted
@@ -62,7 +65,7 @@ class MCSServerRouter(MCSRouter, Subject):
         """
         Called when a Connect Initial PDU is received
         """
-        if self.observer.connectionReceived(pdu):
+        if self.observer.onConnectionReceived(pdu):
             self.connected = True
     
     @whenConnected
