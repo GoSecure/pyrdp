@@ -43,3 +43,10 @@ class RDPSynchronizePDU:
         self.header = header
         self.messageType = messageType
         self.targetUser = targetUser
+
+class RDPControlPDU:
+    def __init__(self, header, action, grantID, controlID):
+        self.header = header
+        self.action = action
+        self.grantID = grantID
+        self.controlID = controlID

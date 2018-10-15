@@ -11,7 +11,7 @@ from rdpy.pdu.rdp.connection import RDPNegotiationRequestPDU, RDPClientDataPDU, 
     ClientChannelDefinition, ClientNetworkData, ClientClusterData, RDPServerDataPDU, ServerCoreData, ServerNetworkData, \
     ServerSecurityData, ProprietaryCertificate
 from rdpy.pdu.rdp.data import RDPDemandActivePDU, RDPShareControlHeader, RDPConfirmActivePDU, RDPShareDataHeader, \
-    RDPSetErrorInfoPDU, RDPSynchronizePDU
+    RDPSetErrorInfoPDU, RDPSynchronizePDU, RDPControlPDU
 from rdpy.pdu.rdp.licensing import RDPLicenseBinaryBlob, RDPLicenseErrorAlertPDU
 from rdpy.pdu.rdp.security import RDPBasicSecurityPDU, RDPSignedSecurityPDU, RDPFIPSSecurityPDU, \
     RDPSecurityExchangePDU
@@ -240,11 +240,13 @@ class RDPDataParser:
         self.dataParsers = {
             RDPDataPDUSubtype.PDUTYPE2_SET_ERROR_INFO_PDU: self.parseError,
             RDPDataPDUSubtype.PDUTYPE2_SYNCHRONIZE: self.parseSynchronize,
+            RDPDataPDUSubtype.PDUTYPE2_CONTROL: self.parseControl,
         }
 
         self.dataWriters = {
             RDPDataPDUSubtype.PDUTYPE2_SET_ERROR_INFO_PDU: self.writeError,
             RDPDataPDUSubtype.PDUTYPE2_SYNCHRONIZE: self.writeSynchronize,
+            RDPDataPDUSubtype.PDUTYPE2_CONTROL: self.writeControl,
         }
 
     def parse(self, data):
@@ -383,6 +385,17 @@ class RDPDataParser:
     def writeSynchronize(self, stream, pdu):
         Uint16LE.pack(pdu.messageType, stream)
         Uint16LE.pack(pdu.targetUser, stream)
+
+    def parseControl(self, stream, header):
+        action = Uint16LE.unpack(stream)
+        grantID = Uint16LE.unpack(stream)
+        controlID = Uint32LE.unpack(stream)
+        return RDPControlPDU(header, action, grantID, controlID)
+
+    def writeControl(self, stream, pdu):
+        Uint16LE.pack(pdu.action, stream)
+        Uint16LE.pack(pdu.grantID, stream)
+        Uint32LE.pack(pdu.grantID, stream)
 
 class RDPNegotiationParser:
     """
