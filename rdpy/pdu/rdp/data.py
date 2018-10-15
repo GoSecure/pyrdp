@@ -37,3 +37,9 @@ class RDPSetErrorInfoPDU:
     def __init__(self, header, errorInfo):
         self.header = header
         self.errorInfo = errorInfo
+
+class RDPSynchronizePDU:
+    def __init__(self, header, messageType, targetUser):
+        self.header = header
+        self.messageType = messageType
+        self.targetUser = targetUser
