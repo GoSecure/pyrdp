@@ -6,7 +6,7 @@ from StringIO import StringIO
 from rdpy.core.StrictStream import StrictStream
 from rdpy.core.packing import Uint32LE, Uint16LE, Uint8, Int32LE
 from rdpy.enum.rdp import ClientInfoFlags, RDPSecurityHeaderType, RDPLicensingPDUType, RDPDataPDUType, \
-    RDPConnectionDataType, ServerCertificateType, RDPDataPDUSubtype, ErrorInfo
+    RDPConnectionDataType, ServerCertificateType, RDPDataPDUSubtype, ErrorInfo, NegotiationProtocols
 from rdpy.pdu.rdp.connection import RDPNegotiationRequestPDU, RDPClientDataPDU, ClientCoreData, ClientSecurityData, \
     ClientChannelDefinition, ClientNetworkData, ClientClusterData, RDPServerDataPDU, ServerCoreData, ServerNetworkData, \
     ServerSecurityData, ProprietaryCertificate
@@ -404,10 +404,11 @@ class RDPNegotiationParser:
     """
 
     def __init__(self):
-
         self.writers = {
+            NegociationType.TYPE_RDP_NEG_REQ: self.writeNegotiationRequestPDU,
             NegociationType.TYPE_RDP_NEG_RSP: self.writeNegotiationResponsePDU,
         }
+
 
     def parse(self, data):
         """
@@ -415,22 +416,21 @@ class RDPNegotiationParser:
         :param data: The bytes of the RDP Negotiation Request packet.
         :return: A RDPNegotiationRequestPDU
         """
-        split_data = data.split("\r\n")
-        if len(split_data) != 2:
-            raise Exception("No mstshash cookie (not an error per se, but not implemented)")
-        cookie = split_data[0]
-        flags = split_data[1]
-        if len(split_data[1]) < 4:
-            raise Exception("RDP negotiation packet not big enough: {} bytes".format(len(split_data[1])))
-        packet_type = Uint16LE.unpack(split_data[1][0 : 2])
-        if packet_type != NegociationType.TYPE_RDP_NEG_REQ:
-            raise Exception("Invalid RDP packet type. Should be {}, is {}".format(NegociationType.TYPE_RDP_NEG_REQ,
-                                                                                  packet_type))
-        length = Uint16LE.unpack(split_data[1][2 : 4])
-        if length < 8:
-            raise Exception("Invalid RDP negotiation packet length: {}".format(length))
-        requested_protocols = Uint32LE.unpack(split_data[1][4: 8])
-        return RDPNegotiationRequestPDU(cookie, flags, requested_protocols)
+        cookie = ""
+        flags = 0
+        requested_protocols = NegotiationProtocols.NONE
+
+        if "\r\n" in data:
+            cookie = data[: data.index("\r\n")]
+            data = data[data.index("\r\n") + 2 :]
+
+        if len(data) == 8:
+            type = Uint8.unpack(data[0])
+            flags = Uint8.unpack(data[1])
+            length = Uint16LE.unpack(data[2 : 4])
+            requested_protocols = Uint32LE.unpack(data[4 : 8])
+
+        return RDPNegotiationRequestPDU(cookie, flags, NegotiationProtocols(requested_protocols))
 
     def write(self, pdu):
         """
@@ -440,7 +440,22 @@ class RDPNegotiationParser:
         if pdu.packetType in self.writers.keys():
             return self.writers[pdu.packetType](pdu)
         else:
-            raise Exception("Wrong packet type.")
+            raise Exception("Wrong packet type %d" % pdu.packetType)
+
+    def writeNegotiationRequestPDU(self, pdu):
+        """
+        :type pdu: RDPNegotiationRequestPDU
+        """
+        stream = StringIO()
+
+        if pdu.cookie != "":
+            stream.write(pdu.cookie)
+
+        Uint8.pack(pdu.packetType, stream)
+        Uint8.pack(pdu.flags)
+        Uint16LE.pack(8, stream)
+        Uint32LE.pack(pdu.requestedProtocols)
+        return stream.getvalue()
 
     def writeNegotiationResponsePDU(self, pdu):
         """
@@ -589,10 +604,19 @@ class RDPClientConnectionParser:
 
     def write(self, pdu):
         stream = StringIO()
-        self.writeStructure(stream, pdu.coreData)
-        self.writeStructure(stream, pdu.securityData)
-        self.writeStructure(stream, pdu.networkData)
-        self.writeStructure(stream, pdu.clusterData)
+
+        if pdu.coreData:
+            self.writeStructure(stream, pdu.coreData)
+
+        if pdu.securityData:
+            self.writeStructure(stream, pdu.securityData)
+
+        if pdu.networkData:
+            self.writeStructure(stream, pdu.networkData)
+
+        if pdu.clusterData:
+            self.writeStructure(stream, pdu.clusterData)
+
         return stream.getvalue()
 
     def writeStructure(self, stream, data):
@@ -801,9 +825,16 @@ class RDPServerConnectionParser:
         :return: StringIO to send to the next network protocol layer
         """
         stream = StringIO()
-        self.writeStructure(stream, pdu.core)
-        self.writeStructure(stream, pdu.security)
-        self.writeStructure(stream, pdu.network)
+
+        if pdu.core:
+            self.writeStructure(stream, pdu.core)
+
+        if pdu.security:
+            self.writeStructure(stream, pdu.security)
+
+        if pdu.network:
+            self.writeStructure(stream, pdu.network)
+
         return stream.getvalue()
 
     def writeStructure(self, stream, data):
