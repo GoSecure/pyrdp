@@ -61,7 +61,7 @@ class RDPSecurityLayer(Layer):
         encrypted = self.headerType not in [RDPSecurityHeaderType.NONE, RDPSecurityHeaderType.BASIC]
         flags = 0
         if encrypted:
-            flags &= RDPSecurityFlags.SEC_ENCRYPT
+            flags |= RDPSecurityFlags.SEC_ENCRYPT
         if isLicensing:
             self.sendLicensingData(data)
         else:
