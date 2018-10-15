@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import IntEnum
 
 class ClientInfoFlags:
     """
@@ -110,7 +110,7 @@ class RDPStateTransition:
     ST_RESEND_LAST_MESSAGE = 0x00000004
 
 
-class RDPDataPDUType(Enum):
+class RDPDataPDUType(IntEnum):
     """
     Data PDU types
     @see: http://msdn.microsoft.com/en-us/library/cc240576.aspx
@@ -121,7 +121,7 @@ class RDPDataPDUType(Enum):
     PDUTYPE_DATAPDU = 0x7
     PDUTYPE_SERVER_REDIR_PKT = 0xA
 
-class RDPDataPDUSubtype(Enum):
+class RDPDataPDUSubtype(IntEnum):
     """
     @summary: Data PDU type secondary index
     @see: http://msdn.microsoft.com/en-us/library/cc240577.aspx
@@ -282,14 +282,14 @@ class ServerCertificateType:
     X509 = 2
 
 
-class NegotiationProtocols:
+class NegotiationProtocols(IntEnum):
     NONE = 0
     SSL = 0b00000001
     CRED_SSP = 0b00000010
     EARLY_USER_AUTHORIZATION_RESULT = 0b00001000
 
 
-class CapabilityType(Enum):
+class CapabilityType(IntEnum):
     CAPSTYPE_GENERAL = 0x0001
     CAPSTYPE_BITMAP = 0x0002
     CAPSTYPE_ORDER = 0x0003
@@ -429,7 +429,7 @@ class SoundFlag:
     SOUND_BEEPS_FLAG = 0x0001
 
 
-class ErrorInfo(Enum):
+class ErrorInfo(IntEnum):
     ERRINFO_RPC_INITIATED_DISCONNECT = 0x00000001
     ERRINFO_RPC_INITIATED_LOGOFF = 0x00000002
     ERRINFO_IDLE_TIMEOUT = 0x00000003
