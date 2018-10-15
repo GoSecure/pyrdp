@@ -1,33 +1,9 @@
-from rdpy.core import log
-
 from rdpy.core.newlayer import Layer
-from rdpy.enum.rdp import RDPSecurityFlags, RDPSecurityHeaderType, FIPSVersion
-from rdpy.parser.rdp import RDPSecurityParser, RDPLicensingParser, RDPClientConnectionParser, RDPServerConnectionParser
+from rdpy.enum.rdp import RDPSecurityHeaderType, RDPSecurityFlags, FIPSVersion
+from rdpy.layer.rdp.licensing import RDPLicensingLayer
+from rdpy.parser.rdp import RDPSecurityParser
 from rdpy.pdu.rdp.security import RDPSecurityExchangePDU, RDPBasicSecurityPDU, RDPSignedSecurityPDU, RDPFIPSSecurityPDU
 
-
-class RDPClientConnectionLayer(Layer):
-    def __init__(self):
-        Layer.__init__(self)
-        self.clientRDP = RDPClientConnectionParser()
-        self.serverRDP = RDPServerConnectionParser()
-
-    def recv(self, data):
-        pdu = self.serverRDP.parse(data)
-        self.pduReceived(pdu, True)
-
-    def send(self, pdu):
-        self.previous.send(self.clientRDP.write(pdu))
-
-
-class IOChannel(Layer):
-    def __init__(self, security):
-        Layer.__init__(self)
-        self.security = security
-
-    def recv(self, data):
-        log.info("Security Exchange result: %s" % data.encode('hex'))
-        pass
 
 class RDPSecurityLayer(Layer):
     # Header type used for Client Info and Licensing PDUs if no encryption is used
@@ -127,13 +103,3 @@ class RDPSecurityLayer(Layer):
 
         pdu = RDPFIPSSecurityPDU(header, FIPSVersion.TSFIPS_VERSION1, padLength, signature, data)
         self.previous.send(self.parser.write(pdu))
-
-
-class RDPLicensingLayer(Layer):
-    def __init__(self):
-        Layer.__init__(self)
-        self.parser = RDPLicensingParser()
-
-    def recv(self, data):
-        pdu = self.parser.parse(data)
-        self.pduReceived(pdu, False)
