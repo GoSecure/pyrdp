@@ -283,6 +283,7 @@ class ServerCertificateType:
 
 
 class NegotiationProtocols:
+    NONE = 0
     SSL = 0b00000001
     CRED_SSP = 0b00000010
     EARLY_USER_AUTHORIZATION_RESULT = 0b00001000
