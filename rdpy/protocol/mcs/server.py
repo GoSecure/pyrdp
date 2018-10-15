@@ -1,5 +1,5 @@
 from rdpy.core.observer import Observer
-from rdpy.core.subject import Subject
+from rdpy.core.subject import Subject, ObservedBy
 from rdpy.enum.mcs import MCSChannelID
 from rdpy.pdu.mcs import MCSAttachUserConfirmPDU, MCSChannelJoinConfirmPDU
 from router import MCSRouter, whenConnected
@@ -42,6 +42,7 @@ class MCSUserIDGenerator:
         
         return self.next_channel
 
+@ObservedBy(MCSServerConnectionObserver)
 class MCSServerRouter(MCSRouter, Subject):
     """
     MCS router for server traffic
