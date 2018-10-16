@@ -10,3 +10,7 @@ class RDPLicensingLayer(Layer):
     def recv(self, data):
         pdu = self.parser.parse(data)
         self.pduReceived(pdu, False)
+
+    def sendPDU(self, pdu):
+        data = self.parser.write(pdu)
+        self.previous.send(data)
