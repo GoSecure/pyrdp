@@ -48,6 +48,7 @@ class RDPSecurityLayer(Layer):
             elif pdu.header & RDPSecurityFlags.SEC_LICENSE_PKT != 0:
                 self.licensing.recv(pdu.payload)
             elif pdu.header & RDPSecurityFlags.SEC_EXCHANGE_PKT != 0:
+                pdu = self.securityParser.parseSecurityExchange(data)
                 self.observer.onSecurityExchangeReceived(pdu)
             else:
                 self.pduReceived(pdu, pdu.header & RDPSecurityFlags.SEC_INFO_PKT == 0)
