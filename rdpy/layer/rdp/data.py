@@ -69,7 +69,8 @@ class RDPDataLayer(Layer):
             pdu = self.parser.parse(data)
         except Exception as e:
             log.error(str(e))
-            self.observer.onUnparsedData(data)
+            if self.observer:
+                self.observer.onUnparsedData(data)
         else:
             self.pduReceived(pdu, False)
 
