@@ -7,6 +7,7 @@ from rdpy.core.StrictStream import StrictStream
 from rdpy.core.packing import Uint32LE, Uint16LE, Uint8, Int32LE
 from rdpy.enum.rdp import ClientInfoFlags, RDPSecurityHeaderType, RDPLicensingPDUType, RDPDataPDUType, \
     RDPConnectionDataType, ServerCertificateType, RDPDataPDUSubtype, ErrorInfo, NegotiationProtocols
+from rdpy.pdu.rdp.client_info import RDPClientInfoPDU
 from rdpy.pdu.rdp.connection import RDPNegotiationRequestPDU, RDPClientDataPDU, ClientCoreData, ClientSecurityData, \
     ClientChannelDefinition, ClientNetworkData, ClientClusterData, RDPServerDataPDU, ServerCoreData, ServerNetworkData, \
     ServerSecurityData, ProprietaryCertificate
@@ -15,7 +16,6 @@ from rdpy.pdu.rdp.data import RDPDemandActivePDU, RDPShareControlHeader, RDPConf
 from rdpy.pdu.rdp.licensing import RDPLicenseBinaryBlob, RDPLicenseErrorAlertPDU
 from rdpy.pdu.rdp.security import RDPBasicSecurityPDU, RDPSignedSecurityPDU, RDPFIPSSecurityPDU, \
     RDPSecurityExchangePDU
-from rdpy.pdu.rdp.settings import RDPClientInfoPDU
 from rdpy.protocol.rdp.x224 import NegociationType
 
 
