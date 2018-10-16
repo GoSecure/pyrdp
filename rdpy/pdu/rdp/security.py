@@ -1,21 +1,34 @@
-class RDPBasicSecurityPDU:
-    def __init__(self, header, payload):
-        self.header = header
-        self.payload = payload
+from rdpy.pdu.base_pdu import PDU
 
-class RDPSignedSecurityPDU:
-    def __init__(self, header, signature, payload):
-        self.header = header
+
+class RDPSecurityBasePDU(PDU):
+    """
+    base class for RDP Security PDUs. They all have flags (2 used bytes + 2 unused bytes) and a payload.
+    """
+
+    def __init__(self, flags, payload):
+        PDU.__init__(self, payload)
+        self.header = flags
+
+
+class RDPBasicSecurityPDU(RDPSecurityBasePDU):
+    def __init__(self, flags, payload):
+        RDPSecurityBasePDU.__init__(self, flags, payload)
+
+
+class RDPSignedSecurityPDU(RDPSecurityBasePDU):
+    def __init__(self, flags, signature, payload):
+        RDPSecurityBasePDU.__init__(self, flags, payload)
         self.signature = signature
-        self.payload = payload
 
-class RDPFIPSSecurityPDU:
-    def __init__(self, header, version, padLength, signature, payload):
-        self.header = header
+
+class RDPFIPSSecurityPDU(RDPSecurityBasePDU):
+    def __init__(self, flags, version, padLength, signature, payload):
+        RDPSecurityBasePDU.__init__(self, flags, payload)
         self.version = version
         self.padLength = padLength
         self.signature = signature
-        self.payload = payload
+
 
 class RDPSecurityExchangePDU:
     def __init__(self, header, clientRandom):
