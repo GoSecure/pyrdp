@@ -1,6 +1,6 @@
 import struct
 from Crypto.PublicKey import RSA
-from Crypto.Util.number import bytes_to_long
+from Crypto.Util.number import bytes_to_long, long_to_bytes
 from StringIO import StringIO
 
 from rdpy.core.StrictStream import StrictStream
@@ -803,7 +803,12 @@ class RDPServerConnectionParser:
         signature = stream.read(signatureLength - 8)
         padding = stream.read()
 
-        stream = StringIO(publicKey)
+        publicKey = self.parsePublicKey(publicKey)
+
+        return ProprietaryCertificate(signatureAlgorithmID, keyAlgorithmID, publicKeyType, publicKey, signatureType, signature, padding)
+
+    def parsePublicKey(self, data):
+        stream = StringIO(data)
         magic = stream.read(4)
         keyLength = Uint32LE.unpack(stream)
         bitLength = Uint32LE.unpack(stream)
@@ -816,8 +821,7 @@ class RDPServerConnectionParser:
         modulus = bytes_to_long(modulus[:: -1])
         publicExponent = long(publicExponent)
         publicKey = RSA.construct((modulus, publicExponent))
-
-        return ProprietaryCertificate(signatureAlgorithmID, keyAlgorithmID, publicKeyType, publicKey, signatureType, signature, padding)
+        return publicKey
 
     def write(self, pdu):
         """
@@ -860,8 +864,12 @@ class RDPServerConnectionParser:
         :type data: ServerCoreData
         """
         stream.write(Uint32LE.pack(data.version))
-        stream.write(Uint32LE.pack(data.clientRequestedProtocols))
-        stream.write(Uint32LE.pack(data.earlyCapabilityFlags))
+
+        if data.clientRequestedProtocols is not None:
+            stream.write(Uint32LE.pack(data.clientRequestedProtocols))
+
+        if data.earlyCapabilityFlags is not None:
+            stream.write(Uint32LE.pack(data.earlyCapabilityFlags))
 
     def writeServerNetworkData(self, stream, data):
         """
@@ -883,10 +891,54 @@ class RDPServerConnectionParser:
         stream.write(Uint32LE.pack(data.encryptionMethod))
         stream.write(Uint32LE.pack(data.encryptionLevel))
         if data.serverRandom is not None:
+            serverCertificate = self.writeServerCertificate(data.serverCertificate)
+
             stream.write(Uint32LE.pack(len(data.serverRandom)))
-            stream.write(Uint32LE.pack(len(data.serverCertificate)))
+            stream.write(Uint32LE.pack(len(serverCertificate)))
             stream.write(data.serverRandom)
-            stream.write(data.serverCertificate)
+            stream.write(serverCertificate)
+
+    def writeServerCertificate(self, certificate):
+        stream = StringIO()
+
+        if certificate.type == ServerCertificateType.PROPRIETARY:
+            Uint32LE.pack(ServerCertificateType.PROPRIETARY, stream)
+            self.writeProprietaryCertificate(stream, certificate)
+        else:
+            raise Exception("Unhandled certificate type")
+
+        return stream.getvalue()
+
+    def writeProprietaryCertificate(self, stream, cert):
+        keyBytes = self.writePublicKey(cert.publicKey)
+
+        Uint32LE.pack(cert.signatureAlgorithmID, stream)
+        Uint32LE.pack(cert.keyAlgorithmID, stream)
+        Uint16LE.pack(cert.publicKeyType, stream)
+        Uint16LE.pack(len(keyBytes), stream)
+        stream.write(keyBytes)
+        Uint16LE.pack(cert.signatureType, stream)
+        Uint16LE.pack(len(cert.signature) + 8, stream)
+        stream.write(cert.signature)
+        stream.write("\x00" * 8)
+
+    def writePublicKey(self, publicKey):
+        modulus = publicKey.n
+        publicExponent = publicKey.e
+
+        # Modulus must be reversed because bytes_to_long expects it to be in big endian format
+        modulusBytes = long_to_bytes(modulus)[:: -1]
+
+        stream = StringIO()
+        stream.write("RSA1")
+        Uint32LE.pack(len(modulusBytes) + 8, stream)
+        Uint32LE.pack(2048, stream)
+        Uint32LE.pack(255, stream)
+        Uint32LE.pack(publicExponent, stream)
+        stream.write(modulusBytes)
+        stream.write("\x00" * 8)
+        return stream.getvalue()
+
 
 class RDPClientInfoParser:
 
