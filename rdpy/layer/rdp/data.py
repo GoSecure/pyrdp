@@ -47,16 +47,16 @@ class RDPDataLayerObserver(LayerStrictRoutedObserver):
             self.unparsedDataHandler(data)
 
     def onDemandActive(self, pdu):
-        raise Exception("Unhandled Demand Active PDU")
+        pass
 
     def onConfirmActive(self, pdu):
-        raise Exception("Unhandled Confirm Active PDU")
+        pass
 
     def onDeactivateAll(self, pdu):
-        raise Exception("Unhandled Deactivate All PDU")
+        pass
 
     def onServerRedirect(self, pdu):
-        raise Exception("Unhandled Server Redirect PDU")
+        pass
 
 @ObservedBy(RDPDataLayerObserver)
 class RDPDataLayer(Layer):
@@ -76,3 +76,6 @@ class RDPDataLayer(Layer):
 
     def sendPDU(self, pdu):
         self.previous.send(self.parser.write(pdu))
+
+    def sendData(self, data):
+        self.previous.send(data)
