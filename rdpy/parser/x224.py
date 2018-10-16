@@ -1,34 +1,39 @@
 from StringIO import StringIO
 
-from rdpy.core.packing import Uint8, Uint16BE
-from rdpy.enum.x224 import X224Header
+from rdpy.core.packing import Uint8, Uint16BE, Uint16LE
+from rdpy.enum.x224 import X224PDUType
 from rdpy.pdu.x224 import X224ConnectionConfirmPDU, X224ConnectionRequestPDU, X224DisconnectRequestPDU, X224DataPDU, \
     X224ErrorPDU
 
 
 class X224Parser:
     """
-    @summary: Parser for X224 PDUs
+    Parser to read and write X224 (COTP) PDUs.
     """
 
     def __init__(self):
         self.parsers = {
-            X224Header.X224_TPDU_CONNECTION_REQUEST: self.parseConnectionRequest,
-            X224Header.X224_TPDU_CONNECTION_CONFIRM: self.parseConnectionConfirm,
-            X224Header.X224_TPDU_DISCONNECT_REQUEST: self.parseDisconnectRequest,
-            X224Header.X224_TPDU_DATA: self.parseData,
-            X224Header.X224_TPDU_ERROR: self.parseError,
+            X224PDUType.X224_TPDU_CONNECTION_REQUEST: self.parseConnectionRequest,
+            X224PDUType.X224_TPDU_CONNECTION_CONFIRM: self.parseConnectionConfirm,
+            X224PDUType.X224_TPDU_DISCONNECT_REQUEST: self.parseDisconnectRequest,
+            X224PDUType.X224_TPDU_DATA: self.parseData,
+            X224PDUType.X224_TPDU_ERROR: self.parseError,
         }
 
         self.writers = {
-            X224Header.X224_TPDU_CONNECTION_REQUEST: self.writeConnectionRequest,
-            X224Header.X224_TPDU_CONNECTION_CONFIRM: self.writeConnectionConfirm,
-            X224Header.X224_TPDU_DISCONNECT_REQUEST: self.writeDisconnectRequest,
-            X224Header.X224_TPDU_DATA: self.writeData,
-            X224Header.X224_TPDU_ERROR: self.writeError,
+            X224PDUType.X224_TPDU_CONNECTION_REQUEST: self.writeConnectionRequest,
+            X224PDUType.X224_TPDU_CONNECTION_CONFIRM: self.writeConnectionConfirm,
+            X224PDUType.X224_TPDU_DISCONNECT_REQUEST: self.writeDisconnectRequest,
+            X224PDUType.X224_TPDU_DATA: self.writeData,
+            X224PDUType.X224_TPDU_ERROR: self.writeError,
         }
 
     def parse(self, data):
+        """
+        Read the byte stream and return a corresponding X224PDU
+        :type data: str
+        :return: rdpy.pdu.x224.X224PDU
+        """
         length = Uint8.unpack(data[0])
         header = Uint8.unpack(data[1]) >> 4
 
@@ -41,6 +46,16 @@ class X224Parser:
         return self.parsers[header](data, length)
 
     def parseConnectionPDU(self, data, length, name):
+        """
+        Parse the provided data to extract common information contained in Connection Request,
+        Connection Confirm and Disconnect Request PDUs.
+        :type data: str
+        :param length: Length of the Connection PDU
+        :param name: For debugging purposes: the name of the connection PDU (like "Connection Request")
+        :return: A tuple of the information we find in both connection PDUs:
+                (source, destination, options, payload)
+        """
+
         if length < 6:
             raise Exception("Invalid %s" % name)
 
@@ -55,20 +70,45 @@ class X224Parser:
         return source, destination, options, payload
 
     def parseConnectionRequest(self, data, length):
+        """
+        Parse a ConnectionRequest PDU from the raw bytes
+        :type data: str
+        :param length: The length in bytes of the Connection Request PDU.
+        :return: X224ConnectionRequestPDU
+        """
         credit = Uint8.unpack(data[1]) & 0xf
         destination, source, options, payload = self.parseConnectionPDU(data, length, "Connection Request")
         return X224ConnectionRequestPDU(credit, destination, source, options, payload)
 
     def parseConnectionConfirm(self, data, length):
+        """
+        Parse a ConnectionConfirm PDU from the raw bytes
+        :type data: str
+        :param length: The length in bytes of the Connection Confirm PDU.
+        :return: X224ConnectionConfirmPDU
+        """
         credit = Uint8.unpack(data[1]) & 0xf
         destination, source, options, payload = self.parseConnectionPDU(data, length, "Connection Confirm")
         return X224ConnectionConfirmPDU(credit, destination, source, options, payload)
 
     def parseDisconnectRequest(self, data, length):
+        """
+        Parse a DisconnectRequest PDU from the raw bytes
+        :type data: str
+        :param length: The length in bytes of the Disconnect Request PDU.
+        :return: X224DisconnectRequestPDU
+        """
         destination, source, reason, payload = self.parseConnectionPDU(data, length, "Disconnect Request")
         return X224DisconnectRequestPDU(destination, source, reason, payload)
 
     def parseData(self, data, length):
+        """
+        Parse a Data PDU from the raw bytes
+        :type data: str
+        :param length: The length in bytes of the Data PDU.
+        :return: X224DataPDU
+        """
+
         if length != 2:
             raise Exception("Invalid length indicator for X224 Data PDU")
 
@@ -79,6 +119,13 @@ class X224Parser:
         return X224DataPDU(code & 1 == 1, sequence & 0x80 == 0x80, payload)
 
     def parseError(self, data, length):
+        """
+        Parse a Error PDU from the raw bytes
+        :type data: str
+        :param length: The length in bytes of the Error PDU.
+        :return: X224ErrorPDU
+        """
+
         if length < 4:
             raise Exception("Invalid X224 Error PDU")
 
@@ -92,6 +139,12 @@ class X224Parser:
         return X224ErrorPDU(destination, cause, payload)
 
     def write(self, pdu):
+        """
+        Encode the provided X224 pdu into a byte stream.
+        :type pdu: rdpy.pdu.x224.X224PDU
+        :return: str The byte stream to send to the previous layer
+        """
+
         stream = StringIO()
         stream.write(Uint8.pack(pdu.length))
 
@@ -103,28 +156,61 @@ class X224Parser:
         return stream.getvalue()
 
     def writeConnectionPDU(self, stream, header, destination, source, options):
+        """
+        Write a connection PDU (connectionRequest/connectionConfirm/disconnectRequest) in the provided byte stream.
+        :type stream: StringIO
+        :type header: X224PDUType
+        :type destination: int
+        :type source: int
+        :type options: int
+        """
         stream.write(Uint8.pack(header))
         stream.write(Uint16BE.pack(destination))
         stream.write(Uint16BE.pack(source))
         stream.write(Uint8.pack(options))
 
     def writeConnectionRequest(self, stream, pdu):
+        """
+        Write a connection request PDU onto the provided stream
+        :type stream: StringIO
+        :type pdu: X224ConnectionRequestPDU
+        """
         header = (pdu.header << 4) | (pdu.credit & 0xf)
         self.writeConnectionPDU(stream, header, pdu.destination, pdu.source, pdu.options)
 
     def writeConnectionConfirm(self, stream, pdu):
+        """
+        Write a connection confirm PDU onto the provided stream
+        :type stream: StringIO
+        :type pdu: X224ConnectionConfirmPDU
+        """
         header = (pdu.header << 4) | (pdu.credit & 0xf)
         self.writeConnectionPDU(stream, header, pdu.destination, pdu.source, pdu.options)
 
     def writeDisconnectRequest(self, stream, pdu):
+        """
+        Write a disconnect request PDU onto the provided stream
+        :type stream: StringIO
+        :type pdu: X224DisconnectRequestPDU
+        """
         self.writeConnectionPDU(stream, pdu.header, pdu.destination, pdu.source, pdu.reason)
 
     def writeData(self, stream, pdu):
+        """
+        Write a Data PDU onto the provided stream
+        :type stream: StringIO
+        :type pdu: X224DataPDU
+        """
         header = (pdu.header << 4) | int(pdu.roa)
         stream.write(Uint8.pack(header))
         stream.write(Uint8.pack(int(pdu.eot) << 7))
 
     def writeError(self, stream, pdu):
+        """
+        Write an error PDU onto the provided stream
+        :type stream: StringIO
+        :type pdu: X224ErrorPDU
+        """
         stream.write(Uint8.pack(pdu.header))
-        stream.write(Uint16.pack(pdu.destination))
+        stream.write(Uint16LE.pack(pdu.destination))
         stream.write(Uint8.pack(pdu.cause))

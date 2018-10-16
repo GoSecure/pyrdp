@@ -1,15 +1,15 @@
 from rdpy.core.newlayer import LayerStrictRoutedObserver
-from rdpy.enum.x224 import X224Header
+from rdpy.enum.x224 import X224PDUType
 
 
 class X224Observer(LayerStrictRoutedObserver):
     def __init__(self, **kwargs):
         LayerStrictRoutedObserver.__init__(self, {
-            X224Header.X224_TPDU_CONNECTION_REQUEST: "onConnectionRequest",
-            X224Header.X224_TPDU_CONNECTION_CONFIRM: "onConnectionConfirm",
-            X224Header.X224_TPDU_DISCONNECT_REQUEST: "onDisconnectRequest",
-            X224Header.X224_TPDU_DATA: "onData",
-            X224Header.X224_TPDU_ERROR: "onError"
+            X224PDUType.X224_TPDU_CONNECTION_REQUEST: "onConnectionRequest",
+            X224PDUType.X224_TPDU_CONNECTION_CONFIRM: "onConnectionConfirm",
+            X224PDUType.X224_TPDU_DISCONNECT_REQUEST: "onDisconnectRequest",
+            X224PDUType.X224_TPDU_DATA: "onData",
+            X224PDUType.X224_TPDU_ERROR: "onError"
         }, **kwargs)
 
     def onConnectionRequest(self, pdu):

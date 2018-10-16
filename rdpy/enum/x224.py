@@ -1,7 +1,11 @@
-class X224Header:
+from enum import IntEnum
+
+
+class X224PDUType(IntEnum):
     """
-    @summary: X224 header codes
+    X224 header codes
     """
+
     X224_TPDU_CONNECTION_REQUEST = 0x0E
     X224_TPDU_CONNECTION_CONFIRM = 0x0D
     X224_TPDU_DISCONNECT_REQUEST = 0x08
