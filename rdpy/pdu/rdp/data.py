@@ -4,6 +4,7 @@ class RDPShareControlHeader:
         self.version = version
         self.source = source
 
+
 class RDPShareDataHeader(RDPShareControlHeader):
     def __init__(self, type, version, source, shareID, streamID, uncompressedLength, subtype, compressedType, compressedLength):
         RDPShareControlHeader.__init__(self, type, version, source)
@@ -24,6 +25,7 @@ class RDPDemandActivePDU:
         self.capabilitySets = capabilitySets
         self.sessionID = sessionID
 
+
 class RDPConfirmActivePDU:
     def __init__(self, header, shareID, originatorID, sourceDescriptor, numberCapabilities, capabilitySets):
         self.header = header
@@ -33,16 +35,19 @@ class RDPConfirmActivePDU:
         self.numberCapabilities = numberCapabilities
         self.capabilitySets = capabilitySets
 
+
 class RDPSetErrorInfoPDU:
     def __init__(self, header, errorInfo):
         self.header = header
         self.errorInfo = errorInfo
+
 
 class RDPSynchronizePDU:
     def __init__(self, header, messageType, targetUser):
         self.header = header
         self.messageType = messageType
         self.targetUser = targetUser
+
 
 class RDPControlPDU:
     def __init__(self, header, action, grantID, controlID):
