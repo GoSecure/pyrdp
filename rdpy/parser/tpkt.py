@@ -6,12 +6,18 @@ from rdpy.pdu.tpkt import TPKTPDU
 
 class TPKTParser:
     """
-    @summary: Parser for TPKT traffic
+    Parser for TPKT traffic to read and write TPKT messages
     """
 
     def parse(self, data):
+        """
+        Read the byte stream and return a TPKTPDU
+        :type data: str
+        :return: TPKTPDU
+        """
+
         version = Uint8.unpack(data[0 : 1])
-        padding = Uint8.unpack(data[1 : 2])
+        padding = Uint8.unpack(data[1 : 2])  # Unused value
         length = Uint16BE.unpack(data[2 : 4])
         payload = data[4 : length]
 
@@ -21,6 +27,12 @@ class TPKTParser:
         return TPKTPDU(version, payload)
 
     def write(self, pdu):
+        """
+        Encode a TPKTPDU into bytes to send on the network.
+        :type pdu: TPKTPDU
+        :return: str
+        """
+
         stream = StringIO()
         stream.write(Uint8.pack(pdu.version))
         stream.write(Uint8.pack(pdu.padding))

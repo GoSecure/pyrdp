@@ -1,6 +1,6 @@
 from rdpy.core.newlayer import Layer
 from rdpy.core.subject import ObservedBy
-from rdpy.enum.x224 import X224Header
+from rdpy.enum.x224 import X224PDUType
 from rdpy.parser.x224 import X224Parser
 from rdpy.pdu.x224 import X224DataPDU, X224ConnectionRequestPDU, X224ConnectionConfirmPDU, X224DisconnectRequestPDU, X224ErrorPDU
 from rdpy.protocol.x224.layer import X224Observer
@@ -26,11 +26,11 @@ class X224Layer(Layer):
         :type data: str
         """
         pdu = self.parser.parse(data)
-        self.pduReceived(pdu, pdu.header == X224Header.X224_TPDU_DATA)
+        self.pduReceived(pdu, pdu.header == X224PDUType.X224_TPDU_DATA)
 
     def send(self, payload, roa=False, eot=True):
         """
-        Encapsulate the payload in a X.224 Data PDU and send it to the upper layer.
+        Encapsulate the payload in a X.224 Data PDU and send it to the transport (previous) layer.
         :type payload: str
         :param eot: End of transmission.
         :param roa: Request of acknowledgement

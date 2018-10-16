@@ -1,4 +1,4 @@
-from rdpy.enum.x224 import X224Header
+from rdpy.enum.x224 import X224PDUType
 from rdpy.pdu.base_pdu import PDU
 
 
@@ -22,7 +22,7 @@ class X224PDU(PDU):
 class X224ConnectionRequestPDU(X224PDU):
 
     def __init__(self, credit, destination, source, options, payload):
-        X224PDU.__init__(self, len(payload) + 6, X224Header.X224_TPDU_CONNECTION_REQUEST, payload)
+        X224PDU.__init__(self, len(payload) + 6, X224PDUType.X224_TPDU_CONNECTION_REQUEST, payload)
         self.credit = credit
         self.destination = destination
         self.source = source
@@ -32,7 +32,7 @@ class X224ConnectionRequestPDU(X224PDU):
 class X224ConnectionConfirmPDU(X224PDU):
 
     def __init__(self, credit, destination, source, options, payload):
-        X224PDU.__init__(self, len(payload) + 6, X224Header.X224_TPDU_CONNECTION_CONFIRM, payload)
+        X224PDU.__init__(self, len(payload) + 6, X224PDUType.X224_TPDU_CONNECTION_CONFIRM, payload)
         self.credit = credit
         self.destination = destination
         self.source = source
@@ -42,7 +42,7 @@ class X224ConnectionConfirmPDU(X224PDU):
 class X224DisconnectRequestPDU(X224PDU):
 
     def __init__(self, destination, source, reason, payload):
-        X224PDU.__init__(self, len(payload) + 6, X224Header.X224_TPDU_DISCONNECT_REQUEST, payload)
+        X224PDU.__init__(self, len(payload) + 6, X224PDUType.X224_TPDU_DISCONNECT_REQUEST, payload)
         self.destination = destination
         self.source = source
         self.reason = reason
@@ -56,15 +56,14 @@ class X224DataPDU(X224PDU):
         @param eot: end of transmission (True if this is the last packet in a sequence)
         @param payload: the data payload
         """
-        X224PDU.__init__(self, 2, X224Header.X224_TPDU_DATA, payload)
+        X224PDU.__init__(self, 2, X224PDUType.X224_TPDU_DATA, payload)
         self.roa = roa
         self.eot = eot
 
 
 class X224ErrorPDU(X224PDU):
 
-    def __init__(self, destination, cause):
-        # this might not work
-        X224PDU.__init__(self, len(cause) + 4, X224Header.X224_TPDU_ERROR, cause)
+    def __init__(self, destination, cause, payload):
+        X224PDU.__init__(self, len(payload) + 4, X224PDUType.X224_TPDU_ERROR, payload)
         self.destination = destination
         self.cause = cause
