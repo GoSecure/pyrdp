@@ -20,27 +20,31 @@ class X224Layer(Layer):
 
     def recv(self, data):
         """
-        Receive a X.224 message, decode its header and
-        :param data:
-        :return:
+        Receive a X.224 message, decode its header, notify the observer and forward to the next layer
+        if its a data PDU.
+        :param data: The X.224 raw data (with header and payload)
+        :type data: str
         """
         pdu = self.parser.parse(data)
         self.pduReceived(pdu, pdu.header == X224Header.X224_TPDU_DATA)
 
-    def send(self, payload, **kwargs):
+    def send(self, payload, roa=False, eot=True):
         """
-
-        :param payload:
-        :param kwargs:
-        :return:
+        Encapsulate the payload in a X.224 Data PDU and send it to the upper layer.
+        :type payload: str
+        :param eot: End of transmission.
+        :param roa: Request of acknowledgement
         """
-        roa = kwargs.pop("roa", False)
-        eot = kwargs.pop("eot", True)
 
         pdu = X224DataPDU(roa, eot, payload)
         self.previous.send(self.parser.write(pdu))
 
     def sendConnectionPDU(self, factory, payload, **kwargs):
+        """
+        :param factory: The PDU class to use to create the connection PDU
+        :type factory: Class
+        :type payload: str
+        """
         credit = kwargs.pop("credit", 0)
         destination = kwargs.pop("destination", 0)
         source = kwargs.pop("source", 0)
