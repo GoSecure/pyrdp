@@ -10,6 +10,10 @@ from rdpy.pdu.mcs import MCSConnectInitialPDU, MCSConnectResponsePDU, MCSErectDo
 
 
 class MCSParser:
+    """
+    Parser class to read and write MCS (T.125) PDUs.
+    """
+
     def __init__(self):
         self.parsers = {
             MCSPDUType.CONNECT_INITIAL: self.parseConnectInitial,
@@ -39,8 +43,12 @@ class MCSParser:
 
     def parse(self, data):
         """
+        Parse raw data bytes into a MCSPDU
         :param data: raw bytes to parse
+        :type data: str
+        :return: MCSPDU
         """
+
         stream = StringIO(data)
         header = Uint8.unpack(stream.read(1))
         if header == ber.Class.BER_CLASS_APPL | ber.BerPc.BER_CONSTRUCT | ber.Tag.BER_TAG_MASK:
@@ -55,8 +63,10 @@ class MCSParser:
 
     def parseDomainParams(self, stream):
         """
-        Parse a Domain Param from stream
-        :param stream: stream containing the data
+        Parse a MCSDomainParam from stream
+        :param stream: byte stream containing the data
+        :type stream: StringIO
+        :return: MCSDomainParam
         """
         if not ber.readUniversalTag(stream, ber.Tag.BER_TAG_SEQUENCE, True):
             raise InvalidValue("Invalid BER tag (%d expected)" % ber.Tag.BER_TAG_SEQUENCE)
@@ -79,6 +89,8 @@ class MCSParser:
         """
         Parse a Connect Initial PDU
         :param stream: stream containing the data
+        :type stream: StringIO
+        :return: MCSConnectInitialPDU
         """
         length = ber.readLength(stream)
         callingDomain = ber.readOctetString(stream)
@@ -94,6 +106,8 @@ class MCSParser:
         """
         Parse a Connect Response PDU
         :param stream: stream containing the data
+        :type stream: StringIO
+        :return: MCSConnectResponsePDU
         """
         length = ber.readLength(stream)
         result = ber.readEnumerated(stream)
@@ -106,6 +120,8 @@ class MCSParser:
         """
         Parse an Erect Domain Request PDU
         :param stream: stream containing the data
+        :type stream: StringIO
+        :return: MCSErectDomainRequestPDU
         """
         subHeight = per.readInteger(stream)
         subInterval = per.readInteger(stream)
@@ -116,8 +132,10 @@ class MCSParser:
         """
         Parse a Disconnect Provider Ultimatum PDU
         :param stream: stream containing the data
+        :type stream: StringIO
+        :return: MCSDisconnectProviderUltimatumPDU
         """
-        reason = ber.readEnumeration(stream)
+        reason = ber.readEnumerated(stream)
 
         if len(stream.read()) > 0:
             raise Exception("Unexpected payload")
@@ -128,6 +146,8 @@ class MCSParser:
         """
         Parse an Attach User Request PDU
         :param stream: stream containing the data
+        :type stream: StringIO
+        :return: MCSAttachUserRequestPDU
         """
         if len(stream.read()) > 0:
             raise Exception("Unexpected payload")
@@ -138,13 +158,14 @@ class MCSParser:
         """
         Parse an Attach User Confirm PDU
         :param stream: stream containing the data
+        :type stream: StringIO
+        :return: MCSAttachUserConfirmPDU
         """
         result = per.readEnumeration(stream)
         data = stream.read()
 
-        if len(data) == 0:
-            initiator = None
-        elif len(data) == 2:
+        initiator = None
+        if len(data) == 2:
             initiator = Uint16BE.unpack(data) + MCSChannelID.USERCHANNEL_BASE
         elif len(data) > 2:
             raise Exception("Unexpected payload")
@@ -155,6 +176,8 @@ class MCSParser:
         """
         Parse a Channel Join Request PDU
         :param stream: stream containing the data
+        :type stream: StringIO
+        :return: MCSChannelJoinRequestPDU
         """
         data = stream.read()
         if len(data) < 4:
@@ -170,6 +193,8 @@ class MCSParser:
         """
         Parse a Channel Join Confirm PDU
         :param stream: stream containing the data
+        :type stream: StringIO
+        :return: MCSChannelJoinConfirmPDU
         """
         result = per.readEnumeration(stream)
         data = stream.read()
@@ -191,7 +216,9 @@ class MCSParser:
         """
         Common logic for parsing Send Data Request and Send Data Indication PDUs
         :param stream: stream containing the data
-        :param PDUClass: the actual PDU class
+        :type stream: StringIO
+        :param PDUClass: the actual PDU class: MCSSendDataRequestPDU|MCSSendDataIndicationPDU
+        :return: MCSSendDataRequestPDU|MCSSendDataIndicationPDU
         """
         initiator = Uint16BE.unpack(stream.read(2)) + MCSChannelID.USERCHANNEL_BASE
         channelID = Uint16BE.unpack(stream.read(2))
@@ -203,6 +230,8 @@ class MCSParser:
         """
         Parse a Send Data Request PDU
         :param stream: stream containing the data
+        :type stream: StringIO
+        :return: MCSSendDataRequestPDU
         """
         return self.parseDataPDU(stream, MCSSendDataRequestPDU)
 
@@ -210,15 +239,17 @@ class MCSParser:
         """
         Parse a Send Data Indication PDU
         :param stream: stream containing the data
+        :type stream: StringIO
+        :return: MCSSendDataIndicationPDU
         """
         return self.parseDataPDU(stream, MCSSendDataIndicationPDU)
 
-
-
     def write(self, pdu):
         """
-        Encode an MCS PDU
-        :param pdu: the PDU to encode
+        Encode an MCS PDU into raw bytes
+        :param pdu: the MCSPDU to encode
+        :type pdu: rdpy.pdu.mcs.MCSPDU
+        :return: str The raw bytes to send
         """
         if pdu.header not in self.writers:
             raise Exception("Trying to send unhandled PDU type")
@@ -234,12 +265,12 @@ class MCSParser:
         self.writers[pdu.header](stream, pdu)
         return stream.getvalue()
 
-
     def writeDomainParams(self, stream, params):
         """
-        Encode a Domain Params structure
-        :param stream: the destination stream
-        :param params: the domain params
+        Encode a Domain Params structure into the provided stream
+        :param stream: The destination stream to write into.
+        :type stream: StringIO
+        :type params: MCSDomainParams
         """
         substream = StringIO()
         substream.write(ber.writeInteger(params.maxChannelIDs))
@@ -259,8 +290,9 @@ class MCSParser:
     def writeConnectInitial(self, stream, pdu):
         """
         Encode a Connect Initial PDU
-        :param stream: the destination stream
-        :param pdu: the PDU
+        :param stream: The destination stream to write into.
+        :type stream: StringIO
+        :type pdu: MCSConnectInitialPDU
         """
         substream = StringIO()
         substream.write(ber.writeOctetString(pdu.callingDomain))
@@ -278,8 +310,9 @@ class MCSParser:
     def writeConnectResponse(self, stream, pdu):
         """
         Encode a Connect Response PDU
-        :param stream: the destination stream
-        :param pdu: the PDU
+        :param stream: The destination stream to write into.
+        :type stream: StringIO
+        :type pdu: MCSConnectResponsePDU
         """
         substream = StringIO()
         substream.write(ber.writeEnumerated(pdu.result))
@@ -292,9 +325,10 @@ class MCSParser:
 
     def writeErectDomainRequest(self, stream, pdu):
         """
-        Encode an Erect Domain Request PDU
-        :param stream: the destination stream
-        :param pdu: the PDU
+        Encode a Erect Domain Request PDU
+        :param stream: The destination stream to write into.
+        :type stream: StringIO
+        :type pdu: MCSErectDomainRequestPDU
         """
         stream.write(per.writeInteger(pdu.subHeight))
         stream.write(per.writeInteger(pdu.subInterval))
@@ -303,24 +337,24 @@ class MCSParser:
     def writeDisconnectProviderUltimatum(self, stream, pdu):
         """
         Encode a Disconnect Provider Ultimatum PDU
-        :param stream: the destination stream
-        :param pdu: the PDU
+        :param stream: The destination stream to write into.
+        :type stream: StringIO
+        :type pdu: MCSDisconnectProviderUltimatumPDU
         """
-        stream.write(per.writeEnumerated(pdu.reason))
+        stream.write(per.writeEnumeration(pdu.reason))
 
     def writeAttachUserRequest(self, stream, pdu):
         """
-        Encode an Attach User Request PDU
-        :param stream: the destination stream
-        :param pdu: the PDU
+        Does nothing :)
         """
         pass
 
     def writeAttachUserConfirm(self, stream, pdu):
         """
-        Encode an Attach User Confirm PDU
-        :param stream: the destination stream
-        :param pdu: the PDU
+        Encode a Attach User Confirm PDU
+        :param stream: The destination stream to write into.
+        :type stream: StringIO
+        :type pdu: MCSAttachUserConfirmPDU
         """
         stream.write(per.writeEnumeration(pdu.result))
 
@@ -330,8 +364,9 @@ class MCSParser:
     def writeChannelJoinRequest(self, stream, pdu):
         """
         Encode a Channel Join Request PDU
-        :param stream: the destination stream
-        :param pdu: the PDU
+        :param stream: The destination stream to write into.
+        :type stream: StringIO
+        :type pdu: MCSChannelJoinRequestPDU
         """
         stream.write(Uint16BE.pack(pdu.initiator - MCSChannelID.USERCHANNEL_BASE))
         stream.write(Uint16BE.pack(pdu.channelID))
@@ -340,8 +375,9 @@ class MCSParser:
     def writeChannelJoinConfirm(self, stream, pdu):
         """
         Encode a Channel Join Confirm PDU
-        :param stream: the destination stream
-        :param pdu: the PDU
+        :param stream: The destination stream to write into.
+        :type stream: StringIO
+        :type pdu: MCSChannelJoinConfirmPDU
         """
         stream.write(per.writeEnumeration(pdu.result))
         stream.write(Uint16BE.pack(pdu.initiator - MCSChannelID.USERCHANNEL_BASE))
@@ -353,9 +389,10 @@ class MCSParser:
 
     def writeDataPDU(self, stream, pdu):
         """
-        Base logic for encoding Send Data Request and Send Data Indication PDUs
-        :param stream: the destination stream
-        :param pdu: the PDU
+        Encode a Data PDU
+        :param stream: The destination stream to write into.
+        :type stream: StringIO
+        :type pdu: MCSSendDataIndicationPDU|MCSSendDataRequestPDU
         """
         stream.write(Uint16BE.pack(pdu.initiator - MCSChannelID.USERCHANNEL_BASE))
         stream.write(Uint16BE.pack(pdu.channelID))
@@ -365,15 +402,17 @@ class MCSParser:
     def writeSendDataRequest(self, stream, pdu):
         """
         Encode a Send Data Request PDU
-        :param stream: the destination stream
-        :param pdu: the PDU
+        :param stream: The destination stream to write into.
+        :type stream: StringIO
+        :type pdu: MCSSendDataRequestPDU
         """
         self.writeDataPDU(stream, pdu)
 
     def writeSendDataIndication(self, stream, pdu):
         """
         Encode a Send Data Indication PDU
-        :param stream: the destination stream
-        :param pdu: the PDU
+        :param stream: The destination stream to write into.
+        :type stream: StringIO
+        :type pdu: MCSSendDataIndicationPDU
         """
         self.writeDataPDU(stream, pdu)

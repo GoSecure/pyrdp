@@ -7,6 +7,10 @@ from rdpy.pdu.gcc import GCCConferenceCreateRequestPDU, GCCConferenceCreateRespo
 
 
 class GCCParser:
+    """
+    Parser class to read and write GCC (T.124) PDUs.
+    """
+
     T124_02_98_OID = (0, 0, 20, 124, 0, 1)
     H221_CLIENT_KEY = "Duca"
     H221_SERVER_KEY = "McDn"
@@ -24,6 +28,11 @@ class GCCParser:
         }
 
     def parse(self, data):
+        """
+        Parses the raw data bytes into a GCCPDU
+        :type data: str
+        :return: GCCPDU
+        """
         stream = StringIO(data)
 
         tag = per.readChoice(stream)
@@ -47,9 +56,15 @@ class GCCParser:
         return pdu
 
     def parseConferenceCreateRequest(self, stream):
+        """
+        Parse ConferenceCreateRequest data into a GCCPDU
+        :param stream: byte stream containing the PDU data
+        :type stream: StringIO
+        :return: GCCConferenceCreateRequestPDU
+        """
         property = per.readSelection(stream)
         if property != 8:
-            raise Exception("Expected property to be 8 (conference name), got %d" % choice)
+            raise Exception("Expected property to be 8 (conference name), got %d" % property)
 
         conferenceName = per.readNumericString(stream, 1)
         padding = stream.read(1)
@@ -70,6 +85,13 @@ class GCCParser:
         return GCCConferenceCreateRequestPDU(conferenceName, payload)
 
     def parseConferenceCreateResponse(self, stream):
+        """
+        Parse ConferenceCreateResponse data into a GCCPDU
+        :param stream: byte stream containing the PDU data
+        :type stream: StringIO
+        :return: GCCConferenceCreateResponsePDU
+        """
+
         nodeID = Uint16BE.unpack(stream.read(2)) + 1001
         tag = per.readInteger(stream)
         result = per.readEnumeration(stream)
@@ -89,7 +111,6 @@ class GCCParser:
         payload = per.readOctetStream(stream)
         return GCCConferenceCreateResponsePDU(nodeID, tag, result, payload)
 
-
     def write(self, pdu):
         if pdu.header not in self.writers:
             raise Exception("Trying to write unknown GCC PDU type %d" % pdu.header)
@@ -104,6 +125,12 @@ class GCCParser:
         return stream.getvalue()
 
     def writeConferenceCreateRequest(self, stream, pdu):
+        """
+        Read a GCCConferenceCreateRequestPDU and put its raw data into stream
+        :param stream: byte stream to put the ConferenceCreateRequest data in
+        :type stream: StringIO
+        :type pdu: GCCConferenceCreateRequestPDU
+        """
         stream.write(per.writeSelection(8))
         stream.write(per.writeNumericString(pdu.conferenceName, 1))
         stream.write(per.writeEnumeration(0))
@@ -113,6 +140,13 @@ class GCCParser:
         stream.write(per.writeOctetStream(pdu.payload))
 
     def writeConferenceCreateResponse(self, stream, pdu):
+        """
+        Read a GCCConferenceCreateResponsePDU and put its raw data into stream
+        :param stream: byte stream to put the ConferenceCreateResponse data in
+        :type stream: StringIO
+        :type pdu: GCCConferenceCreateResponsePDU
+        """
+
         stream.write(Uint16BE.pack(GCCParser.NODE_ID - 1001))
         stream.write(per.writeInteger(1))
         stream.write(per.writeEnumeration(0))

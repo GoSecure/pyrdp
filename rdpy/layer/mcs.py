@@ -5,8 +5,9 @@ from rdpy.pdu.mcs import MCSConnectInitialPDU, MCSDomainParams
 
 class MCSLayer(Layer):
     """
-    Layer for handling MCS related traffic.
-    It doesn't really make sense to assign a single 'next' layer to this, so traffic is never forwarded.
+    Layer to handle MCS-related traffic.
+    It doesn't really make sense to assign a single 'next' layer to this
+    (since MCS is channel-based), so traffic is never forwarded.
     """
 
     def __init__(self):
@@ -17,19 +18,22 @@ class MCSLayer(Layer):
         """
         Receive MCS data
         :param data: raw MCS layer bytes
+        :type data: str
         """
         pdu = self.parser.parse(data)
         self.pduReceived(pdu, False)
 
     def send(self, pdu):
         """
-        Send an MCS PDU
+        Send a MCS PDU
         :param pdu: PDU to send
+        :type pdu: rdpy.pdu.mcs.MCSPDU
         """
         self.previous.send(self.parser.write(pdu))
 
 
 class MCSClientConnectionLayer(Layer):
+
     def __init__(self, mcs):
         Layer.__init__(self)
         self.mcs = mcs
