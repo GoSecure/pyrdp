@@ -6,12 +6,14 @@ class RDPLicensingPDU:
         self.header = header
         self.flags = flags
 
+
 class RDPLicenseErrorAlertPDU(RDPLicensingPDU):
     def __init__(self, flags, errorCode, stateTransition, blob):
         RDPLicensingPDU.__init__(self, RDPLicensingPDUType.ERROR_ALERT, flags)
         self.errorCode = errorCode
         self.stateTransition = stateTransition
         self.blob = blob
+
 
 class RDPLicenseBinaryBlob:
     def __init__(self, type, data):

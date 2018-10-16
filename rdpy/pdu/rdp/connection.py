@@ -1,8 +1,9 @@
 from rdpy.enum.rdp import RDPConnectionDataType, ServerCertificateType, NegotiationProtocols
+from rdpy.pdu.base_pdu import PDU
 from rdpy.protocol.rdp.x224 import NegociationType
 
 
-class RDPClientDataPDU:
+class RDPClientDataPDU(PDU):
     def __init__(self, coreData, securityData, networkData, clusterData):
         """
         :type coreData: ClientCoreData
@@ -10,10 +11,12 @@ class RDPClientDataPDU:
         :type networkData: ClientNetworkData
         :type clusterData: ClientClusterData
         """
+        PDU.__init__(self)
         self.coreData = coreData
         self.securityData = securityData
         self.networkData = networkData
         self.clusterData = clusterData
+
 
 class ClientCoreData:
     def __init__(self, version, desktopWidth, desktopHeight, colorDepth, sasSequence, keyboardLayout, clientBuild, clientName, keyboardType, keyboardSubType, keyboardFunctionKey, imeFileName):
@@ -46,12 +49,14 @@ class ClientCoreData:
         self.desktopScaleFactor = None
         self.deviceScaleFactor = None   
 
+
 class ClientSecurityData:
     def __init__(self, encryptionMethods, extEncryptionMethods):
         self.header = RDPConnectionDataType.CLIENT_SECURITY
         self.encryptionMethods = encryptionMethods
         # extEncryptionMethods is used only for the French locale (https://msdn.microsoft.com/en-us/library/cc240511.aspx)
         self.extEncryptionMethods = extEncryptionMethods
+
 
 class ClientChannelDefinition:
     def __init__(self, name, options):
@@ -61,10 +66,12 @@ class ClientChannelDefinition:
     def __repr__(self):
         return "%s (0x%lx)" % (self.name, self.options)
 
+
 class ClientNetworkData:
     def __init__(self, channelDefinitions):
         self.header = RDPConnectionDataType.CLIENT_NETWORK
         self.channelDefinitions = channelDefinitions
+
 
 class ClientClusterData:
     def __init__(self, flags, redirectedSessionID):
@@ -73,12 +80,13 @@ class ClientClusterData:
         self.redirectedSessionID = redirectedSessionID
 
 
-
-class RDPServerDataPDU:
+class RDPServerDataPDU(PDU):
     def __init__(self, core, security, network):
+        PDU.__init__(self)
         self.core = core
         self.security = security
         self.network = network
+
 
 class ServerCoreData:
     def __init__(self, version, clientRequestedProtocols, earlyCapabilityFlags):
@@ -87,12 +95,14 @@ class ServerCoreData:
         self.clientRequestedProtocols = clientRequestedProtocols
         self.earlyCapabilityFlags = earlyCapabilityFlags
 
+
 class ServerNetworkData:
     def __init__(self, mcsChannelID, channels):
         self.header = RDPConnectionDataType.SERVER_NETWORK
         self.mcsChannelID = mcsChannelID
         self.channels = channels
-    
+
+
 class ServerSecurityData:
     def __init__(self, encryptionMethod, encryptionLevel, serverRandom, serverCertificate):
         self.header = RDPConnectionDataType.SERVER_SECURITY
@@ -101,11 +111,13 @@ class ServerSecurityData:
         self.serverRandom = serverRandom
         self.serverCertificate = serverCertificate
 
+
 class ServerCertificate:
     def __init__(self, type, publicKey, signature):
         self.type = type
         self.publicKey = publicKey
         self.signature = signature
+
 
 class ProprietaryCertificate(ServerCertificate):
     def __init__(self, signatureAlgorithmID, keyAlgorithmID, publicKeyType, publicKey, signatureType, signature, padding):
@@ -117,25 +129,27 @@ class ProprietaryCertificate(ServerCertificate):
         self.padding = padding
 
 
-class RDPNegotiationResponsePDU:
+class RDPNegotiationResponsePDU(PDU):
     """
     Second PDU of the RDP connection sequence. Sent by the server.
     Important information is the chosen encryption method.
     """
 
     def __init__(self, flags, selected_protocol):
+        PDU.__init__(self)
         self.packetType = NegociationType.TYPE_RDP_NEG_RSP
         self.length = 8
         self.flags = flags
         self.selected_protocol = selected_protocol
 
 
-class RDPNegotiationRequestPDU:
+class RDPNegotiationRequestPDU(PDU):
     """
     First PDU of the RDP connection sequence. Sent by the client.
     """
 
     def __init__(self, cookie, flags, requested_protocols):
+        PDU.__init__(self)
         self.cookie = cookie
         self.flags = flags
         self.packetType = NegociationType.TYPE_RDP_NEG_REQ

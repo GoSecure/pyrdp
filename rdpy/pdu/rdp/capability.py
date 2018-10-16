@@ -1,8 +1,10 @@
 from rdpy.enum.rdp import CapabilityType
 
+
 class Capability:
     def __init__(self, type):
         self.type = type
+
 
 class GeneralCapability(Capability):
     def __init__(self, majorType, minorType, protocolVersion, generalCompressionTypes, extraFlags, updateCapabilityFlag, remoteUnshareFlag, generalCompressionLevel, refreshRectSupport, suppressOutputSupport):
