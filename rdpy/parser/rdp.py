@@ -25,14 +25,16 @@ class RDPSettingsParser:
         codePage = Uint32LE.unpack(stream)
         flags = Uint32LE.unpack(stream)
 
-        hasNullBytes = codePage == 1252 or flags & ClientInfoFlags.INFO_UNICODE != 0
+        isUnicode = flags & ClientInfoFlags.INFO_UNICODE != 0
+        hasNullBytes = codePage == 1252 or isUnicode
         nullByteCount = 1 if hasNullBytes else 0
+        unicodeMultiplier = 2 if isUnicode else 0
 
-        domainLength = Uint16LE.unpack(stream) + nullByteCount
-        usernameLength = Uint16LE.unpack(stream) + nullByteCount
-        passwordLength = Uint16LE.unpack(stream) + nullByteCount
-        alternateShellLength = Uint16LE.unpack(stream) + nullByteCount
-        workingDirLength = Uint16LE.unpack(stream) + nullByteCount
+        domainLength = Uint16LE.unpack(stream) + nullByteCount * unicodeMultiplier
+        usernameLength = Uint16LE.unpack(stream) + nullByteCount * unicodeMultiplier
+        passwordLength = Uint16LE.unpack(stream) + nullByteCount * unicodeMultiplier
+        alternateShellLength = Uint16LE.unpack(stream) + nullByteCount * unicodeMultiplier
+        workingDirLength = Uint16LE.unpack(stream) + nullByteCount * unicodeMultiplier
 
         domain = stream.read(domainLength)
         username = stream.read(usernameLength)
@@ -40,11 +42,19 @@ class RDPSettingsParser:
         alternateShell = stream.read(alternateShellLength)
         workingDir = stream.read(workingDirLength)
 
-        domain = domain.replace("\x00", "")
-        username = username.replace("\x00", "")
-        password = password.replace("\x00", "")
-        alternateShell = alternateShell.replace("\x00", "")
-        workingDir = workingDir.replace("\x00", "")
+        if isUnicode:
+            domain = domain.decode("utf-16le")
+            username = username.decode("utf-16le")
+            password = password.decode("utf-16le")
+            alternateShell = alternateShell.decode("utf-16le")
+            workingDir = workingDir.decode("utf-16le")
+
+        removeTrailingNullByte = lambda s: s[: -1] if s.endswith("\x00") else s
+        domain = removeTrailingNullByte(domain)
+        username = removeTrailingNullByte(username)
+        password = removeTrailingNullByte(password)
+        alternateShell = removeTrailingNullByte(alternateShell)
+        workingDir = removeTrailingNullByte(workingDir)
 
         extraInfo = stream.read()
 
