@@ -71,8 +71,13 @@ class RC4Crypter:
         self.decryptKey = RC4(encryptionMethod, macKey, decryptKey)
 
     @staticmethod
-    def generate(clientRandom, serverRandom, encryptionMethod):
+    def generateClient(clientRandom, serverRandom, encryptionMethod):
         macKey, decryptKey, encryptKey = generateKeys(clientRandom, serverRandom, encryptionMethod)
+        return RC4Crypter(encryptionMethod, macKey, encryptKey, decryptKey)
+
+    @staticmethod
+    def generateServer(clientRandom, serverRandom, encryptionMethod):
+        macKey, encryptKey, decryptKey = generateKeys(clientRandom, serverRandom, encryptionMethod)
         return RC4Crypter(encryptionMethod, macKey, encryptKey, decryptKey)
 
     def encrypt(self, data):
