@@ -29,8 +29,10 @@ class RDPSecurityLayer(Layer):
         self.headerType = headerType
         self.crypter = crypter
         self.licensing = RDPLicensingLayer()
+        self.licensing.previous = self
         self.securityParser = RDPSecurityParser(headerType)
         self.clientInfoParser = RDPClientInfoParser()
+        self.allowLicensing = False
 
     def recv(self, data):
         if self.headerType == RDPSecurityHeaderType.NONE:
@@ -41,6 +43,8 @@ class RDPSecurityLayer(Layer):
             if pdu.header & RDPSecurityFlags.SEC_ENCRYPT != 0:
                 pdu.payload = self.crypter.decrypt(pdu.payload)
                 self.crypter.addDecryption()
+
+            self.allowLicensing = pdu.header & (RDPSecurityFlags.SEC_LICENSE_ENCRYPT_SC | RDPSecurityFlags.SEC_LICENSE_ENCRYPT_CS) != 0
 
             if pdu.header & RDPSecurityFlags.SEC_INFO_PKT != 0:
                 clientInfo = self.clientInfoParser.parse(pdu.payload)
