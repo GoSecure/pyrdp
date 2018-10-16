@@ -1,4 +1,7 @@
-class MCSPDUType:
+from enum import Enum
+
+
+class MCSPDUType(Enum):
     """
     MCS PDU Headers
     """

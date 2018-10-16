@@ -1,18 +1,24 @@
 from rdpy.enum.mcs import MCSPDUType
+from rdpy.pdu.base_pdu import PDU
 
 
-class MCSPDU(object):
+class MCSPDU(PDU):
     """
-    Base class for MCS PDUs (not actually a PDU)
+    Base class for MCS (T.125) PDUs (not actually a PDU). Every MCS PDU has a PDU type (header) and a payload.
     """
-    def __init__(self, type, payload):
-        self.header = type
-        self.payload = payload
+    def __init__(self, pduType, payload):
+        """
+        :type pduType: MCSPDUType
+        :type payload: str
+        """
+
+        PDU.__init__(self, payload)
+        self.header = pduType
 
 
 class MCSConnectInitialPDU(MCSPDU):
     def __init__(self, callingDomain, calledDomain, upward, targetParams, minParams, maxParams, payload):
-        super(MCSConnectInitialPDU, self).__init__(MCSPDUType.CONNECT_INITIAL, payload)
+        MCSPDU.__init__(self, MCSPDUType.CONNECT_INITIAL, payload)
         self.callingDomain = callingDomain
         self.calledDomain = calledDomain
         self.upward = upward
@@ -23,7 +29,7 @@ class MCSConnectInitialPDU(MCSPDU):
 
 class MCSConnectResponsePDU(MCSPDU):
     def __init__(self, result, calledConnectID, domainParams, payload):
-        super(MCSConnectResponsePDU, self).__init__(MCSPDUType.CONNECT_RESPONSE, payload)
+        MCSPDU.__init__(self, MCSPDUType.CONNECT_RESPONSE, payload)
         self.result = result
         self.calledConnectID = calledConnectID
         self.domainParams = domainParams
@@ -31,39 +37,39 @@ class MCSConnectResponsePDU(MCSPDU):
 
 class MCSErectDomainRequestPDU(MCSPDU):
     def __init__(self, subHeight, subInterval, payload):
-        super(MCSErectDomainRequestPDU, self).__init__(MCSPDUType.ERECT_DOMAIN_REQUEST, payload)
+        MCSPDU.__init__(self, MCSPDUType.ERECT_DOMAIN_REQUEST, payload)
         self.subHeight = subHeight
         self.subInterval = subInterval
 
 
 class MCSDisconnectProviderUltimatumPDU(MCSPDU):
     def __init__(self, reason):
-        super(MCSDisconnectProviderUltimatumPDU, self).__init__(MCSPDUType.DISCONNECT_PROVIDER_ULTIMATUM, "")
+        MCSPDU.__init__(self, MCSPDUType.DISCONNECT_PROVIDER_ULTIMATUM, "")
         self.reason = reason
 
 
 class MCSAttachUserRequestPDU(MCSPDU):
     def __init__(self):
-        super(MCSAttachUserRequestPDU, self).__init__(MCSPDUType.ATTACH_USER_REQUEST, "")
+        MCSPDU.__init__(self, MCSPDUType.ATTACH_USER_REQUEST, "")
 
 
 class MCSAttachUserConfirmPDU(MCSPDU):
     def __init__(self, result, initiator = None):
-        super(MCSAttachUserConfirmPDU, self).__init__(MCSPDUType.ATTACH_USER_CONFIRM, "")
+        MCSPDU.__init__(self, MCSPDUType.ATTACH_USER_CONFIRM, "")
         self.result = result
         self.initiator = initiator
 
 
 class MCSChannelJoinRequestPDU(MCSPDU):
     def __init__(self, initiator, channelID, payload):
-        super(MCSChannelJoinRequestPDU, self).__init__(MCSPDUType.CHANNEL_JOIN_REQUEST, payload)
+        MCSPDU.__init__(self, MCSPDUType.CHANNEL_JOIN_REQUEST, payload)
         self.initiator = initiator
         self.channelID = channelID
 
 
 class MCSChannelJoinConfirmPDU(MCSPDU):
     def __init__(self, result, initiator, requested, channelID, payload):
-        super(MCSChannelJoinConfirmPDU, self).__init__(MCSPDUType.CHANNEL_JOIN_CONFIRM, payload)
+        MCSPDU.__init__(self, MCSPDUType.CHANNEL_JOIN_CONFIRM, payload)
         self.result = result
         self.initiator = initiator
         self.requested = requested
@@ -72,7 +78,7 @@ class MCSChannelJoinConfirmPDU(MCSPDU):
 
 class MCSSendDataRequestPDU(MCSPDU):
     def __init__(self, initiator, channelID, priority, payload):
-        super(MCSSendDataRequestPDU, self).__init__(MCSPDUType.SEND_DATA_REQUEST, payload)
+        MCSPDU.__init__(self, MCSPDUType.SEND_DATA_REQUEST, payload)
         self.initiator = initiator
         self.channelID = channelID
         self.priority = priority
@@ -80,7 +86,7 @@ class MCSSendDataRequestPDU(MCSPDU):
 
 class MCSSendDataIndicationPDU(MCSPDU):
     def __init__(self, initiator, channelID, priority, payload):
-        super(MCSSendDataIndicationPDU, self).__init__(MCSPDUType.SEND_DATA_INDICATION, payload)
+        MCSPDU.__init__(self, MCSPDUType.SEND_DATA_INDICATION, payload)
         self.initiator = initiator
         self.channelID = channelID
         self.priority = priority

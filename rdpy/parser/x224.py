@@ -2,8 +2,8 @@ from StringIO import StringIO
 
 from rdpy.core.packing import Uint8, Uint16BE
 from rdpy.enum.x224 import X224Header
-from rdpy.pdu.x224 import X224ConnectionConfirm, X224ConnectionRequest, X224DisconnectRequest, X224Data, \
-    X224Error
+from rdpy.pdu.x224 import X224ConnectionConfirmPDU, X224ConnectionRequestPDU, X224DisconnectRequestPDU, X224DataPDU, \
+    X224ErrorPDU
 
 
 class X224Parser:
@@ -57,16 +57,16 @@ class X224Parser:
     def parseConnectionRequest(self, data, length):
         credit = Uint8.unpack(data[1]) & 0xf
         destination, source, options, payload = self.parseConnectionPDU(data, length, "Connection Request")
-        return X224ConnectionRequest(credit, destination, source, options, payload)
+        return X224ConnectionRequestPDU(credit, destination, source, options, payload)
 
     def parseConnectionConfirm(self, data, length):
         credit = Uint8.unpack(data[1]) & 0xf
         destination, source, options, payload = self.parseConnectionPDU(data, length, "Connection Confirm")
-        return X224ConnectionConfirm(credit, destination, source, options, payload)
+        return X224ConnectionConfirmPDU(credit, destination, source, options, payload)
 
     def parseDisconnectRequest(self, data, length):
         destination, source, reason, payload = self.parseConnectionPDU(data, length, "Disconnect Request")
-        return X224DisconnectRequest(destination, source, reason, payload)
+        return X224DisconnectRequestPDU(destination, source, reason, payload)
 
     def parseData(self, data, length):
         if length != 2:
@@ -76,7 +76,7 @@ class X224Parser:
         sequence = Uint8.unpack(data[2])
         payload = data[3 :]
 
-        return X224Data(code & 1 == 1, sequence & 0x80 == 0x80, payload)
+        return X224DataPDU(code & 1 == 1, sequence & 0x80 == 0x80, payload)
 
     def parseError(self, data, length):
         if length < 4:
@@ -89,7 +89,7 @@ class X224Parser:
         if len(payload) != length - 4:
             raise Exception("Invalid length indicator for X224 Error PDU")
 
-        return X224Error(destination, cause, payload)
+        return X224ErrorPDU(destination, cause, payload)
 
     def write(self, pdu):
         stream = StringIO()

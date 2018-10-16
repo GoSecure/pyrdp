@@ -57,6 +57,7 @@ class LayerStrictRoutedObserver(LayerRoutedObserver):
         """
         raise Exception("Unknown PDU header received: 0x%lx" % pdu.header)
 
+
 @ObservedBy(LayerObserver)
 class Layer(Subject):
     """
@@ -70,17 +71,20 @@ class Layer(Subject):
     
     def setNext(self, layer):
         """
-        Set the next layer in the list.
-        :param layer: the next layer.
+        Set the next layer in the protocol hierarchy (ex: IP's next layer would be TCP).
+        :param layer: The next layer.
+        :type layer: Layer
         """
         self.next = layer
         layer.previous = self
     
     def pduReceived(self, pdu, forward):
         """
-        Called when a PDU is received. Notifies the observer and optionally forwards the payload to the next layer.
+        Called when a PDU is received.
+        Notifies the attached observer and optionally forwards the payload to the next layer.
         :param pdu: the PDU.
         :param forward: whether the PDU's payload should be forwarded to the next layer.
+        :type forward: bool
         """
         if self.observer is not None:
             self.observer.onPDUReceived(pdu)
