@@ -430,7 +430,7 @@ class RDPNegotiationParser:
             length = Uint16LE.unpack(data[2 : 4])
             requested_protocols = Uint32LE.unpack(data[4 : 8])
 
-        return RDPNegotiationRequestPDU(cookie, flags, NegotiationProtocols(requested_protocols))
+        return RDPNegotiationRequestPDU(cookie, flags, requested_protocols)
 
     def write(self, pdu):
         """

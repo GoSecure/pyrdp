@@ -3,7 +3,8 @@ from rdpy.core.newlayer import Layer
 from rdpy.enum.mcs import MCSResult
 from rdpy.enum.rdp import NegotiationProtocols, RDPSecurityHeaderType
 from rdpy.layer.mcs import MCSLayer
-from rdpy.layer.rdp import RDPSecurityLayer, RDPLicensingLayer
+from rdpy.layer.rdp.licensing import RDPLicensingLayer
+from rdpy.layer.rdp.security import RDPSecurityLayer
 from rdpy.layer.tcp import TCPLayer
 from rdpy.layer.tpkt import TPKTLayer
 from rdpy.layer.x224 import X224Layer
