@@ -310,9 +310,9 @@ class RDPLicensingParser:
 class RDPDataParser:
     def __init__(self):
         self.parsers = {
-            RDPDataPDUType.PDUTYPE_DEMANDACTIVEPDU: self.parseDemandActive,
-            RDPDataPDUType.PDUTYPE_CONFIRMACTIVEPDU: self.parseConfirmActive,
-            RDPDataPDUType.PDUTYPE_DATAPDU: self.parseData,
+            RDPDataPDUType.DEMAND_ACTIVE_PDU: self.parseDemandActive,
+            RDPDataPDUType.CONFIRM_ACTIVE_PDU: self.parseConfirmActive,
+            RDPDataPDUType.DATA_PDU: self.parseData,
         }
 
         self.dataParsers = {
@@ -348,13 +348,13 @@ class RDPDataParser:
         stream = StringIO()
         substream = StringIO()
 
-        if pdu.header.type == RDPDataPDUType.PDUTYPE_DEMANDACTIVEPDU:
+        if pdu.header.type == RDPDataPDUType.DEMAND_ACTIVE_PDU:
             headerWriter = self.writeShareControlHeader
             self.writeDemandActive(substream, pdu)
-        elif pdu.header.type == RDPDataPDUType.PDUTYPE_CONFIRMACTIVEPDU:
+        elif pdu.header.type == RDPDataPDUType.CONFIRM_ACTIVE_PDU:
             headerWriter = self.writeShareControlHeader
             self.writeConfirmActive(substream, pdu)
-        elif pdu.header.type == RDPDataPDUType.PDUTYPE_DATAPDU:
+        elif pdu.header.type == RDPDataPDUType.DATA_PDU:
             headerWriter = self.writeShareDataHeader
             self.writeData(stream, pdu)
 
