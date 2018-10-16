@@ -1,10 +1,25 @@
-from rdpy.core.newlayer import Layer
+from rdpy.core.newlayer import Layer, LayerObserver
+from rdpy.core.subject import ObservedBy
 from rdpy.enum.rdp import RDPSecurityHeaderType, RDPSecurityFlags, FIPSVersion
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
-from rdpy.parser.rdp import RDPSecurityParser
+from rdpy.parser.rdp import RDPSecurityParser, RDPSettingsParser
 from rdpy.pdu.rdp.security import RDPSecurityExchangePDU, RDPBasicSecurityPDU, RDPSignedSecurityPDU, RDPFIPSSecurityPDU
 
+class RDPSecurityObserver(LayerObserver):
+    def onSecurityExchangeReceived(self, pdu):
+        """
+        Called when a Security Exchange PDU is received.
+        """
+        pass
 
+    def onClientInfoReceived(self, pdu):
+        """
+        Called when a Client Info PDU is received.
+        """
+        pass
+
+
+@ObservedBy(RDPSecurityObserver)
 class RDPSecurityLayer(Layer):
     # Header type used for Client Info and Licensing PDUs if no encryption is used
     DEFAULT_HEADER_TYPE = RDPSecurityHeaderType.BASIC
@@ -14,22 +29,26 @@ class RDPSecurityLayer(Layer):
         self.headerType = headerType
         self.crypter = crypter
         self.licensing = RDPLicensingLayer()
-        self.parser = RDPSecurityParser(headerType)
+        self.securityParser = RDPSecurityParser(headerType)
+        self.settingsParser = RDPSettingsParser()
 
     def recv(self, data):
         if self.headerType == RDPSecurityHeaderType.NONE:
             self.next.recv(data)
         else:
-            pdu = self.parser.parse(data)
+            pdu = self.securityParser.parse(data)
 
             if pdu.header & RDPSecurityFlags.SEC_ENCRYPT != 0:
                 pdu.payload = self.crypter.decrypt(pdu.payload)
                 self.crypter.addDecryption()
 
             if pdu.header & RDPSecurityFlags.SEC_INFO_PKT != 0:
-                self.observer.onClientInfoReceived(pdu.payload)
+                clientInfo = self.settingsParser.parse(pdu.payload)
+                self.observer.onClientInfoReceived(clientInfo)
             elif pdu.header & RDPSecurityFlags.SEC_LICENSE_PKT != 0:
                 self.licensing.recv(pdu.payload)
+            elif pdu.header & RDPSecurityFlags.SEC_EXCHANGE_PKT != 0:
+                self.observer.onSecurityExchangeReceived(pdu)
             else:
                 self.pduReceived(pdu, pdu.header & RDPSecurityFlags.SEC_INFO_PKT == 0)
 
@@ -45,9 +64,10 @@ class RDPSecurityLayer(Layer):
 
     def sendSecurityExchange(self, clientRandom):
         pdu = RDPSecurityExchangePDU(RDPSecurityFlags.SEC_EXCHANGE_PKT | RDPSecurityFlags.SEC_LICENSE_ENCRYPT_SC, clientRandom + "\x00" * 8)
-        self.previous.send(self.parser.writeSecurityExchange(pdu))
+        self.previous.send(self.securityParser.writeSecurityExchange(pdu))
 
-    def sendClientInfo(self, data):
+    def sendClientInfo(self, pdu):
+        data = self.settingsParser.write(pdu)
         header = RDPSecurityFlags.SEC_INFO_PKT
 
         if self.headerType == RDPSecurityHeaderType.NONE:
@@ -83,7 +103,7 @@ class RDPSecurityLayer(Layer):
             self.crypter.addEncryption()
 
         pdu = RDPBasicSecurityPDU(header, data)
-        self.previous.send(self.parser.write(pdu))
+        self.previous.send(self.securityParser.write(pdu))
 
     def sendSignedSecurity(self, data, header):
         header |= RDPSecurityFlags.SEC_SECURE_CHECKSUM
@@ -92,7 +112,7 @@ class RDPSecurityLayer(Layer):
         self.crypter.addEncryption()
 
         pdu = RDPSignedSecurityPDU(header, signature, data)
-        self.previous.send(self.parser.write(pdu))
+        self.previous.send(self.securityParser.write(pdu))
 
     def sendFIPSSecurity(self, data, header):
         header |= RDPSecurityFlags.SEC_SECURE_CHECKSUM
@@ -102,4 +122,4 @@ class RDPSecurityLayer(Layer):
         self.crypter.addEncryption()
 
         pdu = RDPFIPSSecurityPDU(header, FIPSVersion.TSFIPS_VERSION1, padLength, signature, data)
-        self.previous.send(self.parser.write(pdu))
+        self.previous.send(self.securityParser.write(pdu))
