@@ -38,10 +38,10 @@ class TCPLayer(Protocol, Layer):
         """
         self.transport.write(data)
 
-    def startTLS(self, context):
+    def startTLS(self, tlsContext):
         """
-        Instruct Twisted to make the TLS handshake so that all further communications are encrypted.
-        :param context: Twisted TLS Context object (like DefaultOpenSSLContextFactory)
-        :type context: ServerTLSContext
+        Tell Twisted to make the TLS handshake so that all further communications are encrypted.
+        :param tlsContext: Twisted TLS Context object (like DefaultOpenSSLContextFactory)
+        :type tlsContext: ServerTLSContext
         """
-        self.transport.startTLS(context)
+        self.transport.startTLS(tlsContext)
