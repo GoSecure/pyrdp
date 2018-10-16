@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import setuptools
 from distutils.core import setup, Extension
 
 setup(name='rdpy',
@@ -50,5 +49,6 @@ setup(name='rdpy',
           	'rsa',
           	'pyasn1',
 			'notify2',
-	  	],
+		    'Crypto'
+    ],
 )

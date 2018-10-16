@@ -2,7 +2,7 @@ from rdpy.core.newlayer import Layer, LayerObserver
 from rdpy.core.subject import ObservedBy
 from rdpy.enum.rdp import RDPSecurityHeaderType, RDPSecurityFlags, FIPSVersion
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
-from rdpy.parser.rdp import RDPSecurityParser, RDPSettingsParser
+from rdpy.parser.rdp import RDPSecurityParser, RDPClientInfoParser
 from rdpy.pdu.rdp.security import RDPSecurityExchangePDU, RDPBasicSecurityPDU, RDPSignedSecurityPDU, RDPFIPSSecurityPDU
 
 class RDPSecurityObserver(LayerObserver):
@@ -30,7 +30,7 @@ class RDPSecurityLayer(Layer):
         self.crypter = crypter
         self.licensing = RDPLicensingLayer()
         self.securityParser = RDPSecurityParser(headerType)
-        self.settingsParser = RDPSettingsParser()
+        self.clientInfoParser = RDPClientInfoParser()
 
     def recv(self, data):
         if self.headerType == RDPSecurityHeaderType.NONE:
@@ -43,7 +43,7 @@ class RDPSecurityLayer(Layer):
                 self.crypter.addDecryption()
 
             if pdu.header & RDPSecurityFlags.SEC_INFO_PKT != 0:
-                clientInfo = self.settingsParser.parse(pdu.payload)
+                clientInfo = self.clientInfoParser.parse(pdu.payload)
                 self.observer.onClientInfoReceived(clientInfo)
             elif pdu.header & RDPSecurityFlags.SEC_LICENSE_PKT != 0:
                 self.licensing.recv(pdu.payload)
@@ -67,7 +67,7 @@ class RDPSecurityLayer(Layer):
         self.previous.send(self.securityParser.writeSecurityExchange(pdu))
 
     def sendClientInfo(self, pdu):
-        data = self.settingsParser.write(pdu)
+        data = self.clientInfoParser.write(pdu)
         header = RDPSecurityFlags.SEC_INFO_PKT
 
         if self.headerType == RDPSecurityHeaderType.NONE:

@@ -19,8 +19,18 @@ from rdpy.pdu.rdp.settings import RDPClientInfoPDU
 from rdpy.protocol.rdp.x224 import NegociationType
 
 
-class RDPSettingsParser:
+class RDPClientInfoParser:
+    """
+    Read and write the RDP ClientInfo PDU which contains very useful information.
+    See https://msdn.microsoft.com/en-us/library/cc240475.aspx
+    """
+
     def parse(self, data):
+        """
+        Read the bytestream and return a RDPClientInfoPDU.
+        :type data: str
+        :return: RDPClientInfoPDU
+        """
         stream = StringIO(data)
         codePage = Uint32LE.unpack(stream)
         flags = Uint32LE.unpack(stream)
@@ -51,6 +61,12 @@ class RDPSettingsParser:
         return RDPClientInfoPDU(codePage, flags, domain, username, password, alternateShell, workingDir, extraInfo)
 
     def write(self, pdu):
+        """
+        Encode the provided RDPClientInfoPDU and return it as a byte stream.
+        :type pdu: RDPClientInfoPDU
+        :return: str
+        """
+
         if not isinstance(pdu, RDPClientInfoPDU):
             raise Exception("Unknown settings PDU type")
 
@@ -227,8 +243,6 @@ class RDPLicensingParser:
         stream.write(Uint16LE.pack(0))
 
 
-
-
 class RDPDataParser:
     def __init__(self):
         self.parsers = {
@@ -396,6 +410,7 @@ class RDPDataParser:
         Uint16LE.pack(pdu.action, stream)
         Uint16LE.pack(pdu.grantID, stream)
         Uint32LE.pack(pdu.grantID, stream)
+
 
 class RDPNegotiationParser:
     """
@@ -938,38 +953,3 @@ class RDPServerConnectionParser:
         stream.write(modulusBytes)
         stream.write("\x00" * 8)
         return stream.getvalue()
-
-
-class RDPClientInfoParser:
-
-    def parse(self, pdu):
-        """
-        https://msdn.microsoft.com/en-us/library/cc240475.aspx
-        :type pdu: str
-        :return: RDPClientInfoPDU
-        """
-        # cb = count byte
-        codePage = Uint32LE.unpack(pdu[0 : 4])
-        flags = Uint32LE.unpack(pdu[4 : 8])
-        cbDomain = Uint16LE.unpack(pdu[8 : 10])
-        cbUserName = Uint16LE.unpack(pdu[10 : 12])
-        cbPassword = Uint16LE.unpack(pdu[12 : 14])
-        cbAlternateShell = Uint16LE.unpack(pdu[14 : 16])
-        cbWorkingDir = Uint16LE.unpack(pdu[16 : 18])
-        domainIndexEnd = 18 + cbDomain + 2
-        domain = pdu[18 : domainIndexEnd].decode("utf-16le")
-        userNameIndexEnd = domainIndexEnd + cbUserName + 2
-        username = pdu[domainIndexEnd : userNameIndexEnd].decode("utf-16le")
-        passwordIndexEnd = userNameIndexEnd + cbPassword + 2
-        password = pdu[userNameIndexEnd : passwordIndexEnd].decode("utf-16le")
-        alternateShellIndexEnd = passwordIndexEnd + cbAlternateShell + 2
-        alternateShell = pdu[passwordIndexEnd: alternateShellIndexEnd].decode("utf-16le")
-        workingDirIndexEnd = alternateShellIndexEnd + cbWorkingDir + 2
-        workingDir = pdu[alternateShellIndexEnd: workingDirIndexEnd].decode("utf-16le")
-
-        extraInfo = ""
-        if workingDirIndexEnd + 1 < len(pdu):
-            # Means there is an extraInfo PDU
-            extraInfo = pdu[workingDirIndexEnd : len(pdu)]
-
-        return RDPClientInfoPDU(codePage, flags, domain, username, password, alternateShell, workingDir, extraInfo)
