@@ -1,16 +1,14 @@
 import Crypto.Random
 import logging
 from Crypto.PublicKey import RSA
-from enum import IntEnum
 
+from enum import IntEnum
 from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory, ClientFactory
 
 from rdpy.core import log
 from rdpy.core.crypto import RC4Crypter
-from rdpy.core.newlayer import Layer, LayerObserver
-from rdpy.enum.rdp import NegotiationProtocols, RDPSecurityHeaderType, EncryptionMethod, ServerCertificateType, \
-    RDPDataPDUSubtype, RDPDataPDUType
+from rdpy.enum.rdp import NegotiationProtocols, RDPSecurityHeaderType, EncryptionMethod, RDPDataPDUSubtype
 from rdpy.layer.gcc import GCCClientConnectionLayer
 from rdpy.layer.mcs import MCSLayer, MCSClientConnectionLayer
 from rdpy.layer.rdp.connection import RDPClientConnectionLayer
@@ -22,12 +20,11 @@ from rdpy.layer.tpkt import TPKTLayer
 from rdpy.layer.x224 import X224Layer
 from rdpy.parser.gcc import GCCParser
 from rdpy.parser.rdp import RDPClientInfoParser, RDPClientConnectionParser, RDPServerConnectionParser, \
-    RDPNegotiationParser, RDPDataParser
+    RDPNegotiationParser
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.pdu.mcs import MCSConnectResponsePDU, MCSAttachUserConfirmPDU, MCSChannelJoinConfirmPDU
 from rdpy.pdu.rdp.connection import ServerSecurityData, RDPServerDataPDU, \
     RDPNegotiationResponsePDU, ProprietaryCertificate
-from rdpy.pdu.rdp.data import RDPConfirmActivePDU, RDPShareControlHeader, RDPSynchronizePDU
 from rdpy.pdu.rdp.security import RDPSecurityExchangePDU
 from rdpy.protocol.mcs.channel import MCSChannelFactory, MCSServerChannel, MCSClientChannel
 from rdpy.protocol.mcs.client import MCSClientRouter
@@ -112,14 +109,14 @@ class MITMChannelObserver(RDPDataLayerObserver):
 
     def onPDUReceived(self, pdu):
         if hasattr(pdu.header, "subtype"):
-            log.debug("%s: received %s" % (self.name, str(pdu.header.subtype)))
+            log.debug("%s: received %s" % (self.name, pdu.header.subtype))
             if pdu.header.subtype == RDPDataPDUSubtype.PDUTYPE2_SYNCHRONIZE:
                 self.sync = pdu
 
             if hasattr(pdu, "errorInfo"):
                 log.debug("%s" % pdu.errorInfo)
         else:
-            log.debug("%s: received %s" % (self.name, str(pdu.header.type)))
+            log.debug("%s: received %s" % (self.name, pdu.header.type))
 
         RDPDataLayerObserver.onPDUReceived(self, pdu)
         self.peer.sendPDU(pdu)
@@ -130,12 +127,12 @@ class MITMChannelObserver(RDPDataLayerObserver):
 
     def sendPDU(self, pdu):
         if hasattr(pdu.header, "subtype"):
-            log.debug("%s: sending %s" % (self.name, str(pdu.header.subtype)))
+            log.debug("%s: sending %s" % (self.name, pdu.header.subtype))
 
             if hasattr(pdu, "errorInfo"):
                 log.debug("%s" % pdu.errorInfo)
         else:
-            log.debug("%s: sending %s" % (self.name, str(pdu.header.type)))
+            log.debug("%s: sending %s" % (self.name, pdu.header.type))
 
         self.layer.sendPDU(pdu)
 
@@ -180,18 +177,24 @@ class MITMClient(MCSChannelFactory):
 
         self.tcp.createObserver(onConnection=self.startConnection)
         self.x224.createObserver(onConnectionConfirm=self.onConnectionConfirm)
-        self.router.createObserver(onConnectResponse=self.onConnectResponse)
+        self.router.createObserver(onConnectResponse=self.onConnectResponse, onDisconnectProviderUltimatum=self.onDisconnectProviderUltimatum)
         self.gccConnect.createObserver(onPDUReceived=self.onConferenceCreateResponse)
         self.rdpConnect.createObserver(onPDUReceived=self.onServerData)
 
     def getProtocol(self):
         return self.tcp
 
+    def log_debug(self, string):
+        log.debug("Client: %s" % string)
+
+    def log_error(self, string):
+        log.error("Client: %s" % string)
+
     def startConnection(self):
         """
         Start the connection sequence to the target machine.
         """
-        log.debug("Client TCP connected")
+        self.log_debug("TCP connected")
         negotiation = self.server.getNegotiationPDU()
         parser = RDPNegotiationParser()
         self.x224.sendConnectionRequest(parser.write(negotiation))
@@ -200,7 +203,7 @@ class MITMClient(MCSChannelFactory):
         """
         Called when the X224 layer is connected.
         """
-        log.debug("Connection Confirm received")
+        self.log_debug("Connection Confirm received")
         self.server.onConnectionConfirm(pdu)
 
     def onConnectInitial(self, gccConferenceCreateRequest, clientData):
@@ -223,7 +226,7 @@ class MITMClient(MCSChannelFactory):
             log.error("Connection Failed")
             self.server.onConnectResponse(self, pdu, None)
         else:
-            log.debug("Connection Successful")
+            self.log_debug("Connection Successful")
             self.mcsConnect.recv(pdu)
             self.server.onConnectResponse(pdu, self.serverData)
 
@@ -261,7 +264,7 @@ class MITMClient(MCSChannelFactory):
         self.mcs.send(pdu)
 
     def buildChannel(self, mcs, userID, channelID):
-        log.debug("Client: building channel {} for user {}".format(channelID, userID))
+        self.log_debug("building channel {} for user {}".format(channelID, userID))
 
         if self.serverData.security.encryptionMethod == EncryptionMethod.ENCRYPTION_NONE:
             headerType = RDPSecurityHeaderType.NONE
@@ -295,8 +298,12 @@ class MITMClient(MCSChannelFactory):
         self.io.previous.sendClientInfo(pdu)
 
     def onLicensingPDU(self, pdu):
-        log.debug("Licensing PDU received")
+        self.log_debug("Licensing PDU received")
         self.server.onLicensingPDU(pdu)
+
+    def onDisconnectProviderUltimatum(self, pdu):
+        self.log_debug("Disconnect Provider Ultimatum received")
+        self.server.sendDisconnectProviderUltimatum(pdu)
 
     def getChannelObserver(self, channelID):
         return self.channelObservers[channelID]
@@ -388,17 +395,23 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         log.get_ssl_logger().info(self.tpkt.previous.transport.protocol._tlsConnection.client_random(),
                                   self.tpkt.previous.transport.protocol._tlsConnection.master_key())
 
+    def log_debug(self, string):
+        log.debug("Server: %s" % string)
+
+    def log_error(self, string):
+        log.error("Server: %s" % string)
+
     # Connect the client side to the target machine
     def connectClient(self):
         reactor.connectTCP(self.targetHost, self.targetPort, self)
 
     # Connection sequence #0
     def onConnection(self):
-        log.debug("Server TCP connected")
+        self.log_debug("TCP connected")
 
     # X224 Request
     def onConnectionRequest(self, pdu):
-        log.debug("Connection Request received")
+        self.log_debug("Connection Request received")
         self.negotiationPDU = self.rdpNegotiationParser.parse(pdu.payload)
         self.connectClient()
 
@@ -418,7 +431,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         Parse the ClientData PDU and send a ServerData PDU back.
         :param pdu: The GCC ConferenceCreateResponse PDU that contains the ClientData PDU.
         """
-        log.debug("Connect Initial received")
+        self.log_debug("Connect Initial received")
 
         if self.use_tls:
             self.logSSLParameters()
@@ -485,7 +498,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
 
     def buildChannel(self, mcs, userID, channelID):
-        log.debug("Server: building channel {} for user {}".format(channelID, userID))
+        self.log_debug("building channel {} for user {}".format(channelID, userID))
 
         if self.use_tls:
             headerType = RDPSecurityHeaderType.BASIC
@@ -526,18 +539,21 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         :type pdu: RDPSecurityExchangePDU
         :return:
         """
-        log.debug("Server: Security Exchange received")
+        self.log_debug("Security Exchange received")
         clientRandom = self.rc4RSAKey.decrypt(pdu.clientRandom[:: -1])[:: -1]
         self.settings.setClientRandom(clientRandom)
         self.securityLayer.crypter = self.settings.getCrypter()
 
     # Client Info Packet
     def onClientInfoReceived(self, pdu):
-        log.debug("Server: Client Info received")
+        self.log_debug("Client Info received")
         self.client.onClientInfoReceived(pdu)
 
     def onLicensingPDU(self, pdu):
         self.licensing.sendPDU(pdu)
+
+    def sendDisconnectProviderUltimatum(self, pdu):
+        self.mcs.send(pdu)
 
 
 
