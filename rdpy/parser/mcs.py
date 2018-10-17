@@ -135,7 +135,7 @@ class MCSParser:
         :type stream: StringIO
         :return: MCSDisconnectProviderUltimatumPDU
         """
-        reason = ber.readEnumerated(stream)
+        reason = per.readEnumeration(stream)
 
         if len(stream.read()) > 0:
             raise Exception("Unexpected payload")
