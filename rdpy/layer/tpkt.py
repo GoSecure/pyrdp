@@ -11,6 +11,7 @@ class TPKTLayer(Layer):
     def __init__(self):
         Layer.__init__(self)
         self.parser = TPKTParser()
+        self.buffer = ""
 
     def recv(self, data):
         """
@@ -20,10 +21,17 @@ class TPKTLayer(Layer):
         :param data: The TCP packet's payload
         :type data: str
         """
+        data = self.buffer + data
+
         while len(data) > 0:
-            pdu = self.parser.parse(data)
-            self.pduReceived(pdu, True)
-            data = data[pdu.length :]
+            if not self.parser.isCompletePDU(data):
+                self.buffer = data
+                data = ""
+            else:
+                pdu = self.parser.parse(data)
+                self.pduReceived(pdu, True)
+                data = data[pdu.length :]
+                self.buffer = ""
 
     def send(self, data):
         """

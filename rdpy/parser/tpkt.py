@@ -8,6 +8,9 @@ class TPKTParser:
     """
     Parser for TPKT traffic to read and write TPKT messages
     """
+    def isCompletePDU(self, data):
+        length = Uint16BE.unpack(data[2 : 4])
+        return len(data) >= length
 
     def parse(self, data):
         """
