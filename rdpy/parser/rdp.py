@@ -302,7 +302,7 @@ class RDPDataParser:
             self.writeConfirmActive(substream, pdu)
         elif pdu.header.type == RDPDataPDUType.PDUTYPE_DATAPDU:
             headerWriter = self.writeShareDataHeader
-            self.writeData(stream, pdu)
+            self.writeData(substream, pdu)
 
         substream = substream.getvalue()
         headerWriter(stream, pdu.header, len(substream))
