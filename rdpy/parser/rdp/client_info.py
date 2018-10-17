@@ -62,10 +62,6 @@ class RDPClientInfoParser:
         :type pdu: RDPClientInfoPDU
         :return: str
         """
-
-        if not isinstance(pdu, RDPClientInfoPDU):
-            raise Exception("Unknown settings PDU type")
-
         stream = StringIO()
         stream.write(Uint32LE.pack(pdu.codePage))
         stream.write(Uint32LE.pack(pdu.flags))
