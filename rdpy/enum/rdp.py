@@ -1,5 +1,6 @@
 from enum import IntEnum
 
+
 class ClientInfoFlags:
     """
     Flags for the RDPClientInfoPDU flags field
@@ -112,14 +113,15 @@ class RDPStateTransition:
 
 class RDPDataPDUType(IntEnum):
     """
-    Data PDU types
+    RDP Data PDU types
     @see: http://msdn.microsoft.com/en-us/library/cc240576.aspx
     """
-    PDUTYPE_DEMANDACTIVEPDU = 0x1
-    PDUTYPE_CONFIRMACTIVEPDU = 0x3
-    PDUTYPE_DEACTIVATEALLPDU = 0x6
-    PDUTYPE_DATAPDU = 0x7
-    PDUTYPE_SERVER_REDIR_PKT = 0xA
+    DEMAND_ACTIVE_PDU = 0x1
+    CONFIRM_ACTIVE_PDU = 0x3
+    DEACTIVATE_ALL_PDU = 0x6
+    DATA_PDU = 0x7
+    SERVER_REDIR_PKT_PDU = 0xA
+
 
 class RDPDataPDUSubtype(IntEnum):
     """

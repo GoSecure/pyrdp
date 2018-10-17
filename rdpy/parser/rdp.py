@@ -129,6 +129,11 @@ class RDPSecurityParser:
         self.headerType = headerType
 
     def parse(self, data):
+        """
+        Read the provided byte stream and return a RDP security PDU from it
+        :type data: str
+        :return: RDPSecurityBasePDU
+        """
         stream = StringIO(data)
 
         if self.headerType == RDPSecurityHeaderType.BASIC:
@@ -141,17 +146,29 @@ class RDPSecurityParser:
             raise Exception("Trying to parse unknown security header type")
 
     def parseBasicSecurity(self, stream):
-        header = self.parseBasicHeader(stream)
+        """
+        :type stream: StringIO
+        :return: RDPBasicSecurityPDU
+        """
+        flags = self.parseBasicHeader(stream)
         payload = stream.read()
-        return RDPBasicSecurityPDU(header, payload)
+        return RDPBasicSecurityPDU(flags, payload)
 
     def parseSignedSecurity(self, stream):
+        """
+        :type stream: StringIO
+        :return: RDPSignedSecurityPDU
+        """
         header = self.parseBasicHeader(stream)
         signature = stream.read(8)
         payload = stream.read()
         return RDPSignedSecurityPDU(header, signature, payload)
 
     def parseFIPSSecurity(self, stream):
+        """
+        :type stream: StringIO
+        :return: RDPFIPSSecurityPDU
+        """
         header = self.parseBasicHeader(stream)
         headerLength = Uint16LE.unpack(stream)
         version = Uint8.unpack(stream)
@@ -161,20 +178,31 @@ class RDPSecurityParser:
         return RDPFIPSSecurityPDU(header, version, padLength, signature, payload)
 
     def parseBasicHeader(self, stream):
+        """
+        :type stream: StringIO
+        :return: int The flags value (32 bits)
+        """
         flags = Uint16LE.unpack(stream)
         hiFlags = Uint16LE.unpack(stream)
         return (hiFlags << 16) | flags
 
     def parseSecurityExchange(self, data):
+        """
+        :type data: str
+        :return: RDPSecurityExchangePDU
+        """
         stream = StringIO(data)
-        header = self.parseBasicHeader(stream)
+        flags = self.parseBasicHeader(stream)
         length = Uint32LE.unpack(stream)
         clientRandom = stream.read(length)
-        return RDPSecurityExchangePDU(header, clientRandom)
-
-
+        return RDPSecurityExchangePDU(flags, clientRandom)
 
     def write(self, pdu):
+        """
+        Encode the provided PDU to a byte stream to send to the previous layer
+        :type pdu: RDPBasicSecurityPDU
+        :return: str
+        """
         if isinstance(pdu, RDPSecurityExchangePDU):
             return self.writeSecurityExchange(pdu)
         elif isinstance(pdu, RDPBasicSecurityPDU):
@@ -200,12 +228,22 @@ class RDPSecurityParser:
 
 
 class RDPLicensingParser:
+    """
+    Parse the RDP Licensing part of the RDP connection sequence
+    """
+
     def __init__(self):
         self.parsers = {
             RDPLicensingPDUType.ERROR_ALERT: self.parseErrorAlert,
         }
 
     def parse(self, data):
+        """
+        Read the provided byte stream and return the corresponding RDPLicensingPDU.
+        :type data: str
+        :return: RDPLicensingPDU
+        """
+
         stream = StringIO(data)
         header = Uint8.unpack(stream)
         flags = Uint8.unpack(stream)
@@ -217,18 +255,34 @@ class RDPLicensingParser:
         return self.parsers[header](stream, flags)
 
     def parseLicenseBlob(self, stream):
+        """
+        Parse the provided byte stream and return the corresponding RDPLicenseBinaryBlob
+        :type stream: StringIO
+        :return: RDPLicenseBinaryBlob
+        """
         type = Uint16LE.unpack(stream)
         length = Uint16LE.unpack(stream)
         data = stream.read(length)
         return RDPLicenseBinaryBlob(type, data)
 
     def parseErrorAlert(self, stream, flags):
+        """
+        Parse the provided byte stream and return the corresponding RDPLicenseErrorAlertPDU
+        :type stream: StringIO
+        :param flags: The flags of the Licencing PDU.
+        :return: RDPLicenseErrorAlertPDU
+        """
         errorCode = Uint32LE.unpack(stream)
         stateTransition = Uint32LE.unpack(stream)
         blob = self.parseLicenseBlob(stream)
         return RDPLicenseErrorAlertPDU(flags, errorCode, stateTransition, blob)
 
     def write(self, pdu):
+        """
+        Encode a RDPLicensingPDU into a byte stream to send to the previous layer.
+        :type pdu: rdpy.pdu.rdp.licensing.RDPLicensingPDU
+        :return: RDPLicensingPDU
+        """
         stream = StringIO()
         stream.write(Uint8.pack(pdu.header))
         stream.write(Uint8.pack(pdu.flags))
@@ -256,9 +310,9 @@ class RDPLicensingParser:
 class RDPDataParser:
     def __init__(self):
         self.parsers = {
-            RDPDataPDUType.PDUTYPE_DEMANDACTIVEPDU: self.parseDemandActive,
-            RDPDataPDUType.PDUTYPE_CONFIRMACTIVEPDU: self.parseConfirmActive,
-            RDPDataPDUType.PDUTYPE_DATAPDU: self.parseData,
+            RDPDataPDUType.DEMAND_ACTIVE_PDU: self.parseDemandActive,
+            RDPDataPDUType.CONFIRM_ACTIVE_PDU: self.parseConfirmActive,
+            RDPDataPDUType.DATA_PDU: self.parseData,
         }
 
         self.dataParsers = {
@@ -294,13 +348,13 @@ class RDPDataParser:
         stream = StringIO()
         substream = StringIO()
 
-        if pdu.header.type == RDPDataPDUType.PDUTYPE_DEMANDACTIVEPDU:
+        if pdu.header.type == RDPDataPDUType.DEMAND_ACTIVE_PDU:
             headerWriter = self.writeShareControlHeader
             self.writeDemandActive(substream, pdu)
-        elif pdu.header.type == RDPDataPDUType.PDUTYPE_CONFIRMACTIVEPDU:
+        elif pdu.header.type == RDPDataPDUType.CONFIRM_ACTIVE_PDU:
             headerWriter = self.writeShareControlHeader
             self.writeConfirmActive(substream, pdu)
-        elif pdu.header.type == RDPDataPDUType.PDUTYPE_DATAPDU:
+        elif pdu.header.type == RDPDataPDUType.DATA_PDU:
             headerWriter = self.writeShareDataHeader
             self.writeData(substream, pdu)
 

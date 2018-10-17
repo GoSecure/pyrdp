@@ -1,20 +1,18 @@
-from twisted.internet import reactor
-
 from rdpy.core import log
-from rdpy.core.newlayer import Layer, LayerStrictRoutedObserver, LayerObserver
+from rdpy.core.newlayer import Layer, LayerStrictRoutedObserver
 from rdpy.core.subject import ObservedBy
-from rdpy.enum.rdp import RDPDataPDUType, RDPDataPDUSubtype
+from rdpy.enum.rdp import RDPDataPDUType
 from rdpy.parser.rdp import RDPDataParser
-from rdpy.pdu.rdp.data import RDPShareControlHeader, RDPConfirmActivePDU
+
 
 class RDPDataLayerObserver(LayerStrictRoutedObserver):
     def __init__(self, **kwargs):
         LayerStrictRoutedObserver.__init__(self, {
-            RDPDataPDUType.PDUTYPE_DEMANDACTIVEPDU: "onDemandActive",
-            RDPDataPDUType.PDUTYPE_CONFIRMACTIVEPDU: "onConfirmActive",
-            RDPDataPDUType.PDUTYPE_DEACTIVATEALLPDU: "onDeactivateAll",
-            RDPDataPDUType.PDUTYPE_DATAPDU: "onData",
-            RDPDataPDUType.PDUTYPE_SERVER_REDIR_PKT: "onServerRedirect",
+            RDPDataPDUType.DEMAND_ACTIVE_PDU: "onDemandActive",
+            RDPDataPDUType.CONFIRM_ACTIVE_PDU: "onConfirmActive",
+            RDPDataPDUType.DEACTIVATE_ALL_PDU: "onDeactivateAll",
+            RDPDataPDUType.DATA_PDU: "onData",
+            RDPDataPDUType.SERVER_REDIR_PKT_PDU: "onServerRedirect",
         }, **kwargs)
 
         self.dataHandlers = {}
