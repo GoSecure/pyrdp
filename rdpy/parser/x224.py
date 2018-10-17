@@ -2,6 +2,7 @@ from StringIO import StringIO
 
 from rdpy.core.packing import Uint8, Uint16BE, Uint16LE
 from rdpy.enum.x224 import X224PDUType
+from rdpy.exceptions import ParsingError, UnknownPDUTypeError
 from rdpy.pdu.x224 import X224ConnectionConfirmPDU, X224ConnectionRequestPDU, X224DisconnectRequestPDU, X224DataPDU, \
     X224ErrorPDU
 
@@ -37,11 +38,16 @@ class X224Parser:
         length = Uint8.unpack(data[0])
         header = Uint8.unpack(data[1]) >> 4
 
-        if length < 2 or len(data) < length:
-            raise Exception("Invalid X224 length indicator")
+        if header in list(X224PDUType):
+            header = X224PDUType(header)
+
+        if length < 2:
+            raise ParsingError("Invalid X224 length indicator: indicator = %d, expected at least 2 bytes" % length)
+        if len(data) < length:
+            raise ParsingError("Invalid X224 length indicator: indicator = %d, length = %d" % (length, len(data)))
 
         if header not in self.parsers:
-            raise Exception("Unknown X224 header received")
+            raise UnknownPDUTypeError("Trying to parse unknown X224 PDU type: %s" % (header if header in X224PDUType else hex(header)), header)
 
         return self.parsers[header](data, length)
 
@@ -57,7 +63,7 @@ class X224Parser:
         """
 
         if length < 6:
-            raise Exception("Invalid %s" % name)
+            raise ParsingError("Invalid X244 %s length indicator: indicator = %d, expected at least 6 bytes" % (name, 6))
 
         destination = Uint16BE.unpack(data[2 : 4])
         source = Uint16BE.unpack(data[4 : 6])
@@ -65,7 +71,7 @@ class X224Parser:
         payload = data[7 :]
 
         if len(payload) != length - 6:
-            raise Exception("Invalid length indicator for X224 %s" % name)
+            raise ParsingError("Invalid X224 %s payload length: expected = %d, length = %d" % (name, length - 6, len(payload)))
 
         return source, destination, options, payload
 
@@ -110,7 +116,7 @@ class X224Parser:
         """
 
         if length != 2:
-            raise Exception("Invalid length indicator for X224 Data PDU")
+            raise ParsingError("Invalid X224 Data PDU length indicator: expected = 2, indicator = %d" % length)
 
         code = Uint8.unpack(data[1]) & 0xf
         sequence = Uint8.unpack(data[2])
@@ -127,14 +133,14 @@ class X224Parser:
         """
 
         if length < 4:
-            raise Exception("Invalid X224 Error PDU")
+            raise ParsingError("Invalid X224 Error PDU length indicator: indicator = %d, expected at least 4 bytes")
 
         destination = Uint16BE.unpack(data[2 : 4])
         cause = Uint8.unpack(data[4])
         payload = data[5 :]
 
         if len(payload) != length - 4:
-            raise Exception("Invalid length indicator for X224 Error PDU")
+            raise ParsingError("Invalid X224 Error PDU payload length: expected = %d, length = %d" % (length - 4, len(payload)))
 
         return X224ErrorPDU(destination, cause, payload)
 
@@ -149,7 +155,7 @@ class X224Parser:
         stream.write(Uint8.pack(pdu.length))
 
         if pdu.header not in self.writers:
-            raise Exception("Unknown X224 header")
+            raise UnknownPDUTypeError("Trying to write unknown X224 PDU type: %s" % (pdu.header if pdu.header in X224PDUType else hex(pdu.header)), pdu.header)
 
         self.writers[pdu.header](stream, pdu)
         stream.write(pdu.payload)

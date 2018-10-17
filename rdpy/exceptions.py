@@ -9,3 +9,7 @@ class WritingError(RDPYError, ValueError):
 
 class UnknownPDUTypeError(RDPYError, NotImplementedError):
     """A parser tried to write or parse an unknown PDU type"""
+
+    def __init__(self, message, type):
+        super(UnknownPDUTypeError, self).__init__(message)
+        self.type = type
