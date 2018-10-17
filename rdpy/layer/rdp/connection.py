@@ -1,5 +1,5 @@
 from rdpy.core.newlayer import Layer
-from rdpy.parser.rdp import RDPClientConnectionParser, RDPServerConnectionParser
+from rdpy.parser.rdp.connection import RDPClientConnectionParser, RDPServerConnectionParser
 
 
 class RDPClientConnectionLayer(Layer):

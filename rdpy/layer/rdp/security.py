@@ -2,7 +2,8 @@ from rdpy.core.newlayer import Layer, LayerObserver
 from rdpy.core.subject import ObservedBy
 from rdpy.enum.rdp import RDPSecurityHeaderType, RDPSecurityFlags, FIPSVersion
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
-from rdpy.parser.rdp import RDPSecurityParser, RDPClientInfoParser
+from rdpy.parser.rdp.client_info import RDPClientInfoParser
+from rdpy.parser.rdp.security import RDPSecurityParser
 from rdpy.pdu.rdp.security import RDPSecurityExchangePDU, RDPBasicSecurityPDU, RDPSignedSecurityPDU, RDPFIPSSecurityPDU
 
 class RDPSecurityObserver(LayerObserver):

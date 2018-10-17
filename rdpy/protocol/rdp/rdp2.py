@@ -13,8 +13,9 @@ from rdpy.parser.rdp import RDPNegotiationParser, RDPClientConnectionParser, RDP
     RDPClientInfoParser
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.pdu.mcs import MCSConnectResponsePDU, MCSDomainParams
-from rdpy.pdu.rdp.connection import RDPNegotiationResponsePDU, RDPServerDataPDU, ServerCoreData, ServerNetworkData, \
+from rdpy.pdu.rdp.connection import RDPServerDataPDU, ServerCoreData, ServerNetworkData, \
     ServerSecurityData
+from rdpy.pdu.rdp.negotiation import RDPNegotiationResponsePDU
 from rdpy.pdu.rdp.licensing import RDPLicenseErrorAlertPDU, RDPLicenseBinaryBlob
 from rdpy.protocol.mcs.channel import MCSChannelFactory, MCSServerChannel
 from rdpy.protocol.mcs.client import MCSClientConnectionObserver

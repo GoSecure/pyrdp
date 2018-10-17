@@ -19,12 +19,14 @@ from rdpy.layer.tcp import TCPLayer
 from rdpy.layer.tpkt import TPKTLayer
 from rdpy.layer.x224 import X224Layer
 from rdpy.parser.gcc import GCCParser
-from rdpy.parser.rdp import RDPClientInfoParser, RDPClientConnectionParser, RDPServerConnectionParser, \
-    RDPNegotiationParser
+from rdpy.parser.rdp.client_info import RDPClientInfoParser
+from rdpy.parser.rdp.connection import RDPClientConnectionParser, RDPServerConnectionParser
+from rdpy.parser.rdp.negotiation import RDPNegotiationParser
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.pdu.mcs import MCSConnectResponsePDU, MCSAttachUserConfirmPDU, MCSChannelJoinConfirmPDU
 from rdpy.pdu.rdp.connection import ServerSecurityData, RDPServerDataPDU, \
-    RDPNegotiationResponsePDU, ProprietaryCertificate
+    ProprietaryCertificate
+from rdpy.pdu.rdp.negotiation import RDPNegotiationResponsePDU
 from rdpy.pdu.rdp.security import RDPSecurityExchangePDU
 from rdpy.protocol.mcs.channel import MCSChannelFactory, MCSServerChannel, MCSClientChannel
 from rdpy.protocol.mcs.client import MCSClientRouter

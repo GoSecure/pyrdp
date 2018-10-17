@@ -1,5 +1,5 @@
 from rdpy.core.newlayer import Layer
-from rdpy.parser.rdp import RDPLicensingParser
+from rdpy.parser.rdp.licensing import RDPLicensingParser
 
 
 class RDPLicensingLayer(Layer):

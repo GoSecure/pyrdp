@@ -2,7 +2,7 @@ from rdpy.core import log
 from rdpy.core.newlayer import Layer, LayerStrictRoutedObserver
 from rdpy.core.subject import ObservedBy
 from rdpy.enum.rdp import RDPDataPDUType
-from rdpy.parser.rdp import RDPDataParser
+from rdpy.parser.rdp.data import RDPDataParser
 
 
 class RDPDataLayerObserver(LayerStrictRoutedObserver):
