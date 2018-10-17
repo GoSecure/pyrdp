@@ -21,7 +21,7 @@ class MCSRouter(LayerStrictRoutedObserver):
             MCSPDUType.CONNECT_INITIAL: "onConnectInitial",
             MCSPDUType.CONNECT_RESPONSE: "onConnectResponse",
             MCSPDUType.ERECT_DOMAIN_REQUEST: "onErectDomainRequest",
-            MCSPDUType.DISCONNECT_PROVIDER_ULTIMATUM: "disconnectProviderUltimatum",
+            MCSPDUType.DISCONNECT_PROVIDER_ULTIMATUM: "onDisconnectProviderUltimatum",
             MCSPDUType.ATTACH_USER_REQUEST: "onAttachUserRequest",
             MCSPDUType.ATTACH_USER_CONFIRM: "onAttachUserConfirm",
             MCSPDUType.CHANNEL_JOIN_REQUEST: "onChannelJoinRequest",
@@ -39,7 +39,7 @@ class MCSRouter(LayerStrictRoutedObserver):
     def onConnectResponse(self, pdu):
         raise Exception("Connect Response is not handled")
     
-    def disconnectProviderUltimatum(self, pdu):
+    def onDisconnectProviderUltimatum(self, pdu):
         raise Exception("Disconnect Provider Ultimatum is not handled")
 
     def onErectDomainRequest(self, pdu):
