@@ -6,6 +6,7 @@ from StringIO import StringIO
 from rdpy.core.StrictStream import StrictStream
 from rdpy.core.packing import Uint16LE, Uint32LE, Uint8
 from rdpy.enum.rdp import RDPConnectionDataType, ServerCertificateType
+from rdpy.exceptions import ParsingError, UnknownPDUTypeError
 from rdpy.pdu.rdp.connection import RDPClientDataPDU, ClientCoreData, ClientSecurityData, ClientChannelDefinition, \
     ClientNetworkData, ClientClusterData, RDPServerDataPDU, ServerCoreData, ServerNetworkData, ServerSecurityData, \
     ProprietaryCertificate
@@ -61,12 +62,12 @@ class RDPClientConnectionParser:
         data = stream.read(length)
 
         if len(data) != length:
-            raise Exception("Client Data length field does not match actual size")
+            raise ParsingError("Client Data length field does not match actual size")
 
         substream = StringIO(data)
 
         if header not in self.parsers:
-            raise Exception("Unknown client data header")
+            raise UnknownPDUTypeError("Trying to parse unknown client data structure %s" % header, header)
 
         return self.parsers[header](substream)
 
@@ -127,7 +128,7 @@ class RDPClientConnectionParser:
         data = stream.getvalue()[4 :]
 
         if len(data) != channelCount * 12:
-            raise Exception("Invalid channel array size")
+            raise ParsingError("Invalid channel array size")
 
         channelDefinitions = []
 
@@ -162,7 +163,7 @@ class RDPClientConnectionParser:
 
     def writeStructure(self, stream, data):
         if data.header not in self.writers:
-            raise Exception("Trying to write unknown Client Data structure")
+            raise UnknownPDUTypeError("Trying to write unknown Client Data structure %s" % data.header, data.header)
 
         substream = StringIO()
         self.writers[data.header](substream, data)
@@ -220,7 +221,7 @@ class RDPClientConnectionParser:
 
         for channel in network.channelDefinitions:
             if len(channel.name) > 8:
-                raise Exception("Channel name must have 8 characters maximum")
+                raise ParsingError("Channel name must have 8 characters maximum")
 
             stream.write(channel.name.ljust(8, "\x00")[: 8])
             stream.write(Uint32LE.pack(channel.options))
@@ -275,12 +276,12 @@ class RDPServerConnectionParser:
         data = stream.read(length)
 
         if len(data) < length:
-            raise Exception("Server Data length field does not match actual size")
+            raise ParsingError("Server Data length field does not match actual size")
 
         substream = StringIO(data)
 
         if header not in self.parsers:
-            raise Exception("Unknown server data header")
+            raise UnknownPDUTypeError("Trying to parse unknown server data structure %s" % header, header)
 
         return self.parsers[header](substream)
 
@@ -331,7 +332,7 @@ class RDPServerConnectionParser:
         if version == ServerCertificateType.PROPRIETARY:
             return self.parseProprietaryCertificate(stream)
         else:
-            raise Exception("Unhandled certificate type")
+            raise NotImplementedError("Unhandled certificate type")
 
     def parseProprietaryCertificate(self, stream):
         signatureAlgorithmID = Uint32LE.unpack(stream)
@@ -388,7 +389,7 @@ class RDPServerConnectionParser:
         :param data: The structure to write (ex: ServerCoreData)
         """
         if data.header not in self.writers:
-            raise Exception("Trying to write unknown Server Data structure")
+            raise UnknownPDUTypeError("Trying to write unknown Server Data structure %s" % data.header, data.header)
 
         substream = StringIO()
         self.writers[data.header](substream, data)
@@ -446,7 +447,7 @@ class RDPServerConnectionParser:
             Uint32LE.pack(ServerCertificateType.PROPRIETARY, stream)
             self.writeProprietaryCertificate(stream, certificate)
         else:
-            raise Exception("Unhandled certificate type")
+            raise NotImplementedError("Unhandled certificate type")
 
         return stream.getvalue()
 
