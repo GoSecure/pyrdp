@@ -2,6 +2,7 @@ from StringIO import StringIO
 
 from rdpy.core.packing import Uint8, Uint16LE, Uint32LE
 from rdpy.enum.rdp import RDPLicensingPDUType
+from rdpy.exceptions import UnknownPDUTypeError
 from rdpy.pdu.rdp.licensing import RDPLicenseBinaryBlob, RDPLicenseErrorAlertPDU
 
 
@@ -28,7 +29,7 @@ class RDPLicensingParser:
         size = Uint16LE.unpack(stream)
 
         if header not in self.parsers:
-            raise Exception("Trying to parse unknown license PDU")
+            raise UnknownPDUTypeError("Trying to parse unknown license PDU")
 
         return self.parsers[header](stream, flags)
 
@@ -65,10 +66,12 @@ class RDPLicensingParser:
         stream.write(Uint8.pack(pdu.header))
         stream.write(Uint8.pack(pdu.flags))
         substream = StringIO()
+
         if isinstance(pdu, RDPLicenseErrorAlertPDU):
             self.writeErrorAlert(substream, pdu)
         else:
-            raise Exception("Unhandled RDP Licencing PDU: {}".format(pdu))
+            raise UnknownPDUTypeError("Trying to write unknown RDP Licensing PDU: {}".format(pdu.header), pdu.header)
+
         stream.write(Uint16LE.pack(len(substream.getvalue()) + 4))
         stream.write(substream.getvalue())
         return stream.getvalue()
