@@ -2,6 +2,7 @@ from rdpy.core import log
 from rdpy.core.newlayer import Layer, LayerStrictRoutedObserver
 from rdpy.core.subject import ObservedBy
 from rdpy.enum.rdp import RDPDataPDUType
+from rdpy.exceptions import UnknownPDUTypeError
 from rdpy.parser.rdp.data import RDPDataParser
 
 
@@ -65,7 +66,7 @@ class RDPDataLayer(Layer):
     def recv(self, data):
         try:
             pdu = self.parser.parse(data)
-        except Exception as e:
+        except UnknownPDUTypeError as e:
             log.error(str(e))
             if self.observer:
                 self.observer.onUnparsedData(data)

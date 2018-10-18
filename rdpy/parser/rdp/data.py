@@ -2,6 +2,7 @@ from StringIO import StringIO
 
 from rdpy.core.packing import Uint16LE, Uint32LE, Uint8
 from rdpy.enum.rdp import RDPDataPDUType, RDPDataPDUSubtype, ErrorInfo
+from rdpy.exceptions import UnknownPDUTypeError
 from rdpy.pdu.rdp.data import RDPShareControlHeader, RDPShareDataHeader, RDPDemandActivePDU, RDPConfirmActivePDU, \
     RDPSetErrorInfoPDU, RDPSynchronizePDU, RDPControlPDU
 
@@ -31,7 +32,7 @@ class RDPDataParser:
         header = self.parseShareControlHeader(stream)
 
         if header.type not in self.parsers:
-            raise Exception("Trying to parse unknown Data PDU type: %s" % str(header.type))
+            raise UnknownPDUTypeError("Trying to parse unknown Data PDU type: %s" % header.type, header.type)
 
         return self.parsers[header.type](stream, header)
 
@@ -39,7 +40,7 @@ class RDPDataParser:
         header = self.parseShareDataHeader(stream, header)
 
         if header.subtype not in self.dataParsers:
-            raise Exception("Trying to parse unknown Data PDU Subtype: %s" % str(header.subtype))
+            raise UnknownPDUTypeError("Trying to parse unknown Data PDU Subtype: %s" % header.subtype, header.subtype)
 
         return self.dataParsers[header.subtype](stream, header)
 
@@ -64,7 +65,7 @@ class RDPDataParser:
 
     def writeData(self, stream, pdu):
         if pdu.header.subtype not in self.dataWriters:
-            raise Exception("Trying to write unknown Data PDU Subtype: %s" % str(pdu.header.subtype))
+            raise UnknownPDUTypeError("Trying to write unknown Data PDU Subtype: %s" % pdu.header.subtype, pdu.header.subtype)
 
         self.dataWriters[pdu.header.subtype](stream, pdu)
 
