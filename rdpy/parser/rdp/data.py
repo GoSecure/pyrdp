@@ -21,6 +21,7 @@ class RDPDataParser:
             RDPDataPDUSubtype.PDUTYPE2_SYNCHRONIZE: self.parseSynchronize,
             RDPDataPDUSubtype.PDUTYPE2_CONTROL: self.parseControl,
             RDPDataPDUSubtype.PDUTYPE2_INPUT: self.parseInput,
+            RDPDataPDUSubtype.PDUTYPE2_PLAY_SOUND: self.parsePlaySound,
         }
 
         self.dataWriters = {
@@ -28,6 +29,7 @@ class RDPDataParser:
             RDPDataPDUSubtype.PDUTYPE2_SYNCHRONIZE: self.writeSynchronize,
             RDPDataPDUSubtype.PDUTYPE2_CONTROL: self.writeControl,
             RDPDataPDUSubtype.PDUTYPE2_INPUT: self.writeInput,
+            RDPDataPDUSubtype.PDUTYPE2_PLAY_SOUND: self.writePlaySound,
         }
 
     def parse(self, data):
