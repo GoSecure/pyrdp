@@ -2,6 +2,7 @@ from StringIO import StringIO
 
 from rdpy.core.packing import Uint8, Uint16LE, Uint32LE, Int32LE
 from rdpy.enum.rdp import NegotiationProtocols
+from rdpy.exceptions import WritingError
 from rdpy.pdu.rdp.negotiation import RDPNegotiationRequestPDU
 from rdpy.protocol.rdp.x224 import NegociationType
 
@@ -49,7 +50,7 @@ class RDPNegotiationParser:
         if pdu.packetType in self.writers.keys():
             return self.writers[pdu.packetType](pdu)
         else:
-            raise Exception("Wrong packet type %d" % pdu.packetType)
+            raise WritingError("Trying to write invalid packet type %d" % pdu.packetType)
 
     def writeNegotiationRequestPDU(self, pdu):
         """
