@@ -29,7 +29,7 @@ class RDPLicensingParser:
         size = Uint16LE.unpack(stream)
 
         if header not in self.parsers:
-            raise UnknownPDUTypeError("Trying to parse unknown license PDU")
+            raise UnknownPDUTypeError("Trying to parse unknown license PDU", header)
 
         return self.parsers[header](stream, flags)
 
