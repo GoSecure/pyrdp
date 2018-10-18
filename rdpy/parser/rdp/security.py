@@ -2,6 +2,7 @@ from StringIO import StringIO
 
 from rdpy.core.packing import Uint16LE, Uint8, Uint32LE
 from rdpy.enum.rdp import RDPSecurityHeaderType
+from rdpy.exceptions import UnknownPDUTypeError, WritingError
 from rdpy.pdu.rdp.security import RDPBasicSecurityPDU, RDPSignedSecurityPDU, RDPFIPSSecurityPDU, RDPSecurityExchangePDU
 
 
@@ -24,7 +25,7 @@ class RDPSecurityParser:
         elif self.headerType == RDPSecurityHeaderType.FIPS:
             return self.parseFIPSSecurity(stream)
         else:
-            raise Exception("Trying to parse unknown security header type")
+            raise UnknownPDUTypeError("Trying to parse unknown security header type", self.headerType)
 
     def parseBasicSecurity(self, stream):
         """
@@ -93,7 +94,7 @@ class RDPSecurityParser:
         elif isinstance(pdu, RDPFIPSSecurityPDU):
             return self.writeFIPSHeader(pdu) + pdu.payload
         else:
-            raise Exception("Trying to write unknown PDU type")
+            raise WritingError("Trying to write invalid PDU type")
 
     def writeBasicHeader(self, pdu):
         return Uint16LE.pack(pdu.header & 0xffff) + Uint16LE.pack(pdu.header >> 16)
