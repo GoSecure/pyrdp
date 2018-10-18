@@ -5,7 +5,7 @@ from rdpy.enum.rdp import RDPDataPDUType, RDPDataPDUSubtype, ErrorInfo, InputEve
 from rdpy.exceptions import UnknownPDUTypeError
 from rdpy.parser.rdp.input import RDPInputParser
 from rdpy.pdu.rdp.data import RDPShareControlHeader, RDPShareDataHeader, RDPDemandActivePDU, RDPConfirmActivePDU, \
-    RDPSetErrorInfoPDU, RDPSynchronizePDU, RDPControlPDU, RDPInputPDU
+    RDPSetErrorInfoPDU, RDPSynchronizePDU, RDPControlPDU, RDPInputPDU, RDPPlaySoundPDU
 
 
 class RDPDataParser:
@@ -194,3 +194,12 @@ class RDPDataParser:
         parser = RDPInputParser()
         for event in pdu.events:
             stream.write(parser.write(event))
+
+    def parsePlaySound(self, stream, header):
+        duration = Uint32LE.unpack(stream)
+        frequency = Uint32LE.unpack(stream)
+        return RDPPlaySoundPDU(header, duration, frequency)
+
+    def writePlaySound(self, stream, pdu):
+        Uint32LE.pack(pdu.duration, stream)
+        Uint32LE.pack(pdu.frequency, stream)

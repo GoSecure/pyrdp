@@ -61,3 +61,10 @@ class RDPInputPDU:
     def __init__(self, header, events):
         self.header = header
         self.events = events
+
+
+class RDPPlaySoundPDU:
+    def __init__(self, header, duration, frequency):
+        self.header = header
+        self.duration = duration
+        self.frequency = frequency
