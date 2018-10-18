@@ -1,6 +1,5 @@
 from enum import IntEnum
 
-
 class ClientInfoFlags:
     """
     Flags for the RDPClientInfoPDU flags field
@@ -541,3 +540,42 @@ class ErrorInfo(IntEnum):
     ERRINFO_ENCRYPTFAILED = 0x00001193
     ERRINFO_ENCPKGMISMATCH = 0x00001194
     ERRINFO_DECRYPTFAILED2 = 0x00001195
+
+class InputEventType(IntEnum):
+    """
+    Slow-path input message type
+    See: http://msdn.microsoft.com/en-us/library/cc240583.aspx
+    """
+    INPUT_EVENT_SYNC = 0x0000
+    INPUT_EVENT_UNUSED = 0x0002
+    INPUT_EVENT_SCANCODE = 0x0004
+    INPUT_EVENT_UNICODE = 0x0005
+    INPUT_EVENT_MOUSE = 0x8001
+    INPUT_EVENT_MOUSEX = 0x8002
+
+class SynchronizeFlag(IntEnum):
+    TS_SYNC_SCROLL_LOCK = 0x00000001
+    TS_SYNC_NUM_LOCK = 0x00000002
+    TS_SYNC_CAPS_LOCK = 0x00000004
+    TS_SYNC_KANA_LOCK = 0x00000008
+
+class KeyboardFlag(IntEnum):
+    KBDFLAGS_EXTENDED = 0x0100
+    KBDFLAGS_DOWN = 0x4000
+    KBDFLAGS_RELEASE = 0x8000
+
+class PointerFlag(IntEnum):
+    PTRFLAGS_WHEEL_NEGATIVE = 0x0100
+    PTRFLAGS_WHEEL = 0x0200
+    PTRFLAGS_HWHEEL = 0x0400
+    WheelRotationMask = 0x01FF
+
+    PTRFLAGS_MOVE = 0x0800
+
+    PTRFLAGS_BUTTON1 = 0x1000
+    PTRFLAGS_BUTTON2 = 0x2000
+    PTRFLAGS_BUTTON3 = 0x4000
+    PTRFLAGS_DOWN = 0x8000
+
+    PTRXFLAGS_BUTTON1 = 0x0001
+    PTRXFLAGS_BUTTON2 = 0x0002

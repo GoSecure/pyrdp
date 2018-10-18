@@ -1,10 +1,11 @@
 from StringIO import StringIO
 
 from rdpy.core.packing import Uint16LE, Uint32LE, Uint8
-from rdpy.enum.rdp import RDPDataPDUType, RDPDataPDUSubtype, ErrorInfo
+from rdpy.enum.rdp import RDPDataPDUType, RDPDataPDUSubtype, ErrorInfo, InputEventType
 from rdpy.exceptions import UnknownPDUTypeError
+from rdpy.parser.rdp.input import RDPInputParser
 from rdpy.pdu.rdp.data import RDPShareControlHeader, RDPShareDataHeader, RDPDemandActivePDU, RDPConfirmActivePDU, \
-    RDPSetErrorInfoPDU, RDPSynchronizePDU, RDPControlPDU
+    RDPSetErrorInfoPDU, RDPSynchronizePDU, RDPControlPDU, RDPInputPDU
 
 
 class RDPDataParser:
@@ -19,12 +20,14 @@ class RDPDataParser:
             RDPDataPDUSubtype.PDUTYPE2_SET_ERROR_INFO_PDU: self.parseError,
             RDPDataPDUSubtype.PDUTYPE2_SYNCHRONIZE: self.parseSynchronize,
             RDPDataPDUSubtype.PDUTYPE2_CONTROL: self.parseControl,
+            RDPDataPDUSubtype.PDUTYPE2_INPUT: self.parseInput,
         }
 
         self.dataWriters = {
             RDPDataPDUSubtype.PDUTYPE2_SET_ERROR_INFO_PDU: self.writeError,
             RDPDataPDUSubtype.PDUTYPE2_SYNCHRONIZE: self.writeSynchronize,
             RDPDataPDUSubtype.PDUTYPE2_CONTROL: self.writeControl,
+            RDPDataPDUSubtype.PDUTYPE2_INPUT: self.writeInput,
         }
 
     def parse(self, data):
@@ -174,3 +177,20 @@ class RDPDataParser:
         Uint16LE.pack(pdu.action, stream)
         Uint16LE.pack(pdu.grantID, stream)
         Uint32LE.pack(pdu.grantID, stream)
+
+    def parseInput(self, stream, header):
+        numEvents = Uint16LE.unpack(stream)
+        stream.read(2)
+
+        parser = RDPInputParser()
+        inputEvents = [parser.parse(stream) for _ in range(numEvents)]
+
+        return RDPInputPDU(header, inputEvents)
+
+    def writeInput(self, stream, pdu):
+        Uint16LE.pack(len(pdu.events), stream)
+        stream.write("\x00" * 2)
+
+        parser = RDPInputParser()
+        for event in pdu.events:
+            stream.write(parser.write(event))

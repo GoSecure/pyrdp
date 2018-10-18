@@ -55,3 +55,9 @@ class RDPControlPDU:
         self.action = action
         self.grantID = grantID
         self.controlID = controlID
+
+
+class RDPInputPDU:
+    def __init__(self, header, events):
+        self.header = header
+        self.events = events
