@@ -1,6 +1,7 @@
 from StringIO import StringIO
 
 from rdpy.core.packing import Uint8, Uint16BE
+from rdpy.exceptions import ParsingError
 from rdpy.pdu.tpkt import TPKTPDU
 
 
@@ -25,7 +26,7 @@ class TPKTParser:
         payload = data[4 : length]
 
         if len(payload) != length - 4:
-            raise Exception("Payload is too short for TPKT length field")
+            raise ParsingError("Payload is too short for TPKT length field")
 
         return TPKTPDU(version, payload)
 
