@@ -8,7 +8,8 @@ from twisted.internet.protocol import ServerFactory, ClientFactory
 
 from rdpy.core import log
 from rdpy.core.crypto import RC4Crypter
-from rdpy.enum.rdp import NegotiationProtocols, RDPSecurityHeaderType, EncryptionMethod, RDPDataPDUSubtype
+from rdpy.enum.rdp import NegotiationProtocols, RDPSecurityHeaderType, EncryptionMethod, RDPDataPDUSubtype, \
+    InputEventType
 from rdpy.layer.gcc import GCCClientConnectionLayer
 from rdpy.layer.mcs import MCSLayer, MCSClientConnectionLayer
 from rdpy.layer.rdp.connection import RDPClientConnectionLayer
@@ -532,6 +533,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
             clientObserver.setPeer(observer)
 
             self.io.setObserver(observer)
+            observer.setDataHandler(RDPDataPDUSubtype.PDUTYPE2_INPUT, self.onInputPDUReceived)
 
             return channel
 
@@ -557,16 +559,10 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
     def sendDisconnectProviderUltimatum(self, pdu):
         self.mcs.send(pdu)
 
-
-
-
-
-
-class RDPClientFactory(ClientFactory):
-    def buildProtocol(self, addr):
-        client = MITMClient()
-        return client.getProtocol()
-
+    def onInputPDUReceived(self, pdu):
+        for event in pdu.events:
+            if event.messageType == InputEventType.INPUT_EVENT_SCANCODE:
+                self.log_debug("Key pressed: 0x%2lx" % event.keyCode)
 
 
 
