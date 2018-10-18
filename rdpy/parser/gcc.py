@@ -3,6 +3,7 @@ from StringIO import StringIO
 from rdpy.core import per
 from rdpy.core.packing import Uint16BE
 from rdpy.enum.gcc import GCCPDUType
+from rdpy.exceptions import ParsingError, UnknownPDUTypeError
 from rdpy.pdu.gcc import GCCConferenceCreateRequestPDU, GCCConferenceCreateResponsePDU
 
 
@@ -38,18 +39,18 @@ class GCCParser:
         tag = per.readChoice(stream)
 
         if tag != 0:
-            raise Exception("Expected object tag (0), got %d instead" % tag)
+            raise ParsingError("Expected object tag (0), got %d instead" % tag)
 
         oid = per.readObjectIdentifier(stream)
 
         if oid != GCCParser.T124_02_98_OID:
-            raise Exception("Invalid object identifier: %r, expected %r" % (oid, GCCParser.T124_02_98_OID))
+            raise ParsingError("Invalid object identifier: %r, expected %r" % (oid, GCCParser.T124_02_98_OID))
 
         length = per.readLength(stream)
         header = per.readChoice(stream)
 
         if header not in self.parsers:
-            raise Exception("Trying to parse unknown GCC PDU type %d" % header)
+            raise UnknownPDUTypeError("Trying to parse unknown GCC PDU type %s" % header, header)
 
         pdu = self.parsers[header](stream)
 
@@ -64,22 +65,22 @@ class GCCParser:
         """
         property = per.readSelection(stream)
         if property != 8:
-            raise Exception("Expected property to be 8 (conference name), got %d" % property)
+            raise ParsingError("Expected property to be 8 (conference name), got %d" % property)
 
         conferenceName = per.readNumericString(stream, 1)
         padding = stream.read(1)
 
         userDataCount = per.readNumberOfSet(stream)
         if userDataCount != 1:
-            raise Exception("Expected user data count to be 1, got %d" % userDataCount)
+            raise ParsingError("Expected user data count to be 1, got %d" % userDataCount)
 
         userDataType = per.readChoice(stream)
         if userDataType != 0xc0:
-            raise Exception("Expected user data type to be 0xc0 (h221NonStandard), got %d" % userDataType)
+            raise ParsingError("Expected user data type to be 0xc0 (h221NonStandard), got %d" % userDataType)
 
         key = per.readOctetStream(stream, 4)
         if key != GCCParser.H221_CLIENT_KEY:
-            raise Exception("Expected user data key to be %s, got %s" % (GCCParser.H221_CLIENT_KEY, key))
+            raise ParsingError("Expected user data key to be %s, got %s" % (GCCParser.H221_CLIENT_KEY, key))
 
         payload = per.readOctetStream(stream)
         return GCCConferenceCreateRequestPDU(conferenceName, payload)
@@ -98,22 +99,22 @@ class GCCParser:
 
         userDataCount = per.readNumberOfSet(stream)
         if userDataCount != 1:
-            raise Exception("Expected user data count to be 1, got %d" % userDataCount)
+            raise ParsingError("Expected user data count to be 1, got %d" % userDataCount)
 
         userDataType = per.readChoice(stream)
         if userDataType != 0xc0:
-            raise Exception("Expected user data type to be 0xc0 (h221NonStandard), got %d" % userDataType)
+            raise ParsingError("Expected user data type to be 0xc0 (h221NonStandard), got %d" % userDataType)
 
         key = per.readOctetStream(stream, 4)
         if key != GCCParser.H221_SERVER_KEY:
-            raise Exception("Expected user data key to be %s, got %s" % (GCCParser.H221_SERVER_KEY, key))
+            raise ParsingError("Expected user data key to be %s, got %s" % (GCCParser.H221_SERVER_KEY, key))
 
         payload = per.readOctetStream(stream)
         return GCCConferenceCreateResponsePDU(nodeID, tag, result, payload)
 
     def write(self, pdu):
         if pdu.header not in self.writers:
-            raise Exception("Trying to write unknown GCC PDU type %d" % pdu.header)
+            raise UnknownPDUTypeError("Trying to write unknown GCC PDU type %s" % pdu.header, pdu.header)
 
         stream = StringIO()
         stream.write(per.writeChoice(0))
