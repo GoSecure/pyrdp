@@ -4,6 +4,7 @@ from rdpy.core import ber, per
 from rdpy.core.error import InvalidValue, InvalidSize
 from rdpy.core.packing import Uint8, Uint16BE
 from rdpy.enum.mcs import MCSChannelID, MCSPDUType
+from rdpy.exceptions import UnknownPDUTypeError, ParsingError
 from rdpy.pdu.mcs import MCSConnectInitialPDU, MCSConnectResponsePDU, MCSErectDomainRequestPDU, \
     MCSDisconnectProviderUltimatumPDU, MCSAttachUserRequestPDU, MCSAttachUserConfirmPDU, MCSChannelJoinRequestPDU, \
     MCSChannelJoinConfirmPDU, MCSSendDataRequestPDU, MCSSendDataIndicationPDU, MCSDomainParams
@@ -57,7 +58,7 @@ class MCSParser:
             header = header >> 2
 
         if header not in self.parsers:
-            raise Exception("Unhandled header received")
+            raise UnknownPDUTypeError("Trying to parse unknown MCS PDU type %s" % header, header)
 
         return self.parsers[header](stream)
 
@@ -69,11 +70,11 @@ class MCSParser:
         :return: MCSDomainParam
         """
         if not ber.readUniversalTag(stream, ber.Tag.BER_TAG_SEQUENCE, True):
-            raise InvalidValue("Invalid BER tag (%d expected)" % ber.Tag.BER_TAG_SEQUENCE)
+            raise ParsingError("Invalid BER tag (%d expected)" % ber.Tag.BER_TAG_SEQUENCE)
 
         length = ber.readLength(stream)
         if length > len(stream.getvalue()):
-            raise InvalidSize("Invalid size for DomainParameters (got %d, %d bytes left)" % (length, len(stream.getvalue())))
+            raise ParsingError("Invalid size for DomainParameters (got %d, %d bytes left)" % (length, len(stream.getvalue())))
 
         maxChannelIDs = ber.readInteger(stream)
         maxUserIDs = ber.readInteger(stream)
@@ -138,7 +139,7 @@ class MCSParser:
         reason = per.readEnumeration(stream)
 
         if len(stream.read()) > 0:
-            raise Exception("Unexpected payload")
+            raise ParsingError("Unexpected payload")
 
         return MCSDisconnectProviderUltimatumPDU(reason)
 
@@ -150,7 +151,7 @@ class MCSParser:
         :return: MCSAttachUserRequestPDU
         """
         if len(stream.read()) > 0:
-            raise Exception("Unexpected payload")
+            raise ParsingError("Unexpected payload")
 
         return MCSAttachUserRequestPDU()
 
@@ -168,7 +169,7 @@ class MCSParser:
         if len(data) == 2:
             initiator = Uint16BE.unpack(data) + MCSChannelID.USERCHANNEL_BASE
         elif len(data) > 2:
-            raise Exception("Unexpected payload")
+            raise ParsingError("Unexpected payload")
 
         return MCSAttachUserConfirmPDU(result, initiator)
 
@@ -181,7 +182,7 @@ class MCSParser:
         """
         data = stream.read()
         if len(data) < 4:
-            raise Exception("Invalid Channel Join Request PDU received")
+            raise ParsingError("Invalid Channel Join Request PDU received")
 
         initiator = Uint16BE.unpack(data[0 : 2]) + MCSChannelID.USERCHANNEL_BASE
         channelID = Uint16BE.unpack(data[2 : 4])
@@ -200,7 +201,7 @@ class MCSParser:
         data = stream.read()
 
         if len(data) < 4 or len(data) == 5:
-            raise Exception("Invalid Channel Join Confirm PDU received")
+            raise ParsingError("Invalid Channel Join Confirm PDU received")
         elif len(data) >= 6:
             channelID = Uint16BE.unpack(data[4 : 6])
             payload = data[6 :]
@@ -252,7 +253,7 @@ class MCSParser:
         :return: str The raw bytes to send
         """
         if pdu.header not in self.writers:
-            raise Exception("Trying to send unhandled PDU type")
+            raise UnknownPDUTypeError("Trying to write unknown MCS PDU type %s" % pdu.header, pdu.header)
 
         stream = StringIO()
 
