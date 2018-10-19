@@ -49,6 +49,6 @@ setup(name='rdpy',
           	'rsa',
           	'pyasn1',
 			'notify2',
-		    'Crypto'
+		    'Crypto', 'appdirs'
     ],
 )
