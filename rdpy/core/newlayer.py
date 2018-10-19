@@ -1,4 +1,5 @@
 from observer import Observer
+from rdpy.exceptions import UnknownPDUTypeError
 from subject import Subject, ObservedBy
 
 class LayerObserver(Observer):
@@ -55,7 +56,7 @@ class LayerStrictRoutedObserver(LayerRoutedObserver):
         """
         Method called when a PDU with an unknown header is received
         """
-        raise Exception("Unknown PDU header received: 0x%lx" % pdu.header)
+        raise UnknownPDUTypeError("Unknown PDU header received: 0x%2lx" % pdu.header)
 
 
 @ObservedBy(LayerObserver)

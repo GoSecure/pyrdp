@@ -42,13 +42,13 @@ class MCSChannel:
         """
         Called when a Send Data Request PDU is received
         """
-        raise Exception("Unhandled Send Data Request PDU")
+        raise NotImplementedError("Unhandled Send Data Request PDU")
     
     def recvSendDataIndication(self, pdu):
         """
         Called when a Send Data Indication PDU is received
         """
-        raise Exception("Unhandled Send Data Indication PDU")
+        raise NotImplementedError("Unhandled Send Data Indication PDU")
     
     def sendSendDataRequest(self, data):
         """

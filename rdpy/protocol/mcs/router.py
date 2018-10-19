@@ -1,5 +1,6 @@
 from rdpy.enum.mcs import MCSPDUType
 from rdpy.core.newlayer import LayerStrictRoutedObserver
+from rdpy.exceptions import StateError
 
 
 def whenConnected(method):
@@ -9,7 +10,7 @@ def whenConnected(method):
     def wrapper(*args):
         router = args[0]
         if not router.connected:
-            raise Exception("Not connected")
+            raise StateError("Not connected")
         
         method(*args)
     
@@ -34,31 +35,31 @@ class MCSRouter(LayerStrictRoutedObserver):
         self.mcs = mcs
 
     def onConnectInitial(self, pdu):
-        raise Exception("Connect Initial is not handled")
+        raise NotImplementedError("Connect Initial is not handled")
 
     def onConnectResponse(self, pdu):
-        raise Exception("Connect Response is not handled")
+        raise NotImplementedError("Connect Response is not handled")
     
     def onDisconnectProviderUltimatum(self, pdu):
-        raise Exception("Disconnect Provider Ultimatum is not handled")
+        raise NotImplementedError("Disconnect Provider Ultimatum is not handled")
 
     def onErectDomainRequest(self, pdu):
-        raise Exception("Erect Domain Request is not handled")
+        raise NotImplementedError("Erect Domain Request is not handled")
 
     def onAttachUserRequest(self, pdu):
-        raise Exception("Attach User Request is not handled")
+        raise NotImplementedError("Attach User Request is not handled")
     
     def onAttachUserConfirm(self, pdu):
-        raise Exception("Attach User Confirm is not handled")
+        raise NotImplementedError("Attach User Confirm is not handled")
     
     def onChannelJoinRequest(self, pdu):
-        raise Exception("Channel Join Request is not handled")
+        raise NotImplementedError("Channel Join Request is not handled")
     
     def onChannelJoinConfirm(self, pdu):
-        raise Exception("Channel Join Confirm is not handled")
+        raise NotImplementedError("Channel Join Confirm is not handled")
     
     def onSendDataRequest(self, pdu):
-        raise Exception("Send Data Request is not handled")
+        raise NotImplementedError("Send Data Request is not handled")
     
     def onSendDataIndication(self, pdu):
-        raise Exception("Send Data Indication is not handled")
+        raise NotImplementedError("Send Data Indication is not handled")

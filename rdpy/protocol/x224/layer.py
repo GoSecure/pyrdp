@@ -13,18 +13,18 @@ class X224Observer(LayerStrictRoutedObserver):
         }, **kwargs)
 
     def onConnectionRequest(self, pdu):
-        raise Exception("Unhandled X224 Connection Request PDU")
+        raise NotImplementedError("Unhandled X224 Connection Request PDU")
 
     def onConnectionConfirm(self, pdu):
-        raise Exception("Unhandled X224 Connection Confirm PDU")
+        raise NotImplementedError("Unhandled X224 Connection Confirm PDU")
     
     def onDisconnectRequest(self, pdu):
-        raise Exception("Unhandled X224 Disconnect Request PDU")
+        raise NotImplementedError("Unhandled X224 Disconnect Request PDU")
     
     def onData(self, pdu):
         pass
 
     def onError(self, pdu):
-        raise Exception("Unhandled X224 Error PDU")
+        raise NotImplementedError("Unhandled X224 Error PDU")
 
 

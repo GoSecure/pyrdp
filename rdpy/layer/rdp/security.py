@@ -1,6 +1,7 @@
 from rdpy.core.newlayer import Layer, LayerObserver
 from rdpy.core.subject import ObservedBy
 from rdpy.enum.rdp import RDPSecurityHeaderType, RDPSecurityFlags, FIPSVersion, EncryptionMethod
+from rdpy.exceptions import WritingError
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.security import RDPSecurityParser
@@ -113,7 +114,7 @@ class RDPSecurityLayer(Layer):
         elif headerType == RDPSecurityHeaderType.FIPS:
             self.sendFIPSSecurity(data, header)
         else:
-            raise Exception("Unknown security header type")
+            raise WritingError("Invalid security header type")
 
     def sendBasicSecurity(self, data, header):
         if header & RDPSecurityFlags.SEC_ENCRYPT != 0:

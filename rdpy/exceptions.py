@@ -13,3 +13,6 @@ class UnknownPDUTypeError(RDPYError, NotImplementedError):
     def __init__(self, message, type):
         super(UnknownPDUTypeError, self).__init__(message)
         self.type = type
+
+class StateError(RDPYError, RuntimeError):
+    """Used when trying to do something that an object's state does not allow"""

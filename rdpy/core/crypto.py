@@ -24,6 +24,7 @@ from enum import IntEnum
 from rdpy.core import rc4
 from rdpy.core.type import StringStream, UInt32Le
 from rdpy.enum.rdp import RDPSecurityFlags, EncryptionMethod
+from rdpy.exceptions import StateError
 
 """
 Cryptographic utility functions
@@ -359,6 +360,6 @@ class SecuritySettings:
 
     def getCrypter(self):
         if self.crypter is None:
-            raise Exception("The crypter was not generated. The crypter will be generated when the server random is received.")
+            raise StateError("The crypter was not generated. The crypter will be generated when the server random is received.")
 
         return self.crypter
