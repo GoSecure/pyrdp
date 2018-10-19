@@ -5,7 +5,7 @@ class MCSUserObserver(Observer):
     def onAttachConfirmed(self, user):
         raise Exception("Unhandled Attach Confirmed event")
     
-    def onAttachRefused(self, user):
+    def onAttachRefused(self, user, result):
         raise Exception("Unhandled Attach Refused event")
 
 @ObservedBy(MCSUserObserver)
@@ -36,12 +36,12 @@ class MCSUser(Subject):
         if self.observer:
             self.observer.onAttachConfirmed(self)
     
-    def onAttachRefused(self):
+    def onAttachRefused(self, result):
         """
         Called when an Attach Request is refused
         """
         if self.observer:
-            self.observer.onAttachRefused(self)
+            self.observer.onAttachRefused(self, result)
     
     def isInChannel(self, channelID):
         return channelID in self.channels

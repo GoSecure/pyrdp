@@ -31,20 +31,8 @@ from rdpy.protocol.rdp.x224 import ServerTLSContext
 
 class MITMServerRouter(MCSServerRouter):
     def __init__(self, server, mcs, factory):
-        MCSServerRouter.__init__(self, mcs, factory, None)
+        MCSServerRouter.__init__(self, mcs, factory)
         self.server = server
-
-    def onAttachUserRequest(self, pdu):
-        self.server.onAttachUserRequest(pdu)
-
-    def attachSuccessful(self, userID):
-        user = MCSUser(self, self.factory)
-        user.onAttachConfirmed(userID)
-        self.users[userID] = user
-        self.mcs.send(MCSAttachUserConfirmPDU(0, userID))
-
-    def attachFailed(self):
-        self.mcs.send(MCSAttachUserConfirmPDU(1, 0))
 
     def onChannelJoinRequest(self, pdu):
         self.server.onChannelJoinRequest(pdu)
@@ -73,6 +61,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.tpkt = TPKTLayer()
         self.x224 = X224Layer()
         self.mcs = MCSLayer()
+        self.router = MITMServerRouter(self, self.mcs, self)
+
 
         self.tcp.setNext(self.tpkt)
         self.tpkt.setNext(self.x224)
@@ -80,10 +70,11 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
         self.tcp.createObserver(onConnection=self.onConnection)
         self.x224.createObserver(onConnectionRequest=self.onConnectionRequest)
-
-        self.router = MITMServerRouter(self, self.mcs, self)
-        self.router.createObserver(onConnectionReceived = self.onConnectInitial)
         self.mcs.setObserver(self.router)
+        self.router.createObserver(
+            onConnectionReceived = self.onConnectInitial,
+            onAttachUserRequest = self.onAttachUserRequest
+        )
 
         self.ioSecurityLayer = None
         self.licensingLayer = RDPLicensingLayer()
@@ -197,11 +188,11 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
     # MCS Attach User Confirm successful
     def onAttachConfirmed(self, user):
-        self.router.attachSuccessful(user.userID)
+        self.router.sendAttachUserConfirm(True, user.userID)
 
     # MCS Attach User Confirm failed
-    def onAttachRefused(self, user):
-        self.router.attachFailed()
+    def onAttachRefused(self, user, result):
+        self.router.sendAttachUserConfirm(False, result)
 
     # MCS Channel Join Request
     def onChannelJoinRequest(self, pdu):

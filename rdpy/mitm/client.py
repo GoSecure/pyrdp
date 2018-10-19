@@ -12,9 +12,10 @@ from rdpy.mitm.observer import MITMChannelObserver
 from rdpy.parser.rdp.negotiation import RDPNegotiationParser
 from rdpy.protocol.mcs.channel import MCSChannelFactory, MCSClientChannel
 from rdpy.protocol.mcs.client import MCSClientRouter
+from rdpy.protocol.mcs.user import MCSUserObserver
 
 
-class MITMClient(MCSChannelFactory):
+class MITMClient(MCSChannelFactory, MCSUserObserver):
     def __init__(self, server):
         MCSChannelFactory.__init__(self)
         self.server = server
@@ -128,8 +129,8 @@ class MITMClient(MCSChannelFactory):
         self.server.onAttachConfirmed(user)
 
     # MCS Attach User Confirm failed
-    def onAttachRefused(self, user):
-        self.server.onAttachRefused(user)
+    def onAttachRefused(self, user, result):
+        self.server.onAttachRefused(user, result)
 
     def onChannelJoinRequest(self, pdu):
         self.mcs.send(pdu)

@@ -1,6 +1,5 @@
 from rdpy.core.observer import Observer
 from rdpy.core.subject import Subject, ObservedBy
-from rdpy.enum.mcs import MCSChannelID
 from rdpy.pdu.mcs import MCSAttachUserConfirmPDU, MCSChannelJoinConfirmPDU
 from router import MCSRouter, whenConnected
 from user import MCSUser
@@ -20,44 +19,28 @@ class MCSServerConnectionObserver(Observer):
         """
         pass
 
-class MCSUserIDGenerator:
-    """
-    User ID generator for server routers
-    Generates IDs sequentially while skipping virtual channel IDs
-    """
-    def __init__(self, channelIDs):
+    def onAttachUserRequest(self, pdu):
         """
-        :param channelIDs: list of channel IDs that can't be used for user IDs
+        Callback for when an Attach User Request PDU is received. The observer should eventually call
+        sendAttachUserConfirm to send the confirmation message to the client.
         """
-        self.next_channel = MCSChannelID.USERCHANNEL_BASE
-        self.channelIDs = channelIDs
-    
-    def next(self):
-        """
-        Generate the next valid user ID
-        """
-        self.next_channel += 1
-        while self.next_channel in self.channelIDs:
-            self.next_channel += 1
-        
-        return self.next_channel
+        pass
 
 @ObservedBy(MCSServerConnectionObserver)
 class MCSServerRouter(MCSRouter, Subject):
     """
     MCS router for server traffic
     """
-    def __init__(self, mcs, factory, userIDGenerator):
+    def __init__(self, mcs, factory):
         """
-        :param mcs: MCSLayer
-        :param factory: the channel factory
-        :param userIDGenerator: the generator used when creating new users
-        :type userIDGenerator: MCSUserIDGenerator
+        :param mcs: the MCS layer.
+        :type mcs: MCSLayer
+        :param factory: the channel factory.
+        :type factory: MCSChannelFactory
         """
         MCSRouter.__init__(self, mcs)
         Subject.__init__(self)
         self.factory = factory
-        self.userIDGenerator = userIDGenerator
         self.users = {}
 
     # PDU handlers
@@ -81,12 +64,27 @@ class MCSServerRouter(MCSRouter, Subject):
         """
         Called when an Attach User Request PDU is received
         """
-        userID = next(self.userIDGenerator)
-        user = MCSUser(self, self.factory)
-        user.onAttachConfirmed(userID)
-        self.users[userID] = user
+        self.observer.onAttachUserRequest(pdu)
 
-        self.mcs.send(MCSAttachUserConfirmPDU(0, userID))
+    @whenConnected
+    def sendAttachUserConfirm(self, success, param):
+        """
+        Send an Attach User Confirm PDU to the client/
+        :param success: whether the request was successful or not.
+        :type success: bool
+        :param param: if the request was successful, then this is a user ID. Otherwise, this is the error code.
+        :type param: int
+        """
+        if success:
+            userID = param
+            user = MCSUser(self, self.factory)
+            self.users[userID] = user
+            user.onAttachConfirmed(userID)
+            pdu = MCSAttachUserConfirmPDU(0, userID)
+        else:
+            pdu = MCSAttachUserConfirmPDU(param, None)
+
+        self.mcs.send(pdu)
     
     @whenConnected
     def onChannelJoinRequest(self, pdu):

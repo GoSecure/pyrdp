@@ -117,7 +117,7 @@ class MCSClientRouter(MCSRouter, Subject):
             self.users[userID] = user
             user.onAttachConfirmed(userID)
         else:
-            user.onAttachRefused()
+            user.onAttachRefused(pdu.result)
     
     @whenConnected
     def onChannelJoinConfirm(self, pdu):
