@@ -1,10 +1,22 @@
 from rdpy.core.newlayer import Layer, LayerObserver
 from rdpy.core.subject import ObservedBy
-from rdpy.enum.rdp import RDPSecurityHeaderType, RDPSecurityFlags, FIPSVersion
+from rdpy.enum.rdp import RDPSecurityHeaderType, RDPSecurityFlags, FIPSVersion, EncryptionMethod
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.security import RDPSecurityParser
 from rdpy.pdu.rdp.security import RDPSecurityExchangePDU, RDPBasicSecurityPDU, RDPSignedSecurityPDU, RDPFIPSSecurityPDU
+
+
+def chooseSecurityHeader(encryptionMethod, useTLS):
+    if useTLS:
+        return RDPSecurityHeaderType.BASIC
+    elif encryptionMethod == EncryptionMethod.ENCRYPTION_NONE:
+        return RDPSecurityHeaderType.NONE
+    elif encryptionMethod == EncryptionMethod.ENCRYPTION_FIPS:
+        return RDPSecurityHeaderType.FIPS
+    else:
+        return RDPSecurityHeaderType.SIGNED
+
 
 class RDPSecurityObserver(LayerObserver):
     def onSecurityExchangeReceived(self, pdu):

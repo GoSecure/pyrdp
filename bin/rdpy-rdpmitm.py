@@ -13,7 +13,7 @@ from rdpy.layer.mcs import MCSLayer, MCSClientConnectionLayer
 from rdpy.layer.rdp.connection import RDPClientConnectionLayer
 from rdpy.layer.rdp.data import RDPDataLayer, RDPDataLayerObserver
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
-from rdpy.layer.rdp.security import RDPSecurityLayer
+from rdpy.layer.rdp.security import RDPSecurityLayer, chooseSecurityHeader
 from rdpy.layer.tcp import TCPLayer
 from rdpy.layer.tpkt import TPKTLayer
 from rdpy.layer.x224 import X224Layer
@@ -204,12 +204,7 @@ class MITMClient(MCSChannelFactory):
     def buildChannel(self, mcs, userID, channelID):
         self.log_debug("building channel {} for user {}".format(channelID, userID))
 
-        if self.serverData.security.encryptionMethod == EncryptionMethod.ENCRYPTION_NONE:
-            headerType = RDPSecurityHeaderType.NONE
-        elif self.serverData.security.encryptionMethod == EncryptionMethod.ENCRYPTION_FIPS:
-            headerType = RDPSecurityHeaderType.FIPS
-        else:
-            headerType = RDPSecurityHeaderType.SIGNED
+        headerType = chooseSecurityHeader(self.serverData.security.encryptionMethod, False)
 
         if channelID != userID and self.channelMap[channelID] == "I/O":
             self.io = RDPDataLayer()
@@ -437,14 +432,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
     def buildChannel(self, mcs, userID, channelID):
         self.log_debug("building channel {} for user {}".format(channelID, userID))
 
-        if self.use_tls:
-            headerType = RDPSecurityHeaderType.BASIC
-        elif self.serverData.security.encryptionMethod == EncryptionMethod.ENCRYPTION_NONE:
-            headerType = RDPSecurityHeaderType.NONE
-        elif self.serverData.security.encryptionMethod == EncryptionMethod.ENCRYPTION_FIPS:
-            headerType = RDPSecurityHeaderType.FIPS
-        else:
-            headerType = RDPSecurityHeaderType.SIGNED
+        headerType = chooseSecurityHeader(self.serverData.security.encryptionMethod, self.use_tls)
 
         if channelID == self.serverData.network.mcsChannelID:
             self.io = RDPDataLayer()
