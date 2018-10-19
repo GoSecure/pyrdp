@@ -17,8 +17,9 @@ class RDPSecurityParser:
         :return: RDPSecurityBasePDU
         """
         stream = StringIO(data)
+        headerType = self.headerType if self.headerType != RDPSecurityHeaderType.NONE else RDPSecurityHeaderType.DEFAULT
 
-        if self.headerType == RDPSecurityHeaderType.BASIC:
+        if headerType == RDPSecurityHeaderType.BASIC:
             return self.parseBasicSecurity(stream)
         elif self.headerType == RDPSecurityHeaderType.SIGNED:
             return self.parseSignedSecurity(stream)

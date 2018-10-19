@@ -43,7 +43,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.rc4RSAKey = RSA.generate(2048)
         self.settings = SecuritySettings(SecuritySettings.Mode.SERVER)
 
-        self.use_tls = False
+        self.useTLS = False
         self.tcp = TCPLayer()
         self.tpkt = TPKTLayer()
         self.x224 = X224Layer()
@@ -115,8 +115,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.x224.sendConnectionConfirm(payload, source = 0x1234)
 
         if self.negotiationPDU.tlsSupported:
-            self.tpkt.startTLS(ServerTLSContext(privateKeyFileName=self.privateKeyFileName, certificateFileName=self.certificateFileName))
-            self.use_tls = True
+            self.tcp.startTLS(ServerTLSContext(privateKeyFileName=self.privateKeyFileName, certificateFileName=self.certificateFileName))
+            self.useTLS = True
 
     # MCS Connect Initial
     def onConnectInitial(self, pdu):
@@ -126,7 +126,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         """
         self.log_debug("Connect Initial received")
 
-        if self.use_tls:
+        if self.useTLS:
             self.logSSLParameters()
 
         gccConferenceCreateRequestPDU = self.gcc.parse(pdu.payload)
@@ -140,17 +140,22 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         :type pdu: MCSConnectResponsePDU
         :type serverData: RDPServerDataPDU
         """
+        if pdu.result != 0:
+            self.mcs.send(pdu)
+            return
+
         # Replace the server's public key with our own key so we can decrypt the incoming client random
         cert = serverData.security.serverCertificate
-        cert = ProprietaryCertificate(
-            cert.signatureAlgorithmID,
-            cert.keyAlgorithmID,
-            cert.publicKeyType,
-            self.rc4RSAKey,
-            cert.signatureType,
-            cert.signature,
-            cert.padding
-        )
+        if cert:
+            cert = ProprietaryCertificate(
+                cert.signatureAlgorithmID,
+                cert.keyAlgorithmID,
+                cert.publicKeyType,
+                self.rc4RSAKey,
+                cert.signatureType,
+                cert.signature,
+                cert.padding
+            )
 
         security = ServerSecurityData(
             serverData.security.encryptionMethod,
@@ -196,7 +201,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
     def buildChannel(self, mcs, userID, channelID):
         self.log_debug("building channel {} for user {}".format(channelID, userID))
 
-        headerType = chooseSecurityHeader(self.serverData.security.encryptionMethod, self.use_tls)
+        headerType = chooseSecurityHeader(self.serverData.security.encryptionMethod)
 
         if channelID == self.serverData.network.mcsChannelID:
             self.securityLayer = RDPSecurityLayer(headerType, None)
@@ -220,6 +225,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
             self.io.setObserver(observer)
             observer.setDataHandler(RDPDataPDUSubtype.PDUTYPE2_INPUT, self.onInputPDUReceived)
 
+            self.securityLayer.securityHeaderExpected = True
             return channel
 
     # Security Exchange
@@ -239,6 +245,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.client.onClientInfoReceived(pdu)
 
     def onLicensingPDU(self, pdu):
+        self.log_debug("Sending Licensing PDU")
+        self.securityLayer.securityHeaderExpected = False
         self.licensing.sendPDU(pdu)
 
     def sendDisconnectProviderUltimatum(self, pdu):

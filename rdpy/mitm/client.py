@@ -1,5 +1,6 @@
 from rdpy.core import log
 from rdpy.core.crypto import SecuritySettings
+from rdpy.enum.rdp import EncryptionMethod
 from rdpy.layer.gcc import GCCClientConnectionLayer
 from rdpy.layer.mcs import MCSLayer, MCSClientConnectionLayer
 from rdpy.layer.rdp.connection import RDPClientConnectionLayer
@@ -13,6 +14,7 @@ from rdpy.parser.rdp.negotiation import RDPNegotiationParser
 from rdpy.protocol.mcs.channel import MCSChannelFactory, MCSClientChannel
 from rdpy.protocol.mcs.client import MCSClientRouter
 from rdpy.protocol.mcs.user import MCSUserObserver
+from rdpy.protocol.rdp.x224 import ClientTLSContext
 
 
 class MITMClient(MCSChannelFactory, MCSUserObserver):
@@ -30,7 +32,8 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.channelDefinitions = []
         self.channelObservers = {}
         self.user = None
-        self.security = SecuritySettings(SecuritySettings.Mode.CLIENT)
+        self.securitySettings = SecuritySettings(SecuritySettings.Mode.CLIENT)
+        self.securityLayer = None
         self.conferenceCreateResponse = None
         self.serverData = None
 
@@ -56,6 +59,10 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
     def getProtocol(self):
         return self.tcp
 
+    def logSSLParameters(self):
+        log.get_ssl_logger().info(self.tpkt.previous.transport.protocol._tlsConnection.client_random(),
+                                  self.tpkt.previous.transport.protocol._tlsConnection.master_key())
+
     def log_debug(self, string):
         log.debug("Client: %s" % string)
 
@@ -76,6 +83,12 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         Called when the X224 layer is connected.
         """
         self.log_debug("Connection Confirm received")
+
+        negotiation = self.server.getNegotiationPDU()
+        if negotiation.tlsSupported:
+            self.tcp.startTLS(ClientTLSContext())
+            self.useTLS = True
+
         self.server.onConnectionConfirm(pdu)
 
     def onConnectInitial(self, gccConferenceCreateRequest, clientData):
@@ -94,11 +107,14 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         """
         Called when an MCS Connect Response PDU is received.
         """
+        if self.useTLS:
+            self.logSSLParameters()
+
         if pdu.result != 0:
-            log.error("Connection Failed")
-            self.server.onConnectResponse(self, pdu, None)
+            log.error("MCS Connection Failed")
+            self.server.onConnectResponse(pdu, None)
         else:
-            self.log_debug("Connection Successful")
+            self.log_debug("MCS Connection Successful")
             self.mcsConnect.recv(pdu)
             self.server.onConnectResponse(pdu, self.serverData)
 
@@ -110,8 +126,8 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         Called when the server data from the GCC Conference Create Response is received.
         """
         self.serverData = serverData
-        self.security.serverSecurityReceived(serverData.security)
-        self.security.generateClientRandom()
+        self.securitySettings.serverSecurityReceived(serverData.security)
+        self.securitySettings.generateClientRandom()
 
         self.channelMap[self.serverData.network.mcsChannelID] = "I/O"
 
@@ -138,22 +154,27 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
     def buildChannel(self, mcs, userID, channelID):
         self.log_debug("building channel {} for user {}".format(channelID, userID))
 
-        headerType = chooseSecurityHeader(self.serverData.security.encryptionMethod, False)
+        encryptionMethod = self.serverData.security.encryptionMethod
+        headerType = chooseSecurityHeader(encryptionMethod)
+        crypter = self.securitySettings.getCrypter() if encryptionMethod != EncryptionMethod.ENCRYPTION_NONE else None
 
         if channelID != userID and self.channelMap[channelID] == "I/O":
-            security = RDPSecurityLayer(headerType, self.security.getCrypter())
+            self.securityLayer = RDPSecurityLayer(headerType, crypter)
             channel = MCSClientChannel(mcs, userID, channelID)
 
-            channel.setNext(security)
-            security.setNext(self.io)
+            channel.setNext(self.securityLayer)
+            self.securityLayer.setNext(self.io)
 
             observer = MITMChannelObserver(self.io, "Client")
             self.channelObservers[channelID] = observer
 
             self.io.setObserver(observer)
-            security.licensing.createObserver(onPDUReceived=self.onLicensingPDU)
+            self.securityLayer.licensing.createObserver(onPDUReceived=self.onLicensingPDU)
 
-            self.io.previous.sendSecurityExchange(self.security.encryptClientRandom())
+            if encryptionMethod != 0:
+                self.io.previous.sendSecurityExchange(self.securitySettings.encryptClientRandom())
+            else:
+                self.securityLayer.securityHeaderExpected = True
         else:
             channel = None
 
@@ -164,10 +185,12 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.server.onChannelJoinRefused(user, result, channelID)
 
     def onClientInfoReceived(self, pdu):
+        self.log_debug("Sending Client Info")
         self.io.previous.sendClientInfo(pdu)
 
     def onLicensingPDU(self, pdu):
         self.log_debug("Licensing PDU received")
+        self.securityLayer.securityHeaderExpected = False
         self.server.onLicensingPDU(pdu)
 
     def onDisconnectProviderUltimatum(self, pdu):

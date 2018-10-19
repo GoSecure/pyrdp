@@ -8,10 +8,8 @@ from rdpy.parser.rdp.security import RDPSecurityParser
 from rdpy.pdu.rdp.security import RDPSecurityExchangePDU, RDPBasicSecurityPDU, RDPSignedSecurityPDU, RDPFIPSSecurityPDU
 
 
-def chooseSecurityHeader(encryptionMethod, useTLS):
-    if useTLS:
-        return RDPSecurityHeaderType.BASIC
-    elif encryptionMethod == EncryptionMethod.ENCRYPTION_NONE:
+def chooseSecurityHeader(encryptionMethod):
+    if encryptionMethod == EncryptionMethod.ENCRYPTION_NONE:
         return RDPSecurityHeaderType.NONE
     elif encryptionMethod == EncryptionMethod.ENCRYPTION_FIPS:
         return RDPSecurityHeaderType.FIPS
@@ -35,9 +33,6 @@ class RDPSecurityObserver(LayerObserver):
 
 @ObservedBy(RDPSecurityObserver)
 class RDPSecurityLayer(Layer):
-    # Header type used for Client Info and Licensing PDUs if no encryption is used
-    DEFAULT_HEADER_TYPE = RDPSecurityHeaderType.BASIC
-
     def __init__(self, headerType, crypter):
         Layer.__init__(self)
         self.headerType = headerType
@@ -47,9 +42,10 @@ class RDPSecurityLayer(Layer):
         self.securityParser = RDPSecurityParser(headerType)
         self.clientInfoParser = RDPClientInfoParser()
         self.allowLicensing = False
+        self.securityHeaderExpected = False
 
     def recv(self, data):
-        if self.headerType == RDPSecurityHeaderType.NONE:
+        if self.headerType == RDPSecurityHeaderType.NONE and not self.securityHeaderExpected:
             self.next.recv(data)
         else:
             pdu = self.securityParser.parse(data)
@@ -90,7 +86,7 @@ class RDPSecurityLayer(Layer):
         header = RDPSecurityFlags.SEC_INFO_PKT
 
         if self.headerType == RDPSecurityHeaderType.NONE:
-            self.sendWithHeader(data, RDPSecurityLayer.DEFAULT_HEADER_TYPE, header)
+            self.sendWithHeader(data, RDPSecurityHeaderType.DEFAULT, header)
         else:
             self.sendWithHeader(data, self.headerType, header | RDPSecurityFlags.SEC_ENCRYPT)
 
@@ -98,7 +94,7 @@ class RDPSecurityLayer(Layer):
         header = RDPSecurityFlags.SEC_LICENSE_PKT
 
         if self.headerType in [RDPSecurityHeaderType.NONE, RDPSecurityHeaderType.BASIC]:
-            self.sendWithHeader(data, RDPSecurityLayer.DEFAULT_HEADER_TYPE, header)
+            self.sendWithHeader(data, RDPSecurityHeaderType.DEFAULT, header)
         else:
             self.sendWithHeader(data, self.headerType, header | RDPSecurityFlags.SEC_ENCRYPT)
 

@@ -340,11 +340,11 @@ class SecuritySettings:
 
     def serverSecurityReceived(self, security):
         self.encryptionMethod = security.encryptionMethod
-        self.serverRandom = security.serverRandom
-        self.publicKey = security.serverCertificate.publicKey
 
-        if self.clientRandom is not None:
-            self.generateCrypter()
+        if security.serverCertificate:
+            self.publicKey = security.serverCertificate.publicKey
+
+        self.setServerRandom(security.serverRandom)
 
     def setServerRandom(self, random):
         self.serverRandom = random

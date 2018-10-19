@@ -50,6 +50,9 @@ class RDPSecurityHeaderType:
     SIGNED = 2
     FIPS = 3
 
+    # Header type used for Client Info and Licensing PDUs if no encryption is used
+    DEFAULT = 1
+
 
 class FIPSVersion:
     TSFIPS_VERSION1 = 1
