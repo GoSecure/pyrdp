@@ -13,13 +13,11 @@ class MCSClientConnectionObserver(Observer):
         """
         Method called on Connect Response PDUs.
         """
-        raise Exception("Unhandled Connect Response PDU")
     
     def onDisconnectProviderUltimatum(self, pdu):
         """
         Method called on Disconnect Provider Ultimatum PDUs.
         """
-        raise Exception("Unhandled Disconnect Provider Ultimatum PDU")
 
 class MCSClient(MCSUser):
     """
