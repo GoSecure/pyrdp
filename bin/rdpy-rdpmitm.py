@@ -78,14 +78,13 @@ if __name__ == "__main__":
             log.info("Using existing private key: %s" % key)
             log.info("Using existing certificate: %s" % certificate)
         else:
-            log.info("Trying to generate a private key and certificate for SSL connections")
+            log.info("Generating a private key and certificate for SSL connections")
 
             if generateCertificate(key, certificate):
-                log.info("Certificate generation succesful!")
                 log.info("Private key path: %s" % key)
                 log.info("Certificate path: %s" % certificate)
             else:
-                log.error("Could not generate a certificate. Please provide the private key and certificate with -k and -c")
+                log.error("Generation failed. Please provide the private key and certificate with -k and -c")
     else:
         key, certificate = args.private_key, args.certificate
 
