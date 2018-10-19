@@ -4,8 +4,9 @@ from rdpy.core.packing import Uint16LE, Uint32LE, Uint8
 from rdpy.enum.rdp import RDPDataPDUType, RDPDataPDUSubtype, ErrorInfo, InputEventType
 from rdpy.exceptions import UnknownPDUTypeError
 from rdpy.parser.rdp.input import RDPInputParser
+from rdpy.parser.rdp.pointer import PointerEventParser
 from rdpy.pdu.rdp.data import RDPShareControlHeader, RDPShareDataHeader, RDPDemandActivePDU, RDPConfirmActivePDU, \
-    RDPSetErrorInfoPDU, RDPSynchronizePDU, RDPControlPDU, RDPInputPDU, RDPPlaySoundPDU
+    RDPSetErrorInfoPDU, RDPSynchronizePDU, RDPControlPDU, RDPInputPDU, RDPPlaySoundPDU, RDPPointerPDU
 
 
 class RDPDataParser:
@@ -21,6 +22,7 @@ class RDPDataParser:
             RDPDataPDUSubtype.PDUTYPE2_SYNCHRONIZE: self.parseSynchronize,
             RDPDataPDUSubtype.PDUTYPE2_CONTROL: self.parseControl,
             RDPDataPDUSubtype.PDUTYPE2_INPUT: self.parseInput,
+            # RDPDataPDUSubtype.PDUTYPE2_POINTER: self.parsePointer,
             RDPDataPDUSubtype.PDUTYPE2_PLAY_SOUND: self.parsePlaySound,
         }
 
@@ -29,6 +31,7 @@ class RDPDataParser:
             RDPDataPDUSubtype.PDUTYPE2_SYNCHRONIZE: self.writeSynchronize,
             RDPDataPDUSubtype.PDUTYPE2_CONTROL: self.writeControl,
             RDPDataPDUSubtype.PDUTYPE2_INPUT: self.writeInput,
+            # RDPDataPDUSubtype.PDUTYPE2_POINTER: self.writePointer,
             RDPDataPDUSubtype.PDUTYPE2_PLAY_SOUND: self.writePlaySound,
         }
 
@@ -196,6 +199,15 @@ class RDPDataParser:
         parser = RDPInputParser()
         for event in pdu.events:
             stream.write(parser.write(event))
+
+    def parsePointer(self, stream, header):
+        parser = PointerEventParser()
+        event = parser.parse(stream)
+        return RDPPointerPDU(header, event)
+
+    def writePointer(self, stream, pdu):
+        parser = PointerEventParser()
+        stream.write(parser.write(pdu.event))
 
     def parsePlaySound(self, stream, header):
         duration = Uint32LE.unpack(stream)

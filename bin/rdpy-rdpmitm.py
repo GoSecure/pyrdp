@@ -563,6 +563,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         for event in pdu.events:
             if event.messageType == InputEventType.INPUT_EVENT_SCANCODE:
                 self.log_debug("Key pressed: 0x%2lx" % event.keyCode)
+            elif event.messageType == InputEventType.INPUT_EVENT_MOUSE:
+                self.log_debug("Mouse position: x = %d, y = %d" % (event.x, event.y))
 
 
 
