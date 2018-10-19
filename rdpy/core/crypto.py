@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
-
+import Crypto.Random
 import md5
 import sha
+from enum import IntEnum
 
 from rdpy.core import rc4
 from rdpy.core.type import StringStream, UInt32Le
@@ -302,3 +303,62 @@ def updateKey(initialKey, currentKey, method):
     elif method == EncryptionMethod.ENCRYPTION_128BIT:
         tempKey128 = tempKey(initialKey, currentKey)
         return rc4.crypt(rc4.RC4Key(tempKey128), tempKey128)
+
+
+class SecuritySettings:
+    class Mode(IntEnum):
+        CLIENT = 0
+        SERVER = 1
+
+    def __init__(self, mode):
+        """
+        :type mode: SecuritySettings.Mode
+        """
+        self.mode = mode
+        self.encryptionMethod = None
+        self.clientRandom = None
+        self.serverRandom = None
+        self.publicKey = None
+        self.crypter = None
+
+    def generateCrypter(self):
+        if self.mode == SecuritySettings.Mode.CLIENT:
+            self.crypter = RC4Crypter.generateClient(self.clientRandom, self.serverRandom, self.encryptionMethod)
+        else:
+            self.crypter = RC4Crypter.generateServer(self.clientRandom, self.serverRandom, self.encryptionMethod)
+
+    def generateClientRandom(self):
+        self.clientRandom = Crypto.Random.get_random_bytes(32)
+
+        if self.serverRandom is not None:
+            self.generateCrypter()
+
+    def encryptClientRandom(self):
+        # Client random is stored as little-endian but crypto functions expect it to be in big-endian format.
+        return self.publicKey.encrypt(self.clientRandom[:: -1], 0)[0][:: -1]
+
+    def serverSecurityReceived(self, security):
+        self.encryptionMethod = security.encryptionMethod
+        self.serverRandom = security.serverRandom
+        self.publicKey = security.serverCertificate.publicKey
+
+        if self.clientRandom is not None:
+            self.generateCrypter()
+
+    def setServerRandom(self, random):
+        self.serverRandom = random
+
+        if self.clientRandom is not None:
+            self.generateCrypter()
+
+    def setClientRandom(self, random):
+        self.clientRandom = random
+
+        if self.serverRandom is not None:
+            self.generateCrypter()
+
+    def getCrypter(self):
+        if self.crypter is None:
+            raise Exception("The crypter was not generated. The crypter will be generated when the server random is received.")
+
+        return self.crypter

@@ -1,13 +1,11 @@
-import Crypto.Random
 import logging
 from Crypto.PublicKey import RSA
 
-from enum import IntEnum
 from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory, ClientFactory
 
 from rdpy.core import log
-from rdpy.core.crypto import RC4Crypter
+from rdpy.core.crypto import SecuritySettings
 from rdpy.enum.rdp import NegotiationProtocols, RDPSecurityHeaderType, EncryptionMethod, RDPDataPDUSubtype, \
     InputEventType
 from rdpy.layer.gcc import GCCClientConnectionLayer
@@ -34,69 +32,6 @@ from rdpy.protocol.mcs.client import MCSClientRouter
 from rdpy.protocol.mcs.server import MCSServerRouter
 from rdpy.protocol.mcs.user import MCSUserObserver, MCSUser
 from rdpy.protocol.rdp.x224 import ServerTLSContext
-
-
-class SecuritySettings:
-    class Mode(IntEnum):
-        CLIENT = 0
-        SERVER = 1
-
-    def __init__(self, mode):
-        """
-        :type mode: SecuritySettings.Mode
-        """
-        self.mode = mode
-        self.encryptionMethod = None
-        self.clientRandom = None
-        self.serverRandom = None
-        self.publicKey = None
-        self.crypter = None
-
-    def generateCrypter(self):
-        if self.mode == SecuritySettings.Mode.CLIENT:
-            self.crypter = RC4Crypter.generateClient(self.clientRandom, self.serverRandom, self.encryptionMethod)
-        else:
-            self.crypter = RC4Crypter.generateServer(self.clientRandom, self.serverRandom, self.encryptionMethod)
-
-    def generateClientRandom(self):
-        self.clientRandom = Crypto.Random.get_random_bytes(32)
-
-        if self.serverRandom is not None:
-            self.generateCrypter()
-
-    def encryptClientRandom(self):
-        # Client random is stored as little-endian but crypto functions expect it to be in big-endian format.
-        return self.publicKey.encrypt(self.clientRandom[:: -1], 0)[0][:: -1]
-
-    def serverSecurityReceived(self, security):
-        self.encryptionMethod = security.encryptionMethod
-        self.serverRandom = security.serverRandom
-        self.publicKey = security.serverCertificate.publicKey
-
-        if self.clientRandom is not None:
-            self.generateCrypter()
-
-    def setServerRandom(self, random):
-        self.serverRandom = random
-
-        if self.clientRandom is not None:
-            self.generateCrypter()
-
-    def setClientRandom(self, random):
-        self.clientRandom = random
-
-        if self.serverRandom is not None:
-            self.generateCrypter()
-
-    def getCrypter(self):
-        if self.crypter is None:
-            raise Exception("The crypter was not generated. The crypter will be generated when the server random is received.")
-
-        return self.crypter
-
-
-
-
 
 
 class MITMChannelObserver(RDPDataLayerObserver):
@@ -372,7 +307,6 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.router.createObserver(onConnectionReceived = self.onConnectInitial)
         self.mcs.setObserver(self.router)
 
-        # self.io = IOChannel()
         self.ioSecurityLayer = None
         self.licensingLayer = RDPLicensingLayer()
         self.certificateFileName = certificateFileName
