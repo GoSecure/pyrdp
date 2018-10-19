@@ -59,12 +59,12 @@ class RDPNegotiationParser:
         stream = StringIO()
 
         if pdu.cookie != "":
-            stream.write(pdu.cookie)
+            stream.write(pdu.cookie + "\r\n")
 
         Uint8.pack(pdu.packetType, stream)
-        Uint8.pack(pdu.flags)
+        Uint8.pack(pdu.flags, stream)
         Uint16LE.pack(8, stream)
-        Uint32LE.pack(pdu.requestedProtocols)
+        Uint32LE.pack(pdu.requestedProtocols, stream)
         return stream.getvalue()
 
     def writeNegotiationResponsePDU(self, pdu):
