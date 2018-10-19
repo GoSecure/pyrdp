@@ -26,6 +26,13 @@ class MCSServerConnectionObserver(Observer):
         """
         pass
 
+    def onChannelJoinRequest(self, pdu):
+        """
+        Callback for when an Channel Join Request PDU is received. The observer should eventually call
+        sendChannelJoinConfirm to send the confirmation message to the client.
+        """
+        pass
+
 @ObservedBy(MCSServerConnectionObserver)
 class MCSServerRouter(MCSRouter, Subject):
     """
@@ -69,7 +76,7 @@ class MCSServerRouter(MCSRouter, Subject):
     @whenConnected
     def sendAttachUserConfirm(self, success, param):
         """
-        Send an Attach User Confirm PDU to the client/
+        Send an Attach User Confirm PDU to the client.
         :param success: whether the request was successful or not.
         :type success: bool
         :param param: if the request was successful, then this is a user ID. Otherwise, this is the error code.
@@ -91,19 +98,31 @@ class MCSServerRouter(MCSRouter, Subject):
         """
         Called when a Channel Join Request PDU is received
         """
-        userID = pdu.initiator
-        channelID = pdu.channelID
+        self.observer.onChannelJoinRequest(pdu)
 
-        if userID not in self.users:
-            raise Exception("User does not exist")
-        
-        self.users[userID].channelJoined(self.mcs, channelID)
-        self.mcs.send(MCSChannelJoinConfirmPDU(0, userID, channelID, channelID, ""))
-    
+    @whenConnected
+    def sendChannelJoinConfirm(self, result, userID, channelID):
+        """
+        Send a Channel Join Confirm PDU.
+        :param result: the result code (0 if the request was successful).
+        :type result: int
+        :param userID: the user ID.
+        :type result: int
+        :param channelID: the channel ID.
+        :type channelID: int
+        """
+        if result == 0:
+            self.users[userID].channelJoinAccepted(self.mcs, channelID)
+        else:
+            self.users[userID].channelJoinRefused(result, channelID)
+
+        pdu = MCSChannelJoinConfirmPDU(result, userID, channelID, channelID, "")
+        self.mcs.send(pdu)
+
     @whenConnected
     def onSendDataRequest(self, pdu):
         """
-        Called when a Send Data Request PDU is received
+        Called when a Send Data Request PDU is received.
         """
         userID = pdu.initiator
 

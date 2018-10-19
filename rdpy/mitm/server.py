@@ -20,26 +20,13 @@ from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.connection import RDPClientConnectionParser, RDPServerConnectionParser
 from rdpy.parser.rdp.negotiation import RDPNegotiationParser
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
-from rdpy.pdu.mcs import MCSAttachUserConfirmPDU, MCSChannelJoinConfirmPDU, MCSConnectResponsePDU
+from rdpy.pdu.mcs import MCSConnectResponsePDU
 from rdpy.pdu.rdp.connection import ProprietaryCertificate, ServerSecurityData, RDPServerDataPDU
 from rdpy.pdu.rdp.negotiation import RDPNegotiationResponsePDU
 from rdpy.protocol.mcs.channel import MCSChannelFactory, MCSServerChannel
 from rdpy.protocol.mcs.server import MCSServerRouter
-from rdpy.protocol.mcs.user import MCSUser, MCSUserObserver
+from rdpy.protocol.mcs.user import MCSUserObserver
 from rdpy.protocol.rdp.x224 import ServerTLSContext
-
-
-class MITMServerRouter(MCSServerRouter):
-    def __init__(self, server, mcs, factory):
-        MCSServerRouter.__init__(self, mcs, factory)
-        self.server = server
-
-    def onChannelJoinRequest(self, pdu):
-        self.server.onChannelJoinRequest(pdu)
-
-    def channelJoinAccepted(self, userID, channelID):
-        self.users[userID].channelJoined(self.mcs, channelID)
-        self.mcs.send(MCSChannelJoinConfirmPDU(0, userID, channelID, channelID, ""))
 
 
 class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
@@ -61,8 +48,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.tpkt = TPKTLayer()
         self.x224 = X224Layer()
         self.mcs = MCSLayer()
-        self.router = MITMServerRouter(self, self.mcs, self)
-
+        self.router = MCSServerRouter(self.mcs, self)
 
         self.tcp.setNext(self.tpkt)
         self.tpkt.setNext(self.x224)
@@ -73,7 +59,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.mcs.setObserver(self.router)
         self.router.createObserver(
             onConnectionReceived = self.onConnectInitial,
-            onAttachUserRequest = self.onAttachUserRequest
+            onAttachUserRequest = self.onAttachUserRequest,
+            onChannelJoinRequest = self.onChannelJoinRequest
         )
 
         self.ioSecurityLayer = None
@@ -122,7 +109,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.connectClient()
 
     # X224 Response
-    def onConnectionConfirm(self, pdu):
+    def onConnectionConfirm(self, _):
         protocols = NegotiationProtocols.SSL if self.negotiationPDU.tlsSupported else NegotiationProtocols.NONE
         payload = self.rdpNegotiationParser.write(RDPNegotiationResponsePDU(0x00, protocols))
         self.x224.sendConnectionConfirm(payload, source = 0x1234)
@@ -198,10 +185,13 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
     def onChannelJoinRequest(self, pdu):
         self.client.onChannelJoinRequest(pdu)
 
-    # MCS Channel Join Confirm
-    def onChannelJoinConfirm(self, userID, channelID):
-        self.router.channelJoinAccepted(userID, channelID)
+    # MCS Channel Join Confirm successful
+    def onChannelJoinAccepted(self, userID, channelID):
+        self.router.sendChannelJoinConfirm(0, userID, channelID)
 
+    # MCS Channel Join Confirm failed
+    def onChannelJoinRefused(self, user, result, channelID):
+        self.router.sendChannelJoinConfirm(result, user.userID, channelID)
 
     def buildChannel(self, mcs, userID, channelID):
         self.log_debug("building channel {} for user {}".format(channelID, userID))

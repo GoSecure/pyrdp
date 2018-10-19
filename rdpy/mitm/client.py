@@ -157,8 +157,11 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         else:
             channel = None
 
-        self.server.onChannelJoinConfirm(userID, channelID)
+        self.server.onChannelJoinAccepted(userID, channelID)
         return channel
+
+    def onChannelJoinRefused(self, user, result, channelID):
+        self.server.onChannelJoinRefused(user, result, channelID)
 
     def onClientInfoReceived(self, pdu):
         self.io.previous.sendClientInfo(pdu)

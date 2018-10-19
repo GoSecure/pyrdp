@@ -3,10 +3,13 @@ from rdpy.core.subject import Subject, ObservedBy
 
 class MCSUserObserver(Observer):
     def onAttachConfirmed(self, user):
-        raise Exception("Unhandled Attach Confirmed event")
-    
+        pass
+
     def onAttachRefused(self, user, result):
-        raise Exception("Unhandled Attach Refused event")
+        pass
+
+    def onChannelJoinRefused(self, user, result, channelID):
+        pass
 
 @ObservedBy(MCSUserObserver)
 class MCSUser(Subject):
@@ -46,7 +49,7 @@ class MCSUser(Subject):
     def isInChannel(self, channelID):
         return channelID in self.channels
     
-    def channelJoined(self, mcs, channelID):
+    def channelJoinAccepted(self, mcs, channelID):
         """
         Called when a channel was joined
         :param mcs: the MCS layer
@@ -54,6 +57,14 @@ class MCSUser(Subject):
         """
         channel = self.factory.buildChannel(mcs, self.userID, channelID)
         self.channels[channelID] = channel
+
+    def channelJoinRefused(self, result, channelID):
+        """
+        Called when a channel could not be joined.
+        :param result: result code.
+        :param channelID: ID of the channel.
+        """
+        self.observer.onChannelJoinRefused(self, result, channelID)
     
     def recvSendDataRequest(self, channelID, data):
         """

@@ -11,13 +11,13 @@ class MCSClientConnectionObserver(Observer):
     """
     def onConnectResponse(self, pdu):
         """
-        Method called on Connect Response PDUs
+        Method called on Connect Response PDUs.
         """
         raise Exception("Unhandled Connect Response PDU")
     
     def onDisconnectProviderUltimatum(self, pdu):
         """
-        Method called on Disconnect Provider Ultimatum PDUs
+        Method called on Disconnect Provider Ultimatum PDUs.
         """
         raise Exception("Unhandled Disconnect Provider Ultimatum PDU")
 
@@ -127,7 +127,11 @@ class MCSClientRouter(MCSRouter, Subject):
         """
         userID = pdu.initiator
         channelID = pdu.channelID
-        self.users[userID].channelJoined(self.mcs, channelID)
+
+        if pdu.result == 0:
+            self.users[userID].channelJoinAccepted(self.mcs, channelID)
+        else:
+            self.users[userID].channelJoinRefused(pdu.result, channelID)
     
     @whenConnected
     def onSendDataIndication(self, pdu):
@@ -135,8 +139,6 @@ class MCSClientRouter(MCSRouter, Subject):
         Called when a Send Data Indication PDU is received
         :param pdu: the PDU
         """
-        userID = pdu.initiator
-
-        for id, user in self.users.items():
+        for _, user in self.users.items():
             if user.isInChannel(pdu.channelID):
                 user.recvSendDataIndication(pdu.channelID, pdu)
