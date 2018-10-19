@@ -1,4 +1,6 @@
 #!/usr/bin/env python2
+import sys
+
 import appdirs
 import argparse
 import logging
@@ -71,6 +73,7 @@ if __name__ == "__main__":
 
     if (args.private_key is None) != (args.certificate is None):
         log.error("You must provide both the private key and the certificate")
+        sys.exit(1)
     elif args.private_key is None:
         key, certificate = getSSLPaths()
 
