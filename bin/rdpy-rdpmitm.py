@@ -1,6 +1,8 @@
 #!/usr/bin/env python2
+import appdirs
 import argparse
 import logging
+import os
 
 from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
@@ -19,6 +21,20 @@ class MITMServerFactory(ServerFactory):
     def buildProtocol(self, addr):
         server = MITMServer(self.targetHost, self.targetPort, self.certificateFileName, self.privateKeyFileName)
         return server.getProtocol()
+
+def getSSLPaths():
+    config = appdirs.user_config_dir("rdpy", "rdpy")
+
+    if not os.path.exists(config):
+        os.makedirs(config)
+
+    key = config + "/private_key.pem"
+    certificate = config + "/certificate.pem"
+    return key, certificate
+
+def generateCertificate(keyPath, certificatePath):
+    result = os.system("openssl req -newkey rsa:2048 -nodes -keyout %s -x509 -days 365 -out %s -subj '/CN=www.example.com/O=RDPY/C=US' 2>/dev/null" % (keyPath, certificatePath))
+    return result == 0
 
 if __name__ == "__main__":
     log.get_logger().setLevel(logging.DEBUG)
@@ -53,5 +69,28 @@ if __name__ == "__main__":
         targetHost = target
         targetPort = 3389
 
-    reactor.listenTCP(int(args.listen), MITMServerFactory(targetHost, targetPort, None, None))
+    if (args.private_key is None) != (args.certificate is None):
+        log.error("You must provide both the private key and the certificate")
+    elif args.private_key is None:
+        key, certificate = getSSLPaths()
+
+        if os.path.exists(key) and os.path.exists(certificate):
+            log.info("Using existing private key: %s" % key)
+            log.info("Using existing certificate: %s" % certificate)
+        else:
+            log.info("Trying to generate a private key and certificate for SSL connections")
+
+            if generateCertificate(key, certificate):
+                log.info("Certificate generation succesful!")
+                log.info("Private key path: %s" % key)
+                log.info("Certificate path: %s" % certificate)
+            else:
+                log.error("Could not generate a certificate. Please provide the private key and certificate with -k and -c")
+    else:
+        key, certificate = args.private_key, args.certificate
+
+
+    listenPort = int(args.listen)
+    reactor.listenTCP(listenPort, MITMServerFactory(targetHost, targetPort, key, certificate))
+    log.info("MITM Server listening on port %d" % listenPort)
     reactor.run()
