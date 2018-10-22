@@ -24,14 +24,17 @@ class TPKTLayer(Layer):
         data = self.buffer + data
 
         while len(data) > 0:
-            if not self.parser.isCompletePDU(data):
-                self.buffer = data
-                data = ""
+            if self.parser.isTPKTPDU(data):
+                if not self.parser.isCompletePDU(data):
+                    self.buffer = data
+                    data = ""
+                else:
+                    pdu = self.parser.parse(data)
+                    self.pduReceived(pdu, True)
+                    data = data[pdu.length :]
+                    self.buffer = ""
             else:
-                pdu = self.parser.parse(data)
-                self.pduReceived(pdu, True)
-                data = data[pdu.length :]
-                self.buffer = ""
+                raise NotImplementedError("Fast path not implemented")
 
     def send(self, data):
         """

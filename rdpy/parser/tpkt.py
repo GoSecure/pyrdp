@@ -13,6 +13,9 @@ class TPKTParser:
         length = Uint16BE.unpack(data[2 : 4])
         return len(data) >= length
 
+    def isTPKTPDU(self, data):
+        return Uint8.unpack(data[0]) == 3
+
     def parse(self, data):
         """
         Read the byte stream and return a TPKTPDU
