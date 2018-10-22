@@ -1,7 +1,7 @@
 from StringIO import StringIO
 
 from rdpy.core.packing import Uint8, Uint16LE, Uint32LE
-from rdpy.enum.rdp import RDPLicensingPDUType
+from rdpy.enum.rdp import RDPLicensingPDUType, RDPLicenseBinaryBlobType, RDPLicenseErrorCode, RDPStateTransition
 from rdpy.exceptions import UnknownPDUTypeError
 from rdpy.pdu.rdp.licensing import RDPLicenseBinaryBlob, RDPLicenseErrorAlertPDU
 
@@ -39,7 +39,7 @@ class RDPLicensingParser:
         :type stream: StringIO
         :return: RDPLicenseBinaryBlob
         """
-        type = Uint16LE.unpack(stream)
+        type = RDPLicenseBinaryBlobType(Uint16LE.unpack(stream))
         length = Uint16LE.unpack(stream)
         data = stream.read(length)
         return RDPLicenseBinaryBlob(type, data)
@@ -51,8 +51,8 @@ class RDPLicensingParser:
         :param flags: The flags of the Licencing PDU.
         :return: RDPLicenseErrorAlertPDU
         """
-        errorCode = Uint32LE.unpack(stream)
-        stateTransition = Uint32LE.unpack(stream)
+        errorCode = RDPLicenseErrorCode(Uint32LE.unpack(stream))
+        stateTransition = RDPStateTransition(Uint32LE.unpack(stream))
         blob = self.parseLicenseBlob(stream)
         return RDPLicenseErrorAlertPDU(flags, errorCode, stateTransition, blob)
 

@@ -5,7 +5,8 @@ from StringIO import StringIO
 
 from rdpy.core.StrictStream import StrictStream
 from rdpy.core.packing import Uint16LE, Uint32LE, Uint8
-from rdpy.enum.rdp import RDPConnectionDataType, ServerCertificateType
+from rdpy.enum.rdp import RDPConnectionDataType, ServerCertificateType, RDPVersion, ColorDepth, KeyboardType, \
+    HighColorDepth, ConnectionType, DesktopOrientation, EncryptionLevel, EncryptionMethod
 from rdpy.exceptions import ParsingError, UnknownPDUTypeError
 from rdpy.pdu.rdp.connection import RDPClientDataPDU, ClientCoreData, ClientSecurityData, ClientChannelDefinition, \
     ClientNetworkData, ClientClusterData, RDPServerDataPDU, ServerCoreData, ServerNetworkData, ServerSecurityData, \
@@ -75,19 +76,16 @@ class RDPClientConnectionParser:
     def parseClientCoreData(self, stream):
         stream = StrictStream(stream)
 
-        minor = Uint16LE.unpack(stream.read(2))
-        major = Uint16LE.unpack(stream.read(2))
-
         # 128 bytes minimum (excluding header)
-        version = (major << 16) | minor
+        version = RDPVersion(Uint32LE.unpack(stream))
         desktopWidth = Uint16LE.unpack(stream)
         desktopHeight = Uint16LE.unpack(stream)
-        colorDepth = Uint16LE.unpack(stream)
+        colorDepth = ColorDepth(Uint16LE.unpack(stream))
         sasSequence = Uint16LE.unpack(stream)
         keyboardLayout = Uint32LE.unpack(stream)
         clientBuild = Uint32LE.unpack(stream)
         clientName = stream.read(32).decode("utf-16le").strip("\x00")
-        keyboardType = Uint32LE.unpack(stream)
+        keyboardType = KeyboardType(Uint32LE.unpack(stream))
         keyboardSubType = Uint32LE.unpack(stream)
         keyboardFunctionKey = Uint32LE.unpack(stream)
         imeFileName = stream.read(64).decode("utf-16le").strip("\x00")
@@ -100,16 +98,16 @@ class RDPClientConnectionParser:
             core.postBeta2ColorDepth = Uint16LE.unpack(stream)
             core.clientProductId = Uint16LE.unpack(stream)
             core.serialNumber = Uint32LE.unpack(stream)
-            core.highColorDepth = Uint16LE.unpack(stream)
+            core.highColorDepth = HighColorDepth(Uint16LE.unpack(stream))
             core.supportedColorDepths = Uint16LE.unpack(stream)
             core.earlyCapabilityFlags = Uint16LE.unpack(stream)
             core.clientDigProductId = stream.read(64).decode("utf-16le").strip("\x00")
-            core.connectionType = Uint8.unpack(stream)
+            core.connectionType = ConnectionType(Uint8.unpack(stream))
             core.pad1octet = stream.read(1)
             core.serverSelectedProtocol = Uint32LE.unpack(stream)
             core.desktopPhysicalWidth = Uint32LE.unpack(stream)
             core.desktopPhysicalHeight = Uint32LE.unpack(stream)
-            core.desktopOrientation = Uint16LE.unpack(stream)
+            core.desktopOrientation = DesktopOrientation(Uint16LE.unpack(stream))
             core.desktopScaleFactor = Uint32LE.unpack(stream)
             core.deviceScaleFactor = Uint32LE.unpack(stream)
         except EOFError:
@@ -175,11 +173,7 @@ class RDPClientConnectionParser:
         stream.write(substream)
 
     def writeClientCoreData(self, stream, core):
-        major = core.version >> 16
-        minor = core.version & 0xffff
-
-        stream.write(Uint16LE.pack(minor))
-        stream.write(Uint16LE.pack(major))
+        stream.write(Uint32LE.pack(core.version))
         stream.write(Uint16LE.pack(core.desktopWidth))
         stream.write(Uint16LE.pack(core.desktopHeight))
         stream.write(Uint16LE.pack(core.colorDepth))
@@ -309,8 +303,8 @@ class RDPServerConnectionParser:
 
     def parseServerSecurityData(self, stream):
         stream = StrictStream(stream)
-        encryptionMethod = Uint32LE.unpack(stream)
-        encryptionLevel = Uint32LE.unpack(stream)
+        encryptionMethod = EncryptionMethod(Uint32LE.unpack(stream))
+        encryptionLevel = EncryptionLevel(Uint32LE.unpack(stream))
         serverRandom = None
         serverCertificate = None
 

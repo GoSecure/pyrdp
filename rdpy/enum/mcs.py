@@ -20,8 +20,8 @@ class MCSPDUType(IntEnum):
     SEND_DATA_INDICATION = 26
 
 
-class MCSResult:
+class MCSResult(IntEnum):
     RT_SUCCESSFUL = 0x00
 
-class MCSChannelID:
+class MCSChannelID(IntEnum):
     USERCHANNEL_BASE = 1001

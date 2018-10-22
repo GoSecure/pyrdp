@@ -44,7 +44,7 @@ class RDPSecurityFlags:
     SEC_FLAGSHI_VALID = 0x8000
 
 
-class RDPSecurityHeaderType:
+class RDPSecurityHeaderType(IntEnum):
     NONE = 0
     BASIC = 1
     SIGNED = 2
@@ -54,11 +54,11 @@ class RDPSecurityHeaderType:
     DEFAULT = 1
 
 
-class FIPSVersion:
+class FIPSVersion(IntEnum):
     TSFIPS_VERSION1 = 1
 
 
-class RDPLicensingPDUType:
+class RDPLicensingPDUType(IntEnum):
     LICENSE_REQUEST = 0x01
     PLATFORM_CHALLENGE = 0x02
     NEW_LICENSE = 0x03
@@ -69,7 +69,7 @@ class RDPLicensingPDUType:
     ERROR_ALERT = 0xFF
 
 
-class RDPLicenseBinaryBlobType:
+class RDPLicenseBinaryBlobType(IntEnum):
     """
     License blob data type
     See http://msdn.microsoft.com/en-us/library/cc240481.aspx
@@ -86,7 +86,7 @@ class RDPLicenseBinaryBlobType:
     BB_CLIENT_MACHINE_NAME_BLOB = 0x0010
 
 
-class RDPLicenseErrorCode:
+class RDPLicenseErrorCode(IntEnum):
     """
     @summary: License error message code
     @see: http://msdn.microsoft.com/en-us/library/cc240482.aspx
@@ -102,7 +102,7 @@ class RDPLicenseErrorCode:
     ERR_INVALID_MAC = 0x00000003
 
 
-class RDPStateTransition:
+class RDPStateTransition(IntEnum):
     """
     Automata state transition
     See http://msdn.microsoft.com/en-us/library/cc240482.aspx
@@ -156,7 +156,7 @@ class RDPDataPDUSubtype(IntEnum):
     PDUTYPE2_MONITOR_LAYOUT_PDU = 0x37
 
 
-class RDPConnectionDataType:
+class RDPConnectionDataType(IntEnum):
     SERVER_CORE = 0x0C01
     SERVER_SECURITY = 0x0C02
     SERVER_NETWORK = 0x0C03
@@ -167,7 +167,7 @@ class RDPConnectionDataType:
     CLIENT_MONITOR = 0xC005
 
 
-class RDPVersion:
+class RDPVersion(IntEnum):
     RDP4 = 0x80001
     RDP5 = 0x80004
     RDP10 = 0x80005
@@ -179,7 +179,7 @@ class RDPVersion:
     RDP10_6 = 0x8000B
 
 
-class ColorDepth:
+class ColorDepth(IntEnum):
     RNS_UD_COLOR_4BPP = 0xCA00
     RNS_UD_COLOR_8BPP = 0xCA01
     RNS_UD_COLOR_16BPP_555 = 0xCA02
@@ -187,7 +187,7 @@ class ColorDepth:
     RNS_UD_COLOR_24BPP = 0xCA04
 
 
-class HighColorDepth:
+class HighColorDepth(IntEnum):
     HIGH_COLOR_4BPP = 4
     HIGH_COLOR_8BPP = 8
     HIGH_COLOR_15BPP = 15
@@ -195,7 +195,7 @@ class HighColorDepth:
     HIGH_COLOR_24BPP = 24
 
 
-class KeyboardType:
+class KeyboardType(IntEnum):
     IBM_PC_XT = 1
     OLIVETTI = 2
     IBM_PC_AT = 3
@@ -232,7 +232,7 @@ class ServerCapabilityFlag:
     RNS_UD_SC_EDGE_ACTIONS_SUPPORTED_V2 = 4
 
 
-class ConnectionType:
+class ConnectionType(IntEnum):
     CONNECTION_TYPE_MODEM = 0x01
     CONNECTION_TYPE_BROADBAND_LOW = 0x02
     CONNECTION_TYPE_SATELLITE = 0x03
@@ -242,14 +242,14 @@ class ConnectionType:
     CONNECTION_TYPE_AUTODETECT = 0x07
 
 
-class DesktopOrientation:
+class DesktopOrientation(IntEnum):
     ORIENTATION_LANDSCAPE = 0
     ORIENTATION_PORTRAIT = 90
     ORIENTATION_LANDSCAPE_FLIPPED = 180
     ORIENTATION_PORTRAIT_FLIPPED = 270
 
 
-class EncryptionMethod:
+class EncryptionMethod(IntEnum):
     ENCRYPTION_NONE = 0x00
     ENCRYPTION_40BIT = 0x01
     ENCRYPTION_128BIT = 0x02
@@ -257,7 +257,7 @@ class EncryptionMethod:
     ENCRYPTION_FIPS = 0x10
 
 
-class EncryptionLevel:
+class EncryptionLevel(IntEnum):
     ENCRYPTION_LEVEL_NONE = 0
     ENCRYPTION_LEVEL_LOW = 1
     ENCRYPTION_LEVEL_CLIENT_COMPATIBLE = 2
@@ -265,14 +265,14 @@ class EncryptionLevel:
     ENCRYPTION_LEVEL_FIPS = 4
 
 
-class ClusterFlags:
+class ClusterFlags(IntEnum):
     REDIRECTION_SUPPORTED = 0x01
     REDIRECTED_SESSIONID_FIELD_VALID = 0x02
     SERVER_SESSION_REDIRECTION_VERSION_MASK = 0x3C
     REDIRECTED_SMARTCARD = 0x40
 
 
-class RedirectionVersion:
+class RedirectionVersion(IntEnum):
     REDIRECTION_VERSION1 = 0
     REDIRECTION_VERSION2 = 1
     REDIRECTION_VERSION3 = 2
@@ -281,7 +281,7 @@ class RedirectionVersion:
     REDIRECTION_VERSION6 = 5
 
 
-class ServerCertificateType:
+class ServerCertificateType(IntEnum):
     PROPRIETARY = 1
     X509 = 2
 
@@ -324,7 +324,7 @@ class CapabilityType(IntEnum):
     CAPSSETTYPE_FRAME_ACKNOWLEDGE = 0x001E
 
 
-class MajorType:
+class MajorType(IntEnum):
     OSMAJORTYPE_UNSPECIFIED = 0x0000
     OSMAJORTYPE_WINDOWS = 0x0001
     OSMAJORTYPE_OS2 = 0x0002
@@ -335,7 +335,7 @@ class MajorType:
     OSMAJORTYPE_ANDROID = 0x0007
 
 
-class MinorType:
+class MinorType(IntEnum):
     OSMINORTYPE_UNSPECIFIED = 0x0000
     OSMINORTYPE_WINDOWS_31X = 0x0001
     OSMINORTYPE_WINDOWS_95 = 0x0002
@@ -364,7 +364,7 @@ class OrderFlag:
     ORDERFLAGS_EXTRA_FLAGS = 0x0080
 
 
-class Order:
+class Order(IntEnum):
     TS_NEG_DSTBLT_INDEX = 0x00
     TS_NEG_PATBLT_INDEX = 0x01
     TS_NEG_SCRBLT_INDEX = 0x02
@@ -404,20 +404,20 @@ class InputFlags:
     TS_INPUT_FLAG_MOUSE_HWHEEL = 0x0100
 
 
-class BrushSupport:
+class BrushSupport(IntEnum):
     BRUSH_DEFAULT = 0x00000000
     BRUSH_COLOR_8x8 = 0x00000001
     BRUSH_COLOR_FULL = 0x00000002
 
 
-class GlyphSupport:
+class GlyphSupport(IntEnum):
     GLYPH_SUPPORT_NONE = 0x0000
     GLYPH_SUPPORT_PARTIAL = 0x0001
     GLYPH_SUPPORT_FULL = 0x0002
     GLYPH_SUPPORT_ENCODE = 0x0003
 
 
-class OffscreenSupportLevel:
+class OffscreenSupportLevel(IntEnum):
     FALSE = 0x00000000
     TRUE = 0x00000001
 
