@@ -31,6 +31,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.channelMap = {}
         self.channelDefinitions = []
         self.channelObservers = {}
+        self.useTLS = False
         self.user = None
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.CLIENT)
         self.securityLayer = None
