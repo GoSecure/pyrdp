@@ -1,8 +1,12 @@
 from twisted.internet.protocol import Protocol
 
-from rdpy.core.newlayer import Layer
+from rdpy.core.newlayer import Layer, LayerObserver
 from rdpy.core.subject import ObservedBy
-from rdpy.protocol.tcp.layer import TCPObserver
+
+
+class TCPObserver(LayerObserver):
+    def onConnection(self):
+        pass
 
 
 @ObservedBy(TCPObserver)

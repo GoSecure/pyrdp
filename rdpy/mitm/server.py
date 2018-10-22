@@ -13,6 +13,7 @@ from rdpy.layer.rdp.security import chooseSecurityHeader, RDPSecurityLayer
 from rdpy.layer.tcp import TCPLayer
 from rdpy.layer.tpkt import TPKTLayer
 from rdpy.layer.x224 import X224Layer
+from rdpy.mcs.server import MCSServerRouter
 from rdpy.mitm.client import MITMClient
 from rdpy.mitm.observer import MITMChannelObserver
 from rdpy.parser.gcc import GCCParser
@@ -23,9 +24,8 @@ from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.pdu.mcs import MCSConnectResponsePDU
 from rdpy.pdu.rdp.connection import ProprietaryCertificate, ServerSecurityData, RDPServerDataPDU
 from rdpy.pdu.rdp.negotiation import RDPNegotiationResponsePDU
-from rdpy.protocol.mcs.channel import MCSChannelFactory, MCSServerChannel
-from rdpy.protocol.mcs.server import MCSServerRouter
-from rdpy.protocol.mcs.user import MCSUserObserver
+from rdpy.mcs.channel import MCSChannelFactory, MCSServerChannel
+from rdpy.mcs.user import MCSUserObserver
 from rdpy.protocol.rdp.x224 import ServerTLSContext
 
 

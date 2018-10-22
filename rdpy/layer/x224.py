@@ -1,9 +1,34 @@
-from rdpy.core.newlayer import Layer
+from rdpy.core.newlayer import Layer, LayerStrictRoutedObserver
 from rdpy.core.subject import ObservedBy
 from rdpy.enum.x224 import X224PDUType
 from rdpy.parser.x224 import X224Parser
 from rdpy.pdu.x224 import X224DataPDU, X224ConnectionRequestPDU, X224ConnectionConfirmPDU, X224DisconnectRequestPDU, X224ErrorPDU
-from rdpy.protocol.x224.layer import X224Observer
+
+
+class X224Observer(LayerStrictRoutedObserver):
+    def __init__(self, **kwargs):
+        LayerStrictRoutedObserver.__init__(self, {
+            X224PDUType.X224_TPDU_CONNECTION_REQUEST: "onConnectionRequest",
+            X224PDUType.X224_TPDU_CONNECTION_CONFIRM: "onConnectionConfirm",
+            X224PDUType.X224_TPDU_DISCONNECT_REQUEST: "onDisconnectRequest",
+            X224PDUType.X224_TPDU_DATA: "onData",
+            X224PDUType.X224_TPDU_ERROR: "onError"
+        }, **kwargs)
+
+    def onConnectionRequest(self, pdu):
+        raise NotImplementedError("Unhandled X224 Connection Request PDU")
+
+    def onConnectionConfirm(self, pdu):
+        raise NotImplementedError("Unhandled X224 Connection Confirm PDU")
+
+    def onDisconnectRequest(self, pdu):
+        raise NotImplementedError("Unhandled X224 Disconnect Request PDU")
+
+    def onData(self, pdu):
+        pass
+
+    def onError(self, pdu):
+        raise NotImplementedError("Unhandled X224 Error PDU")
 
 
 @ObservedBy(X224Observer)

@@ -17,10 +17,10 @@ from rdpy.pdu.rdp.connection import RDPServerDataPDU, ServerCoreData, ServerNetw
     ServerSecurityData
 from rdpy.pdu.rdp.negotiation import RDPNegotiationResponsePDU
 from rdpy.pdu.rdp.licensing import RDPLicenseErrorAlertPDU, RDPLicenseBinaryBlob
-from rdpy.protocol.mcs.channel import MCSChannelFactory, MCSServerChannel
-from rdpy.protocol.mcs.client import MCSClientConnectionObserver
-from rdpy.protocol.mcs.server import MCSServerRouter, MCSUserIDGenerator
-from rdpy.protocol.mcs.user import MCSUserObserver
+from rdpy.mcs.channel import MCSChannelFactory, MCSServerChannel
+from rdpy.mcs.client import MCSClientConnectionObserver
+from rdpy.mcs import MCSServerRouter, MCSUserIDGenerator
+from rdpy.mcs.user import MCSUserObserver
 from rdpy.protocol.rdp.lic import ErrorCode, StateTransition, BinaryBlobType
 from rdpy.protocol.rdp.rdp import ServerFactory
 from rdpy.protocol.rdp.t125.mcs import Channel

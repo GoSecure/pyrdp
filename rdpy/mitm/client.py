@@ -11,9 +11,9 @@ from rdpy.layer.tpkt import TPKTLayer
 from rdpy.layer.x224 import X224Layer
 from rdpy.mitm.observer import MITMChannelObserver
 from rdpy.parser.rdp.negotiation import RDPNegotiationParser
-from rdpy.protocol.mcs.channel import MCSChannelFactory, MCSClientChannel
-from rdpy.protocol.mcs.client import MCSClientRouter
-from rdpy.protocol.mcs.user import MCSUserObserver
+from rdpy.mcs.channel import MCSChannelFactory, MCSClientChannel
+from rdpy.mcs.client import MCSClientRouter
+from rdpy.mcs.user import MCSUserObserver
 from rdpy.protocol.rdp.x224 import ClientTLSContext
 
 
