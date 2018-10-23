@@ -1,7 +1,7 @@
 from StringIO import StringIO
 
 from rdpy.core.packing import Uint16LE, Uint8, Uint32LE
-from rdpy.enum.rdp import RDPSecurityHeaderType
+from rdpy.enum.rdp import RDPSecurityHeaderType, RDPSecurityFlags
 from rdpy.exceptions import UnknownPDUTypeError, WritingError
 from rdpy.pdu.rdp.security import RDPBasicSecurityPDU, RDPSignedSecurityPDU, RDPFIPSSecurityPDU, RDPSecurityExchangePDU
 
@@ -18,41 +18,54 @@ class RDPSecurityParser:
         """
         stream = StringIO(data)
         headerType = self.headerType if self.headerType != RDPSecurityHeaderType.NONE else RDPSecurityHeaderType.DEFAULT
+        header = Uint32LE.unpack(stream)
 
-        if headerType == RDPSecurityHeaderType.BASIC:
-            return self.parseBasicSecurity(stream)
+        if header & RDPSecurityFlags.SEC_EXCHANGE_PKT:
+            return self.parseSecurityExchange(stream, header)
+        elif headerType == RDPSecurityHeaderType.BASIC:
+            return self.parseBasicSecurity(stream, header)
         elif self.headerType == RDPSecurityHeaderType.SIGNED:
-            return self.parseSignedSecurity(stream)
+            return self.parseSignedSecurity(stream, header)
         elif self.headerType == RDPSecurityHeaderType.FIPS:
-            return self.parseFIPSSecurity(stream)
+            return self.parseFIPSSecurity(stream, header)
         else:
             raise UnknownPDUTypeError("Trying to parse unknown security header type", self.headerType)
 
-    def parseBasicSecurity(self, stream):
+    def parseSecurityExchange(self, stream, header):
         """
         :type stream: StringIO
+        :type header: int
+        :return: RDPSecurityExchangePDU
+        """
+        length = Uint32LE.unpack(stream)
+        clientRandom = stream.read(length)
+        return RDPSecurityExchangePDU(header, clientRandom)
+
+    def parseBasicSecurity(self, stream, header):
+        """
+        :type stream: StringIO
+        :type header: int
         :return: RDPBasicSecurityPDU
         """
-        flags = self.parseBasicHeader(stream)
         payload = stream.read()
-        return RDPBasicSecurityPDU(flags, payload)
+        return RDPBasicSecurityPDU(header, payload)
 
-    def parseSignedSecurity(self, stream):
+    def parseSignedSecurity(self, stream, header):
         """
         :type stream: StringIO
+        :type header: int
         :return: RDPSignedSecurityPDU
         """
-        header = self.parseBasicHeader(stream)
         signature = stream.read(8)
         payload = stream.read()
         return RDPSignedSecurityPDU(header, signature, payload)
 
-    def parseFIPSSecurity(self, stream):
+    def parseFIPSSecurity(self, stream, header):
         """
         :type stream: StringIO
+        :type header: int
         :return: RDPFIPSSecurityPDU
         """
-        header = self.parseBasicHeader(stream)
         headerLength = Uint16LE.unpack(stream)
         version = Uint8.unpack(stream)
         padLength = Uint8.unpack(stream)
@@ -60,51 +73,30 @@ class RDPSecurityParser:
         payload = stream.read()
         return RDPFIPSSecurityPDU(header, version, padLength, signature, payload)
 
-    def parseBasicHeader(self, stream):
-        """
-        :type stream: StringIO
-        :return: int The flags value (32 bits)
-        """
-        flags = Uint16LE.unpack(stream)
-        hiFlags = Uint16LE.unpack(stream)
-        return (hiFlags << 16) | flags
-
-    def parseSecurityExchange(self, data):
-        """
-        :type data: str
-        :return: RDPSecurityExchangePDU
-        """
-        stream = StringIO(data)
-        flags = self.parseBasicHeader(stream)
-        length = Uint32LE.unpack(stream)
-        clientRandom = stream.read(length)
-        return RDPSecurityExchangePDU(flags, clientRandom)
-
     def write(self, pdu):
         """
         Encode the provided PDU to a byte stream to send to the previous layer
-        :type pdu: RDPBasicSecurityPDU
+        :type pdu: RDPSecurityExchangePDU | RDPBasicSecurityPDU | RDPSignedSecurityPDU | RDPFIPSSecurityPDU
         :return: str
         """
+        header = Uint32LE.pack(pdu.header)
+
         if isinstance(pdu, RDPSecurityExchangePDU):
-            return self.writeSecurityExchange(pdu)
+            return header + self.writeSecurityExchange(pdu)
         elif isinstance(pdu, RDPBasicSecurityPDU):
-            return self.writeBasicHeader(pdu) + pdu.payload
+            return header + pdu.payload
         elif isinstance(pdu, RDPSignedSecurityPDU):
-            return self.writeSignedHeader(pdu) + pdu.payload
+            return header + self.writeSignedHeader(pdu) + pdu.payload
         elif isinstance(pdu, RDPFIPSSecurityPDU):
-            return self.writeFIPSHeader(pdu) + pdu.payload
+            return header + self.writeFIPSHeader(pdu) + pdu.payload
         else:
             raise WritingError("Trying to write invalid PDU type")
 
-    def writeBasicHeader(self, pdu):
-        return Uint16LE.pack(pdu.header & 0xffff) + Uint16LE.pack(pdu.header >> 16)
-
     def writeSignedHeader(self, pdu):
-        return self.writeBasicHeader(pdu) + pdu.signature[: 8]
+        return pdu.signature[: 8]
 
     def writeFIPSHeader(self, pdu):
-        return self.writeBasicHeader(pdu) + Uint16LE.pack(0x10) + Uint8.pack(pdu.version) + Uint8.pack(pdu.padLength) + pdu.signature[: 8]
+        return Uint16LE.pack(0x10) + Uint8.pack(pdu.version) + Uint8.pack(pdu.padLength) + pdu.signature[: 8]
 
     def writeSecurityExchange(self, pdu):
-        return self.writeBasicHeader(pdu) + Uint32LE.pack(len(pdu.clientRandom)) + pdu.clientRandom
+        return Uint32LE.pack(len(pdu.clientRandom)) + pdu.clientRandom

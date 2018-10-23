@@ -13,4 +13,4 @@ class RDPLicensingLayer(Layer):
 
     def sendPDU(self, pdu):
         data = self.parser.write(pdu)
-        self.previous.sendLicensingData(data)
+        self.previous.send(data)

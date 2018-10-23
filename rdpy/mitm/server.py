@@ -9,7 +9,7 @@ from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventTyp
 from rdpy.layer.mcs import MCSLayer
 from rdpy.layer.rdp.data import RDPDataLayer
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
-from rdpy.layer.rdp.security import chooseSecurityHeader, RDPSecurityLayer
+from rdpy.layer.rdp.security import createNonTLSSecurityLayer, RDPSecurityLayer, TLSSecurityLayer
 from rdpy.layer.tcp import TCPLayer
 from rdpy.layer.tpkt import TPKTLayer
 from rdpy.layer.x224 import X224Layer
@@ -37,11 +37,10 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.client = None
         self.negotiationPDU = None
         self.serverData = None
-        self.licensing = None
         self.io = RDPDataLayer()
         self.securityLayer = None
         self.rc4RSAKey = RSA.generate(2048)
-        self.settings = SecuritySettings(SecuritySettings.Mode.SERVER)
+        self.securitySettings = SecuritySettings(SecuritySettings.Mode.SERVER)
 
         self.useTLS = False
         self.tcp = TCPLayer()
@@ -64,7 +63,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         )
 
         self.ioSecurityLayer = None
-        self.licensingLayer = RDPLicensingLayer()
+        self.licensingLayer = None
         self.certificateFileName = certificateFileName
         self.privateKeyFileName = privateKeyFileName
         self.gcc = GCCParser()
@@ -163,7 +162,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
             serverData.security.serverRandom,
             cert
         )
-        self.settings.serverSecurityReceived(security)
+        self.securitySettings.serverSecurityReceived(security)
         self.serverData = RDPServerDataPDU(serverData.core, security, serverData.network)
 
         rdpParser = RDPServerConnectionParser()
@@ -201,31 +200,39 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
     def buildChannel(self, mcs, userID, channelID):
         self.log_debug("building channel {} for user {}".format(channelID, userID))
 
-        headerType = chooseSecurityHeader(self.serverData.security.encryptionMethod)
-
         if channelID == self.serverData.network.mcsChannelID:
-            self.securityLayer = RDPSecurityLayer(headerType, None)
-            self.licensing = self.securityLayer.licensing
+            encryptionMethod = self.serverData.security.encryptionMethod
+
+            if self.useTLS:
+                self.securityLayer = TLSSecurityLayer()
+            else:
+                self.securitySettings.generateClientRandom()
+                crypter = self.securitySettings.getCrypter()
+                self.securityLayer = createNonTLSSecurityLayer(encryptionMethod, crypter)
+
+            self.licensingLayer = RDPLicensingLayer()
             channel = MCSServerChannel(mcs, userID, channelID)
 
             channel.setNext(self.securityLayer)
+            self.securityLayer.setLicensingLayer(self.licensingLayer)
             self.securityLayer.setNext(self.io)
 
+            observer = MITMChannelObserver(self.io, "Server")
+            self.io.setObserver(observer)
             self.securityLayer.createObserver(
                 onClientInfoReceived = self.onClientInfoReceived,
                 onSecurityExchangeReceived = self.onSecurityExchangeReceived
             )
 
-            observer = MITMChannelObserver(self.io, "Server")
             clientObserver = self.client.getChannelObserver(channelID)
-
             observer.setPeer(clientObserver)
             clientObserver.setPeer(observer)
 
-            self.io.setObserver(observer)
             observer.setDataHandler(RDPDataPDUSubtype.PDUTYPE2_INPUT, self.onInputPDUReceived)
 
-            self.securityLayer.securityHeaderExpected = True
+            if self.useTLS:
+                self.securityLayer.securityHeaderExpected = True
+
             return channel
 
     # Security Exchange
@@ -236,8 +243,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         """
         self.log_debug("Security Exchange received")
         clientRandom = self.rc4RSAKey.decrypt(pdu.clientRandom[:: -1])[:: -1]
-        self.settings.setClientRandom(clientRandom)
-        self.securityLayer.crypter = self.settings.getCrypter()
+        self.securitySettings.setClientRandom(clientRandom)
+        self.securityLayer.crypter = self.securitySettings.getCrypter()
 
     # Client Info Packet
     def onClientInfoReceived(self, pdu):
@@ -247,7 +254,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
     def onLicensingPDU(self, pdu):
         self.log_debug("Sending Licensing PDU")
         self.securityLayer.securityHeaderExpected = False
-        self.licensing.sendPDU(pdu)
+        self.licensingLayer.sendPDU(pdu)
 
     def sendDisconnectProviderUltimatum(self, pdu):
         self.mcs.send(pdu)

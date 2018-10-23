@@ -5,7 +5,8 @@ from rdpy.layer.gcc import GCCClientConnectionLayer
 from rdpy.layer.mcs import MCSLayer, MCSClientConnectionLayer
 from rdpy.layer.rdp.connection import RDPClientConnectionLayer
 from rdpy.layer.rdp.data import RDPDataLayer
-from rdpy.layer.rdp.security import chooseSecurityHeader, RDPSecurityLayer
+from rdpy.layer.rdp.licensing import RDPLicensingLayer
+from rdpy.layer.rdp.security import createNonTLSSecurityLayer, RDPSecurityLayer, TLSSecurityLayer
 from rdpy.layer.tcp import TCPLayer
 from rdpy.layer.tpkt import TPKTLayer
 from rdpy.layer.x224 import X224Layer
@@ -35,6 +36,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.user = None
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.CLIENT)
         self.securityLayer = None
+        self.licensingLayer = None
         self.conferenceCreateResponse = None
         self.serverData = None
 
@@ -155,27 +157,32 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
     def buildChannel(self, mcs, userID, channelID):
         self.log_debug("building channel {} for user {}".format(channelID, userID))
 
-        encryptionMethod = self.serverData.security.encryptionMethod
-        headerType = chooseSecurityHeader(encryptionMethod)
-        crypter = self.securitySettings.getCrypter() if encryptionMethod != EncryptionMethod.ENCRYPTION_NONE else None
-
         if channelID != userID and self.channelMap[channelID] == "I/O":
-            self.securityLayer = RDPSecurityLayer(headerType, crypter)
+            encryptionMethod = self.serverData.security.encryptionMethod
+
+            if self.useTLS:
+                self.securityLayer = TLSSecurityLayer()
+            else:
+                crypter = self.securitySettings.getCrypter()
+                self.securityLayer = createNonTLSSecurityLayer(encryptionMethod, crypter)
+
+            self.licensingLayer = RDPLicensingLayer()
             channel = MCSClientChannel(mcs, userID, channelID)
 
             channel.setNext(self.securityLayer)
+            self.securityLayer.setLicensingLayer(self.licensingLayer)
             self.securityLayer.setNext(self.io)
 
             observer = MITMChannelObserver(self.io, "Client")
+            self.io.setObserver(observer)
+            self.licensingLayer.createObserver(onPDUReceived=self.onLicensingPDU)
+
             self.channelObservers[channelID] = observer
 
-            self.io.setObserver(observer)
-            self.securityLayer.licensing.createObserver(onPDUReceived=self.onLicensingPDU)
-
-            if encryptionMethod != 0:
-                self.io.previous.sendSecurityExchange(self.securitySettings.encryptClientRandom())
-            else:
+            if self.useTLS:
                 self.securityLayer.securityHeaderExpected = True
+            elif encryptionMethod != 0:
+                self.io.previous.sendSecurityExchange(self.securitySettings.encryptClientRandom())
         else:
             channel = None
 
@@ -191,7 +198,10 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
     def onLicensingPDU(self, pdu):
         self.log_debug("Licensing PDU received")
-        self.securityLayer.securityHeaderExpected = False
+
+        if self.useTLS:
+            self.securityLayer.securityHeaderExpected = False
+
         self.server.onLicensingPDU(pdu)
 
     def onDisconnectProviderUltimatum(self, pdu):
