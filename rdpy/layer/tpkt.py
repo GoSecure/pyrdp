@@ -12,6 +12,10 @@ class TPKTLayer(Layer):
         Layer.__init__(self)
         self.parser = TPKTParser()
         self.buffer = ""
+        self.fastPathLayer = None
+
+    def setFastPathLayer(self, layer):
+        self.fastPathLayer = layer
 
     def recv(self, data):
         """
@@ -33,8 +37,10 @@ class TPKTLayer(Layer):
                     self.pduReceived(pdu, True)
                     data = data[pdu.length :]
                     self.buffer = ""
+            elif self.fastPathLayer:
+                self.fastPathLayer.recv(data)
             else:
-                raise NotImplementedError("Fast path not implemented")
+                raise RuntimeError("Received fast-path PDU but no fast path layer was set")
 
     def send(self, data):
         """
