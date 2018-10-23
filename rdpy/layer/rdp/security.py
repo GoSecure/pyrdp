@@ -2,9 +2,10 @@ from collections import namedtuple
 
 from rdpy.core.newlayer import Layer, LayerObserver
 from rdpy.core.subject import ObservedBy
-from rdpy.enum.rdp import RDPSecurityHeaderType, RDPSecurityFlags, FIPSVersion, EncryptionMethod
+from rdpy.enum.rdp import RDPSecurityHeaderType, RDPSecurityFlags, FIPSVersion, EncryptionMethod, \
+    RDPFastPathSecurityFlags
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
-from rdpy.parser.rdp.security import RDPSecurityParser
+from rdpy.parser.rdp.security import RDPSecurityParser, RDPFastPathSecurityParser
 from rdpy.pdu.rdp.security import RDPSecurityExchangePDU, RDPBasicSecurityPDU, RDPSignedSecurityPDU, RDPFIPSSecurityPDU
 
 
@@ -14,6 +15,11 @@ def createNonTLSSecurityLayer(encryptionMethod, crypter):
     elif encryptionMethod == EncryptionMethod.ENCRYPTION_FIPS:
         return FIPSSecurityLayer(crypter)
 
+def createNonTLSFastPathSecurityLayer(encryptionMethod, crypter):
+    if encryptionMethod in [EncryptionMethod.ENCRYPTION_40BIT, EncryptionMethod.ENCRYPTION_56BIT, EncryptionMethod.ENCRYPTION_128BIT]:
+        return SignedFastPathSecurityLayer(crypter)
+    elif encryptionMethod == EncryptionMethod.ENCRYPTION_FIPS:
+        return FIPSFastPathSecurityLayer(crypter)
 
 class RDPSecurityObserver(LayerObserver):
     def onSecurityExchangeReceived(self, pdu):
@@ -108,11 +114,14 @@ class NonTLSSecurityLayer(RDPSecurityLayer):
     def recv(self, data):
         pdu = self.securityParser.parse(data)
 
-        if pdu.header & RDPSecurityFlags.SEC_ENCRYPT != 0:
+        if self.isPDUEncrypted(pdu):
             pdu.payload = self.crypter.decrypt(pdu.payload)
             self.crypter.addDecryption()
 
         self.dispatchPDU(pdu)
+
+    def isPDUEncrypted(self, pdu):
+        return pdu.header & RDPSecurityFlags.SEC_ENCRYPT != 0
 
     def send(self, data, header = 0):
         header |= RDPSecurityFlags.SEC_ENCRYPT
@@ -154,3 +163,34 @@ class FIPSSecurityLayer(NonTLSSecurityLayer):
         padLength = self.crypter.getPadLength(plaintext)
         pdu = RDPFIPSSecurityPDU(header, FIPSVersion.TSFIPS_VERSION1, padLength, signature, ciphertext)
         self.previous.send(self.securityParser.write(pdu))
+
+
+
+class FastPathSecurityLayer:
+    def isPDUEncrypted(self, pdu):
+        return pdu.header & RDPFastPathSecurityFlags.FASTPATH_OUTPUT_ENCRYPTED != 0
+
+    def dispatchPDU(self, pdu):
+        self.pduReceived(pdu, True)
+
+
+class TLSFastPathSecurityLayer(FastPathSecurityLayer, TLSSecurityLayer):
+    def __init__(self):
+        TLSSecurityLayer.__init__(self)
+        self.securityParser = RDPFastPathSecurityParser(RDPSecurityHeaderType.BASIC)
+
+    def recv(self, data):
+        pdu = self.securityParser.parse(data)
+        self.dispatchPDU(pdu)
+
+
+class SignedFastPathSecurityLayer(FastPathSecurityLayer, SignedSecurityLayer):
+    def __init__(self, crypter):
+        SignedSecurityLayer.__init__(self, crypter)
+        self.securityParser = RDPFastPathSecurityParser(RDPSecurityHeaderType.SIGNED)
+
+
+class FIPSFastPathSecurityLayer(FastPathSecurityLayer, FIPSSecurityLayer):
+    def __int__(self, crypter):
+        FIPSSecurityLayer.__init__(self, crypter)
+        self.securityParser = RDPFastPathSecurityParser(RDPSecurityHeaderType.FIPS)

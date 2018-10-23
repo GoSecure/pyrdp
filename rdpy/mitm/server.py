@@ -9,7 +9,8 @@ from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventTyp
 from rdpy.layer.mcs import MCSLayer
 from rdpy.layer.rdp.data import RDPDataLayer
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
-from rdpy.layer.rdp.security import createNonTLSSecurityLayer, RDPSecurityLayer, TLSSecurityLayer
+from rdpy.layer.rdp.security import createNonTLSSecurityLayer, RDPSecurityLayer, TLSSecurityLayer, \
+    TLSFastPathSecurityLayer, createNonTLSFastPathSecurityLayer
 from rdpy.layer.tcp import TCPLayer
 from rdpy.layer.tpkt import TPKTLayer
 from rdpy.layer.x224 import X224Layer
@@ -39,6 +40,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.serverData = None
         self.io = RDPDataLayer()
         self.securityLayer = None
+        self.fastPathSecurityLayer = None
         self.rc4RSAKey = RSA.generate(2048)
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.SERVER)
 
@@ -205,10 +207,12 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
             if self.useTLS:
                 self.securityLayer = TLSSecurityLayer()
+                self.fastPathSecurityLayer = TLSFastPathSecurityLayer()
             else:
                 self.securitySettings.generateClientRandom()
                 crypter = self.securitySettings.getCrypter()
                 self.securityLayer = createNonTLSSecurityLayer(encryptionMethod, crypter)
+                self.fastPathSecurityLayer = createNonTLSFastPathSecurityLayer(encryptionMethod, crypter)
 
             self.licensingLayer = RDPLicensingLayer()
             channel = MCSServerChannel(mcs, userID, channelID)
@@ -216,6 +220,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
             channel.setNext(self.securityLayer)
             self.securityLayer.setLicensingLayer(self.licensingLayer)
             self.securityLayer.setNext(self.io)
+            self.tpkt.setFastPathLayer(self.fastPathSecurityLayer)
 
             observer = MITMChannelObserver(self.io, "Server")
             self.io.setObserver(observer)

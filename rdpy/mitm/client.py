@@ -6,7 +6,8 @@ from rdpy.layer.mcs import MCSLayer, MCSClientConnectionLayer
 from rdpy.layer.rdp.connection import RDPClientConnectionLayer
 from rdpy.layer.rdp.data import RDPDataLayer
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
-from rdpy.layer.rdp.security import createNonTLSSecurityLayer, RDPSecurityLayer, TLSSecurityLayer
+from rdpy.layer.rdp.security import createNonTLSSecurityLayer, RDPSecurityLayer, TLSSecurityLayer, \
+    TLSFastPathSecurityLayer, createNonTLSFastPathSecurityLayer
 from rdpy.layer.tcp import TCPLayer
 from rdpy.layer.tpkt import TPKTLayer
 from rdpy.layer.x224 import X224Layer
@@ -36,6 +37,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.user = None
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.CLIENT)
         self.securityLayer = None
+        self.fastPathSecurityLayer = None
         self.licensingLayer = None
         self.conferenceCreateResponse = None
         self.serverData = None
@@ -162,9 +164,11 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
             if self.useTLS:
                 self.securityLayer = TLSSecurityLayer()
+                self.fastPathSecurityLayer = TLSFastPathSecurityLayer()
             else:
                 crypter = self.securitySettings.getCrypter()
                 self.securityLayer = createNonTLSSecurityLayer(encryptionMethod, crypter)
+                self.fastPathSecurityLayer = createNonTLSFastPathSecurityLayer(encryptionMethod, crypter)
 
             self.licensingLayer = RDPLicensingLayer()
             channel = MCSClientChannel(mcs, userID, channelID)
@@ -172,6 +176,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
             channel.setNext(self.securityLayer)
             self.securityLayer.setLicensingLayer(self.licensingLayer)
             self.securityLayer.setNext(self.io)
+            self.tpkt.setFastPathLayer(self.fastPathSecurityLayer)
 
             observer = MITMChannelObserver(self.io, "Client")
             self.io.setObserver(observer)
