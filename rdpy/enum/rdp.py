@@ -44,6 +44,11 @@ class RDPSecurityFlags:
     SEC_FLAGSHI_VALID = 0x8000
 
 
+class RDPFastPathSecurityFlags:
+    FASTPATH_OUTPUT_SECURE_CHECKSUM = 0x40
+    FASTPATH_OUTPUT_ENCRYPTED = 0x80
+
+
 class RDPSecurityHeaderType(IntEnum):
     NONE = 0
     BASIC = 1
