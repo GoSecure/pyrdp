@@ -132,15 +132,6 @@ class NonTLSSecurityLayer(RDPSecurityLayer):
         raise NotImplementedError("sendEncrypted must be overridden")
 
 
-class BasicSecurityLayer(NonTLSSecurityLayer):
-    def __init__(self, crypter):
-        NonTLSSecurityLayer.__init__(self, RDPSecurityHeaderType.BASIC, crypter)
-
-    def sendEncrypted(self, plaintext, ciphertext, header):
-        pdu = RDPBasicSecurityPDU(header, ciphertext)
-        self.previous.send(self.securityParser.write(pdu))
-
-
 class SignedSecurityLayer(NonTLSSecurityLayer):
     def __init__(self, crypter):
         NonTLSSecurityLayer.__init__(self, RDPSecurityHeaderType.SIGNED, crypter)
