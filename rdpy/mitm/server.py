@@ -5,18 +5,20 @@ from twisted.internet.protocol import ClientFactory
 
 from rdpy.core import log
 from rdpy.core.crypto import SecuritySettings
-from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType
+from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, RDPFastPathLayerMode
 from rdpy.layer.mcs import MCSLayer
 from rdpy.layer.rdp.data import RDPDataLayer
+from rdpy.layer.rdp.fastpath import createFastPathLayer
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
-from rdpy.layer.rdp.security import createNonTLSSecurityLayer, RDPSecurityLayer, TLSSecurityLayer, \
-    TLSFastPathSecurityLayer, createNonTLSFastPathSecurityLayer
+from rdpy.layer.rdp.security import createNonTLSSecurityLayer, TLSSecurityLayer
 from rdpy.layer.tcp import TCPLayer
 from rdpy.layer.tpkt import TPKTLayer
 from rdpy.layer.x224 import X224Layer
+from rdpy.mcs.channel import MCSChannelFactory, MCSServerChannel
 from rdpy.mcs.server import MCSServerRouter
+from rdpy.mcs.user import MCSUserObserver
 from rdpy.mitm.client import MITMClient
-from rdpy.mitm.observer import MITMChannelObserver
+from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver
 from rdpy.parser.gcc import GCCParser
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.connection import RDPClientConnectionParser, RDPServerConnectionParser
@@ -25,8 +27,6 @@ from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.pdu.mcs import MCSConnectResponsePDU
 from rdpy.pdu.rdp.connection import ProprietaryCertificate, ServerSecurityData, RDPServerDataPDU
 from rdpy.pdu.rdp.negotiation import RDPNegotiationResponsePDU
-from rdpy.mcs.channel import MCSChannelFactory, MCSServerChannel
-from rdpy.mcs.user import MCSUserObserver
 from rdpy.protocol.rdp.x224 import ServerTLSContext
 
 
@@ -40,7 +40,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.serverData = None
         self.io = RDPDataLayer()
         self.securityLayer = None
-        self.fastPathSecurityLayer = None
+        self.fastPathLayer = None
         self.rc4RSAKey = RSA.generate(2048)
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.SERVER)
 
@@ -206,34 +206,36 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
             encryptionMethod = self.serverData.security.encryptionMethod
 
             if self.useTLS:
+                crypter = None
                 self.securityLayer = TLSSecurityLayer()
-                self.fastPathSecurityLayer = TLSFastPathSecurityLayer()
             else:
                 self.securitySettings.generateClientRandom()
                 crypter = self.securitySettings.getCrypter()
                 self.securityLayer = createNonTLSSecurityLayer(encryptionMethod, crypter)
-                self.fastPathSecurityLayer = createNonTLSFastPathSecurityLayer(encryptionMethod, crypter)
 
+            self.fastPathLayer = createFastPathLayer(self.useTLS, encryptionMethod, crypter, RDPFastPathLayerMode.SERVER)
             self.licensingLayer = RDPLicensingLayer()
             channel = MCSServerChannel(mcs, userID, channelID)
 
             channel.setNext(self.securityLayer)
             self.securityLayer.setLicensingLayer(self.licensingLayer)
             self.securityLayer.setNext(self.io)
-            self.tpkt.setFastPathLayer(self.fastPathSecurityLayer)
+            self.tpkt.setFastPathLayer(self.fastPathLayer)
 
-            observer = MITMChannelObserver(self.io, "Server")
-            self.io.setObserver(observer)
+            slowPathObserver = MITMSlowPathObserver(self.io, "Server")
+            fastPathObserver = MITMFastPathObserver(self.fastPathLayer, "Server")
+            self.io.setObserver(slowPathObserver)
+            self.fastPathLayer.setObserver(fastPathObserver)
             self.securityLayer.createObserver(
                 onClientInfoReceived = self.onClientInfoReceived,
                 onSecurityExchangeReceived = self.onSecurityExchangeReceived
             )
 
             clientObserver = self.client.getChannelObserver(channelID)
-            observer.setPeer(clientObserver)
-            clientObserver.setPeer(observer)
+            slowPathObserver.setPeer(clientObserver)
+            fastPathObserver.setPeer(self.client.getFastPathObserver())
 
-            observer.setDataHandler(RDPDataPDUSubtype.PDUTYPE2_INPUT, self.onInputPDUReceived)
+            slowPathObserver.setDataHandler(RDPDataPDUSubtype.PDUTYPE2_INPUT, self.onInputPDUReceived)
 
             if self.useTLS:
                 self.securityLayer.securityHeaderExpected = True

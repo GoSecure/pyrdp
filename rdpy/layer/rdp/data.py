@@ -1,12 +1,44 @@
 from rdpy.core import log
-from rdpy.core.newlayer import Layer, LayerStrictRoutedObserver
+from rdpy.core.newlayer import Layer, LayerStrictRoutedObserver, LayerObserver
 from rdpy.core.subject import ObservedBy
 from rdpy.enum.rdp import RDPDataPDUType
 from rdpy.exceptions import UnknownPDUTypeError
 from rdpy.parser.rdp.data import RDPDataParser
 
 
-class RDPDataLayerObserver(LayerStrictRoutedObserver):
+class RDPBaseDataLayerObserver:
+    def __init__(self):
+        self.dataHandlers = {}
+        self.defaultDataHandler = None
+        self.unparsedDataHandler = None
+
+    def dispatchPDU(self, pdu):
+        type = self.getPDUType(pdu)
+
+        if type in self.dataHandlers:
+            self.dataHandlers[type](pdu)
+        elif self.defaultDataHandler:
+            self.defaultDataHandler(pdu)
+
+    def onUnparsedData(self, data):
+        if self.unparsedDataHandler is not None:
+            self.unparsedDataHandler(data)
+
+    def setDataHandler(self, type, handler):
+        self.dataHandlers[type] = handler
+
+    def setDefaultDataHandler(self, handler):
+        self.defaultDataHandler = handler
+
+    def setUnparsedDataHandler(self, handler):
+        self.unparsedDataHandler = handler
+
+    def getPDUType(self, pdu):
+        raise NotImplementedError("getPDUType must be overridden")
+
+
+
+class RDPDataLayerObserver(RDPBaseDataLayerObserver, LayerStrictRoutedObserver):
     def __init__(self, **kwargs):
         LayerStrictRoutedObserver.__init__(self, {
             RDPDataPDUType.DEMAND_ACTIVE_PDU: "onDemandActive",
@@ -20,6 +52,9 @@ class RDPDataLayerObserver(LayerStrictRoutedObserver):
         self.defaultDataHandler = None
         self.unparsedDataHandler = None
 
+    def getPDUType(self, pdu):
+        return pdu.header.subtype
+
     def onPDUReceived(self, pdu):
         if pdu.header.type in self.handlers:
             self.handlers[pdu.header.type](pdu)
@@ -27,23 +62,7 @@ class RDPDataLayerObserver(LayerStrictRoutedObserver):
             self.onUnknownHeader(self, pdu)
 
     def onData(self, pdu):
-        if pdu.header.subtype in self.dataHandlers:
-            self.dataHandlers[pdu.header.subtype](pdu)
-        elif self.defaultDataHandler is not None:
-            self.defaultDataHandler(pdu)
-
-    def setDataHandler(self, subtype, handler):
-        self.dataHandlers[subtype] = handler
-
-    def setDefaultDataHandler(self, handler):
-        self.defaultDataHandler = handler
-
-    def setUnparsedDataHandler(self, handler):
-        self.unparsedDataHandler = handler
-
-    def onUnparsedData(self, data):
-        if self.unparsedDataHandler is not None:
-            self.unparsedDataHandler(data)
+        self.dispatchPDU(pdu)
 
     def onDemandActive(self, pdu):
         pass
@@ -57,11 +76,21 @@ class RDPDataLayerObserver(LayerStrictRoutedObserver):
     def onServerRedirect(self, pdu):
         pass
 
-@ObservedBy(RDPDataLayerObserver)
-class RDPDataLayer(Layer):
-    def __init__(self):
+
+
+class RDPFastPathDataLayerObserver(RDPBaseDataLayerObserver, LayerObserver):
+    def onPDUReceived(self, pdu):
+        self.dispatchPDU(pdu)
+
+    def getPDUType(self, pdu):
+        return pdu.header & 0b11100000
+
+
+
+class RDPBaseDataLayer(Layer):
+    def __init__(self, parser):
         Layer.__init__(self)
-        self.parser = RDPDataParser()
+        self.parser = parser
 
     def recv(self, data):
         try:
@@ -78,3 +107,8 @@ class RDPDataLayer(Layer):
 
     def sendData(self, data):
         self.previous.send(data)
+
+@ObservedBy(RDPDataLayerObserver)
+class RDPDataLayer(RDPBaseDataLayer):
+    def __init__(self):
+        RDPBaseDataLayer.__init__(self, RDPDataParser())

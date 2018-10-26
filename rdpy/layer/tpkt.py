@@ -1,3 +1,5 @@
+from rdpy.core import log
+
 from rdpy.core.newlayer import Layer
 from rdpy.parser.tpkt import TPKTParser
 from rdpy.pdu.tpkt import TPKTPDU
@@ -16,6 +18,7 @@ class TPKTLayer(Layer):
 
     def setFastPathLayer(self, layer):
         self.fastPathLayer = layer
+        layer.previous = self.previous
 
     def recv(self, data):
         """
@@ -39,8 +42,9 @@ class TPKTLayer(Layer):
                     self.buffer = ""
             elif self.fastPathLayer:
                 self.fastPathLayer.recv(data)
+                data = ""
             else:
-                raise RuntimeError("Received fast-path PDU but no fast path layer was set")
+                raise RuntimeError("Received fast-path PDU but no fast-path layer was set")
 
     def send(self, data):
         """

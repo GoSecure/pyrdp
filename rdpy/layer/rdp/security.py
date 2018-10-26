@@ -1,25 +1,25 @@
 from collections import namedtuple
 
+from rdpy.core import log
+
 from rdpy.core.newlayer import Layer, LayerObserver
 from rdpy.core.subject import ObservedBy
-from rdpy.enum.rdp import RDPSecurityHeaderType, RDPSecurityFlags, FIPSVersion, EncryptionMethod, \
-    RDPFastPathSecurityFlags
+from rdpy.enum.rdp import RDPSecurityFlags, EncryptionMethod
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
-from rdpy.parser.rdp.security import RDPSecurityParser, RDPFastPathSecurityParser
-from rdpy.pdu.rdp.security import RDPSecurityExchangePDU, RDPBasicSecurityPDU, RDPSignedSecurityPDU, RDPFIPSSecurityPDU
+from rdpy.parser.rdp.security import RDPBasicSecurityParser, RDPSignedSecurityParser, RDPFIPSSecurityParser
+from rdpy.pdu.rdp.security import RDPSecurityExchangePDU, \
+    RDPSecurityPDU
 
 
 def createNonTLSSecurityLayer(encryptionMethod, crypter):
     if encryptionMethod in [EncryptionMethod.ENCRYPTION_40BIT, EncryptionMethod.ENCRYPTION_56BIT, EncryptionMethod.ENCRYPTION_128BIT]:
-        return SignedSecurityLayer(crypter)
+        parser = RDPSignedSecurityParser(crypter)
+        return RDPSecurityLayer(parser)
     elif encryptionMethod == EncryptionMethod.ENCRYPTION_FIPS:
-        return FIPSSecurityLayer(crypter)
+        parser = RDPFIPSSecurityParser(crypter)
+        return RDPSecurityLayer(parser)
 
-def createNonTLSFastPathSecurityLayer(encryptionMethod, crypter):
-    if encryptionMethod in [EncryptionMethod.ENCRYPTION_40BIT, EncryptionMethod.ENCRYPTION_56BIT, EncryptionMethod.ENCRYPTION_128BIT]:
-        return SignedFastPathSecurityLayer(crypter)
-    elif encryptionMethod == EncryptionMethod.ENCRYPTION_FIPS:
-        return FIPSFastPathSecurityLayer(crypter)
+
 
 class RDPSecurityObserver(LayerObserver):
     def onSecurityExchangeReceived(self, pdu):
@@ -38,8 +38,9 @@ class RDPSecurityObserver(LayerObserver):
 
 @ObservedBy(RDPSecurityObserver)
 class RDPSecurityLayer(Layer):
-    def __init__(self):
+    def __init__(self, parser):
         Layer.__init__(self)
+        self.securityParser = parser
         self.licensing = None
         self.clientInfoParser = RDPClientInfoParser()
 
@@ -50,7 +51,8 @@ class RDPSecurityLayer(Layer):
         self.licensing.previous = securityProxy
 
     def recv(self, data):
-        raise NotImplementedError("recv must be overridden")
+        pdu = self.securityParser.parse(data)
+        self.dispatchPDU(pdu)
 
     def dispatchPDU(self, pdu):
         if pdu.header & RDPSecurityFlags.SEC_EXCHANGE_PKT != 0:
@@ -63,134 +65,41 @@ class RDPSecurityLayer(Layer):
         else:
             self.pduReceived(pdu, True)
 
+    def send(self, data, header = 0):
+        pdu = RDPSecurityPDU(header, data)
+        data = self.securityParser.write(pdu)
+        log.info("Security send: %s" % data.encode("hex"))
+        self.previous.send(data)
+
     def sendSecurityExchange(self, clientRandom):
         pdu = RDPSecurityExchangePDU(RDPSecurityFlags.SEC_EXCHANGE_PKT | RDPSecurityFlags.SEC_LICENSE_ENCRYPT_SC, clientRandom + "\x00" * 8)
-        self.previous.send(self.securityParser.write(pdu))
-
-    def send(self, data, header = 0):
-        raise NotImplementedError("send must be overridden")
+        self.previous.send(self.securityParser.writeSecurityExchange(pdu))
 
     def sendClientInfo(self, pdu):
-        raise NotImplementedError("sendClientInfo must be overridden")
+        data = self.clientInfoParser.write(pdu)
+        pdu = RDPSecurityPDU(RDPSecurityFlags.SEC_INFO_PKT, data)
+        self.previous.send(self.securityParser.write(pdu))
 
     def sendLicensing(self, data):
-        raise NotImplementedError("sendLicensing must be overridden")
+        pdu = RDPSecurityPDU(RDPSecurityFlags.SEC_LICENSE_PKT, data)
+        self.previous.send(self.securityParser.write(pdu))
 
 
 
 class TLSSecurityLayer(RDPSecurityLayer):
     def __init__(self):
-        RDPSecurityLayer.__init__(self)
-        self.securityParser = RDPSecurityParser(RDPSecurityHeaderType.NONE)
+        RDPSecurityLayer.__init__(self, RDPBasicSecurityParser())
         self.securityHeaderExpected = False
 
     def recv(self, data):
         if not self.securityHeaderExpected:
             self.next.recv(data)
         else:
-            pdu = self.securityParser.parse(data)
-            self.dispatchPDU(pdu)
+            RDPSecurityLayer.recv(self, data)
 
     def send(self, data, header = 0):
-        self.previous.send(data)
+        if not self.securityHeaderExpected:
+            self.previous.send(data)
+        else:
+            RDPSecurityLayer.send(self, data, header)
 
-    def sendClientInfo(self, pdu):
-        data = self.clientInfoParser.write(pdu)
-        pdu = RDPBasicSecurityPDU(RDPSecurityFlags.SEC_INFO_PKT, data)
-        self.previous.send(self.securityParser.write(pdu))
-
-    def sendLicensing(self, data):
-        pdu = RDPBasicSecurityPDU(RDPSecurityFlags.SEC_LICENSE_PKT, data)
-        self.previous.send(self.securityParser.write(pdu))
-
-
-
-class NonTLSSecurityLayer(RDPSecurityLayer):
-    def __init__(self, headerType, crypter):
-        RDPSecurityLayer.__init__(self)
-        self.crypter = crypter
-        self.securityParser = RDPSecurityParser(headerType)
-
-    def recv(self, data):
-        pdu = self.securityParser.parse(data)
-
-        if self.isPDUEncrypted(pdu):
-            pdu.payload = self.crypter.decrypt(pdu.payload)
-            self.crypter.addDecryption()
-
-        self.dispatchPDU(pdu)
-
-    def isPDUEncrypted(self, pdu):
-        return pdu.header & RDPSecurityFlags.SEC_ENCRYPT != 0
-
-    def send(self, data, header = 0):
-        header |= RDPSecurityFlags.SEC_ENCRYPT
-        ciphertext = self.crypter.encrypt(data)
-
-        self.sendEncrypted(data, ciphertext, header)
-        self.crypter.addEncryption()
-
-    def sendClientInfo(self, pdu):
-        data = self.clientInfoParser.write(pdu)
-        self.send(data, RDPSecurityFlags.SEC_INFO_PKT)
-
-    def sendLicensing(self, data):
-        self.send(data, RDPSecurityFlags.SEC_LICENSE_PKT)
-
-    def sendEncrypted(self, plaintext, ciphertext, header):
-        raise NotImplementedError("sendEncrypted must be overridden")
-
-
-class SignedSecurityLayer(NonTLSSecurityLayer):
-    def __init__(self, crypter):
-        NonTLSSecurityLayer.__init__(self, RDPSecurityHeaderType.SIGNED, crypter)
-
-    def sendEncrypted(self, plaintext, ciphertext, header):
-        header |= RDPSecurityFlags.SEC_SECURE_CHECKSUM
-        signature = self.crypter.sign(plaintext, True)
-
-        pdu = RDPSignedSecurityPDU(header, signature, ciphertext)
-        self.previous.send(self.securityParser.write(pdu))
-
-
-class FIPSSecurityLayer(NonTLSSecurityLayer):
-    def __init__(self, crypter):
-        NonTLSSecurityLayer.__init__(self, RDPSecurityHeaderType.FIPS, crypter)
-
-    def sendEncrypted(self, plaintext, ciphertext, header):
-        header |= RDPSecurityFlags.SEC_SECURE_CHECKSUM
-        signature = self.crypter.sign(plaintext, True)
-        padLength = self.crypter.getPadLength(plaintext)
-        pdu = RDPFIPSSecurityPDU(header, FIPSVersion.TSFIPS_VERSION1, padLength, signature, ciphertext)
-        self.previous.send(self.securityParser.write(pdu))
-
-
-
-class FastPathSecurityLayer:
-    def isPDUEncrypted(self, pdu):
-        return pdu.header & RDPFastPathSecurityFlags.FASTPATH_OUTPUT_ENCRYPTED != 0
-
-    def dispatchPDU(self, pdu):
-        self.pduReceived(pdu, True)
-
-
-class TLSFastPathSecurityLayer(FastPathSecurityLayer, TLSSecurityLayer):
-    def __init__(self):
-        TLSSecurityLayer.__init__(self)
-        self.securityParser = RDPFastPathSecurityParser(RDPSecurityHeaderType.BASIC)
-
-    def recv(self, data):
-        pdu = self.securityParser.parse(data)
-        self.dispatchPDU(pdu)
-
-
-class SignedFastPathSecurityLayer(FastPathSecurityLayer, SignedSecurityLayer):
-    def __init__(self, crypter):
-        SignedSecurityLayer.__init__(self, crypter)
-        self.securityParser = RDPFastPathSecurityParser(RDPSecurityHeaderType.SIGNED)
-
-
-class FIPSFastPathSecurityLayer(FastPathSecurityLayer, FIPSSecurityLayer):
-    def __int__(self, crypter):
-        FIPSSecurityLayer.__init__(self, crypter)
-        self.securityParser = RDPFastPathSecurityParser(RDPSecurityHeaderType.FIPS)

@@ -1,21 +1,21 @@
 from rdpy.core import log
 from rdpy.core.crypto import SecuritySettings
-from rdpy.enum.rdp import EncryptionMethod
+from rdpy.enum.rdp import RDPFastPathLayerMode
 from rdpy.layer.gcc import GCCClientConnectionLayer
 from rdpy.layer.mcs import MCSLayer, MCSClientConnectionLayer
 from rdpy.layer.rdp.connection import RDPClientConnectionLayer
 from rdpy.layer.rdp.data import RDPDataLayer
+from rdpy.layer.rdp.fastpath import createFastPathLayer
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
-from rdpy.layer.rdp.security import createNonTLSSecurityLayer, RDPSecurityLayer, TLSSecurityLayer, \
-    TLSFastPathSecurityLayer, createNonTLSFastPathSecurityLayer
+from rdpy.layer.rdp.security import createNonTLSSecurityLayer, TLSSecurityLayer
 from rdpy.layer.tcp import TCPLayer
 from rdpy.layer.tpkt import TPKTLayer
 from rdpy.layer.x224 import X224Layer
-from rdpy.mitm.observer import MITMChannelObserver
-from rdpy.parser.rdp.negotiation import RDPNegotiationParser
 from rdpy.mcs.channel import MCSChannelFactory, MCSClientChannel
 from rdpy.mcs.client import MCSClientRouter
 from rdpy.mcs.user import MCSUserObserver
+from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver
+from rdpy.parser.rdp.negotiation import RDPNegotiationParser
 from rdpy.protocol.rdp.x224 import ClientTLSContext
 
 
@@ -37,7 +37,8 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.user = None
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.CLIENT)
         self.securityLayer = None
-        self.fastPathSecurityLayer = None
+        self.fastPathLayer = None
+        self.fastPathObserver = None
         self.licensingLayer = None
         self.conferenceCreateResponse = None
         self.serverData = None
@@ -163,26 +164,28 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
             encryptionMethod = self.serverData.security.encryptionMethod
 
             if self.useTLS:
+                crypter = None
                 self.securityLayer = TLSSecurityLayer()
-                self.fastPathSecurityLayer = TLSFastPathSecurityLayer()
             else:
                 crypter = self.securitySettings.getCrypter()
                 self.securityLayer = createNonTLSSecurityLayer(encryptionMethod, crypter)
-                self.fastPathSecurityLayer = createNonTLSFastPathSecurityLayer(encryptionMethod, crypter)
 
+            self.fastPathLayer = createFastPathLayer(self.useTLS, encryptionMethod, crypter, RDPFastPathLayerMode.CLIENT)
             self.licensingLayer = RDPLicensingLayer()
             channel = MCSClientChannel(mcs, userID, channelID)
 
             channel.setNext(self.securityLayer)
             self.securityLayer.setLicensingLayer(self.licensingLayer)
             self.securityLayer.setNext(self.io)
-            self.tpkt.setFastPathLayer(self.fastPathSecurityLayer)
+            self.tpkt.setFastPathLayer(self.fastPathLayer)
 
-            observer = MITMChannelObserver(self.io, "Client")
-            self.io.setObserver(observer)
+            slowPathObserver = MITMSlowPathObserver(self.io, "Client")
+            self.fastPathObserver = MITMFastPathObserver(self.fastPathLayer, "Client")
+            self.io.setObserver(slowPathObserver)
+            self.fastPathLayer.setObserver(self.fastPathObserver)
             self.licensingLayer.createObserver(onPDUReceived=self.onLicensingPDU)
 
-            self.channelObservers[channelID] = observer
+            self.channelObservers[channelID] = slowPathObserver
 
             if self.useTLS:
                 self.securityLayer.securityHeaderExpected = True
@@ -215,3 +218,6 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
     def getChannelObserver(self, channelID):
         return self.channelObservers[channelID]
+
+    def getFastPathObserver(self):
+        return self.fastPathObserver
