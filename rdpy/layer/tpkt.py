@@ -1,8 +1,20 @@
-from rdpy.core import log
-
 from rdpy.core.newlayer import Layer
+from rdpy.core.packing import Uint8
+from rdpy.enum.rdp import EncryptionMethod
+from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser, RDPSignedFastPathParser, RDPFIPSFastPathParser
 from rdpy.parser.tpkt import TPKTParser
 from rdpy.pdu.tpkt import TPKTPDU
+
+
+def createFastPathParser(tls, encryptionMethod, crypter, mode):
+    if tls:
+        return RDPBasicFastPathParser(mode)
+    elif encryptionMethod in [EncryptionMethod.ENCRYPTION_40BIT, EncryptionMethod.ENCRYPTION_56BIT, EncryptionMethod.ENCRYPTION_128BIT]:
+        return RDPSignedFastPathParser(crypter, mode)
+    elif encryptionMethod == EncryptionMethod.ENCRYPTION_FIPS:
+        return RDPFIPSFastPathParser(crypter, mode)
+    else:
+        raise ValueError("Invalid fast-path layer mode")
 
 
 class TPKTLayer(Layer):
@@ -12,9 +24,14 @@ class TPKTLayer(Layer):
 
     def __init__(self):
         Layer.__init__(self)
-        self.parser = TPKTParser()
         self.buffer = ""
         self.fastPathLayer = None
+        self.parsers = {
+            3: TPKTParser()
+        }
+
+    def setFastPathParser(self, parser):
+        self.parsers[0] = parser
 
     def setFastPathLayer(self, layer):
         self.fastPathLayer = layer
@@ -31,20 +48,21 @@ class TPKTLayer(Layer):
         data = self.buffer + data
 
         while len(data) > 0:
-            if self.parser.isTPKTPDU(data):
-                if not self.parser.isCompletePDU(data):
-                    self.buffer = data
-                    data = ""
-                else:
-                    pdu = self.parser.parse(data)
-                    self.pduReceived(pdu, True)
-                    data = data[pdu.length :]
-                    self.buffer = ""
-            elif self.fastPathLayer:
-                self.fastPathLayer.recv(data)
+            header = Uint8.unpack(data[0]) & 3
+            parser = self.parsers[header]
+
+            if not parser.isCompletePDU(data):
+                self.buffer = data
                 data = ""
             else:
-                raise RuntimeError("Received fast-path PDU but no fast-path layer was set")
+                pduLength = parser.getPDULength(data)
+                pduData = data[: pduLength]
+
+                pdu = parser.parse(pduData)
+                self.pduReceived(pdu, header == 3)
+
+                data = data[pduLength :]
+                self.buffer = ""
 
     def send(self, data):
         """
@@ -53,7 +71,16 @@ class TPKTLayer(Layer):
         :type data: str
         """
         pdu = TPKTPDU(3, data)
-        self.previous.send(self.parser.write(pdu))
+        self.previous.send(self.parsers[3].write(pdu))
+
+    def sendPDU(self, pdu):
+        header = pdu.header & 3
+        parser = self.parsers[header]
+        data = parser.write(pdu)
+        self.previous.send(data)
+
+    def sendData(self, data):
+        self.previous.send(data)
 
     def startTLS(self, tlsContext):
         """

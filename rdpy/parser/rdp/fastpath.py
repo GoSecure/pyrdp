@@ -1,7 +1,7 @@
 from StringIO import StringIO
 
 from rdpy.core.packing import Uint8, Uint16BE, Uint16LE
-from rdpy.enum.rdp import RDPFastPathLayerMode, RDPFastPathInputEventType, \
+from rdpy.enum.rdp import RDPFastPathParserMode, RDPFastPathInputEventType, \
     RDPFastPathSecurityFlags, FIPSVersion
 from rdpy.parser.rdp.security import RDPBasicSecurityParser
 from rdpy.pdu.rdp.fastpath import FastPathEventRaw, RDPFastPathPDU
@@ -12,7 +12,7 @@ class RDPBasicFastPathParser(RDPBasicSecurityParser):
         self.mode = mode
         input, output = RDPInputEventParser(), RDPOutputEventParser()
 
-        if mode == RDPFastPathLayerMode.CLIENT:
+        if mode == RDPFastPathParserMode.CLIENT:
             self.readParser = output
             self.writeParser = input
         else:
@@ -47,7 +47,7 @@ class RDPBasicFastPathParser(RDPBasicSecurityParser):
         return RDPFastPathPDU(header, events)
 
     def parseEventCount(self, header):
-        if self.mode == RDPFastPathLayerMode.SERVER:
+        if self.mode == RDPFastPathParserMode.SERVER:
             return (header >> 2) & 0xf
         else:
             return 1
@@ -77,7 +77,7 @@ class RDPBasicFastPathParser(RDPBasicSecurityParser):
         header = (pdu.header & 0xc0) | self.getHeaderFlags()
         eventCount = len(pdu.events)
 
-        if eventCount <= 15 and self.mode == RDPFastPathLayerMode.CLIENT:
+        if eventCount <= 15 and self.mode == RDPFastPathParserMode.CLIENT:
             header |= eventCount << 2
 
         Uint8.pack(header, stream)
@@ -86,7 +86,7 @@ class RDPBasicFastPathParser(RDPBasicSecurityParser):
     def writeBody(self, stream, pdu):
         eventCount = len(pdu.events)
 
-        if self.mode == RDPFastPathLayerMode.CLIENT and eventCount > 15:
+        if self.mode == RDPFastPathParserMode.CLIENT and eventCount > 15:
             Uint8.pack(eventCount, stream)
 
     def writePayload(self, stream, pdu):
@@ -106,7 +106,7 @@ class RDPBasicFastPathParser(RDPBasicSecurityParser):
         length = 3
         length += sum(self.writeParser.getEventLength(event) for event in pdu.events)
 
-        if self.mode == RDPFastPathLayerMode.CLIENT and len(pdu.events) > 15:
+        if self.mode == RDPFastPathParserMode.CLIENT and len(pdu.events) > 15:
             length += 1
 
         return length
@@ -145,7 +145,7 @@ class RDPSignedFastPathParser(RDPBasicFastPathParser):
         eventStream = StringIO()
         self.writeEvents(eventStream, pdu)
         self.eventData = eventStream.getvalue()
-        signature = self.crypter.sign(self.eventData)
+        signature = self.crypter.sign(self.eventData, True)
 
         stream.write(signature)
         RDPBasicFastPathParser.writeBody(self, stream, pdu)

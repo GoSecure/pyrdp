@@ -1,5 +1,7 @@
 from StringIO import StringIO
 
+from rdpy.core import log
+
 from rdpy.core.packing import Uint16LE, Uint8, Uint32LE
 from rdpy.enum.rdp import RDPSecurityFlags, FIPSVersion
 from rdpy.pdu.rdp.security import RDPSecurityPDU, RDPSecurityExchangePDU
@@ -30,7 +32,7 @@ class RDPBasicSecurityParser:
 
     def writeSecurityExchange(self, pdu):
         stream = StringIO()
-        Uint32LE.pack(RDPSecurityFlags.SEC_EXCHANGE_PKT)
+        Uint32LE.pack(RDPSecurityFlags.SEC_EXCHANGE_PKT | RDPSecurityFlags.SEC_LICENSE_ENCRYPT_SC, stream)
         Uint32LE.pack(len(pdu.clientRandom), stream)
         stream.write(pdu.clientRandom)
         return stream.getvalue()
@@ -62,6 +64,7 @@ class RDPSignedSecurityParser(RDPBasicSecurityParser):
 
         if header & RDPSecurityFlags.SEC_ENCRYPT != 0:
             payload = self.crypter.decrypt(payload)
+            self.crypter.addDecryption()
 
         return RDPSecurityPDU(header, payload)
 
@@ -71,11 +74,12 @@ class RDPSignedSecurityParser(RDPBasicSecurityParser):
         Uint32LE.pack(header, stream)
 
     def writeBody(self, stream, pdu):
-        signature = self.crypter.sign(pdu.payload)
+        signature = self.crypter.sign(pdu.payload, True)
         stream.write(signature)
 
     def writePayload(self, stream, pdu):
         payload = self.crypter.encrypt(pdu.payload)
+        self.crypter.addEncryption()
         stream.write(payload)
 
 
@@ -99,6 +103,7 @@ class RDPFIPSSecurityParser(RDPSignedSecurityParser):
 
         if header & RDPSecurityFlags.SEC_ENCRYPT != 0:
             payload = self.crypter.decrypt(payload)
+            self.crypter.addDecryption()
 
         return RDPSecurityPDU(header, payload)
 

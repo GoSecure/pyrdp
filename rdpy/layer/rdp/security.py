@@ -68,17 +68,18 @@ class RDPSecurityLayer(Layer):
     def send(self, data, header = 0):
         pdu = RDPSecurityPDU(header, data)
         data = self.securityParser.write(pdu)
-        log.info("Security send: %s" % data.encode("hex"))
         self.previous.send(data)
 
     def sendSecurityExchange(self, clientRandom):
-        pdu = RDPSecurityExchangePDU(RDPSecurityFlags.SEC_EXCHANGE_PKT | RDPSecurityFlags.SEC_LICENSE_ENCRYPT_SC, clientRandom + "\x00" * 8)
-        self.previous.send(self.securityParser.writeSecurityExchange(pdu))
+        pdu = RDPSecurityExchangePDU(RDPSecurityFlags.SEC_EXCHANGE_PKT, clientRandom + "\x00" * 8)
+        data = self.securityParser.writeSecurityExchange(pdu)
+        self.previous.send(data)
 
     def sendClientInfo(self, pdu):
         data = self.clientInfoParser.write(pdu)
         pdu = RDPSecurityPDU(RDPSecurityFlags.SEC_INFO_PKT, data)
-        self.previous.send(self.securityParser.write(pdu))
+        data = self.securityParser.write(pdu)
+        self.previous.send(data)
 
     def sendLicensing(self, data):
         pdu = RDPSecurityPDU(RDPSecurityFlags.SEC_LICENSE_PKT, data)

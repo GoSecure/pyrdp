@@ -48,7 +48,7 @@ class RDPFastPathSecurityFlags:
     FASTPATH_OUTPUT_SECURE_CHECKSUM = 0x40
     FASTPATH_OUTPUT_ENCRYPTED = 0x80
 
-class RDPFastPathLayerMode(IntEnum):
+class RDPFastPathParserMode(IntEnum):
     CLIENT = 0
     SERVER = 1
 

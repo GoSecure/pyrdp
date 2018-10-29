@@ -22,6 +22,7 @@ import sha
 from enum import IntEnum
 
 from rdpy.core import rc4
+from rdpy.core.subject import Subject
 from rdpy.core.type import StringStream, UInt32Le
 from rdpy.enum.rdp import RDPSecurityFlags, EncryptionMethod
 from rdpy.exceptions import StateError
@@ -29,6 +30,75 @@ from rdpy.exceptions import StateError
 """
 Cryptographic utility functions
 """
+
+
+class SecuritySettingsObserver:
+    def onCrypterGenerated(self, settings):
+        pass
+
+class SecuritySettings(Subject):
+    class Mode(IntEnum):
+        CLIENT = 0
+        SERVER = 1
+
+    def __init__(self, mode):
+        """
+        :type mode: SecuritySettings.Mode
+        """
+        Subject.__init__(self)
+        self.mode = mode
+        self.encryptionMethod = None
+        self.clientRandom = None
+        self.serverRandom = None
+        self.publicKey = None
+        self.crypter = None
+
+    def generateCrypter(self):
+        if self.mode == SecuritySettings.Mode.CLIENT:
+            self.crypter = RC4Crypter.generateClient(self.clientRandom, self.serverRandom, self.encryptionMethod)
+        else:
+            self.crypter = RC4Crypter.generateServer(self.clientRandom, self.serverRandom, self.encryptionMethod)
+
+        if self.observer:
+            self.observer.onCrypterGenerated(self)
+
+    def generateClientRandom(self):
+        self.setClientRandom(Crypto.Random.get_random_bytes(32))
+
+    def generateServerRandom(self):
+        self.setServerRandom(Crypto.Random.get_random_bytes(32))
+
+    def encryptClientRandom(self):
+        # Client random is stored as little-endian but crypto functions expect it to be in big-endian format.
+        return self.publicKey.encrypt(self.clientRandom[:: -1], 0)[0][:: -1]
+
+    def serverSecurityReceived(self, security):
+        self.encryptionMethod = security.encryptionMethod
+
+        if security.serverCertificate:
+            self.publicKey = security.serverCertificate.publicKey
+
+        self.setServerRandom(security.serverRandom)
+
+    def setServerRandom(self, random):
+        self.serverRandom = random
+
+        if self.clientRandom is not None and self.serverRandom is not None:
+            self.generateCrypter()
+
+    def setClientRandom(self, random):
+        self.clientRandom = random
+
+        if self.clientRandom is not None and self.serverRandom is not None:
+            self.generateCrypter()
+
+    def getCrypter(self):
+        if self.crypter is None:
+            raise StateError("The crypter was not generated. The crypter will be generated when the server random is received.")
+
+        return self.crypter
+
+
 
 class RC4:
     def __init__(self, encryptionMethod, macKey, key):
@@ -99,6 +169,20 @@ class RC4Crypter:
     
     def addDecryption(self):
         self.decryptKey.increment()
+
+class RC4CrypterProxy:
+    def __init__(self):
+        self.crypter = None
+
+    def onCrypterGenerated(self, settings):
+        self.crypter = settings.getCrypter()
+        self.encrypt = self.crypter.encrypt
+        self.decrypt = self.crypter.decrypt
+        self.sign = self.crypter.sign
+        self.verify = self.crypter.verify
+        self.addEncryption = self.crypter.addEncryption
+        self.addDecryption = self.crypter.addDecryption
+
 
 def saltedHash(inputData, salt, salt1, salt2):
     """
@@ -304,62 +388,3 @@ def updateKey(initialKey, currentKey, method):
     elif method == EncryptionMethod.ENCRYPTION_128BIT:
         tempKey128 = tempKey(initialKey, currentKey)
         return rc4.crypt(rc4.RC4Key(tempKey128), tempKey128)
-
-
-class SecuritySettings:
-    class Mode(IntEnum):
-        CLIENT = 0
-        SERVER = 1
-
-    def __init__(self, mode):
-        """
-        :type mode: SecuritySettings.Mode
-        """
-        self.mode = mode
-        self.encryptionMethod = None
-        self.clientRandom = None
-        self.serverRandom = None
-        self.publicKey = None
-        self.crypter = None
-
-    def generateCrypter(self):
-        if self.mode == SecuritySettings.Mode.CLIENT:
-            self.crypter = RC4Crypter.generateClient(self.clientRandom, self.serverRandom, self.encryptionMethod)
-        else:
-            self.crypter = RC4Crypter.generateServer(self.clientRandom, self.serverRandom, self.encryptionMethod)
-
-    def generateClientRandom(self):
-        self.clientRandom = Crypto.Random.get_random_bytes(32)
-
-        if self.serverRandom is not None:
-            self.generateCrypter()
-
-    def encryptClientRandom(self):
-        # Client random is stored as little-endian but crypto functions expect it to be in big-endian format.
-        return self.publicKey.encrypt(self.clientRandom[:: -1], 0)[0][:: -1]
-
-    def serverSecurityReceived(self, security):
-        self.encryptionMethod = security.encryptionMethod
-
-        if security.serverCertificate:
-            self.publicKey = security.serverCertificate.publicKey
-
-        self.setServerRandom(security.serverRandom)
-
-    def setServerRandom(self, random):
-        self.serverRandom = random
-
-        if self.clientRandom is not None:
-            self.generateCrypter()
-
-    def setClientRandom(self, random):
-        self.clientRandom = random
-
-        if self.serverRandom is not None:
-            self.generateCrypter()
-
-    def getCrypter(self):
-        if self.crypter is None:
-            raise StateError("The crypter was not generated. The crypter will be generated when the server random is received.")
-
-        return self.crypter

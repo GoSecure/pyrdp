@@ -57,3 +57,9 @@ class MITMFastPathObserver(MITMChannelObserver):
 
     def getEffectiveType(self, pdu):
         return "RDPFastPathPDU"
+
+    def onPDUReceived(self, pdu):
+        if pdu.header == 3:
+            return
+
+        MITMChannelObserver.onPDUReceived(self, pdu)

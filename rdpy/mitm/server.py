@@ -4,15 +4,14 @@ from twisted.internet import reactor
 from twisted.internet.protocol import ClientFactory
 
 from rdpy.core import log
-from rdpy.core.crypto import SecuritySettings
-from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, RDPFastPathLayerMode
+from rdpy.core.crypto import SecuritySettings, RC4CrypterProxy
+from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, RDPFastPathParserMode
 from rdpy.layer.mcs import MCSLayer
 from rdpy.layer.rdp.data import RDPDataLayer
-from rdpy.layer.rdp.fastpath import createFastPathLayer
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
 from rdpy.layer.rdp.security import createNonTLSSecurityLayer, TLSSecurityLayer
 from rdpy.layer.tcp import TCPLayer
-from rdpy.layer.tpkt import TPKTLayer
+from rdpy.layer.tpkt import TPKTLayer, createFastPathParser
 from rdpy.layer.x224 import X224Layer
 from rdpy.mcs.channel import MCSChannelFactory, MCSServerChannel
 from rdpy.mcs.server import MCSServerRouter
@@ -40,7 +39,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.serverData = None
         self.io = RDPDataLayer()
         self.securityLayer = None
-        self.fastPathLayer = None
+        self.fastPathParser = None
         self.rc4RSAKey = RSA.generate(2048)
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.SERVER)
 
@@ -204,28 +203,27 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
         if channelID == self.serverData.network.mcsChannelID:
             encryptionMethod = self.serverData.security.encryptionMethod
+            crypterProxy = RC4CrypterProxy()
 
             if self.useTLS:
-                crypter = None
                 self.securityLayer = TLSSecurityLayer()
             else:
-                self.securitySettings.generateClientRandom()
-                crypter = self.securitySettings.getCrypter()
-                self.securityLayer = createNonTLSSecurityLayer(encryptionMethod, crypter)
+                self.securityLayer = createNonTLSSecurityLayer(encryptionMethod, crypterProxy)
 
-            self.fastPathLayer = createFastPathLayer(self.useTLS, encryptionMethod, crypter, RDPFastPathLayerMode.SERVER)
+            self.securitySettings.setObserver(crypterProxy)
+            self.fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, crypterProxy, RDPFastPathParserMode.SERVER)
             self.licensingLayer = RDPLicensingLayer()
             channel = MCSServerChannel(mcs, userID, channelID)
 
             channel.setNext(self.securityLayer)
             self.securityLayer.setLicensingLayer(self.licensingLayer)
             self.securityLayer.setNext(self.io)
-            self.tpkt.setFastPathLayer(self.fastPathLayer)
+            self.tpkt.setFastPathParser(self.fastPathParser)
 
             slowPathObserver = MITMSlowPathObserver(self.io, "Server")
-            fastPathObserver = MITMFastPathObserver(self.fastPathLayer, "Server")
+            fastPathObserver = MITMFastPathObserver(self.tpkt, "Server")
             self.io.setObserver(slowPathObserver)
-            self.fastPathLayer.setObserver(fastPathObserver)
+            self.tpkt.setObserver(fastPathObserver)
             self.securityLayer.createObserver(
                 onClientInfoReceived = self.onClientInfoReceived,
                 onSecurityExchangeReceived = self.onSecurityExchangeReceived
@@ -251,7 +249,6 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.log_debug("Security Exchange received")
         clientRandom = self.rc4RSAKey.decrypt(pdu.clientRandom[:: -1])[:: -1]
         self.securitySettings.setClientRandom(clientRandom)
-        self.securityLayer.crypter = self.securitySettings.getCrypter()
 
     # Client Info Packet
     def onClientInfoReceived(self, pdu):
