@@ -2,7 +2,7 @@ from StringIO import StringIO
 
 from rdpy.core.packing import Uint8, Uint16BE, Uint16LE
 from rdpy.enum.rdp import RDPFastPathParserMode, RDPFastPathInputEventType, \
-    RDPFastPathSecurityFlags, FIPSVersion
+    RDPFastPathSecurityFlags, FIPSVersion, FastPathOutputCompressionType
 from rdpy.parser.rdp.security import RDPBasicSecurityParser
 from rdpy.pdu.rdp.fastpath import FastPathEventRaw, RDPFastPathPDU
 
@@ -238,7 +238,11 @@ class RDPOutputEventParser:
         if isinstance(data, FastPathEventRaw):
             return len(data.data)
 
-        return Uint16LE.unpack(data[2 : 4]) + 4
+        header = Uint8.unpack(data[0])
+        if header >> 6 == FastPathOutputCompressionType.FASTPATH_OUTPUT_COMPRESSION_USED:
+            return Uint16LE.unpack(data[2 : 4]) + 4
+        else:
+            return Uint16LE.unpack(data[1 : 3]) + 3
 
     def parse(self, data):
         return FastPathEventRaw(data)

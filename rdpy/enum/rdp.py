@@ -60,6 +60,8 @@ class RDPFastPathInputEventType(IntEnum):
     FASTPATH_INPUT_EVENT_UNICODE = 4
     FASTPATH_INPUT_EVENT_QOE_TIMESTAMP = 6
 
+class FastPathOutputCompressionType(IntEnum):
+    FASTPATH_OUTPUT_COMPRESSION_USED = 0x2
 
 class RDPSecurityHeaderType(IntEnum):
     NONE = 0
