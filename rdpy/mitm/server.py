@@ -34,6 +34,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         MCSUserObserver.__init__(self)
         self.targetHost = targetHost
         self.targetPort = targetPort
+        self.clientConnector = None
         self.client = None
         self.negotiationPDU = None
         self.serverData = None
@@ -54,7 +55,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.tpkt.setNext(self.x224)
         self.x224.setNext(self.mcs)
 
-        self.tcp.createObserver(onConnection=self.onConnection)
+        self.tcp.createObserver(onConnection=self.onConnection, onDisconnection=self.onDisconnection)
         self.x224.createObserver(onConnectionRequest=self.onConnectionRequest)
         self.mcs.setObserver(self.router)
         self.router.createObserver(
@@ -96,11 +97,29 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
     # Connect the client side to the target machine
     def connectClient(self):
-        reactor.connectTCP(self.targetHost, self.targetPort, self)
+        self.clientConnector = reactor.connectTCP(self.targetHost, self.targetPort, self)
 
     # Connection sequence #0
     def onConnection(self):
         self.log_debug("TCP connected")
+
+    def onDisconnection(self, reason):
+        self.log_debug("Connection closed")
+
+        if self.client:
+            self.client.disconnect()
+
+        self.disconnectConnector()
+
+    def disconnect(self):
+        self.log_debug("Disconnecting")
+        self.tcp.disconnect()
+        self.disconnectConnector()
+
+    def disconnectConnector(self):
+        if self.clientConnector:
+            self.clientConnector.disconnect()
+            self.clientConnector = None
 
     # X224 Request
     def onConnectionRequest(self, pdu):

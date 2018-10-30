@@ -55,7 +55,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
         self.mcs.setObserver(self.router)
 
-        self.tcp.createObserver(onConnection=self.startConnection)
+        self.tcp.createObserver(onConnection=self.startConnection, onDisconnection=self.onDisconnection)
         self.x224.createObserver(onConnectionConfirm=self.onConnectionConfirm)
         self.router.createObserver(onConnectResponse=self.onConnectResponse, onDisconnectProviderUltimatum=self.onDisconnectProviderUltimatum)
         self.gccConnect.createObserver(onPDUReceived=self.onConferenceCreateResponse)
@@ -82,6 +82,14 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         negotiation = self.server.getNegotiationPDU()
         parser = RDPNegotiationParser()
         self.x224.sendConnectionRequest(parser.write(negotiation))
+
+    def onDisconnection(self, reason):
+        self.log_debug("Connection closed")
+        self.server.disconnect()
+
+    def disconnect(self):
+        self.log_debug("Disconnecting")
+        self.tcp.disconnect()
 
     def onConnectionConfirm(self, pdu):
         """
