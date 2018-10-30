@@ -170,6 +170,9 @@ class RC4Crypter:
     def addDecryption(self):
         self.decryptKey.increment()
 
+    def getPadLength(self, plaintext):
+        raise NotImplementedError("FIPS is not implemented")
+
 class RC4CrypterProxy:
     def __init__(self):
         self.crypter = None
