@@ -1,4 +1,5 @@
 from StringIO import StringIO
+from collections import defaultdict
 
 from rdpy.core import ber, per
 from rdpy.core.error import InvalidValue, InvalidSize
@@ -41,6 +42,11 @@ class MCSParser:
             MCSPDUType.SEND_DATA_REQUEST: self.writeSendDataRequest,
             MCSPDUType.SEND_DATA_INDICATION: self.writeSendDataIndication,
         }
+
+        self.headerOptions = defaultdict(int)
+        self.headerOptions[MCSPDUType.DISCONNECT_PROVIDER_ULTIMATUM] = 1
+        self.headerOptions[MCSPDUType.ATTACH_USER_CONFIRM] = 2
+        self.headerOptions[MCSPDUType.CHANNEL_JOIN_CONFIRM] = 2
 
     def parse(self, data):
         """
@@ -261,7 +267,7 @@ class MCSParser:
             stream.write(Uint8.pack(ber.Class.BER_CLASS_APPL | ber.BerPc.BER_CONSTRUCT | ber.Tag.BER_TAG_MASK))
             stream.write(Uint8.pack(pdu.header))
         else:
-            stream.write(Uint8.pack(pdu.header << 2))
+            stream.write(Uint8.pack((pdu.header << 2) | self.headerOptions[pdu.header]))
 
         self.writers[pdu.header](stream, pdu)
         return stream.getvalue()
