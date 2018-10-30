@@ -126,6 +126,9 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
     def onConnectionRequest(self, pdu):
         self.log_debug("Connection Request received")
         self.negotiationPDU = self.rdpNegotiationParser.parse(pdu.payload)
+
+        # Only SSL is implemented, so remove other protocol flags
+        self.negotiationPDU.requestedProtocols &= NegotiationProtocols.SSL
         self.connectClient()
 
     # X224 Response

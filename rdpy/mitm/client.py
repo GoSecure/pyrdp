@@ -110,6 +110,11 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         :param gccConferenceCreateRequest: the conference create request.
         :param clientData: the RDPClientDataPDU.
         """
+        if self.useTLS:
+            self.logSSLParameters()
+
+        self.log_debug("Sending Connect Initial")
+
         if clientData.networkData:
             self.channelDefinitions = clientData.networkData.channelDefinitions
 
@@ -120,9 +125,6 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         """
         Called when an MCS Connect Response PDU is received.
         """
-        if self.useTLS:
-            self.logSSLParameters()
-
         if pdu.result != 0:
             log.error("MCS Connection Failed")
             self.server.onConnectResponse(pdu, None)
