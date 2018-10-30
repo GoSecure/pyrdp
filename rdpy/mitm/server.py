@@ -5,7 +5,8 @@ from twisted.internet.protocol import ClientFactory
 
 from rdpy.core import log
 from rdpy.core.crypto import SecuritySettings, RC4CrypterProxy
-from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, RDPFastPathParserMode
+from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, RDPFastPathParserMode, \
+    EncryptionMethod, EncryptionLevel
 from rdpy.layer.mcs import MCSLayer
 from rdpy.layer.rdp.data import RDPDataLayer
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
@@ -149,7 +150,12 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
             self.logSSLParameters()
 
         gccConferenceCreateRequestPDU = self.gcc.parse(pdu.payload)
+
+        # FIPS is not implemented, so remove this flag if it's set
         rdpClientDataPdu = self.rdpClientConnectionParser.parse(gccConferenceCreateRequestPDU.payload)
+        rdpClientDataPdu.securityData.encryptionMethods &= ~EncryptionMethod.ENCRYPTION_FIPS
+        rdpClientDataPdu.securityData.extEncryptionMethods &= ~EncryptionMethod.ENCRYPTION_FIPS
+
         self.client.onConnectInitial(gccConferenceCreateRequestPDU, rdpClientDataPdu)
         return True
 
@@ -177,8 +183,9 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
             )
 
         security = ServerSecurityData(
-            serverData.security.encryptionMethod,
-            serverData.security.encryptionLevel,
+            # FIPS is not implemented so avoid using that
+            serverData.security.encryptionMethod if serverData.security.encryptionMethod != EncryptionMethod.ENCRYPTION_FIPS else EncryptionMethod.ENCRYPTION_128BIT,
+            serverData.security.encryptionLevel if serverData.security.encryptionLevel != EncryptionLevel.ENCRYPTION_LEVEL_FIPS else EncryptionLevel.ENCRYPTION_LEVEL_HIGH,
             serverData.security.serverRandom,
             cert
         )
