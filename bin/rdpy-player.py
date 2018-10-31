@@ -37,7 +37,7 @@ global qApp  # Here so the linter stops crying :)
 
 
 # Sets the log level for the RDPY library ("rdpy").
-log.get_logger().setLevel(logging.INFO)
+log.get_logger().setLevel(logging.DEBUG)
 
 
 class ReaderThread(QThread):
@@ -131,6 +131,7 @@ class RDPConnectionTab(QWidget):
         QWidget.__init__(self, None, Qt.WindowFlags())
         qApp.aboutToQuit.connect(self.handle_close)
         self._viewer = viewer
+        self.speed_multiplier = 1
 
         self._write_in_caps = False
         self._text = QTextEdit()
@@ -162,20 +163,29 @@ class ControlBar(QWidget):
         self._play_action = lambda: None
         self._stop_action = lambda: None
         self._rewind_action = lambda: None
+        self._slider_change_action = lambda new_value: None
+        self.speed_label = QLabel("Speed: 1x")
 
         layout = QFormLayout()
         play_button = QPushButton("Play")
         stop_button = QPushButton("Pause")
         rewind_button = QPushButton("Restart")
+        self.speed_slider = QSlider(Qt.Horizontal)
+
         play_button.clicked.connect(self.on_play_clicked)
         stop_button.clicked.connect(self.on_stop_clicked)
         rewind_button.clicked.connect(self.on_rewind_clicked)
+        self.speed_slider.valueChanged.connect(self.on_slider_change)
         play_button.setMaximumWidth(100)
         stop_button.setMaximumWidth(100)
         rewind_button.setMaximumWidth(100)
+        self.speed_slider.setMaximumWidth(300)
+        self.speed_slider.setMinimum(1)
+        self.speed_slider.setMaximum(10)
         sub_layout = QFormLayout()
         layout.addRow(play_button, sub_layout)
         sub_layout.addRow(stop_button, rewind_button)
+        layout.addRow(self.speed_label, self.speed_slider)
 
         self.setLayout(layout)
 
@@ -199,8 +209,15 @@ class ControlBar(QWidget):
         """
         self._rewind_action = action
 
+    def set_slider_change_action(self, action):
+        """
+        :type action: Callable
+        """
+        self._slider_change_action = action
+
     def on_play_clicked(self):
         log.debug("Play clicked")
+        self._slider_change_action(self.speed_slider.value())
         self._play_action()
 
     def on_stop_clicked(self):
@@ -210,6 +227,12 @@ class ControlBar(QWidget):
     def on_rewind_clicked(self):
         log.debug("Rewind clicked")
         self._rewind_action()
+
+    def on_slider_change(self):
+        new_value = self.speed_slider.value()
+        log.debug("Slider changed value: {}".format(new_value))
+        self.speed_label.setText("Speed: {}x".format(new_value))
+        self._slider_change_action(new_value)
 
 
 class LivePlayerTab(RDPConnectionTab):
@@ -271,7 +294,6 @@ class ReplayTab(RDPConnectionTab):
         """
         self.file_name = file_name
         self.stopped = True
-        self.replay_index = 0
         RDPConnectionTab.__init__(self, QRemoteDesktop(800, 600, RssAdaptor()), None, *args, **kwargs)
 
         self._reader = reader
@@ -281,7 +303,7 @@ class ReplayTab(RDPConnectionTab):
         Start the RDP Connection replay
         """
         self.stopped = False
-        self.loop(self._reader.nextEvent())
+        self.loop(self._reader.nextEvent(), speed_multiplier=self.speed_multiplier)
 
     def stop(self):
         """
@@ -299,15 +321,18 @@ class ReplayTab(RDPConnectionTab):
         self._text.setText("")
         self.stop()
 
-    def loop(self, event):
+    def loop(self, event, speed_multiplier=1):
 
         if not self.stopped:
             self._handler.on_event_received(event)
             e = self._reader.nextEvent()
             if e is not None:
-                QTimer.singleShot(e.timestamp.value, lambda: self.loop(e))
+                QTimer.singleShot(e.timestamp.value / speed_multiplier, lambda: self.loop(e, speed_multiplier=self.speed_multiplier))
             else:
                 log.debug("RSS file ended, replay done.")
+
+    def set_speed_multiplier(self, value):
+        self.speed_multiplier = value
 
 
 class BasePlayerWindow(QTabWidget):
@@ -349,6 +374,9 @@ class BasePlayerWindow(QTabWidget):
     def on_rewind_clicked(self):
         log.debug("Rewind action not implemented")
 
+    def on_slider_change(self, new_value):
+        log.debug("Slider change action not implemented")
+
 
 class ReplaysWindow(BasePlayerWindow):
     """
@@ -377,6 +405,10 @@ class ReplaysWindow(BasePlayerWindow):
         name = self.currentWidget().replay_tab.file_name
         self.currentWidget().set_replay_tab(ReplayTab(rss.createFileReader(name), name))
         self.currentWidget().replay_tab.start()
+
+    def on_slider_change(self, new_value):
+        log.debug("Change replay speed to {}".format(new_value))
+        self.currentWidget().replay_tab.set_speed_multiplier(new_value)
 
 
 class LiveConnectionsWindow(BasePlayerWindow):
@@ -446,6 +478,7 @@ class PlayerTypeTabManager(QTabWidget):
         control_bar.set_play_action(self.on_play_clicked)
         control_bar.set_stop_action(self.on_stop_clicked)
         control_bar.set_rewind_action(self.on_rewind_clicked)
+        control_bar.set_slider_change_action(self.on_slider_change)
 
     def on_play_clicked(self):
         self.currentWidget().on_play_clicked()
@@ -455,6 +488,9 @@ class PlayerTypeTabManager(QTabWidget):
 
     def on_rewind_clicked(self):
         self.currentWidget().on_rewind_clicked()
+
+    def on_slider_change(self, new_value):
+        self.currentWidget().on_slider_change(new_value)
 
 
 class NotifyHandler(logging.StreamHandler):
