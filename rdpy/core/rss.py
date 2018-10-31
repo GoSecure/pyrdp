@@ -22,12 +22,14 @@ Remote Session Scenario File format
 Private protocol format to save events
 """
 import socket
+import time
 from Queue import Queue
 from threading import Thread
 
-from rdpy.core.type import CompositeType, FactoryType, UInt8, UInt16Le, UInt32Le, String, sizeof, StringStream, SocketStream
 from rdpy.core import log, error
-import time
+from rdpy.core.type import CompositeType, FactoryType, UInt8, UInt16Le, UInt32Le, String, sizeof, StringStream, \
+    SocketStream
+
 
 class EventType(object):
     """
@@ -361,6 +363,7 @@ class FileReader(object):
         @param f: {file} file pointer use to read
         """
         self._s = StringStream(f.read())
+
     def nextEvent(self):
         """
         @summary: read next event and return it
@@ -370,6 +373,12 @@ class FileReader(object):
         e = Event()
         self._s.readType(e)
         return e
+
+    def reset(self):
+        """
+        Resets the reader's cursor to the beginning of the stream.
+        """
+        self._s.pos = 0
 
 class SocketReader:
     """
