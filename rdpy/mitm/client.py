@@ -97,8 +97,10 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         """
         self.log_debug("Connection Confirm received")
 
-        negotiation = self.server.getNegotiationPDU()
-        if negotiation.tlsSupported:
+        parser = RDPNegotiationParser()
+        response = parser.parse(pdu.payload)
+
+        if response.tlsSelected:
             self.tcp.startTLS(ClientTLSContext())
             self.useTLS = True
 

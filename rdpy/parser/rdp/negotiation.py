@@ -1,9 +1,8 @@
 from StringIO import StringIO
 
 from rdpy.core.packing import Uint8, Uint16LE, Uint32LE, Int32LE
-from rdpy.enum.rdp import NegotiationProtocols
-from rdpy.exceptions import WritingError
-from rdpy.pdu.rdp.negotiation import RDPNegotiationRequestPDU
+from rdpy.exceptions import WritingError, UnknownPDUTypeError
+from rdpy.pdu.rdp.negotiation import RDPNegotiationRequestPDU, RDPNegotiationResponsePDU
 from rdpy.protocol.rdp.x224 import NegociationType
 
 
@@ -27,20 +26,32 @@ class RDPNegotiationParser:
         :return: A RDPNegotiationRequestPDU
         """
         cookie = ""
-        flags = 0
-        requested_protocols = NegotiationProtocols.NONE
 
         if "\r\n" in data:
             cookie = data[: data.index("\r\n")]
             data = data[data.index("\r\n") + 2 :]
 
         if len(data) == 8:
-            type = Uint8.unpack(data[0])
-            flags = Uint8.unpack(data[1])
-            length = Uint16LE.unpack(data[2 : 4])
-            requested_protocols = Uint32LE.unpack(data[4 : 8])
+            stream = StringIO(data)
+            type = Uint8.unpack(stream)
+            if type == NegociationType.TYPE_RDP_NEG_REQ:
+                return self.parseNegotiationRequest(stream, cookie)
+            elif type == NegociationType.TYPE_RDP_NEG_RSP:
+                return self.parseNegotiationResponse(stream)
+            else:
+                raise UnknownPDUTypeError("Trying to parse unknown negotiation PDU: %d" % type, type)
 
-        return RDPNegotiationRequestPDU(cookie, flags, requested_protocols)
+    def parseNegotiationRequest(self, stream, cookie):
+        flags = Uint8.unpack(stream)
+        length = Uint16LE.unpack(stream)
+        requestedProtocols = Uint32LE.unpack(stream)
+        return RDPNegotiationRequestPDU(cookie, flags, requestedProtocols)
+
+    def parseNegotiationResponse(self, stream):
+        flags = Uint8.unpack(stream)
+        length = Uint16LE.unpack(stream)
+        requestedProtocols = Uint32LE.unpack(stream)
+        return RDPNegotiationResponsePDU(flags, requestedProtocols)
 
     def write(self, pdu):
         """
@@ -76,5 +87,5 @@ class RDPNegotiationParser:
         stream.write(Uint8.pack(pdu.flags))
         stream.write(Uint8.pack(8))  # Length
         stream.write(Uint8.pack(0))  # Empty byte?
-        stream.write(Int32LE.pack(pdu.selected_protocol))
+        stream.write(Int32LE.pack(pdu.selectedProtocols))
         return stream.getvalue()
