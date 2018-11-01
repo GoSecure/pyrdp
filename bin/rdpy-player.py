@@ -148,7 +148,7 @@ class RDPConnectionTab(QWidget):
         self.setLayout(layout)
 
     def handle_close(self):
-        log.debug("Close tab")
+        ulog.debug("Close tab")
 
 
 class ControlBar(QWidget):
@@ -216,21 +216,21 @@ class ControlBar(QWidget):
         self._slider_change_action = action
 
     def on_play_clicked(self):
-        log.debug("Play clicked")
+        ulog.debug("Play clicked")
         self._slider_change_action(self.speed_slider.value())
         self._play_action()
 
     def on_stop_clicked(self):
-        log.debug("Stop clicked")
+        ulog.debug("Stop clicked")
         self._stop_action()
 
     def on_rewind_clicked(self):
-        log.debug("Rewind clicked")
+        ulog.debug("Rewind clicked")
         self._rewind_action()
 
     def on_slider_change(self):
         new_value = self.speed_slider.value()
-        log.debug("Slider changed value: {}".format(new_value))
+        ulog.debug("Slider changed value: {}".format(new_value))
         self.speed_label.setText("Speed: {}x".format(new_value))
         self._slider_change_action(new_value)
 
@@ -316,7 +316,7 @@ class ReplayTab(RDPConnectionTab):
         """
         Resets the replay to start it over.
         """
-        log.debug("Resetting current replay {}".format(self))
+        ulog.debug("Resetting current replay {}".format(self))
         self._reader.reset()
         self._text.setText("")
         self.stop()
@@ -329,7 +329,7 @@ class ReplayTab(RDPConnectionTab):
             if e is not None:
                 QTimer.singleShot(e.timestamp.value / speed_multiplier, lambda: self.loop(e, speed_multiplier=self.speed_multiplier))
             else:
-                log.debug("RSS file ended, replay done.")
+                ulog.debug("RSS file ended, replay done.")
 
     def set_speed_multiplier(self, value):
         self.speed_multiplier = value
@@ -372,10 +372,10 @@ class BasePlayerWindow(QTabWidget):
         log.debug("Stop action not implemented")
 
     def on_rewind_clicked(self):
-        log.debug("Rewind action not implemented")
+        ulog.debug("Rewind action not implemented")
 
     def on_slider_change(self, new_value):
-        log.debug("Slider change action not implemented")
+        ulog.debug("Slider change action not implemented")
 
 
 class ReplaysWindow(BasePlayerWindow):
@@ -386,28 +386,31 @@ class ReplaysWindow(BasePlayerWindow):
     def __init__(self, files_to_read):
         BasePlayerWindow.__init__(self)
         self.files_to_read = files_to_read
+        i = 0
         for file_name in files_to_read:
             outer_tab = ReplayTabHolder(None)
             inner_tab = ReplayTab(rss.createFileReader(file_name), file_name)
             outer_tab.set_replay_tab(inner_tab)
             self.addTab(outer_tab, file_name)
+            mlog.debug("Loading .rss file {} / {}".format(i, len(files_to_read)))
+            i += 1
 
     def on_play_clicked(self):
-        log.debug("Start .rss file")
+        ulog.debug("Start .rss file")
         self.currentWidget().replay_tab.start()
 
     def on_stop_clicked(self):
-        log.debug("Stop .rss file")
+        ulog.debug("Stop .rss file")
         self.currentWidget().replay_tab.stop()
 
     def on_rewind_clicked(self):
-        log.debug("Rewind: Create new ReplayTab and replace the old one.")
+        ulog.debug("Rewind: Create new ReplayTab and replace the old one.")
         name = self.currentWidget().replay_tab.file_name
         self.currentWidget().set_replay_tab(ReplayTab(rss.createFileReader(name), name))
         self.currentWidget().replay_tab.start()
 
     def on_slider_change(self, new_value):
-        log.debug("Change replay speed to {}".format(new_value))
+        ulog.debug("Change replay speed to {}".format(new_value))
         self.currentWidget().replay_tab.set_speed_multiplier(new_value)
 
 
@@ -473,7 +476,7 @@ class PlayerTypeTabManager(QTabWidget):
         QTabWidget.__init__(self)
         self.live_player_subwindow = LiveConnectionsWindow(bind_address, port)
         self.recorded_player_subwindow = ReplaysWindow(files_to_read)
-        self.addTab(self.recorded_player_subwindow, ".rss files")
+        self.addTab(self.recorded_player_subwindow, "RSS files")
         self.addTab(self.live_player_subwindow, "Live connections")
         control_bar.set_play_action(self.on_play_clicked)
         control_bar.set_stop_action(self.on_stop_clicked)
@@ -522,7 +525,7 @@ def prepare_loggers():
     liveplayer_logger.setLevel(logging.DEBUG)
 
     liveplayer_ui_logger = logging.getLogger("liveplayer.ui")
-    liveplayer_ui_logger.setLevel(logging.INFO)
+    liveplayer_ui_logger.setLevel(logging.DEBUG)
 
     formatter = logging.Formatter("[%(asctime)s] - %(name)s - %(levelname)s - %(message)s")
 
