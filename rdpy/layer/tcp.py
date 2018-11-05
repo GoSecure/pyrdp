@@ -1,3 +1,4 @@
+from rdpy.core import log
 from twisted.internet.protocol import Protocol, connectionDone
 
 from rdpy.core.newlayer import Layer, LayerObserver
@@ -22,6 +23,11 @@ class TCPLayer(Protocol, Layer):
     """
     def __init__(self):
         Layer.__init__(self)
+        self.logSSLRequired = False
+
+    def logSSLParameters(self):
+        log.get_ssl_logger().info(self.transport.protocol._tlsConnection.client_random(),
+                                  self.transport.protocol._tlsConnection.master_key())
 
     def connectionMade(self):
         """
@@ -41,6 +47,10 @@ class TCPLayer(Protocol, Layer):
         :param data: The byte stream (without the TCP header)
         :type data: str
         """
+        if self.logSSLRequired:
+            self.logSSLParameters()
+            self.logSSLRequired = False
+
         self.next.recv(data)
 
     def send(self, data):
@@ -57,4 +67,5 @@ class TCPLayer(Protocol, Layer):
         :param tlsContext: Twisted TLS Context object (like DefaultOpenSSLContextFactory)
         :type tlsContext: ServerTLSContext
         """
+        self.logSSLRequired = True
         self.transport.startTLS(tlsContext)

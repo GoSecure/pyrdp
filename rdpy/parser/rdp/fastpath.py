@@ -3,9 +3,9 @@ from StringIO import StringIO
 
 from rdpy.core.packing import Uint8, Uint16BE, Uint16LE, Uint64LE
 from rdpy.enum.rdp import RDPFastPathParserMode, RDPFastPathInputEventType, \
-    RDPFastPathSecurityFlags, FIPSVersion, FastPathOutputCompressionType
+    RDPFastPathSecurityFlags, FIPSVersion, FastPathOutputCompressionType, RDPFastPathOutputEventType
 from rdpy.parser.rdp.security import RDPBasicSecurityParser
-from rdpy.pdu.rdp.fastpath import FastPathEventRaw, RDPFastPathPDU, FastPathEventScanCode
+from rdpy.pdu.rdp.fastpath import FastPathEventRaw, RDPFastPathPDU, FastPathEventScanCode, FastPathBitmapEvent, FastPathOrdersEvent
 
 
 class RDPBasicFastPathParser(RDPBasicSecurityParser):
@@ -262,16 +262,83 @@ class RDPOutputEventParser:
     def getEventLength(self, data):
         if isinstance(data, FastPathEventRaw):
             return len(data.data)
+        elif isinstance(data, str):
+            header = Uint8.unpack(data[0])
+            if self.isCompressed(header):
+                return Uint16LE.unpack(data[2 : 4]) + 4
+            else:
+                return Uint16LE.unpack(data[1 : 3]) + 3
 
-        header = Uint8.unpack(data[0])
-        if header >> 6 == FastPathOutputCompressionType.FASTPATH_OUTPUT_COMPRESSION_USED:
-            return Uint16LE.unpack(data[2 : 4]) + 4
-        else:
-            return Uint16LE.unpack(data[1 : 3]) + 3
+        size = 3
+
+        if self.isCompressed(data.header):
+            size += 1
+
+        if isinstance(data, FastPathOrdersEvent):
+            size += 2 + len(data.orderData)
+        elif isinstance(data, FastPathBitmapEvent):
+            size += len(data.bitmapUpdateData)
+
+        return size
+
+    def isCompressed(self, header):
+        return (header >> 6) == FastPathOutputCompressionType.FASTPATH_OUTPUT_COMPRESSION_USED
 
     def parse(self, data):
+        stream = StringIO(data)
+        header = Uint8.unpack(stream)
+
+        compressionFlags = None
+
+        if self.isCompressed(header):
+            compressionFlags = Uint16LE.unpack(stream)
+
+        size = Uint16LE.unpack(stream)
+
+        if header & 0xf == RDPFastPathOutputEventType.FASTPATH_UPDATETYPE_BITMAP:
+            return self.parseBitmapEvent(stream, header, compressionFlags, size)
+        elif header & 0xf == RDPFastPathOutputEventType.FASTPATH_UPDATETYPE_ORDERS:
+            return self.parseOrdersEvent(stream, header, compressionFlags, size)
+
         return FastPathEventRaw(data)
+
+    def parseBitmapEvent(self, stream, header, compressionFlags, size):
+        bitmapUpdateData = stream.read(size)
+        return FastPathBitmapEvent(header, compressionFlags, bitmapUpdateData)
+
+    def writeBitmapEvent(self, stream, event):
+        Uint16LE.pack(len(event.bitmapUpdateData), stream)
+        stream.write(event.bitmapUpdateData)
+
+    def parseOrdersEvent(self, stream, header, compressionFlags, size):
+        orderCount = Uint16LE.unpack(stream)
+        orderData = stream.read(size - 2)
+        assert len(orderData) == size - 2
+        return FastPathOrdersEvent(header, compressionFlags, orderCount, orderData)
+
+    def writeOrdersEvent(self, stream, event):
+        Uint16LE.pack(event.orderCount, stream)
+        stream.write(event.orderData)
 
     def write(self, event):
         if isinstance(event, FastPathEventRaw):
             return event.data
+
+        stream = StringIO()
+        Uint8.pack(event.header, stream)
+
+        if event.compressionFlags:
+            Uint8.pack(event.compressionFlags, stream)
+
+        updateStream = StringIO()
+
+        if isinstance(event, FastPathBitmapEvent):
+            self.writeBitmapEvent(stream, event)
+        elif isinstance(event, FastPathOrdersEvent):
+            self.writeOrdersEvent(updateStream, event)
+
+        updateData = updateStream.getvalue()
+        Uint16LE.pack(len(updateData), stream)
+        stream.write(updateData)
+
+        return stream.getvalue()

@@ -150,10 +150,6 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
                 :param pdu: The GCC ConferenceCreateResponse PDU that contains the ClientData PDU.
                 """
         self.log_debug("Connect Initial received")
-
-        if self.useTLS:
-            self.logSSLParameters()
-
         gccConferenceCreateRequestPDU = self.gcc.parse(pdu.payload)
 
         # FIPS is not implemented, so remove this flag if it's set

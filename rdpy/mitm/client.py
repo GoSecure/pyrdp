@@ -64,10 +64,6 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
     def getProtocol(self):
         return self.tcp
 
-    def logSSLParameters(self):
-        log.get_ssl_logger().info(self.tpkt.previous.transport.protocol._tlsConnection.client_random(),
-                                  self.tpkt.previous.transport.protocol._tlsConnection.master_key())
-
     def log_debug(self, string):
         log.debug("Client: %s" % string)
 
@@ -112,9 +108,6 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         :param gccConferenceCreateRequest: the conference create request.
         :param clientData: the RDPClientDataPDU.
         """
-        if self.useTLS:
-            self.logSSLParameters()
-
         self.log_debug("Sending Connect Initial")
 
         if clientData.networkData:
