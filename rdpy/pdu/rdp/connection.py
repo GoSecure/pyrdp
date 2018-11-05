@@ -80,6 +80,11 @@ class ClientClusterData:
 
 
 class RDPServerDataPDU(PDU):
+    """
+    :type core: ServerCoreData
+    :type security: ServerSecurityData
+    :type network: ServerNetworkData
+    """
     def __init__(self, core, security, network):
         PDU.__init__(self)
         self.core = core

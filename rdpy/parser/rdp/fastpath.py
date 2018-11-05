@@ -1,6 +1,8 @@
 import time
 from StringIO import StringIO
 
+from rdpy.core import log
+
 from rdpy.core.packing import Uint8, Uint16BE, Uint16LE, Uint64LE
 from rdpy.enum.rdp import RDPFastPathParserMode, RDPFastPathInputEventType, \
     RDPFastPathSecurityFlags, FIPSVersion, FastPathOutputCompressionType, RDPFastPathOutputEventType
@@ -291,7 +293,7 @@ class RDPOutputEventParser:
         compressionFlags = None
 
         if self.isCompressed(header):
-            compressionFlags = Uint16LE.unpack(stream)
+            compressionFlags = Uint8.unpack(stream)
 
         size = Uint16LE.unpack(stream)
 
@@ -307,7 +309,6 @@ class RDPOutputEventParser:
         return FastPathBitmapEvent(header, compressionFlags, bitmapUpdateData)
 
     def writeBitmapEvent(self, stream, event):
-        Uint16LE.pack(len(event.bitmapUpdateData), stream)
         stream.write(event.bitmapUpdateData)
 
     def parseOrdersEvent(self, stream, header, compressionFlags, size):
@@ -327,13 +328,13 @@ class RDPOutputEventParser:
         stream = StringIO()
         Uint8.pack(event.header, stream)
 
-        if event.compressionFlags:
-            Uint8.pack(event.compressionFlags, stream)
+        if event.compressionFlags is not None:
+            Uint8.pack(event.compressionFlags if event.compressionFlags else 0, stream)
 
         updateStream = StringIO()
 
         if isinstance(event, FastPathBitmapEvent):
-            self.writeBitmapEvent(stream, event)
+            self.writeBitmapEvent(updateStream, event)
         elif isinstance(event, FastPathOrdersEvent):
             self.writeOrdersEvent(updateStream, event)
 
