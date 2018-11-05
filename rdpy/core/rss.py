@@ -29,6 +29,8 @@ from threading import Thread
 from rdpy.core import log, error
 from rdpy.core.type import CompositeType, FactoryType, UInt8, UInt16Le, UInt32Le, String, sizeof, StringStream, \
     SocketStream
+from rdpy.layer.tpkt import TPKTLayer
+from rdpy.parser.rdp.fastpath import RDPInputEventParser
 
 
 class EventType(object):
@@ -380,6 +382,43 @@ class FileReader(object):
         """
         self._s.pos = 0
 
+
+class NewFileReader(FileReader):
+    """
+    Class that manages reading of a RDP replay file event per event.
+    """
+
+    def __init__(self, f):
+        super(NewFileReader, self).__init__(f)
+        self.tpkt_layer = TPKTLayer()
+        self.tpkt_layer.setObserver(self)
+        self._events_queue = Queue()
+        self.rdpInputEventParser = RDPInputEventParser()
+
+    def nextEvent(self):
+        """
+        :return: The next RDP Event to read.
+        """
+        if self._events_queue.empty():
+            self.tpkt_layer.recv(self._s.read())
+
+        # After tpkt_layer.recv, new events should be in the Queue. if not, its over.
+        if not self._events_queue.empty():
+            return self._events_queue.get()
+
+    def onPDUReceived(self, pdu):
+        """
+        :type pdu: rdpy.pdu.tpkt.TPKTPDU
+        """
+        try:
+            rdpPdu = self.rdpInputEventParser.parse(pdu.payload, with_timestamp=True)
+
+            self._events_queue.put(rdpPdu)
+            pass
+        except:
+            log.error("Error occured when parsing RDP event: {}".format(pdu.payload))
+
+
 class SocketReader:
     """
     @summary: RSS Socket reader
@@ -434,4 +473,8 @@ def createFileReader(path):
     @return: {FileReader}
     """
     with open(path, "rb") as f:
-        return FileReader(f)
+        if path.endswith(".rss"):
+            return FileReader(f)
+        else:
+            return NewFileReader(f)
+

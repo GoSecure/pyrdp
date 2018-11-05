@@ -1,9 +1,12 @@
 from rdpy.core import log
 from rdpy.layer.rdp.data import RDPDataLayerObserver, RDPFastPathDataLayerObserver
+from rdpy.pdu.rdp.fastpath import RDPFastPathPDU
+from rdpy.recording.recorder import FileRecorder
 
 
 class MITMChannelObserver:
     def __init__(self, layer, innerObserver, name = ""):
+        self.recorder = None
         self.layer = layer
         self.innerObserver = innerObserver
         self.name = name
@@ -27,6 +30,11 @@ class MITMChannelObserver:
 
     def sendPDU(self, pdu):
         log.debug("%s: sending %s" % (self.name, self.getEffectiveType(pdu)))
+        if not self.recorder:
+            self.recorder = FileRecorder()
+        if isinstance(pdu, RDPFastPathPDU):
+            for event in pdu.events:
+                self.recorder.record(event)
         self.layer.sendPDU(pdu)
 
     def sendData(self, data):
@@ -52,7 +60,7 @@ class MITMSlowPathObserver(MITMChannelObserver):
 
 
 class MITMFastPathObserver(MITMChannelObserver):
-    def __init__(self, layer, name = ""):
+    def __init__(self, layer, name=""):
         MITMChannelObserver.__init__(self, layer, RDPFastPathDataLayerObserver(), name)
 
     def getEffectiveType(self, pdu):

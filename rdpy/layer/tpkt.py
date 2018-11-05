@@ -48,7 +48,7 @@ class TPKTLayer(Layer):
         data = self.buffer + data
 
         while len(data) > 0:
-            header = Uint8.unpack(data[0]) & 3
+            header = Uint8.unpack(data[0]) & 0b00000011
             parser = self.parsers[header]
 
             if not parser.isCompletePDU(data):

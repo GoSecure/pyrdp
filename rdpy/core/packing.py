@@ -51,3 +51,6 @@ class Uint32LE(Integer):
 
 class Uint32BE(Integer):
     FORMAT = ">I"
+
+class Uint64LE(Integer):
+    FORMAT = "<Q"
