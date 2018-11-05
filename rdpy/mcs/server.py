@@ -113,7 +113,7 @@ class MCSServerRouter(MCSRouter, Subject):
         self.observer.onChannelJoinRequest(pdu)
 
     @whenConnected
-    def sendChannelJoinConfirm(self, result, userID, channelID):
+    def sendChannelJoinConfirm(self, result, userID, channelID, notify = True):
         """
         Send a Channel Join Confirm PDU.
         :param result: the result code (0 if the request was successful).
@@ -122,11 +122,15 @@ class MCSServerRouter(MCSRouter, Subject):
         :type result: int
         :param channelID: the channel ID.
         :type channelID: int
+        :param notify: True if the user should be notified (default).
+        :type notify: bool
         """
-        if result == 0:
-            self.users[userID].channelJoinAccepted(self.mcs, channelID)
-        else:
-            self.users[userID].channelJoinRefused(result, channelID)
+
+        if notify:
+            if result == 0:
+                self.users[userID].channelJoinAccepted(self.mcs, channelID)
+            else:
+                self.users[userID].channelJoinRefused(result, channelID)
 
         pdu = MCSChannelJoinConfirmPDU(result, userID, channelID, channelID, "")
         self.mcs.send(pdu)

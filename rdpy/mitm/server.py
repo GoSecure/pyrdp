@@ -232,7 +232,10 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
     # MCS Channel Join Request
     def onChannelJoinRequest(self, pdu):
-        self.client.onChannelJoinRequest(pdu)
+        if pdu.channelID == self.serverData.network.mcsChannelID:
+            self.client.onChannelJoinRequest(pdu)
+        else:
+            self.router.sendChannelJoinConfirm(15, pdu.initiator, pdu.channelID, False)
 
     # MCS Channel Join Confirm successful
     def onChannelJoinAccepted(self, userID, channelID):
