@@ -205,7 +205,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         )
 
         serverData.core.clientRequestedProtocols = self.originalNegotiationPDU.requestedProtocols
-        serverData.network.channels = [0] * len(serverData.network.channels)
+        serverData.network.channels = []
 
         self.securitySettings.serverSecurityReceived(security)
         self.serverData = RDPServerDataPDU(serverData.core, security, serverData.network)
