@@ -266,7 +266,7 @@ class RDPOutputEventParser:
         compressionFlags = None
 
         if self.isCompressed(header):
-            compressionFlags = Uint16LE.unpack(stream)
+            compressionFlags = Uint8.unpack(stream)
 
         size = Uint16LE.unpack(stream)
 
