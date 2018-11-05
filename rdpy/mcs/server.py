@@ -19,6 +19,12 @@ class MCSServerConnectionObserver(Observer):
         """
         pass
 
+    def onDisconnectProviderUltimatum(self, pdu):
+        """
+        Method called on Disconnect Provider Ultimatum PDUs.
+        """
+        pass
+
     def onAttachUserRequest(self, pdu):
         """
         Callback for when an Attach User Request PDU is received. The observer should eventually call
@@ -58,7 +64,13 @@ class MCSServerRouter(MCSRouter, Subject):
         """
         if self.observer.onConnectionReceived(pdu):
             self.connected = True
-    
+
+    def onDisconnectProviderUltimatum(self, pdu):
+        """
+        Called when a Disconnect Provider Ultimatum PDU is received
+        """
+        self.observer.onDisconnectProviderUltimatum(pdu)
+
     @whenConnected
     def onErectDomainRequest(self, pdu):
         """

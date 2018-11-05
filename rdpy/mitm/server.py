@@ -26,7 +26,7 @@ from rdpy.parser.rdp.negotiation import RDPNegotiationParser
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.pdu.mcs import MCSConnectResponsePDU
 from rdpy.pdu.rdp.connection import ProprietaryCertificate, ServerSecurityData, RDPServerDataPDU
-from rdpy.pdu.rdp.negotiation import RDPNegotiationResponsePDU
+from rdpy.pdu.rdp.negotiation import RDPNegotiationResponsePDU, RDPNegotiationRequestPDU
 from rdpy.protocol.rdp.x224 import ServerTLSContext
 
 
@@ -37,13 +37,16 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.targetPort = targetPort
         self.clientConnector = None
         self.client = None
-        self.negotiationPDU = None
+        self.originalNegotiationPDU = None
+        self.targetNegotiationPDU = None
         self.serverData = None
         self.io = RDPDataLayer()
         self.securityLayer = None
         self.fastPathParser = None
         self.rc4RSAKey = RSA.generate(2048)
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.SERVER)
+
+        self.supportedChannels = []
 
         self.useTLS = False
         self.tcp = TCPLayer()
@@ -61,6 +64,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.mcs.setObserver(self.router)
         self.router.createObserver(
             onConnectionReceived = self.onConnectInitial,
+            onDisconnectProviderUltimatum = self.onDisconnectProviderUltimatum,
             onAttachUserRequest = self.onAttachUserRequest,
             onChannelJoinRequest = self.onChannelJoinRequest
         )
@@ -79,7 +83,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         return self.tcp
 
     def getNegotiationPDU(self):
-        return self.negotiationPDU
+        return self.targetNegotiationPDU
 
     # Build protocol for the client side of the connection
     def buildProtocol(self, addr):
@@ -112,6 +116,10 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
         self.disconnectConnector()
 
+    def onDisconnectProviderUltimatum(self, pdu):
+        self.log_debug("Disconnect Provider Ultimatum PDU received")
+        self.disconnect()
+
     def disconnect(self):
         self.log_debug("Disconnecting")
         self.tcp.disconnect()
@@ -125,19 +133,26 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
     # X224 Request
     def onConnectionRequest(self, pdu):
         self.log_debug("Connection Request received")
-        self.negotiationPDU = self.rdpNegotiationParser.parse(pdu.payload)
 
-        # Only SSL is implemented, so remove other protocol flags
-        self.negotiationPDU.requestedProtocols &= NegotiationProtocols.SSL
+        # We need to save the original negotiation PDU because Windows will cut the connection if it sees that the requested protocols have changed.
+        self.originalNegotiationPDU = self.rdpNegotiationParser.parse(pdu.payload)
+        self.targetNegotiationPDU = RDPNegotiationRequestPDU(
+            self.originalNegotiationPDU.cookie,
+            self.originalNegotiationPDU.flags,
+
+            # Only SSL is implemented, so remove other protocol flags
+            self.originalNegotiationPDU.requestedProtocols & NegotiationProtocols.SSL
+        )
+
         self.connectClient()
 
     # X224 Response
     def onConnectionConfirm(self, _):
-        protocols = NegotiationProtocols.SSL if self.negotiationPDU.tlsSupported else NegotiationProtocols.NONE
+        protocols = NegotiationProtocols.SSL if self.originalNegotiationPDU.tlsSupported else NegotiationProtocols.NONE
         payload = self.rdpNegotiationParser.write(RDPNegotiationResponsePDU(0x00, protocols))
         self.x224.sendConnectionConfirm(payload, source = 0x1234)
 
-        if self.negotiationPDU.tlsSupported:
+        if self.originalNegotiationPDU.tlsSupported:
             self.tcp.startTLS(ServerTLSContext(privateKeyFileName=self.privateKeyFileName, certificateFileName=self.certificateFileName))
             self.useTLS = True
 
@@ -188,6 +203,10 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
             serverData.security.serverRandom,
             cert
         )
+
+        serverData.core.clientRequestedProtocols = self.originalNegotiationPDU.requestedProtocols
+        serverData.network.channels = [0] * len(serverData.network.channels)
+
         self.securitySettings.serverSecurityReceived(security)
         self.serverData = RDPServerDataPDU(serverData.core, security, serverData.network)
 
@@ -226,7 +245,9 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
     def buildChannel(self, mcs, userID, channelID):
         self.log_debug("building channel {} for user {}".format(channelID, userID))
 
-        if channelID == self.serverData.network.mcsChannelID:
+        if channelID != self.serverData.network.mcsChannelID:
+            return None
+        else:
             encryptionMethod = self.serverData.security.encryptionMethod
             crypterProxy = RC4CrypterProxy()
 
