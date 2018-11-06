@@ -5,8 +5,8 @@ from twisted.internet.protocol import ClientFactory
 
 from rdpy.core import log
 from rdpy.core.crypto import SecuritySettings, RC4CrypterProxy
-from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, RDPFastPathParserMode, \
-    EncryptionMethod, EncryptionLevel
+from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, EncryptionMethod, EncryptionLevel
+from rdpy.enum.core import ParserMode
 from rdpy.layer.mcs import MCSLayer
 from rdpy.layer.rdp.data import RDPDataLayer
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
@@ -260,7 +260,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
                 self.securityLayer = createNonTLSSecurityLayer(encryptionMethod, crypterProxy)
 
             self.securitySettings.setObserver(crypterProxy)
-            self.fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, crypterProxy, RDPFastPathParserMode.SERVER)
+            self.fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, crypterProxy, ParserMode.SERVER)
             self.licensingLayer = RDPLicensingLayer()
             channel = MCSServerChannel(mcs, userID, channelID)
 

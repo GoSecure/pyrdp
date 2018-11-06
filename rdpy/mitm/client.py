@@ -1,6 +1,6 @@
 from rdpy.core import log
 from rdpy.core.crypto import SecuritySettings
-from rdpy.enum.rdp import RDPFastPathParserMode
+from rdpy.enum.core import ParserMode
 from rdpy.layer.gcc import GCCClientConnectionLayer
 from rdpy.layer.mcs import MCSLayer, MCSClientConnectionLayer
 from rdpy.layer.rdp.connection import RDPClientConnectionLayer
@@ -174,7 +174,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
                 crypter = self.securitySettings.getCrypter()
                 self.securityLayer = createNonTLSSecurityLayer(encryptionMethod, crypter)
 
-            self.fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, crypter, RDPFastPathParserMode.CLIENT)
+            self.fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, crypter, ParserMode.CLIENT)
             self.licensingLayer = RDPLicensingLayer()
             channel = MCSClientChannel(mcs, userID, channelID)
 
