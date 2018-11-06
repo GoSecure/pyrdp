@@ -14,7 +14,7 @@ from rdpy.mcs.channel import MCSChannelFactory, MCSClientChannel
 from rdpy.mcs.client import MCSClientRouter
 from rdpy.mcs.user import MCSUserObserver
 from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver
-from rdpy.parser.rdp.negotiation import RDPNegotiationParser
+from rdpy.parser.rdp.negotiation import RDPNegotiationResponseParser, RDPNegotiationRequestParser
 from rdpy.protocol.rdp.x224 import ClientTLSContext
 
 
@@ -76,7 +76,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         """
         self.log_debug("TCP connected")
         negotiation = self.server.getNegotiationPDU()
-        parser = RDPNegotiationParser()
+        parser = RDPNegotiationRequestParser()
         self.x224.sendConnectionRequest(parser.write(negotiation))
 
     def onDisconnection(self, reason):
@@ -93,7 +93,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         """
         self.log_debug("Connection Confirm received")
 
-        parser = RDPNegotiationParser()
+        parser = RDPNegotiationResponseParser()
         response = parser.parse(pdu.payload)
 
         if response.tlsSelected:

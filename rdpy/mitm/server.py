@@ -22,7 +22,7 @@ from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver
 from rdpy.parser.gcc import GCCParser
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.connection import RDPClientConnectionParser, RDPServerConnectionParser
-from rdpy.parser.rdp.negotiation import RDPNegotiationParser
+from rdpy.parser.rdp.negotiation import RDPNegotiationRequestParser, RDPNegotiationResponseParser
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.pdu.mcs import MCSConnectResponsePDU
 from rdpy.pdu.rdp.connection import ProprietaryCertificate, ServerSecurityData, RDPServerDataPDU
@@ -77,7 +77,6 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.rdpClientInfoParser = RDPClientInfoParser()
         self.rdpClientConnectionParser = RDPClientConnectionParser()
         self.rdpServerConnectionParser = RDPServerConnectionParser()
-        self.rdpNegotiationParser = RDPNegotiationParser()
 
     def getProtocol(self):
         return self.tcp
@@ -135,13 +134,19 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.log_debug("Connection Request received")
 
         # We need to save the original negotiation PDU because Windows will cut the connection if it sees that the requested protocols have changed.
-        self.originalNegotiationPDU = self.rdpNegotiationParser.parse(pdu.payload)
+        parser = RDPNegotiationRequestParser()
+        self.originalNegotiationPDU = parser.parse(pdu.payload)
+
         self.targetNegotiationPDU = RDPNegotiationRequestPDU(
             self.originalNegotiationPDU.cookie,
             self.originalNegotiationPDU.flags,
 
             # Only SSL is implemented, so remove other protocol flags
-            self.originalNegotiationPDU.requestedProtocols & NegotiationProtocols.SSL
+            self.originalNegotiationPDU.requestedProtocols & NegotiationProtocols.SSL if self.originalNegotiationPDU.requestedProtocols is not None else None,
+
+            self.originalNegotiationPDU.correlationFlags,
+            self.originalNegotiationPDU.correlationID,
+            self.originalNegotiationPDU.reserved,
         )
 
         self.connectClient()
@@ -149,7 +154,9 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
     # X224 Response
     def onConnectionConfirm(self, _):
         protocols = NegotiationProtocols.SSL if self.originalNegotiationPDU.tlsSupported else NegotiationProtocols.NONE
-        payload = self.rdpNegotiationParser.write(RDPNegotiationResponsePDU(0x00, protocols))
+
+        parser = RDPNegotiationResponseParser()
+        payload = parser.write(RDPNegotiationResponsePDU(0x00, protocols))
         self.x224.sendConnectionConfirm(payload, source = 0x1234)
 
         if self.originalNegotiationPDU.tlsSupported:

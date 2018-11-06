@@ -28,6 +28,8 @@ from rdpy.core import log
 from rdpy.core.layer import LayerAutomata, IStreamSender
 from rdpy.core.type import UInt8, UInt16Le, UInt16Be, UInt32Le, CompositeType, sizeof, String
 from rdpy.core.error import InvalidExpectedDataException, RDPSecurityNegoFail
+from rdpy.enum.negotiation import NegotiationType
+
 
 class MessageType(object):
     """
@@ -39,13 +41,6 @@ class MessageType(object):
     X224_TPDU_DATA = 0xF0
     X224_TPDU_ERROR = 0x70
 
-class NegociationType(object):
-    """
-    @summary: Negotiation header
-    """
-    TYPE_RDP_NEG_REQ = 0x01
-    TYPE_RDP_NEG_RSP = 0x02
-    TYPE_RDP_NEG_FAILURE = 0x03
 
 class Protocols(object):
     """
@@ -119,8 +114,8 @@ class Negotiation(CompositeType):
         self.flag = UInt8(0)
         #always 8
         self.len = UInt16Le(0x0008, constant = True)
-        self.selectedProtocol = UInt32Le(conditional = lambda: (self.code.value != NegociationType.TYPE_RDP_NEG_FAILURE))
-        self.failureCode = UInt32Le(conditional = lambda: (self.code.value == NegociationType.TYPE_RDP_NEG_FAILURE))
+        self.selectedProtocol = UInt32Le(conditional = lambda: (self.code.value != NegotiationType.TYPE_RDP_NEG_FAILURE))
+        self.failureCode = UInt32Le(conditional = lambda: (self.code.value == NegotiationType.TYPE_RDP_NEG_FAILURE))
 
 class X224Layer(LayerAutomata, IStreamSender):
     """
@@ -178,7 +173,7 @@ class Client(X224Layer):
         @see: http://msdn.microsoft.com/en-us/library/cc240500.aspx
         """
         message = ClientConnectionRequestPDU()
-        message.protocolNeg.code.value = NegociationType.TYPE_RDP_NEG_REQ
+        message.protocolNeg.code.value = NegotiationType.TYPE_RDP_NEG_REQ
         message.protocolNeg.selectedProtocol.value = self._requestedProtocol
         self._transport.send(message)
         self.setNextState(self.recvConnectionConfirm)
@@ -281,7 +276,7 @@ class Server(X224Layer):
             log.warning("server reject client because doesn't support SSL")
             #send error message and quit
             message = ServerConnectionConfirm()
-            message.protocolNeg.code.value = NegociationType.TYPE_RDP_NEG_FAILURE
+            message.protocolNeg.code.value = NegotiationType.TYPE_RDP_NEG_FAILURE
             message.protocolNeg.failureCode.value = NegotiationFailureCode.SSL_REQUIRED_BY_SERVER
             self._transport.send(message)
             self.close()
@@ -297,7 +292,7 @@ class Server(X224Layer):
         @see : http://msdn.microsoft.com/en-us/library/cc240501.aspx
         """
         message = ServerConnectionConfirm()
-        message.protocolNeg.code.value = NegociationType.TYPE_RDP_NEG_RSP
+        message.protocolNeg.code.value = NegotiationType.TYPE_RDP_NEG_RSP
         message.protocolNeg.selectedProtocol.value = self._selectedProtocol
         self._transport.send(message)
         if self._selectedProtocol == Protocols.PROTOCOL_SSL:
