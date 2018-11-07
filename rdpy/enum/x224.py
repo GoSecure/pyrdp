@@ -3,7 +3,7 @@ from enum import IntEnum
 
 class X224PDUType(IntEnum):
     """
-    X224 header codes
+    X224 header codes.
     """
 
     X224_TPDU_CONNECTION_REQUEST = 0x0E

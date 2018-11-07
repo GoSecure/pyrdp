@@ -21,7 +21,14 @@ class MCSPDUType(IntEnum):
 
 
 class MCSResult(IntEnum):
-    RT_SUCCESSFUL = 0x00
+    """
+    MCS Result enumeration.
+    """
+    RT_SUCCESSFUL = 0
+    RT_USER_REJECTED = 15
 
 class MCSChannelID(IntEnum):
+    """
+    MCS Channel ID definitions.
+    """
     USERCHANNEL_BASE = 1001

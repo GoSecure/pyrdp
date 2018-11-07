@@ -6,6 +6,7 @@ from twisted.internet.protocol import ClientFactory
 from rdpy.core import log
 from rdpy.core.crypto import SecuritySettings, RC4CrypterProxy
 from rdpy.enum.core import ParserMode
+from rdpy.enum.mcs import MCSResult
 from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, EncryptionMethod, EncryptionLevel
 from rdpy.layer.mcs import MCSLayer
 from rdpy.layer.rdp.data import RDPDataLayer
@@ -249,7 +250,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         if pdu.channelID == self.serverData.network.mcsChannelID:
             self.client.onChannelJoinRequest(pdu)
         else:
-            self.router.sendChannelJoinConfirm(15, pdu.initiator, pdu.channelID, False)
+            self.router.sendChannelJoinConfirm(MCSResult.RT_USER_REJECTED, pdu.initiator, pdu.channelID, False)
 
     def onChannelJoinAccepted(self, userID, channelID):
         # MCS Channel Join Confirm successful
