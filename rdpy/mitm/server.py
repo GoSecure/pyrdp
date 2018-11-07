@@ -1,3 +1,5 @@
+import datetime
+import random
 from Crypto.PublicKey import RSA
 
 from twisted.internet import reactor
@@ -6,11 +8,9 @@ from twisted.internet.protocol import ClientFactory
 from rdpy.core import log
 from rdpy.core.crypto import SecuritySettings, RC4CrypterProxy
 from rdpy.enum.core import ParserMode
-
 from rdpy.enum.mcs import MCSResult
 from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, EncryptionMethod, EncryptionLevel, \
     RDPPlayerMessageType
-
 from rdpy.layer.mcs import MCSLayer
 from rdpy.layer.rdp.data import RDPDataLayer
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
@@ -51,7 +51,10 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.fastPathParser = None
         self.rc4RSAKey = RSA.generate(2048)
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.SERVER)
-        self.fileHandle = open("test.bin", "wb")
+        self.fileHandle = open("out/rdp_replay_{}_{}.rdpy"
+                               .format(datetime.datetime.now().strftime('%Y%m%d_%H_%M%S'),
+                                       random.randint(0, 1000)), "wb")
+
         # Since we're intercepting communications from the original client (so we're a server),
         # We need to write back the packets as if they came from the client.
         self.recorder = Recorder([FileLayer(self.fileHandle)],
