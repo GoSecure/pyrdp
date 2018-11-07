@@ -22,6 +22,7 @@ class LayerRoutedObserver(LayerObserver):
     def __init__(self, handlers, **kwargs):
         """
         :param handlers: a dictionary of headers to method names
+        :type handlers: dict
         """
         LayerObserver.__init__(self, **kwargs)
         self.handlers = {}
@@ -48,7 +49,8 @@ class LayerStrictRoutedObserver(LayerRoutedObserver):
     """
     def __init__(self, handlers, **kwargs):
         """
-        :param handlers: a dictionary of headers to callbacks (callable objects)
+        :param handlers: a dictionary of headers to method names
+        :type handlers: dict
         """
         LayerRoutedObserver.__init__(self, handlers, **kwargs)
     

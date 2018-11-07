@@ -16,3 +16,6 @@ class UnknownPDUTypeError(RDPYError, NotImplementedError):
 
 class StateError(RDPYError, RuntimeError):
     """Used when trying to do something that an object's state does not allow"""
+
+class CrypterUnavailableError(RDPYError):
+    """Used when trying to use a CrypterProxy before the actual crypter was generated"""

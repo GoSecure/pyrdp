@@ -4,6 +4,11 @@ import struct
 class Integer:
     @classmethod
     def unpack(cls, data):
+        """
+        :param data: data to unpack from.
+        :type data: str | file
+        :return: int
+        """
         if isinstance(data, str):
             return struct.unpack(cls.FORMAT, data)[0]
         else:
@@ -11,8 +16,15 @@ class Integer:
             return struct.unpack(cls.FORMAT, data.read(length))[0]
 
     @classmethod
-    def pack(cls, data, stream = None):
-        bytes = struct.pack(cls.FORMAT, data)
+    def pack(cls, value, stream = None):
+        """
+        :param value: value to pack
+        :type value: int
+        :param stream: stream to pack to (optional)
+        :type stream: file | None
+        :return: str | None
+        """
+        bytes = struct.pack(cls.FORMAT, value)
 
         if stream is not None:
             stream.write(bytes)
