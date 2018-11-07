@@ -58,7 +58,7 @@ class MCSParser:
 
         stream = StringIO(data)
         header = Uint8.unpack(stream.read(1))
-        if header == ber.Class.BER_CLASS_APPL | ber.BerPc.BER_CONSTRUCT | ber.Tag.BER_TAG_MASK:
+        if header == ber.Class.BER_CLASS_APPL | ber.PC.BER_CONSTRUCT | ber.Tag.BER_TAG_MASK:
             header = Uint8.unpack(stream.read(1))
         else:
             header = header >> 2
@@ -117,7 +117,7 @@ class MCSParser:
         :return: MCSConnectResponsePDU
         """
         length = ber.readLength(stream)
-        result = ber.readEnumerated(stream)
+        result = ber.readEnumeration(stream)
         calledConnectID = ber.readInteger(stream)
         domainParams = self.parseDomainParams(stream)
         payload = ber.readOctetString(stream)
@@ -264,7 +264,7 @@ class MCSParser:
         stream = StringIO()
 
         if pdu.header in [MCSPDUType.CONNECT_INITIAL, MCSPDUType.CONNECT_RESPONSE]:
-            stream.write(Uint8.pack(ber.Class.BER_CLASS_APPL | ber.BerPc.BER_CONSTRUCT | ber.Tag.BER_TAG_MASK))
+            stream.write(Uint8.pack(ber.Class.BER_CLASS_APPL | ber.PC.BER_CONSTRUCT | ber.Tag.BER_TAG_MASK))
             stream.write(Uint8.pack(pdu.header))
         else:
             stream.write(Uint8.pack((pdu.header << 2) | self.headerOptions[pdu.header]))
@@ -322,7 +322,7 @@ class MCSParser:
         :type pdu: MCSConnectResponsePDU
         """
         substream = StringIO()
-        substream.write(ber.writeEnumerated(pdu.result))
+        substream.write(ber.writeEnumeration(pdu.result))
         substream.write(ber.writeInteger(pdu.calledConnectID))
         self.writeDomainParams(substream, pdu.domainParams)
         substream.write(ber.writeOctetString(pdu.payload))

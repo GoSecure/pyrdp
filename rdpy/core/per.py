@@ -26,9 +26,10 @@ from rdpy.core.error import InvalidValue, InvalidExpectedDataException
 
 def readLength(s):
     """
-    @summary: Decode a PER length indicator
-    @param s: stream
-    @return: int
+    Unpack a PER length indicator
+    :param s: stream
+    :type s: file
+    :return: int
     """
     byte = Uint8.unpack(s.read(1))
     size = 0
@@ -40,9 +41,9 @@ def readLength(s):
 
 def writeLength(value):
     """
-    @summary: Encode a PER length indicator
-    @param value: int
-    @return: str
+    Pack a PER length indicator
+    :type value: int
+    :return: str
     """
     if value > 0x7f:
         return Uint16BE.pack(value | 0x8000)
@@ -51,73 +52,82 @@ def writeLength(value):
     
 def readChoice(s):
     """
-    @summary: Decode PER choice
-    @param s: stream
-    @return: int
+    Unpack a PER choice
+    :param s: stream
+    :type s: file
+    :return: int
     """
     return Uint8.unpack(s.read(1))
 
 def writeChoice(choice):
     """
-    @summary: Encode PER choice
-    @param choice: choice value
-    @return: str
+    Pack a PER choice
+    :param choice: choice value
+    :type choice: int
+    :return: str
     """
     return Uint8.pack(choice)
 
 def readSelection(s):
     """
-    @summary: Decode PER selection
-    @param s: stream
-    @return: int
+    Unpack a PER selection
+    :param s: stream
+    :type s: file
+    :return: int
     """
     return Uint8.unpack(s.read(1))
 
 def writeSelection(selection):
     """
-    @summary: Encode PER selection
-    @param selection: selection value
-    @return: str
+    Pack a PER selection
+    :param selection: selection value
+    :type selection: int
+    :return: str
     """
     return Uint8.pack(selection)
 
 def readNumberOfSet(s):
     """
-    @summary: Decode PER NumberOfSet
-    @param s: stream
-    @return: int
+    Unpack a PER NumberOfSet
+    :param s: stream
+    :type s: file
+    :return: int
     """
     return Uint8.unpack(s.read(1))
 
 def writeNumberOfSet(numberOfSet):
     """
-    @summary: Encode PER NumberOfSet
-    @param numberOfSet: NumberOfSet value
-    @return: str
+    Pack a PER NumberOfSet
+    :param numberOfSet: NumberOfSet value
+    :type numberOfSet: int
+    :return: str
     """
     return Uint8.pack(numberOfSet)
 
 def readEnumeration(s):
     """
-    @summary: Decode PER enumeration format
-    @param s: stream
-    @return: int
+    Unpack a PER enumeration format
+    :param s: stream
+    :type s: file
+    :return: int
     """
     return Uint8.unpack(s.read(1))
 
 def writeEnumeration(enum):
     """
-    @summary: Encode PER enumeration
-    @param enum: enumeration value
-    @return: str
+    Pack a PER enumeration
+    :param enum: enumeration value
+    :type enum: int
+    :return: str
     """
     return Uint8.pack(enum)
 
 def readInteger(s):
     """
-    @summary: Decode PER integer
-    @param s: stream
-    @return: int
+    Unpack a PER integer
+    :param s: stream
+    :type s: file
+    :return: int
     @raise InvalidValue: if the size of the integer is invalid
     """
     size = readLength(s)
@@ -133,9 +143,9 @@ def readInteger(s):
 
 def writeInteger(value):
     """
-    @summary: Encode PER integer
-    @param value: int
-    @return: str
+    Pack a PER integer
+    :type value: int
+    :return: str
     """
     if value <= 0xff:
         return writeLength(1) + Uint8.pack(value)
@@ -146,9 +156,10 @@ def writeInteger(value):
 
 def readObjectIdentifier(s):
     """
-    @summary: Decode PER object identifier
-    @param s: stream
-    @return: object identifier (tuple of 6 elements)
+    Unpack a PER object identifier (tuple of 6 integers)
+    :param s: stream
+    :type s: file
+    :return: (int, int, int, int, int, int)
     """
     size = readLength(s)
     if size != 5:
@@ -166,18 +177,21 @@ def readObjectIdentifier(s):
 
 def writeObjectIdentifier(oid):
     """
-    @summary: Encode PER object identifier
-    @param oid: object identifier (tuple of 6 elements)
-    @return: str
+    Pack a PER object identifier
+    :param oid: object identifier (tuple of 6 integers)
+    :type oid: (int, int, int, int, int, int)
+    :return: str
     """
     return writeLength(5) + Uint8.pack((oid[0] << 4) & (oid[1] & 0x0f)) + "".join(Uint8.pack(b) for b in oid[2 :])
 
 def readNumericString(s, minValue):
     """
-    @summary: Decode PER numeric string
-    @param s: stream
-    @param minValue: minimum string length
-    @return: str
+    Unpack a PER numeric string
+    :param s: stream
+    :type s: file
+    :param minValue: minimum string length
+    :type minValue: int
+    :return: str
     """
     length = readLength(s)
     length = (length + minValue + 1) / 2
@@ -192,14 +206,16 @@ def readNumericString(s, minValue):
     
     return result
 
-def writeNumericString(nStr, minValue):
+def writeNumericString(string, minValue):
     """
-    @summary: Encode PER numeric string
-    @param str: numeric string
-    @param min: minimum string length
-    @return: str
+    Pack a PER numeric string
+    :param string: numeric string
+    :type string: str
+    :param minValue: minimum string length
+    :type minValue: int
+    :return: str
     """
-    length = len(nStr)
+    length = len(string)
     mlength = minValue
     if length >= minValue:
         mlength = length - minValue
@@ -207,9 +223,9 @@ def writeNumericString(nStr, minValue):
     result = ""
     
     for i in range(0, length, 2):
-        c1 = ord(nStr[i])
+        c1 = ord(string[i])
         if i + 1 < length:
-            c2 = ord(nStr[i + 1])
+            c2 = ord(string[i + 1])
         else:
             c2 = 0x30
         c1 = (c1 - 0x30) % 10
@@ -221,25 +237,29 @@ def writeNumericString(nStr, minValue):
 
 def readOctetStream(s, minValue = 0):
     """
-    @summary: Decode PER octet stream
-    @param s: stream
-    @param minValue: minimum string length
-    @return: str
+    Unpack a PER octet stream
+    :param s: stream
+    :type s: file
+    :param minValue: minimum string length
+    :type minValue: int
+    :return: str
     """
     size = readLength(s) + minValue
     return s.read(size)
 
-def writeOctetStream(oStr, minValue = 0):
+def writeOctetStream(bytes, minValue = 0):
     """
-    @summary: Encode PER octet stream
-    @param oStr: octet stream
-    @param minValue: minimum string length
-    @return: str
+    Pack a PER octet stream
+    :param bytes: octet stream
+    :type bytes: str
+    :param minValue: minimum string length
+    :type minValue: int
+    :return: str
     """
-    length = len(oStr)
+    length = len(bytes)
     mlength = minValue
     
     if length >= minValue:
         mlength = length - minValue
     
-    return writeLength(mlength) + oStr
+    return writeLength(mlength) + bytes

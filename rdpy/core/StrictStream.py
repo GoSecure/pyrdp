@@ -5,14 +5,17 @@ class StrictStream:
     def __init__(self, stream):
         """
         :param stream: the wrapped stream
+        :type stream: file
         """
         self.stream = stream
     
     def read(self, length):
         """
-        :param length: the amount of bytes to read
-        :return: the data read
-        :raises EOFError: when not enough data was read
+        Read data from the stream and raise an EOFError if not enough bytes were read.
+        :param length: the amount of bytes to read.
+        :type length: int
+        :return: str
+        :raises EOFError: when not enough data was read.
         """
         data = self.stream.read(length)
 

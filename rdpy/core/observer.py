@@ -1,4 +1,7 @@
 class Observer:
+    """
+    Base observer class used across RDPY.
+    """
     def __init__(self, **kwargs):
         """
         Initialize a new Observer object.

@@ -18,26 +18,27 @@
 #
 
 """
-Basic Encoding Rules use in RDP.
-ASN.1 standard
+Basic Encoding Rules utility functions.
+ASN.1 standard.
 """
+from enum import IntEnum
 
 from rdpy.core.packing import Uint8, Uint16BE, Uint32BE
 from rdpy.core.error import InvalidExpectedDataException, InvalidSize
 
-class BerPc(object):
+class PC(IntEnum):
     BER_PC_MASK = 0x20
     BER_PRIMITIVE = 0x00
     BER_CONSTRUCT = 0x20
 
-class Class(object):
+class Class(IntEnum):
     BER_CLASS_MASK = 0xC0
     BER_CLASS_UNIV = 0x00
     BER_CLASS_APPL = 0x40
     BER_CLASS_CTXT = 0x80
     BER_CLASS_PRIV = 0xC0
         
-class Tag(object):
+class Tag(IntEnum):
     BER_TAG_MASK = 0x1F
     BER_TAG_BOOLEAN = 0x01
     BER_TAG_INTEGER = 0x02
@@ -48,23 +49,24 @@ class Tag(object):
     BER_TAG_SEQUENCE = 0x10
     BER_TAG_SEQUENCE_OF = 0x10
 
-def berPC(pc):
+def berPC(isConstruct):
     """
-    @summary: Return BER_CONSTRUCT if true, BER_PRIMITIVE if false
-    @param pc: boolean
-    @return: BerPc value
+    Return BER_CONSTRUCT if true, BER_PRIMITIVE if false
+    :param isConstruct: True if BER_CONSTRUCT expected
+    :return: BERPC value
     """
-    if pc:
-        return BerPc.BER_CONSTRUCT
+    if isConstruct:
+        return PC.BER_CONSTRUCT
     else:
-        return BerPc.BER_PRIMITIVE
+        return PC.BER_PRIMITIVE
     
 def readLength(s):
     """
-    @summary: Read length of BER structure
+    Read length of BER structure
     Length is on 1, 2 or 3 bytes
-    @param s: stream
-    @return: int
+    :param s: stream
+    :type s: file
+    :return: int
     """
 
     byte = Uint8.unpack(s.read(1))
@@ -80,74 +82,86 @@ def readLength(s):
     else:
         return byte
 
-def writeLength(size):
+def writeLength(length):
     """
-    @summary: Return structure length as expected in BER specification
-    @param size: int
-    @return: str
+    Pack structure length as expected in BER specification
+    :param length: structure length.
+    :type length: int
+    :return: str
     """
-    if size > 0x7f:
-        return Uint8.pack(0x82) + Uint16BE.pack(size)
+    if length > 0x7f:
+        return Uint8.pack(0x82) + Uint16BE.pack(length)
     else:
-        return Uint8.pack(size)
+        return Uint8.pack(length)
     
-def readUniversalTag(s, tag, pc):
+def readUniversalTag(s, tag, isConstruct):
     """
-    @summary: Read tag of BER packet
-    @param tag: Class attributes
-    @param pc: boolean
-    @return: true if tag was read correctly
+    Unpack universal tag and return True if the proper tag was read.
+    :param s: stream
+    :type s: file
+    :param tag: BER tag
+    :type tag: Tag
+    :param isConstruct: True if a construct is expected
+    :type isConstruct: bool
+    :return: bool
     """
     byte = Uint8.unpack(s.read(1))
-    return byte == ((Class.BER_CLASS_UNIV | berPC(pc)) | (Tag.BER_TAG_MASK & tag))
+    return byte == ((Class.BER_CLASS_UNIV | berPC(isConstruct)) | (Tag.BER_TAG_MASK & tag))
 
-def writeUniversalTag(tag, pc):
+def writeUniversalTag(tag, isConstruct):
     """
-    @summary: Return universal tag byte
-    @param tag: tag class attributes
-    @param pc: boolean
-    @return: str
+    Pack universal tag.
+    :param tag: BER tag
+    :type tag: Tag
+    :param isConstruct: True if the structure is a construct
+    :type isConstruct: bool
+    :return: str
     """
-    return Uint8.pack((Class.BER_CLASS_UNIV | berPC(pc)) | (Tag.BER_TAG_MASK & tag))
+    return Uint8.pack((Class.BER_CLASS_UNIV | berPC(isConstruct)) | (Tag.BER_TAG_MASK & tag))
 
 def readApplicationTag(s, tag):
     """
-    @summary: Read application tag
-    @param s: stream
-    @param tag: tag class attributes
-    @return: length of application packet
+    Unpack an application tag and return the length of the application packet.
+    :param s: stream
+    :type s: file
+    :param tag: application tag.
+    :type tag: Tag
+    :return: int
     """
     byte = Uint8.unpack(s.read(1))
     
     if tag > 30:
-        if byte != ((Class.BER_CLASS_APPL | BerPc.BER_CONSTRUCT) | Tag.BER_TAG_MASK):
+        if byte != ((Class.BER_CLASS_APPL | PC.BER_CONSTRUCT) | Tag.BER_TAG_MASK):
             raise InvalidExpectedDataException()
         
         byte = Uint8.unpack(s.read(1))
         if byte != tag:
             raise InvalidExpectedDataException("bad tag")
     else:
-        if byte != ((Class.BER_CLASS_APPL | BerPc.BER_CONSTRUCT) | (Tag.BER_TAG_MASK & tag)):
+        if byte != ((Class.BER_CLASS_APPL | PC.BER_CONSTRUCT) | (Tag.BER_TAG_MASK & tag)):
             raise InvalidExpectedDataException()
         
     return readLength(s)
 
 def writeApplicationTag(tag, size):
     """
-    @summary: Encode a BER application tag
-    @param tag: BER tag
-    @param size: size of the rest of the packet  
+    Pack an application tag.
+    :param tag: application tag.
+    :type tag: Tag
+    :param size: the size of the application packet.
+    :type size: int
     """
     if tag > 30:
-        return Uint8.pack((Class.BER_CLASS_APPL | BerPc.BER_CONSTRUCT) | Tag.BER_TAG_MASK) + Uint8.pack(tag) + writeLength(size)
+        return Uint8.pack((Class.BER_CLASS_APPL | PC.BER_CONSTRUCT) | Tag.BER_TAG_MASK) + Uint8.pack(tag) + writeLength(size)
     else:
-        return Uint8.pack((Class.BER_CLASS_APPL | BerPc.BER_CONSTRUCT) | (Tag.BER_TAG_MASK & tag)) + writeLength(size)
+        return Uint8.pack((Class.BER_CLASS_APPL | PC.BER_CONSTRUCT) | (Tag.BER_TAG_MASK & tag)) + writeLength(size)
     
 def readBoolean(s):
     """
-    @summary: Decode a BER boolean
-    @param s: stream
-    @return: boolean
+    Unpack a BER boolean
+    :param s: stream
+    :type s: file
+    :return: bool
     """
     if not readUniversalTag(s, Tag.BER_TAG_BOOLEAN, False):
         raise InvalidExpectedDataException("Bad boolean tag")
@@ -159,20 +173,21 @@ def readBoolean(s):
     b = Uint8.unpack(s.read(1))
     return bool(b)
 
-def writeBoolean(b):
+def writeBoolean(value):
     """
-    @summary: Encode a BER boolean
-    @param b: boolean
-    @return: str
+    Pack a BER boolean
+    :type value: bool
+    :return: str
     """
-    boolean = Uint8.pack(0xff if b else 0)
+    boolean = Uint8.pack(0xff if value else 0)
     return writeUniversalTag(Tag.BER_TAG_BOOLEAN, False) + writeLength(1) + boolean
 
 def readInteger(s):
     """
-    @summary: Decode a BER integer
-    @param s: stream
-    @return: int
+    Unpack a BER integer
+    :param s: stream
+    :type s: file
+    :return: int
     """
     if not readUniversalTag(s, Tag.BER_TAG_INTEGER, False):
         raise InvalidExpectedDataException("Bad integer tag")
@@ -194,9 +209,9 @@ def readInteger(s):
     
 def writeInteger(value):
     """
-    @summary: Encode a BER integer
-    @param param: int
-    @return: str
+    Pack a BER integer
+    :type value: int
+    :return: str
     """
     if value <= 0xff:
         return writeUniversalTag(Tag.BER_TAG_INTEGER, False) + writeLength(1) + Uint8.pack(value)
@@ -207,9 +222,10 @@ def writeInteger(value):
 
 def readOctetString(s):
     """
-    @summary: Decode a BER octet string
-    @param s: stream
-    @return: str
+    Unpack a BER octet string
+    :param s: stream
+    :type s: file
+    :return: str
     """
     if not readUniversalTag(s, Tag.BER_TAG_OCTET_STRING, False):
         raise InvalidExpectedDataException("Bad octet string tag")
@@ -219,17 +235,18 @@ def readOctetString(s):
 
 def writeOctetString(value):
     """
-    @summary: Encode a BER octet string
-    @param value: str
-    @return: str
+    Pack a BER octet string
+    :type value: str
+    :return: str
     """
     return writeUniversalTag(Tag.BER_TAG_OCTET_STRING, False) + writeLength(len(value)) + value
 
-def readEnumerated(s):
+def readEnumeration(s):
     """
-    @summary: Decode a BER enumeration value
-    @param s: stream
-    @return: int or long
+    Unpack a BER enumeration value
+    :param s: stream
+    :type s: file
+    :return: int
     """
     if not readUniversalTag(s, Tag.BER_TAG_ENUMERATED, False):
         raise InvalidExpectedDataException("Bad enumeration tag")
@@ -239,10 +256,10 @@ def readEnumerated(s):
     
     return Uint8.unpack(s.read(1))
 
-def writeEnumerated(enumerated):
+def writeEnumeration(value):
     """
-    @summary: Encode a BER enumeration value
-    @param s: stream
-    @return: str
+    Pack a BER enumeration value
+    :type value: int
+    :return: str
     """
-    return writeUniversalTag(Tag.BER_TAG_ENUMERATED, False) + writeLength(1) + Uint8.pack(enumerated)
+    return writeUniversalTag(Tag.BER_TAG_ENUMERATED, False) + writeLength(1) + Uint8.pack(value)

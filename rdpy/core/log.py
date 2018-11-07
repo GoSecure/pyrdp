@@ -21,18 +21,32 @@ import logging
 import binascii
 
 
+class SSLSecretFormatter(logging.Formatter):
+    """
+    Custom formatter used to log SSL client randoms and master secrets.
+    """
+
+    def __init__(self):
+        super(SSLSecretFormatter, self).__init__("format")
+
+    def format(self, record):
+        return "CLIENT_RANDOM {} {}".format(binascii.hexlify(record.msg),
+                                            binascii.hexlify(record.args[0]))
+
+
+
+
 def get_formatter():
     """
-        :return: The log formatter used for the RDPY library.
+    Get the log formatter used for the RDPY library.
     """
     return logging.Formatter("[%(asctime)s] - %(name)s - %(levelname)s - %(message)s")
 
 
 def prepare_rdpy_logger():
     """
-        Prepare the "rdpy" logger to be used by the library.
+    Prepare the RDPY logger to be used by the library.
     """
-    global logger
     logger = logging.getLogger("rdpy")
     logger.setLevel(logging.WARNING)
     stream_handler = logging.StreamHandler()
@@ -41,31 +55,15 @@ def prepare_rdpy_logger():
     logger.addHandler(stream_handler)
 
 
-prepare_rdpy_logger()
-
-class SslSecretFormatter(logging.Formatter):
-    """
-        Custom formatter to log SSL client randoms and master secrets.
-    """
-
-    def __init__(self):
-        super(SslSecretFormatter, self).__init__("format")
-
-    def format(self, record):
-        return "CLIENT_RANDOM {} {}".format(binascii.hexlify(record.msg),
-                                            binascii.hexlify(record.args[0]))
-
 
 def prepare_ssl_session_logger():
     """
-        Prepares the ssl master secret logger. Used to log
-        TLS sessions secrets to decrypt traffic latter.
+    Prepares the SSL master secret logger. Used to log TLS session secrets to decrypt traffic later.
     """
-
     ssl_logger = logging.getLogger("ssl")
     ssl_logger.setLevel(logging.INFO)
     handler = logging.FileHandler("log/ssl_master_secret.log")
-    formatter = SslSecretFormatter()
+    formatter = SSLSecretFormatter()
     handler.setFormatter(formatter)
     ssl_logger.addHandler(handler)
     stream_handler = logging.StreamHandler()
@@ -73,35 +71,35 @@ def prepare_ssl_session_logger():
     ssl_logger.addHandler(stream_handler)
 
 
-prepare_ssl_session_logger()
-
-
 def get_logger():
     """
-        :return: The logger to use in the library.
+    Get the main logger.
     """
-    return logger
+    return logging.getLogger("rdpy")
 
 
 def get_ssl_logger():
+    """
+    Get the SSL logger.
+    """
     return logging.getLogger("ssl")
 
 
-def debug(message):
-    logger.debug(message)
-
-
-def log(message):
-    logger.info(message)
-
-
 def info(message):
-    logger.info(message)
+    get_logger().info(message)
+
+
+def debug(message):
+    get_logger().debug(message)
 
 
 def warning(message):
-    logger.warning(message)
+    get_logger().warning(message)
 
 
 def error(message):
-    logger.error(message)
+    get_logger().error(message)
+
+
+prepare_rdpy_logger()
+prepare_ssl_session_logger()
