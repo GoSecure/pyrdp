@@ -5,8 +5,8 @@ from twisted.internet.protocol import ClientFactory
 
 from rdpy.core import log
 from rdpy.core.crypto import SecuritySettings, RC4CrypterProxy
-from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, RDPFastPathParserMode, \
-    EncryptionMethod, EncryptionLevel
+from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, EncryptionMethod, EncryptionLevel
+from rdpy.enum.core import ParserMode
 from rdpy.layer.mcs import MCSLayer
 from rdpy.layer.rdp.data import RDPDataLayer
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
@@ -23,7 +23,7 @@ from rdpy.parser.gcc import GCCParser
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.connection import RDPClientConnectionParser, RDPServerConnectionParser
 from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser
-from rdpy.parser.rdp.negotiation import RDPNegotiationParser
+from rdpy.parser.rdp.negotiation import RDPNegotiationRequestParser, RDPNegotiationResponseParser
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.pdu.mcs import MCSConnectResponsePDU
 from rdpy.pdu.rdp.connection import ProprietaryCertificate, ServerSecurityData, RDPServerDataPDU
@@ -84,7 +84,6 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.rdpClientInfoParser = RDPClientInfoParser()
         self.rdpClientConnectionParser = RDPClientConnectionParser()
         self.rdpServerConnectionParser = RDPServerConnectionParser()
-        self.rdpNegotiationParser = RDPNegotiationParser()
 
     def getProtocol(self):
         return self.tcp
@@ -142,13 +141,19 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.log_debug("Connection Request received")
 
         # We need to save the original negotiation PDU because Windows will cut the connection if it sees that the requested protocols have changed.
-        self.originalNegotiationPDU = self.rdpNegotiationParser.parse(pdu.payload)
+        parser = RDPNegotiationRequestParser()
+        self.originalNegotiationPDU = parser.parse(pdu.payload)
+
         self.targetNegotiationPDU = RDPNegotiationRequestPDU(
             self.originalNegotiationPDU.cookie,
             self.originalNegotiationPDU.flags,
 
             # Only SSL is implemented, so remove other protocol flags
-            self.originalNegotiationPDU.requestedProtocols & NegotiationProtocols.SSL
+            self.originalNegotiationPDU.requestedProtocols & NegotiationProtocols.SSL if self.originalNegotiationPDU.requestedProtocols is not None else None,
+
+            self.originalNegotiationPDU.correlationFlags,
+            self.originalNegotiationPDU.correlationID,
+            self.originalNegotiationPDU.reserved,
         )
 
         self.connectClient()
@@ -156,7 +161,9 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
     def onConnectionConfirm(self, _):
         # X224 Response
         protocols = NegotiationProtocols.SSL if self.originalNegotiationPDU.tlsSupported else NegotiationProtocols.NONE
-        payload = self.rdpNegotiationParser.write(RDPNegotiationResponsePDU(0x00, protocols))
+
+        parser = RDPNegotiationResponseParser()
+        payload = parser.write(RDPNegotiationResponsePDU(0x00, protocols))
         self.x224.sendConnectionConfirm(payload, source = 0x1234)
 
         if self.originalNegotiationPDU.tlsSupported:
@@ -166,9 +173,9 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
     def onConnectInitial(self, pdu):
         # MCS Connect Initial
         """
-                Parse the ClientData PDU and send a ServerData PDU back.
-                :param pdu: The GCC ConferenceCreateResponse PDU that contains the ClientData PDU.
-                """
+        Parse the ClientData PDU and send a ServerData PDU back.
+        :param pdu: The GCC ConferenceCreateResponse PDU that contains the ClientData PDU.
+        """
         self.log_debug("Connect Initial received")
         gccConferenceCreateRequestPDU = self.gcc.parse(pdu.payload)
 
@@ -183,9 +190,9 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
     def onConnectResponse(self, pdu, serverData):
         # MCS Connect Response
         """
-                :type pdu: MCSConnectResponsePDU
-                :type serverData: RDPServerDataPDU
-                """
+        :type pdu: MCSConnectResponsePDU
+        :type serverData: RDPServerDataPDU
+        """
         if pdu.result != 0:
             self.mcs.send(pdu)
             return
@@ -267,7 +274,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
                 self.securityLayer = createNonTLSSecurityLayer(encryptionMethod, crypterProxy)
 
             self.securitySettings.setObserver(crypterProxy)
-            self.fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, crypterProxy, RDPFastPathParserMode.SERVER)
+            self.fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, crypterProxy, ParserMode.SERVER)
             self.licensingLayer = RDPLicensingLayer()
             channel = MCSServerChannel(mcs, userID, channelID)
 

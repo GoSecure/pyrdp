@@ -1,6 +1,6 @@
 from rdpy.core import log
 from rdpy.core.crypto import SecuritySettings
-from rdpy.enum.rdp import RDPFastPathParserMode
+from rdpy.enum.core import ParserMode
 from rdpy.layer.gcc import GCCClientConnectionLayer
 from rdpy.layer.mcs import MCSLayer, MCSClientConnectionLayer
 from rdpy.layer.rdp.connection import RDPClientConnectionLayer
@@ -15,7 +15,7 @@ from rdpy.mcs.client import MCSClientRouter
 from rdpy.mcs.user import MCSUserObserver
 from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver
 from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser
-from rdpy.parser.rdp.negotiation import RDPNegotiationParser
+from rdpy.parser.rdp.negotiation import RDPNegotiationResponseParser, RDPNegotiationRequestParser
 from rdpy.protocol.rdp.x224 import ClientTLSContext
 from rdpy.recording.recorder import Recorder, FileLayer
 
@@ -84,7 +84,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         """
         self.log_debug("TCP connected")
         negotiation = self.server.getNegotiationPDU()
-        parser = RDPNegotiationParser()
+        parser = RDPNegotiationRequestParser()
         self.x224.sendConnectionRequest(parser.write(negotiation))
 
     def onDisconnection(self, reason):
@@ -101,7 +101,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         """
         self.log_debug("Connection Confirm received")
 
-        parser = RDPNegotiationParser()
+        parser = RDPNegotiationResponseParser()
         response = parser.parse(pdu.payload)
 
         if response.tlsSelected:
@@ -182,7 +182,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
                 crypter = self.securitySettings.getCrypter()
                 self.securityLayer = createNonTLSSecurityLayer(encryptionMethod, crypter)
 
-            self.fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, crypter, RDPFastPathParserMode.CLIENT)
+            self.fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, crypter, ParserMode.CLIENT)
             self.licensingLayer = RDPLicensingLayer()
             channel = MCSClientChannel(mcs, userID, channelID)
 

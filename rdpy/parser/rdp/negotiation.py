@@ -1,91 +1,114 @@
 from StringIO import StringIO
 
-from rdpy.core.packing import Uint8, Uint16LE, Uint32LE, Int32LE
-from rdpy.exceptions import WritingError, UnknownPDUTypeError
+from rdpy.core.packing import Uint8, Uint16LE, Uint32LE
+from rdpy.enum.negotiation import NegotiationRequestFlags, NegotiationType
 from rdpy.pdu.rdp.negotiation import RDPNegotiationRequestPDU, RDPNegotiationResponsePDU
-from rdpy.protocol.rdp.x224 import NegociationType
 
 
-class RDPNegotiationParser:
+class RDPNegotiationRequestParser:
     """
-    Parse the first two packets of the RDP connection sequence,
-    where the security protocol is chosen.
+    Parser for RDP negotiaton requests (Connection Request payloads).
     """
-
-    def __init__(self):
-        self.writers = {
-            NegociationType.TYPE_RDP_NEG_REQ: self.writeNegotiationRequestPDU,
-            NegociationType.TYPE_RDP_NEG_RSP: self.writeNegotiationResponsePDU,
-        }
-
-
     def parse(self, data):
         """
-        Parse RDP Negotiation Request packet. Throws Exceptions if packet is malformed.
-        :param data: The bytes of the RDP Negotiation Request packet.
-        :return: A RDPNegotiationRequestPDU
+        Parse a negotiation request.
+        :param data: the request data.
+        :type data: str
+        :return: RDPNegotiationRequestPDU
         """
-        cookie = ""
+
+        cookie = None
 
         if "\r\n" in data:
             cookie = data[: data.index("\r\n")]
             data = data[data.index("\r\n") + 2 :]
 
-        if len(data) == 8:
-            stream = StringIO(data)
+        stream = StringIO(data)
+
+        if len(data) >= 8:
             type = Uint8.unpack(stream)
-            if type == NegociationType.TYPE_RDP_NEG_REQ:
-                return self.parseNegotiationRequest(stream, cookie)
-            elif type == NegociationType.TYPE_RDP_NEG_RSP:
-                return self.parseNegotiationResponse(stream)
-            else:
-                raise UnknownPDUTypeError("Trying to parse unknown negotiation PDU: %d" % type, type)
+            requestFlags = Uint8.unpack(stream)
+            requestLength = Uint16LE.unpack(stream)
+            requestedProtocols = Uint32LE.unpack(stream)
 
-    def parseNegotiationRequest(self, stream, cookie):
-        flags = Uint8.unpack(stream)
-        length = Uint16LE.unpack(stream)
-        requestedProtocols = Uint32LE.unpack(stream)
-        return RDPNegotiationRequestPDU(cookie, flags, requestedProtocols)
+            correlationFlags = None
+            correlationID = None
+            reserved = None
 
-    def parseNegotiationResponse(self, stream):
-        flags = Uint8.unpack(stream)
-        length = Uint16LE.unpack(stream)
-        requestedProtocols = Uint32LE.unpack(stream)
-        return RDPNegotiationResponsePDU(flags, requestedProtocols)
+            if requestFlags & NegotiationRequestFlags.CORRELATION_INFO_PRESENT != 0 and len(data) >= 36:
+                type = Uint8.unpack(stream)
+                correlationFlags = Uint8.unpack(stream)
+                correlationLength = Uint16LE.unpack(stream)
+                correlationID = stream.read(16)
+                reserved = stream.read(16)
+
+            return RDPNegotiationRequestPDU(cookie, requestFlags, requestedProtocols, correlationFlags, correlationID, reserved)
+        else:
+            return RDPNegotiationRequestPDU(cookie, None, None, None, None, None)
 
     def write(self, pdu):
         """
-        :param pdu: The PDU to write
-        :return: A StringIO of the bytes of the given PDU
-        """
-        if pdu.packetType in self.writers.keys():
-            return self.writers[pdu.packetType](pdu)
-        else:
-            raise WritingError("Trying to write invalid packet type %d" % pdu.packetType)
-
-    def writeNegotiationRequestPDU(self, pdu):
-        """
+        Write a negotiation request.
+        :param pdu: the request PDU.
         :type pdu: RDPNegotiationRequestPDU
+        :return: str
         """
         stream = StringIO()
 
-        if pdu.cookie != "":
+        if pdu.cookie is not None:
             stream.write(pdu.cookie + "\r\n")
 
-        Uint8.pack(pdu.packetType, stream)
-        Uint8.pack(pdu.flags, stream)
-        Uint16LE.pack(8, stream)
-        Uint32LE.pack(pdu.requestedProtocols, stream)
+        if pdu.flags is not None and pdu.requestedProtocols is not None:
+            Uint8.pack(NegotiationType.TYPE_RDP_NEG_REQ, stream)
+            Uint8.pack(pdu.flags, stream)
+            Uint16LE.pack(8, stream)
+            Uint32LE.pack(pdu.requestedProtocols, stream)
+
+            if pdu.correlationFlags is not None and pdu.correlationID is not None and pdu.reserved is not None:
+                Uint8.pack(NegotiationType.TYPE_RDP_CORRELATION_INFO, stream)
+                Uint8.pack(pdu.correlationFlags, stream)
+                Uint16LE.pack(36, stream)
+                stream.write(pdu.correlationID)
+                stream.write(pdu.reserved)
+
         return stream.getvalue()
 
-    def writeNegotiationResponsePDU(self, pdu):
+
+class RDPNegotiationResponseParser:
+    """
+    Parser for RDP negotiation responses (Connection Confirm payloads).
+    """
+    def parse(self, data):
         """
+        Parse a negotiation response.
+        :param data: the response data.
+        :type data: str
+        :return: RDPNegotiationResponsePDU
+        """
+        stream = StringIO(data)
+
+        if len(data) == 8:
+            type = Uint8.unpack(stream)
+            flags = Uint8.unpack(stream)
+            length = Uint16LE.unpack(stream)
+            selectedProtocols = Uint32LE.unpack(stream)
+            return RDPNegotiationResponsePDU(flags, selectedProtocols)
+        else:
+            return RDPNegotiationResponsePDU(None, None)
+
+    def write(self, pdu):
+        """
+        Write a negotiation response.
+        :param pdu: the response PDU.
         :type pdu: RDPNegotiationResponsePDU
+        :return: str
         """
         stream = StringIO()
-        stream.write(Uint8.pack(pdu.packetType))
-        stream.write(Uint8.pack(pdu.flags))
-        stream.write(Uint8.pack(8))  # Length
-        stream.write(Uint8.pack(0))  # Empty byte?
-        stream.write(Int32LE.pack(pdu.selectedProtocols))
+
+        if pdu.flags is not None and pdu.selectedProtocols is not None:
+            Uint8.pack(NegotiationType.TYPE_RDP_NEG_RSP, stream)
+            Uint8.pack(pdu.flags, stream)
+            Uint16LE.pack(8, stream)
+            Uint32LE.pack(pdu.selectedProtocols, stream)
+
         return stream.getvalue()

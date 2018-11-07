@@ -48,10 +48,6 @@ class RDPFastPathSecurityFlags:
     FASTPATH_OUTPUT_SECURE_CHECKSUM = 0x40
     FASTPATH_OUTPUT_ENCRYPTED = 0x80
 
-class RDPFastPathParserMode(IntEnum):
-    CLIENT = 0
-    SERVER = 1
-
 class RDPFastPathInputEventType(IntEnum):
     FASTPATH_INPUT_EVENT_SCANCODE = 0
     FASTPATH_INPUT_EVENT_MOUSE = 1
