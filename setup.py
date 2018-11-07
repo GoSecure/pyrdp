@@ -23,8 +23,6 @@ setup(name='rdpy',
 		'rdpy.protocol.rdp.nla',
 		'rdpy.protocol.rdp.t125',
 		'rdpy.protocol.rfb',
-		'rdpy.protocol.tcp',
-		'rdpy.protocol.x224',
 		'rdpy.ui',
 
 		'rdpy.enum',
