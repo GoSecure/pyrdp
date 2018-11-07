@@ -4,7 +4,8 @@ from PyQt4.QtGui import QTextCursor
 
 from rdpy.core import rss, log
 from rdpy.core.scancode import scancodeToChar
-from rdpy.pdu.rdp.fastpath import FastPathEventScanCode, FastPathEventMouse
+from rdpy.enum.rdp import RDPPlayerMessageType
+from rdpy.pdu.rdp.fastpath import FastPathEventScanCode, FastPathEventMouse, FastPathOrdersEvent
 from rdpy.ui.qt4 import RDPBitmapToQtImage
 
 
@@ -62,28 +63,60 @@ class NewRSSEventHandler:
         For each event in the provided message, handle it, if it can be handled.
         :type message: rdpy.pdu.rdp.recording.RDPPlayerMessagePDU
         """
-        for event in message.payload.events:
+        if message.type == RDPPlayerMessageType.INPUT:
+            self.handle_input_event(message.payload)
+        elif message.type == RDPPlayerMessageType.OUTPUT:
+            self.handle_output_event(message.payload)
+        elif message.type == RDPPlayerMessageType.CLIENT_INFO:
+            self.handle_client_info(message.payload)
+        else:
+            log.error("Received wrong player message type: {}".format(message.type))
+
+    def handle_output_event(self, payload):
+        for event in payload.events:
+            if isinstance(event, FastPathOrdersEvent):
+                log.info("Not handling image event, not coded :)")
+                self.handle_image(event)
+            else:
+                log.debug("Cant handle output event: {}".format(event))
+
+    def handle_input_event(self, payload):
+        for event in payload.events:
             if isinstance(event, FastPathEventScanCode):
                 log.debug("handling {}".format(event))
                 self.handle_scancode(event)
             elif isinstance(event, FastPathEventMouse):
                 log.info("Not handling Mouse event since it has not yet been coded :)")
             else:
-                log.debug("Cant handle event: {}".format(event))
+                log.debug("Cant handle input event: {}".format(event))
 
     def handle_scancode(self, event):
         log.info("Reading scancode {}".format(event.scancode))
         code = event.scancode
         is_pressed = not event.isReleased
         if code in [0x2A, 0x36]:
+            self._text.moveCursor(QTextCursor.End)
             self._text.insertPlainText("\n<LSHIFT PRESSED>" if is_pressed else "\n<LSHIFT RELEASED>")
             self._write_in_caps = not self._write_in_caps
-            self._text.moveCursor(QTextCursor.End)
         elif code == 0x3A and is_pressed:
+            self._text.moveCursor(QTextCursor.End)
             self._text.insertPlainText("\n<CAPSLOCK>")
             self._write_in_caps = not self._write_in_caps
-            self._text.moveCursor(QTextCursor.End)
         elif is_pressed:
             char = scancodeToChar(code)
-            self._text.insertPlainText(char if self._write_in_caps else char.lower())
             self._text.moveCursor(QtGui.QTextCursor.End)
+            self._text.insertPlainText(char if self._write_in_caps else char.lower())
+
+    def handle_image(self, event):
+        pass
+
+    def handle_client_info(self, pdu):
+        """
+        :type pdu: rdpy.pdu.rdp.client_info.RDPClientInfoPDU
+        """
+        self._text.insertPlainText("--------------------")
+        self._text.insertPlainText("\nUSERNAME: {}\nPASSWORD: {}\nDOMAIN: {}\n"
+                          .format(pdu.username.replace("\0", ""),
+                                  pdu.password.replace("\0", ""),
+                                  pdu.domain.replace("\0", "")))
+        self._text.insertPlainText("--------------------\n")

@@ -32,11 +32,11 @@ class Recorder:
         """
         Encapsulate the pdu properly, then record the data
         :type messageType: rdpy.enum.rdp.RDPPlayerMessageType
-        :type pdu: rdpy.pdu.rdp.fastpath.RDPFastPathPDU
+        :type pdu: rdpy.pdu.base_pdu.PDU
         """
         for rdpLayer in self.rdpLayers:
             rdpLayer.previous.setMessageType(messageType)
-            rdpLayer.sendPDU(pdu)
+            rdpLayer.sendPDU(pdu, messageType)
 
 
 class FileLayer(Layer):

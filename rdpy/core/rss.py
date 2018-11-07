@@ -33,6 +33,7 @@ from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import RDPPlayerMessageType
 from rdpy.layer.rdp.recording import RDPPlayerMessageTypeLayer
 from rdpy.layer.tpkt import TPKTLayer
+from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser
 
 
@@ -400,6 +401,7 @@ class NewFileReader(FileReader):
         self._events_queue = Queue()
         self.rdp_server_fastpath_parser = RDPBasicFastPathParser(ParserMode.SERVER)
         self.rdp_client_fastpath_parser = RDPBasicFastPathParser(ParserMode.CLIENT)
+        self.rdp_client_info_parser = RDPClientInfoParser()
 
     def nextEvent(self):
         """
@@ -420,8 +422,12 @@ class NewFileReader(FileReader):
         try:
             if pdu.type == RDPPlayerMessageType.INPUT:
                 rdpPdu = self.rdp_server_fastpath_parser.parse(pdu.payload)
-            else:
+            elif pdu.type == RDPPlayerMessageType.OUTPUT:
                 rdpPdu = self.rdp_client_fastpath_parser.parse(pdu.payload)
+            elif pdu.type == RDPPlayerMessageType.CLIENT_INFO:
+                rdpPdu = self.rdp_client_info_parser.parse(pdu.payload)
+            else:
+                raise ValueError("Incorrect RDPPlayerMessageType received: {}".format(pdu.type))
             pdu.payload = rdpPdu
             self._events_queue.put(pdu)
             pass

@@ -6,7 +6,8 @@ from twisted.internet.protocol import ClientFactory
 from rdpy.core import log
 from rdpy.core.crypto import SecuritySettings, RC4CrypterProxy
 from rdpy.enum.core import ParserMode
-from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, EncryptionMethod, EncryptionLevel
+from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, EncryptionMethod, EncryptionLevel, \
+    RDPPlayerMessageType
 from rdpy.layer.mcs import MCSLayer
 from rdpy.layer.rdp.data import RDPDataLayer
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
@@ -315,7 +316,12 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
     # Client Info Packet
     def onClientInfoReceived(self, pdu):
+        """
+        Record the PDU and send it to the MITMClient.
+        :type pdu: rdpy.pdu.rdp.client_info.RDPClientInfoPDU
+        """
         self.log_debug("Client Info received")
+        self.recorder.record(pdu, RDPPlayerMessageType.CLIENT_INFO)
         self.client.onClientInfoReceived(pdu)
 
     def onLicensingPDU(self, pdu):
