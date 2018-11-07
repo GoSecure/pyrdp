@@ -57,11 +57,17 @@ class NewRSSEventHandler:
         self._text = text
         self._write_in_caps = False
 
-    def on_event_received(self, event):
-        if isinstance(event, FastPathEventScanCode):
-            self.handle_scancode(event)
-        else:
-            raise ValueError("Unimplemented")
+    def on_message_received(self, message):
+        """
+        For each event in the provided message, handle it, if it can be handled.
+        :type message: rdpy.pdu.rdp.recording.RDPPlayerMessagePDU
+        """
+        for event in message.payload.events:
+            if isinstance(event, FastPathEventScanCode):
+                log.info("handling {}".format(event))
+                self.handle_scancode(event)
+            else:
+                log.debug("Cant handle event: {}".format(event))
 
     def handle_scancode(self, event):
         log.info("Reading scancode {}".format(event.scancode))

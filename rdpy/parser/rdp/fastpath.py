@@ -1,13 +1,11 @@
-import time
 from StringIO import StringIO
 
-from rdpy.core import log
-
-from rdpy.core.packing import Uint8, Uint16BE, Uint16LE, Uint64LE
+from rdpy.core.packing import Uint8, Uint16BE, Uint16LE
 from rdpy.enum.rdp import RDPFastPathParserMode, RDPFastPathInputEventType, \
     RDPFastPathSecurityFlags, FIPSVersion, FastPathOutputCompressionType, RDPFastPathOutputEventType
 from rdpy.parser.rdp.security import RDPBasicSecurityParser
-from rdpy.pdu.rdp.fastpath import FastPathEventRaw, RDPFastPathPDU, FastPathEventScanCode, FastPathBitmapEvent, FastPathOrdersEvent
+from rdpy.pdu.rdp.fastpath import FastPathEventRaw, RDPFastPathPDU, FastPathEventScanCode, FastPathBitmapEvent, \
+    FastPathOrdersEvent
 
 
 class RDPBasicFastPathParser(RDPBasicSecurityParser):
@@ -116,7 +114,6 @@ class RDPBasicFastPathParser(RDPBasicSecurityParser):
 
     def getHeaderFlags(self):
         return 0
-
 
 
 class RDPSignedFastPathParser(RDPBasicFastPathParser):
@@ -230,34 +227,26 @@ class RDPInputEventParser:
             return RDPInputEventParser.INPUT_EVENT_LENGTHS[RDPFastPathInputEventType.FASTPATH_INPUT_EVENT_SCANCODE]
         raise ValueError("Unsupported event type?")
 
-    def parse(self, data, with_timestamp=False):
+    def parse(self, data):
         stream = StringIO(data)
         eventHeader = Uint8.unpack(stream.read(1))
         eventCode = (eventHeader & 0b11100000) >> 5
         eventFlags= eventHeader & 0b00011111
         if eventCode == RDPFastPathInputEventType.FASTPATH_INPUT_EVENT_SCANCODE:
             scancode = Uint8.unpack(stream.read(1))
-            timestamp = None
-            if with_timestamp:
-                timestamp = Uint64LE.unpack(stream.read(8))
             return FastPathEventScanCode(eventHeader,
-                                         scancode, eventFlags,
-                                         timestamp)  # there is no lord
+                                         scancode, eventFlags)  # there is no lord
         return FastPathEventRaw(data)
 
-    def write(self, event, write_timestamp=False):
+    def write(self, event):
         if isinstance(event, FastPathEventRaw):
             return event.data
         if isinstance(event, FastPathEventScanCode):
             raw_data = StringIO()
             raw_data.write(Uint8.pack(event.rawHeaderByte))
             raw_data.write(Uint8.pack(event.scancode))
-            if write_timestamp:
-                raw_data.write(Uint64LE.pack(int(round(time.time() * 1000))))
-            else:
-                pass
             return raw_data.getvalue()
-        raise ValueError("")
+        raise ValueError("Invalid FastPath event: {}".format(event))
 
 
 class RDPOutputEventParser:

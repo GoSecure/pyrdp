@@ -29,8 +29,10 @@ from threading import Thread
 from rdpy.core import log, error
 from rdpy.core.type import CompositeType, FactoryType, UInt8, UInt16Le, UInt32Le, String, sizeof, StringStream, \
     SocketStream
+from rdpy.enum.rdp import RDPFastPathParserMode, RDPPlayerMessageType
+from rdpy.layer.rdp.recording import RDPPlayerMessageTypeLayer
 from rdpy.layer.tpkt import TPKTLayer
-from rdpy.parser.rdp.fastpath import RDPInputEventParser
+from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser
 
 
 class EventType(object):
@@ -391,9 +393,12 @@ class NewFileReader(FileReader):
     def __init__(self, f):
         super(NewFileReader, self).__init__(f)
         self.tpkt_layer = TPKTLayer()
-        self.tpkt_layer.setObserver(self)
+        self.rdp_player_event_type_layer = RDPPlayerMessageTypeLayer()
+        self.tpkt_layer.setNext(self.rdp_player_event_type_layer)
+        self.rdp_player_event_type_layer.setObserver(self)
         self._events_queue = Queue()
-        self.rdpInputEventParser = RDPInputEventParser()
+        self.rdp_server_fastpath_parser = RDPBasicFastPathParser(RDPFastPathParserMode.SERVER)
+        self.rdp_client_fastpath_parser = RDPBasicFastPathParser(RDPFastPathParserMode.CLIENT)
 
     def nextEvent(self):
         """
@@ -408,15 +413,19 @@ class NewFileReader(FileReader):
 
     def onPDUReceived(self, pdu):
         """
-        :type pdu: rdpy.pdu.tpkt.TPKTPDU
+        Put the PDU in the events queue after parsing the provided pdu's payload.
+        :type pdu: rdpy.pdu.rdp.recording.RDPPlayerMessagePDU
         """
         try:
-            rdpPdu = self.rdpInputEventParser.parse(pdu.payload, with_timestamp=True)
-
-            self._events_queue.put(rdpPdu)
+            if pdu.type == RDPPlayerMessageType.INPUT:
+                rdpPdu = self.rdp_server_fastpath_parser.parse(pdu.payload)
+            else:
+                rdpPdu = self.rdp_client_fastpath_parser.parse(pdu.payload)
+            pdu.payload = rdpPdu
+            self._events_queue.put(pdu)
             pass
-        except:
-            log.error("Error occured when parsing RDP event: {}".format(pdu.payload))
+        except Exception as e:
+            log.error("Error occured when parsing RDP event: {}".format(e.message))
 
 
 class SocketReader:

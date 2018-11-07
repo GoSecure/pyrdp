@@ -22,18 +22,18 @@ from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver
 from rdpy.parser.gcc import GCCParser
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.connection import RDPClientConnectionParser, RDPServerConnectionParser
+from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser
 from rdpy.parser.rdp.negotiation import RDPNegotiationParser
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.pdu.mcs import MCSConnectResponsePDU
 from rdpy.pdu.rdp.connection import ProprietaryCertificate, ServerSecurityData, RDPServerDataPDU
 from rdpy.pdu.rdp.negotiation import RDPNegotiationResponsePDU, RDPNegotiationRequestPDU
 from rdpy.protocol.rdp.x224 import ServerTLSContext
-from rdpy.recording.recorder import Recorder
+from rdpy.recording.recorder import Recorder, FileLayer
 
 
 class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
     def __init__(self, targetHost, targetPort, certificateFileName, privateKeyFileName):
-        self.recorder = Recorder()  # DONT COMMIT THIS U STUPID
         MCSUserObserver.__init__(self)
         self.targetHost = targetHost
         self.targetPort = targetPort
@@ -47,6 +47,11 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.fastPathParser = None
         self.rc4RSAKey = RSA.generate(2048)
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.SERVER)
+        self.fileHandle = open("test.bin", "wb")
+        # Since we're intercepting communications from the original client (so we're a server),
+        # We need to write back the packets as if they came from the client.
+        self.recorder = Recorder([FileLayer(self.fileHandle)],
+                                 RDPBasicFastPathParser(RDPFastPathParserMode.CLIENT))
 
         self.supportedChannels = []
 
@@ -89,7 +94,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
     def buildProtocol(self, addr):
         # Build protocol for the client side of the connection
-        self.client = MITMClient(self)
+        self.client = MITMClient(self, self.fileHandle)
         return self.client.getProtocol()
 
     def logSSLParameters(self):
@@ -271,8 +276,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
             self.securityLayer.setNext(self.io)
             self.tpkt.setFastPathParser(self.fastPathParser)
 
-            slowPathObserver = MITMSlowPathObserver(self.io, "Server")
-            fastPathObserver = MITMFastPathObserver(self.tpkt, "Server")
+            slowPathObserver = MITMSlowPathObserver(self.io, self.recorder, name="Server")
+            fastPathObserver = MITMFastPathObserver(self.tpkt, self.recorder, name="Server")
             self.io.setObserver(slowPathObserver)
             self.tpkt.setObserver(fastPathObserver)
             self.securityLayer.createObserver(
@@ -315,9 +320,9 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.mcs.send(pdu)
 
     def onInputPDUReceived(self, pdu):
+        # Unsure if still useful
         for event in pdu.events:
             if event.messageType == InputEventType.INPUT_EVENT_SCANCODE:
                 self.log_debug("Key pressed: 0x%2lx" % event.keyCode)
-                self.recorder.record(self.fastPathParser)
             elif event.messageType == InputEventType.INPUT_EVENT_MOUSE:
                 self.log_debug("Mouse position: x = %d, y = %d" % (event.x, event.y))

@@ -1,47 +1,55 @@
 from rdpy.core import log
 
 from rdpy.core.newlayer import Layer
+from rdpy.layer.rdp.data import RDPBaseDataLayer
+from rdpy.layer.rdp.recording import RDPPlayerMessageTypeLayer
 from rdpy.layer.tpkt import TPKTLayer
 
-from rdpy.parser.rdp.fastpath import RDPInputEventParser
-from rdpy.pdu.rdp.fastpath import FastPathEventScanCode
 
-
-class Recorder(Layer):
+class Recorder:
     """
-    Base class to implement a recorder for RDP events.
-    """
-
-    def __init__(self):
-        super(Recorder, self).__init__()
-        self.tpktLayer = TPKTLayer()
-        self.setNext(self.tpktLayer)
-        self.rdpInputEventParser = RDPInputEventParser()
-
-    def record(self, pdu):
-        """
-        Encapsulate pdu in a TPKT packet, then record the provided pdu_data
-        """
-
-        if isinstance(pdu, FastPathEventScanCode):
-            raw_data = self.rdpInputEventParser.write(pdu, write_timestamp=True)
-            self.tpktLayer.send(raw_data)
-
-    def send(self, data):
-        """
-        Method to override to record the event.
-        """
-        raise RuntimeError("Record.send() method not implemented")
-
-
-class FileRecorder(Recorder):
-    """
-    Recorder that save RDP events to a file for later replay.
+    Class that manages recording of RDP events using the provided
+    transport layers. Those transport layers are the ones that will
+    receive binary data and handle them as they wish. They perform the actual recording.
     """
 
-    def __init__(self):
-        super(FileRecorder, self).__init__()
-        self.file_descriptor = open("hahatest.bin", "wb")
+    def __init__(self, transport_layers, parser):
+        """
+        :type transport_layers: list
+        """
+        self.rdpLayers = []
+        for transport_layer in transport_layers:
+            tpktLayer = TPKTLayer()
+            rdpPlayerMessageTypeLayer = RDPPlayerMessageTypeLayer()
+            rdp = RDPBaseDataLayer(parser)
+
+            transport_layer.setNext(tpktLayer)
+            tpktLayer.setNext(rdpPlayerMessageTypeLayer)
+            rdpPlayerMessageTypeLayer.setNext(rdp)
+            self.rdpLayers.append(rdp)
+
+    def record(self, pdu, messageType):
+        """
+        Encapsulate the pdu properly, then record the data
+        :type messageType: rdpy.enum.rdp.RDPPlayerMessageType
+        :type pdu: rdpy.pdu.rdp.fastpath.RDPFastPathPDU
+        """
+        for rdpLayer in self.rdpLayers:
+            rdpLayer.previous.setMessageType(messageType)
+            rdpLayer.sendPDU(pdu)
+
+
+class FileLayer(Layer):
+    """
+    Layer that saves RDP events to a file for later replay.
+    """
+
+    def __init__(self, fileHandle):
+        """
+        :type fileHandle: file
+        """
+        super(FileLayer, self).__init__()
+        self.file_descriptor = fileHandle
 
     def send(self, data):
         """

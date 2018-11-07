@@ -246,7 +246,7 @@ class LivePlayerTab(RDPConnectionTab):
         RDPConnectionTab.__init__(self, LivePlayerWidget(800, 600), None, *args, **kwargs)
 
         self.thread = ReaderThread(sock)
-        self.thread.event_received.connect(self._handler.on_event_received)
+        self.thread.event_received.connect(self._handler.on_message_received)
         self.thread.connection_closed.connect(self.on_connection_closed)
         self.thread.start()
 
@@ -327,7 +327,7 @@ class ReplayTab(RDPConnectionTab):
     def loop(self, event, speed_multiplier=1):
 
         if not self.stopped:
-            self._handler.on_event_received(event)
+            self._handler.on_message_received(event)
             e = self._reader.nextEvent()
             if e is not None:
                 time_difference = (event.timestamp - self.last_timestamp)

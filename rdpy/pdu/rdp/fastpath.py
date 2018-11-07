@@ -14,32 +14,37 @@ class FastPathEventRaw:
 class RDPFastPathEvent:
     """
     Base class for RDP fast path event (not PDU, a PDU contains multiple events)
+    such as a scancode event, a mouse event or a bitmap event.
     """
 
-    def __init__(self, timestamp):
-        # Even though an event does not contain a timestamp, it is needed for replay purposes.
-        self.timestamp = timestamp
+    def __init__(self):
+        pass
 
 
 class FastPathEventScanCode(RDPFastPathEvent):
 
-    def __init__(self, rawHeaderByte, scancode, isReleased, timestamp=None):
-        RDPFastPathEvent.__init__(self, timestamp)
+    def __init__(self, rawHeaderByte, scancode, isReleased):
+        """
+        :type rawHeaderByte: str
+        :type scancode: str
+        :type isReleased: bool
+        """
+        RDPFastPathEvent.__init__(self)
         self.rawHeaderByte = rawHeaderByte
         self.scancode = scancode
         self.isReleased = isReleased
 
 
-
-
 class FastPathOutputEvent:
     pass
+
 
 class FastPathBitmapEvent(FastPathOutputEvent):
     def __init__(self, header, compressionFlags, bitmapUpdateData):
         self.header = header
         self.compressionFlags = compressionFlags
         self.bitmapUpdateData = bitmapUpdateData
+
 
 class FastPathOrdersEvent(FastPathOutputEvent):
     def __init__(self, header, compressionFlags, orderCount, orderData):

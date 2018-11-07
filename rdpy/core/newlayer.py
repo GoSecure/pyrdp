@@ -72,7 +72,7 @@ class Layer(Subject):
     
     def setNext(self, layer):
         """
-        Set the next layer in the protocol hierarchy (ex: IP's next layer would be TCP).
+        Set the next layer in the protocol hierarchy (ex: IP's next layer would be TCP/UDP).
         :param layer: The next layer.
         :type layer: Layer
         """

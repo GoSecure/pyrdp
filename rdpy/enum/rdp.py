@@ -576,6 +576,7 @@ class ErrorInfo(IntEnum):
     ERRINFO_ENCPKGMISMATCH = 0x00001194
     ERRINFO_DECRYPTFAILED2 = 0x00001195
 
+
 class InputEventType(IntEnum):
     """
     Slow-path input message type
@@ -588,16 +589,19 @@ class InputEventType(IntEnum):
     INPUT_EVENT_MOUSE = 0x8001
     INPUT_EVENT_MOUSEX = 0x8002
 
+
 class SynchronizeFlag(IntEnum):
     TS_SYNC_SCROLL_LOCK = 0x00000001
     TS_SYNC_NUM_LOCK = 0x00000002
     TS_SYNC_CAPS_LOCK = 0x00000004
     TS_SYNC_KANA_LOCK = 0x00000008
 
+
 class KeyboardFlag(IntEnum):
     KBDFLAGS_EXTENDED = 0x0100
     KBDFLAGS_DOWN = 0x4000
     KBDFLAGS_RELEASE = 0x8000
+
 
 class PointerFlag(IntEnum):
     PTRFLAGS_WHEEL_NEGATIVE = 0x0100
@@ -615,9 +619,19 @@ class PointerFlag(IntEnum):
     PTRXFLAGS_BUTTON1 = 0x0001
     PTRXFLAGS_BUTTON2 = 0x0002
 
+
 class PointerEventType(IntEnum):
     TS_PTRMSGTYPE_SYSTEM = 0x0001
     TS_PTRMSGTYPE_POSITION = 0x0003
     TS_PTRMSGTYPE_COLOR = 0x0006
     TS_PTRMSGTYPE_CACHED = 0x0007
     TS_PTRMSGTYPE_POINTER = 0x0008
+
+
+class RDPPlayerMessageType(IntEnum):
+    """
+    Types of events that we can encounter when replaying a RDP connection.
+    """
+
+    INPUT = 1
+    OUTPUT = 2
