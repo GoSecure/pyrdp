@@ -29,7 +29,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         MCSChannelFactory.__init__(self)
         self.server = server
         self.recorder = Recorder([FileLayer(fileHandle)],
-                                 RDPBasicFastPathParser(RDPFastPathParserMode.SERVER))
+                                 RDPBasicFastPathParser(ParserMode.SERVER))
 
         self.tcp = TCPLayer()
         self.tpkt = TPKTLayer()

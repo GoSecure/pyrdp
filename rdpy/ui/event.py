@@ -4,7 +4,7 @@ from PyQt4.QtGui import QTextCursor
 
 from rdpy.core import rss, log
 from rdpy.core.scancode import scancodeToChar
-from rdpy.pdu.rdp.fastpath import FastPathEventScanCode
+from rdpy.pdu.rdp.fastpath import FastPathEventScanCode, FastPathEventMouse
 from rdpy.ui.qt4 import RDPBitmapToQtImage
 
 
@@ -64,8 +64,10 @@ class NewRSSEventHandler:
         """
         for event in message.payload.events:
             if isinstance(event, FastPathEventScanCode):
-                log.info("handling {}".format(event))
+                log.debug("handling {}".format(event))
                 self.handle_scancode(event)
+            elif isinstance(event, FastPathEventMouse):
+                log.info("Not handling Mouse event since it has not yet been coded :)")
             else:
                 log.debug("Cant handle event: {}".format(event))
 

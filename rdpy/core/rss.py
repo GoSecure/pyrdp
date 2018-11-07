@@ -29,7 +29,8 @@ from threading import Thread
 from rdpy.core import log, error
 from rdpy.core.type import CompositeType, FactoryType, UInt8, UInt16Le, UInt32Le, String, sizeof, StringStream, \
     SocketStream
-from rdpy.enum.rdp import RDPFastPathParserMode, RDPPlayerMessageType
+from rdpy.enum.core import ParserMode
+from rdpy.enum.rdp import RDPPlayerMessageType
 from rdpy.layer.rdp.recording import RDPPlayerMessageTypeLayer
 from rdpy.layer.tpkt import TPKTLayer
 from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser
@@ -397,8 +398,8 @@ class NewFileReader(FileReader):
         self.tpkt_layer.setNext(self.rdp_player_event_type_layer)
         self.rdp_player_event_type_layer.setObserver(self)
         self._events_queue = Queue()
-        self.rdp_server_fastpath_parser = RDPBasicFastPathParser(RDPFastPathParserMode.SERVER)
-        self.rdp_client_fastpath_parser = RDPBasicFastPathParser(RDPFastPathParserMode.CLIENT)
+        self.rdp_server_fastpath_parser = RDPBasicFastPathParser(ParserMode.SERVER)
+        self.rdp_client_fastpath_parser = RDPBasicFastPathParser(ParserMode.CLIENT)
 
     def nextEvent(self):
         """

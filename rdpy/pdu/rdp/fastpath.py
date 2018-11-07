@@ -35,6 +35,25 @@ class FastPathEventScanCode(RDPFastPathEvent):
         self.isReleased = isReleased
 
 
+class FastPathEventMouse(RDPFastPathEvent):
+    """
+    Mouse event (clicks, move, scroll, etc.)
+    """
+
+    def __init__(self, rawHeaderByte, pointerFlags, mouseX, mouseY):
+        """
+        :type rawHeaderByte: int
+        :type pointerFlags: int
+        :type mouseX: int
+        :type mouseY: int
+        """
+        RDPFastPathEvent.__init__(self)
+        self.rawHeaderByte = rawHeaderByte
+        self.mouseY = mouseY
+        self.mouseX = mouseX
+        self.pointerFlags = pointerFlags
+
+
 class FastPathOutputEvent:
     pass
 
