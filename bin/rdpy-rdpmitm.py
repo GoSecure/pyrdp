@@ -1,11 +1,10 @@
 #!/usr/bin/env python2
-import sys
-
-import appdirs
 import argparse
 import logging
 import os
+import sys
 
+import appdirs
 from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
 
@@ -37,6 +36,7 @@ def getSSLPaths():
 def generateCertificate(keyPath, certificatePath):
     result = os.system("openssl req -newkey rsa:2048 -nodes -keyout %s -x509 -days 365 -out %s -subj '/CN=www.example.com/O=RDPY/C=US' 2>/dev/null" % (keyPath, certificatePath))
     return result == 0
+
 
 if __name__ == "__main__":
     log.get_logger().setLevel(logging.DEBUG)

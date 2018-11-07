@@ -38,24 +38,24 @@ setup(name='rdpy',
         'rdpy.security',
     ],
     ext_modules=[Extension('rle', ['ext/rle.c'])],
-    scripts = [
+    scripts=[
             'bin/rdpy-rdpclient.py',
             'bin/rdpy-rdphoneypot.py',
             'bin/rdpy-rdpmitm.py',
             'bin/rdpy-rdpscreenshot.py',
-            'bin/rdpy-vncclient.py', 
+            'bin/rdpy-vncclient.py',
             'bin/rdpy-vncscreenshot.py',
             'bin/rdpy-player.py'
         ],
     install_requires=[
-            'appdirs',
             'twisted',
             'pyopenssl',
-              'service_identity',
-              'qt4reactor',
-              'rsa',
-              'pyasn1',
+            'service_identity',
+            'qt4reactor',
+            'rsa',
+            'pyasn1',
             'notify2',
-            'Crypto', 'appdirs'
+            'Crypto',
+            'appdirs'
     ],
 )
