@@ -17,8 +17,8 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import logging
 import binascii
+import logging
 
 
 class SSLSecretFormatter(logging.Formatter):
@@ -34,8 +34,6 @@ class SSLSecretFormatter(logging.Formatter):
                                             binascii.hexlify(record.args[0]))
 
 
-
-
 def get_formatter():
     """
     Get the log formatter used for the RDPY library.
@@ -48,11 +46,20 @@ def prepare_rdpy_logger():
     Prepare the RDPY logger to be used by the library.
     """
     logger = logging.getLogger("rdpy")
-    logger.setLevel(logging.WARNING)
+    logger.setLevel(logging.INFO)
+
     stream_handler = logging.StreamHandler()
+    file_handler = logging.FileHandler("log/rdpy.log")
+
     formatter = get_formatter()
+
     stream_handler.setFormatter(formatter)
+    file_handler.setFormatter(formatter)
+    stream_handler.setLevel(logging.INFO)
+    file_handler.setLevel(logging.DEBUG)
+
     logger.addHandler(stream_handler)
+    logger.addHandler(file_handler)
 
 
 
