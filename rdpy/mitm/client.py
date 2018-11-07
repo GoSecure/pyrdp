@@ -14,14 +14,22 @@ from rdpy.mcs.channel import MCSChannelFactory, MCSClientChannel
 from rdpy.mcs.client import MCSClientRouter
 from rdpy.mcs.user import MCSUserObserver
 from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver
+from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser
 from rdpy.parser.rdp.negotiation import RDPNegotiationResponseParser, RDPNegotiationRequestParser
 from rdpy.protocol.rdp.x224 import ClientTLSContext
+from rdpy.recording.recorder import Recorder, FileLayer
 
 
 class MITMClient(MCSChannelFactory, MCSUserObserver):
-    def __init__(self, server):
+    def __init__(self, server, fileHandle):
+        """
+        :type server: rdpy.mitm.server.MITMServer
+        :type fileHandle: file
+        """
         MCSChannelFactory.__init__(self)
         self.server = server
+        self.recorder = Recorder([FileLayer(fileHandle)],
+                                 RDPBasicFastPathParser(ParserMode.SERVER))
 
         self.tcp = TCPLayer()
         self.tpkt = TPKTLayer()
@@ -150,12 +158,12 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.user.setObserver(self)
         self.user.attach()
 
-    # MCS Attach User Confirm successful
     def onAttachConfirmed(self, user):
+        # MCS Attach User Confirm successful
         self.server.onAttachConfirmed(user)
 
-    # MCS Attach User Confirm failed
     def onAttachRefused(self, user, result):
+        # MCS Attach User Confirm failed
         self.server.onAttachRefused(user, result)
 
     def onChannelJoinRequest(self, pdu):
@@ -183,8 +191,8 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
             self.securityLayer.setNext(self.io)
             self.tpkt.setFastPathParser(self.fastPathParser)
 
-            slowPathObserver = MITMSlowPathObserver(self.io, "Client")
-            self.fastPathObserver = MITMFastPathObserver(self.tpkt, "Client")
+            slowPathObserver = MITMSlowPathObserver(self.io, self.recorder, "Client")
+            self.fastPathObserver = MITMFastPathObserver(self.tpkt, self.recorder, "Client")
             self.io.setObserver(slowPathObserver)
             self.tpkt.setObserver(self.fastPathObserver)
             self.licensingLayer.createObserver(onPDUReceived=self.onLicensingPDU)

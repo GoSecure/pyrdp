@@ -1,11 +1,12 @@
 from StringIO import StringIO
 
 from rdpy.core.packing import Uint8, Uint16BE, Uint16LE
+from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import RDPFastPathInputEventType, \
     RDPFastPathSecurityFlags, FIPSVersion, FastPathOutputCompressionType, RDPFastPathOutputEventType
-from rdpy.enum.core import ParserMode
 from rdpy.parser.rdp.security import RDPBasicSecurityParser
-from rdpy.pdu.rdp.fastpath import FastPathEventRaw, RDPFastPathPDU, FastPathBitmapEvent, FastPathOrdersEvent
+from rdpy.pdu.rdp.fastpath import FastPathEventRaw, RDPFastPathPDU, FastPathEventScanCode, FastPathBitmapEvent, \
+    FastPathOrdersEvent, FastPathEventMouse
 
 
 class RDPBasicFastPathParser(RDPBasicSecurityParser):
@@ -116,7 +117,6 @@ class RDPBasicFastPathParser(RDPBasicSecurityParser):
         return 0
 
 
-
 class RDPSignedFastPathParser(RDPBasicFastPathParser):
     def __init__(self, crypter, mode):
         RDPBasicFastPathParser.__init__(self, mode)
@@ -220,18 +220,60 @@ class RDPInputEventParser:
     def getEventLength(self, data):
         if isinstance(data, FastPathEventRaw):
             return len(data.data)
-
-        header = Uint8.unpack(data[0])
-        type = (header & 0b11100000) >> 5
-        return RDPInputEventParser.INPUT_EVENT_LENGTHS[type]
+        elif isinstance(data, str):
+            header = Uint8.unpack(data[0])
+            type = (header & 0b11100000) >> 5
+            return RDPInputEventParser.INPUT_EVENT_LENGTHS[type]
+        elif isinstance(data, FastPathEventScanCode):
+            return RDPInputEventParser.INPUT_EVENT_LENGTHS[RDPFastPathInputEventType.FASTPATH_INPUT_EVENT_SCANCODE]
+        elif isinstance(data, FastPathEventMouse):
+            return RDPInputEventParser.INPUT_EVENT_LENGTHS[RDPFastPathInputEventType.FASTPATH_INPUT_EVENT_MOUSE]
+        raise ValueError("Unsupported event type?")
 
     def parse(self, data):
+        stream = StringIO(data)
+        eventHeader = Uint8.unpack(stream.read(1))
+        eventCode = (eventHeader & 0b11100000) >> 5
+        eventFlags= eventHeader & 0b00011111
+        if eventCode == RDPFastPathInputEventType.FASTPATH_INPUT_EVENT_SCANCODE:
+            return self.parseScanCode(eventFlags, eventHeader, stream)
+        elif eventCode == RDPFastPathInputEventType.FASTPATH_INPUT_EVENT_MOUSE:
+            return self.parseMouseEvent(data, eventHeader)
         return FastPathEventRaw(data)
+
+    def parseMouseEvent(self, data, eventHeader):
+        pointerFlags = Uint16LE.unpack(data[1:3])
+        mouseX = Uint16LE.unpack(data[3:5])
+        mouseY = Uint16LE.unpack(data[5:7])
+        return FastPathEventMouse(eventHeader, pointerFlags, mouseX, mouseY)
+
+    def parseScanCode(self, eventFlags, eventHeader, stream):
+        scancode = Uint8.unpack(stream.read(1))
+        return FastPathEventScanCode(eventHeader,
+                                     scancode, eventFlags)  # there is no lord
 
     def write(self, event):
         if isinstance(event, FastPathEventRaw):
             return event.data
+        elif isinstance(event, FastPathEventScanCode):
+            return self.writeScanCodeEvent(event)
+        elif isinstance(event, FastPathEventMouse):
+            return self.writeMouseEvent(event)
+        raise ValueError("Invalid FastPath event: {}".format(event))
 
+    def writeScanCodeEvent(self, event):
+        raw_data = StringIO()
+        Uint8.pack(event.rawHeaderByte, raw_data)
+        Uint8.pack(event.scancode, raw_data)
+        return raw_data.getvalue()
+
+    def writeMouseEvent(self, event):
+        rawData = StringIO()
+        Uint8.pack(event.rawHeaderByte, rawData)
+        Uint16LE.pack(event.pointerFlags, rawData)
+        Uint16LE.pack(event.mouseX, rawData)
+        Uint16LE.pack(event.mouseY, rawData)
+        return rawData.getvalue()
 
 
 class RDPOutputEventParser:

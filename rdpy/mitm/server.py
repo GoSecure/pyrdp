@@ -5,8 +5,8 @@ from twisted.internet.protocol import ClientFactory
 
 from rdpy.core import log
 from rdpy.core.crypto import SecuritySettings, RC4CrypterProxy
-from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, EncryptionMethod, EncryptionLevel
 from rdpy.enum.core import ParserMode
+from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, EncryptionMethod, EncryptionLevel
 from rdpy.layer.mcs import MCSLayer
 from rdpy.layer.rdp.data import RDPDataLayer
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
@@ -22,12 +22,14 @@ from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver
 from rdpy.parser.gcc import GCCParser
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.connection import RDPClientConnectionParser, RDPServerConnectionParser
+from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser
 from rdpy.parser.rdp.negotiation import RDPNegotiationRequestParser, RDPNegotiationResponseParser
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.pdu.mcs import MCSConnectResponsePDU
 from rdpy.pdu.rdp.connection import ProprietaryCertificate, ServerSecurityData, RDPServerDataPDU
 from rdpy.pdu.rdp.negotiation import RDPNegotiationResponsePDU, RDPNegotiationRequestPDU
 from rdpy.protocol.rdp.x224 import ServerTLSContext
+from rdpy.recording.recorder import Recorder, FileLayer
 
 
 class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
@@ -45,6 +47,11 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.fastPathParser = None
         self.rc4RSAKey = RSA.generate(2048)
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.SERVER)
+        self.fileHandle = open("test.bin", "wb")
+        # Since we're intercepting communications from the original client (so we're a server),
+        # We need to write back the packets as if they came from the client.
+        self.recorder = Recorder([FileLayer(self.fileHandle)],
+                                 RDPBasicFastPathParser(ParserMode.CLIENT))
 
         self.supportedChannels = []
 
@@ -84,9 +91,9 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
     def getNegotiationPDU(self):
         return self.targetNegotiationPDU
 
-    # Build protocol for the client side of the connection
     def buildProtocol(self, addr):
-        self.client = MITMClient(self)
+        # Build protocol for the client side of the connection
+        self.client = MITMClient(self, self.fileHandle)
         return self.client.getProtocol()
 
     def logSSLParameters(self):
@@ -99,12 +106,12 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
     def log_error(self, string):
         log.error("Server: %s" % string)
 
-    # Connect the client side to the target machine
     def connectClient(self):
+        # Connect the client side to the target machine
         self.clientConnector = reactor.connectTCP(self.targetHost, self.targetPort, self)
 
-    # Connection sequence #0
     def onConnection(self):
+        # Connection sequence #0
         self.log_debug("TCP connected")
 
     def onDisconnection(self, reason):
@@ -129,8 +136,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
             self.clientConnector.disconnect()
             self.clientConnector = None
 
-    # X224 Request
     def onConnectionRequest(self, pdu):
+        # X224 Request
         self.log_debug("Connection Request received")
 
         # We need to save the original negotiation PDU because Windows will cut the connection if it sees that the requested protocols have changed.
@@ -151,8 +158,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
         self.connectClient()
 
-    # X224 Response
     def onConnectionConfirm(self, _):
+        # X224 Response
         protocols = NegotiationProtocols.SSL if self.originalNegotiationPDU.tlsSupported else NegotiationProtocols.NONE
 
         parser = RDPNegotiationResponseParser()
@@ -163,8 +170,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
             self.tcp.startTLS(ServerTLSContext(privateKeyFileName=self.privateKeyFileName, certificateFileName=self.certificateFileName))
             self.useTLS = True
 
-    # MCS Connect Initial
     def onConnectInitial(self, pdu):
+        # MCS Connect Initial
         """
         Parse the ClientData PDU and send a ServerData PDU back.
         :param pdu: The GCC ConferenceCreateResponse PDU that contains the ClientData PDU.
@@ -180,8 +187,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.client.onConnectInitial(gccConferenceCreateRequestPDU, rdpClientDataPdu)
         return True
 
-    # MCS Connect Response
     def onConnectResponse(self, pdu, serverData):
+        # MCS Connect Response
         """
         :type pdu: MCSConnectResponsePDU
         :type serverData: RDPServerDataPDU
@@ -225,31 +232,31 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         pdu = MCSConnectResponsePDU(pdu.result, pdu.calledConnectID, pdu.domainParams, gccParser.write(gcc))
         self.mcs.send(pdu)
 
-    # MCS Attach User Request
     def onAttachUserRequest(self, _):
+        # MCS Attach User Request
         self.client.onAttachUserRequest()
 
-    # MCS Attach User Confirm successful
     def onAttachConfirmed(self, user):
+        # MCS Attach User Confirm successful
         self.router.sendAttachUserConfirm(True, user.userID)
 
-    # MCS Attach User Confirm failed
     def onAttachRefused(self, user, result):
+        # MCS Attach User Confirm failed
         self.router.sendAttachUserConfirm(False, result)
 
-    # MCS Channel Join Request
     def onChannelJoinRequest(self, pdu):
+        # MCS Channel Join Request
         if pdu.channelID == self.serverData.network.mcsChannelID:
             self.client.onChannelJoinRequest(pdu)
         else:
             self.router.sendChannelJoinConfirm(15, pdu.initiator, pdu.channelID, False)
 
-    # MCS Channel Join Confirm successful
     def onChannelJoinAccepted(self, userID, channelID):
+        # MCS Channel Join Confirm successful
         self.router.sendChannelJoinConfirm(0, userID, channelID)
 
-    # MCS Channel Join Confirm failed
     def onChannelJoinRefused(self, user, result, channelID):
+        # MCS Channel Join Confirm failed
         self.router.sendChannelJoinConfirm(result, user.userID, channelID)
 
     def buildChannel(self, mcs, userID, channelID):
@@ -276,8 +283,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
             self.securityLayer.setNext(self.io)
             self.tpkt.setFastPathParser(self.fastPathParser)
 
-            slowPathObserver = MITMSlowPathObserver(self.io, "Server")
-            fastPathObserver = MITMFastPathObserver(self.tpkt, "Server")
+            slowPathObserver = MITMSlowPathObserver(self.io, self.recorder, name="Server")
+            fastPathObserver = MITMFastPathObserver(self.tpkt, self.recorder, name="Server")
             self.io.setObserver(slowPathObserver)
             self.tpkt.setObserver(fastPathObserver)
             self.securityLayer.createObserver(
@@ -320,6 +327,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.mcs.send(pdu)
 
     def onInputPDUReceived(self, pdu):
+        # Unsure if still useful
         for event in pdu.events:
             if event.messageType == InputEventType.INPUT_EVENT_SCANCODE:
                 self.log_debug("Key pressed: 0x%2lx" % event.keyCode)

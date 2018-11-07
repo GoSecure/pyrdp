@@ -29,6 +29,11 @@ from threading import Thread
 from rdpy.core import log, error
 from rdpy.core.type import CompositeType, FactoryType, UInt8, UInt16Le, UInt32Le, String, sizeof, StringStream, \
     SocketStream
+from rdpy.enum.core import ParserMode
+from rdpy.enum.rdp import RDPPlayerMessageType
+from rdpy.layer.rdp.recording import RDPPlayerMessageTypeLayer
+from rdpy.layer.tpkt import TPKTLayer
+from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser
 
 
 class EventType(object):
@@ -380,6 +385,50 @@ class FileReader(object):
         """
         self._s.pos = 0
 
+
+class NewFileReader(FileReader):
+    """
+    Class that manages reading of a RDP replay file event per event.
+    """
+
+    def __init__(self, f):
+        super(NewFileReader, self).__init__(f)
+        self.tpkt_layer = TPKTLayer()
+        self.rdp_player_event_type_layer = RDPPlayerMessageTypeLayer()
+        self.tpkt_layer.setNext(self.rdp_player_event_type_layer)
+        self.rdp_player_event_type_layer.setObserver(self)
+        self._events_queue = Queue()
+        self.rdp_server_fastpath_parser = RDPBasicFastPathParser(ParserMode.SERVER)
+        self.rdp_client_fastpath_parser = RDPBasicFastPathParser(ParserMode.CLIENT)
+
+    def nextEvent(self):
+        """
+        :return: The next RDP Event to read.
+        """
+        if self._events_queue.empty():
+            self.tpkt_layer.recv(self._s.read())
+
+        # After tpkt_layer.recv, new events should be in the Queue. if not, its over.
+        if not self._events_queue.empty():
+            return self._events_queue.get()
+
+    def onPDUReceived(self, pdu):
+        """
+        Put the PDU in the events queue after parsing the provided pdu's payload.
+        :type pdu: rdpy.pdu.rdp.recording.RDPPlayerMessagePDU
+        """
+        try:
+            if pdu.type == RDPPlayerMessageType.INPUT:
+                rdpPdu = self.rdp_server_fastpath_parser.parse(pdu.payload)
+            else:
+                rdpPdu = self.rdp_client_fastpath_parser.parse(pdu.payload)
+            pdu.payload = rdpPdu
+            self._events_queue.put(pdu)
+            pass
+        except Exception as e:
+            log.error("Error occured when parsing RDP event: {}".format(e.message))
+
+
 class SocketReader:
     """
     @summary: RSS Socket reader
@@ -434,4 +483,8 @@ def createFileReader(path):
     @return: {FileReader}
     """
     with open(path, "rb") as f:
-        return FileReader(f)
+        if path.endswith(".rss"):
+            return FileReader(f)
+        else:
+            return NewFileReader(f)
+

@@ -30,7 +30,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 from rdpy.core import log, rss
-from rdpy.ui.event import RSSEventHandler
+from rdpy.ui.event import NewRSSEventHandler
 from rdpy.ui.qt4 import QRemoteDesktop
 
 global qApp  # Here so the linter stops crying :)
@@ -137,7 +137,7 @@ class RDPConnectionTab(QWidget):
         self._text = QTextEdit()
         self._text.setReadOnly(True)
         self._text.setMinimumHeight(150)
-        self._handler = RSSEventHandler(self._viewer, self._text)
+        self._handler = NewRSSEventHandler(self._viewer, self._text)
 
         scrollViewer = QScrollArea()
         scrollViewer.setWidget(self._viewer)
@@ -148,7 +148,7 @@ class RDPConnectionTab(QWidget):
         self.setLayout(layout)
 
     def handle_close(self):
-        ulog.debug("Close tab")
+        mlog.debug("Close tab")
 
 
 class ControlBar(QWidget):
@@ -216,21 +216,21 @@ class ControlBar(QWidget):
         self._slider_change_action = action
 
     def on_play_clicked(self):
-        ulog.debug("Play clicked")
+        mlog.debug("Play clicked")
         self._slider_change_action(self.speed_slider.value())
         self._play_action()
 
     def on_stop_clicked(self):
-        ulog.debug("Stop clicked")
+        mlog.debug("Stop clicked")
         self._stop_action()
 
     def on_rewind_clicked(self):
-        ulog.debug("Rewind clicked")
+        mlog.debug("Rewind clicked")
         self._rewind_action()
 
     def on_slider_change(self):
         new_value = self.speed_slider.value()
-        ulog.debug("Slider changed value: {}".format(new_value))
+        mlog.debug("Slider changed value: {}".format(new_value))
         self.speed_label.setText("Speed: {}x".format(new_value))
         self._slider_change_action(new_value)
 
@@ -246,7 +246,7 @@ class LivePlayerTab(RDPConnectionTab):
         RDPConnectionTab.__init__(self, LivePlayerWidget(800, 600), None, *args, **kwargs)
 
         self.thread = ReaderThread(sock)
-        self.thread.event_received.connect(self._handler.on_event_received)
+        self.thread.event_received.connect(self._handler.on_message_received)
         self.thread.connection_closed.connect(self.on_connection_closed)
         self.thread.start()
 
@@ -290,10 +290,11 @@ class ReplayTab(RDPConnectionTab):
 
     def __init__(self, reader, file_name, *args, **kwargs):
         """
-        :type reader: rdpy.core.rss.FileReader
+        :type reader: rdpy.core.rss.NewFileReader
         """
         self.file_name = file_name
         self.stopped = True
+        self.last_timestamp = 0
         RDPConnectionTab.__init__(self, QRemoteDesktop(800, 600, RssAdaptor()), None, *args, **kwargs)
 
         self._reader = reader
@@ -303,7 +304,9 @@ class ReplayTab(RDPConnectionTab):
         Start the RDP Connection replay
         """
         self.stopped = False
-        self.loop(self._reader.nextEvent(), speed_multiplier=self.speed_multiplier)
+        event = self._reader.nextEvent()
+        self.last_timestamp = event.timestamp
+        self.loop(event, speed_multiplier=self.speed_multiplier)
 
     def stop(self):
         """
@@ -316,7 +319,7 @@ class ReplayTab(RDPConnectionTab):
         """
         Resets the replay to start it over.
         """
-        ulog.debug("Resetting current replay {}".format(self))
+        mlog.debug("Resetting current replay {}".format(self))
         self._reader.reset()
         self._text.setText("")
         self.stop()
@@ -324,12 +327,15 @@ class ReplayTab(RDPConnectionTab):
     def loop(self, event, speed_multiplier=1):
 
         if not self.stopped:
-            self._handler.on_event_received(event)
+            self._handler.on_message_received(event)
             e = self._reader.nextEvent()
             if e is not None:
-                QTimer.singleShot(e.timestamp.value / speed_multiplier, lambda: self.loop(e, speed_multiplier=self.speed_multiplier))
+                time_difference = (event.timestamp - self.last_timestamp)
+                self.last_timestamp = event.timestamp
+                QTimer.singleShot(time_difference / speed_multiplier,
+                                  lambda: self.loop(e, speed_multiplier=self.speed_multiplier))
             else:
-                ulog.debug("RSS file ended, replay done.")
+                mlog.debug("RSS file ended, replay done.")
 
     def set_speed_multiplier(self, value):
         self.speed_multiplier = value
@@ -372,10 +378,10 @@ class BasePlayerWindow(QTabWidget):
         log.debug("Stop action not implemented")
 
     def on_rewind_clicked(self):
-        ulog.debug("Rewind action not implemented")
+        mlog.debug("Rewind action not implemented")
 
     def on_slider_change(self, new_value):
-        ulog.debug("Slider change action not implemented")
+        mlog.debug("Slider change action not implemented")
 
 
 class ReplaysWindow(BasePlayerWindow):
@@ -396,21 +402,21 @@ class ReplaysWindow(BasePlayerWindow):
             i += 1
 
     def on_play_clicked(self):
-        ulog.debug("Start .rss file")
+        mlog.debug("Start .rss file")
         self.currentWidget().replay_tab.start()
 
     def on_stop_clicked(self):
-        ulog.debug("Stop .rss file")
+        mlog.debug("Stop .rss file")
         self.currentWidget().replay_tab.stop()
 
     def on_rewind_clicked(self):
-        ulog.debug("Rewind: Create new ReplayTab and replace the old one.")
+        mlog.debug("Rewind: Create new ReplayTab and replace the old one.")
         name = self.currentWidget().replay_tab.file_name
         self.currentWidget().set_replay_tab(ReplayTab(rss.createFileReader(name), name))
         self.currentWidget().replay_tab.start()
 
     def on_slider_change(self, new_value):
-        ulog.debug("Change replay speed to {}".format(new_value))
+        mlog.debug("Change replay speed to {}".format(new_value))
         self.currentWidget().replay_tab.set_speed_multiplier(new_value)
 
 
@@ -525,7 +531,7 @@ def prepare_loggers():
     liveplayer_logger.setLevel(logging.DEBUG)
 
     liveplayer_ui_logger = logging.getLogger("liveplayer.ui")
-    liveplayer_ui_logger.setLevel(logging.DEBUG)
+    liveplayer_ui_logger.setLevel(logging.INFO)
 
     formatter = logging.Formatter("[%(asctime)s] - %(name)s - %(levelname)s - %(message)s")
 
