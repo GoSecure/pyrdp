@@ -261,6 +261,7 @@ class ServerCapabilityFlag:
 
 
 class ConnectionType(IntEnum):
+    CONNECTION_TYPE_UNKNOWN = 0x00
     CONNECTION_TYPE_MODEM = 0x01
     CONNECTION_TYPE_BROADBAND_LOW = 0x02
     CONNECTION_TYPE_SATELLITE = 0x03
