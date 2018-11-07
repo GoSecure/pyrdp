@@ -1,8 +1,9 @@
 from rdpy.core import log
 from rdpy.core.newlayer import Layer, LayerStrictRoutedObserver, LayerObserver
 from rdpy.core.subject import ObservedBy
-from rdpy.enum.rdp import RDPDataPDUType
+from rdpy.enum.rdp import RDPDataPDUType, RDPPlayerMessageType
 from rdpy.exceptions import UnknownPDUTypeError
+from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.data import RDPDataParser
 
 
@@ -86,15 +87,15 @@ class RDPFastPathDataLayerObserver(RDPBaseDataLayerObserver, LayerObserver):
         return pdu.header & 0b11100000
 
 
-
 class RDPBaseDataLayer(Layer):
-    def __init__(self, parser):
+    def __init__(self, fastPathParser):
         Layer.__init__(self)
-        self.parser = parser
+        self.fastPathParser = fastPathParser
+        self.clientInfoParser = RDPClientInfoParser()
 
     def recv(self, data):
         try:
-            pdu = self.parser.parse(data)
+            pdu = self.fastPathParser.parse(data)
         except UnknownPDUTypeError as e:
             log.error(str(e))
             if self.observer:
@@ -102,8 +103,12 @@ class RDPBaseDataLayer(Layer):
         else:
             self.pduReceived(pdu, False)
 
-    def sendPDU(self, pdu):
-        self.previous.send(self.parser.write(pdu))
+    def sendPDU(self, pdu, messageType=None):
+        if messageType == RDPPlayerMessageType.CLIENT_INFO:
+            data = self.clientInfoParser.write(pdu)
+        else:
+            data = self.fastPathParser.write(pdu)
+        self.previous.send(data)
 
     def sendData(self, data):
         self.previous.send(data)

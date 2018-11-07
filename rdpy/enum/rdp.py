@@ -629,5 +629,6 @@ class RDPPlayerMessageType(IntEnum):
     Types of events that we can encounter when replaying a RDP connection.
     """
 
-    INPUT = 1
-    OUTPUT = 2
+    INPUT = 1  # Ex: scancode, mouse
+    OUTPUT = 2  # Ex: image
+    CLIENT_INFO = 3  # Creds on connection
