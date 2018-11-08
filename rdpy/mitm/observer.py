@@ -1,20 +1,25 @@
-from rdpy.core import log
+import logging
+
+from rdpy.core.observer import Observer
+from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import RDPPlayerMessageType
 from rdpy.layer.rdp.data import RDPDataLayerObserver, RDPFastPathDataLayerObserver
 from rdpy.pdu.rdp.fastpath import RDPFastPathPDU
 
 
-class MITMChannelObserver:
-    def __init__(self, layer, innerObserver, recorder, name=""):
+class MITMChannelObserver(Observer):
+    def __init__(self, layer, innerObserver, recorder, mode, **kwargs):
         """
         :type layer: rdpy.core.newlayer.Layer
         :type recorder: rdpy.recording.recorder.Recorder
-        :type name: str
+        :type mode: ParserMode
         """
+        self.mitm_log = logging.getLogger("mitm.{}".format("client" if mode == ParserMode.CLIENT else "server"))
+        Observer.__init__(self, **kwargs)
         self.recorder = recorder
         self.layer = layer
         self.innerObserver = innerObserver
-        self.name = name
+        self.mode = mode
         self.peer = None
 
         self.setDataHandler = self.innerObserver.setDataHandler
@@ -25,22 +30,22 @@ class MITMChannelObserver:
         peer.peer = self
 
     def onPDUReceived(self, pdu):
-        log.debug("%s: received %s" % (self.name, self.getEffectiveType(pdu)))
+        self.mitm_log.debug("Received {}".format(self.getEffectiveType(pdu)))
         if isinstance(pdu, RDPFastPathPDU):
-            self.recorder.record(pdu, RDPPlayerMessageType.OUTPUT if self.name == "Client" else RDPPlayerMessageType.INPUT)
+            self.recorder.record(pdu, RDPPlayerMessageType.OUTPUT if self.mode == ParserMode.CLIENT else RDPPlayerMessageType.INPUT)
         self.innerObserver.onPDUReceived(pdu)
         self.peer.sendPDU(pdu)
 
     def onUnparsedData(self, data):
-        log.debug("%s: received data" % self.name)
+        self.mitm_log.debug("Received unparsed data: {}".format(data.encode('hex')))
         self.peer.sendData(data)
 
     def sendPDU(self, pdu):
-        log.debug("%s: sending %s" % (self.name, self.getEffectiveType(pdu)))
+        self.mitm_log.debug("Sending {}".format(self.getEffectiveType(pdu)))
         self.layer.sendPDU(pdu)
 
     def sendData(self, data):
-        log.debug("%s: sending data, %s" % (self.name, data.encode('hex')))
+        self.mitm_log.debug("Sending data: {}".format(data.encode('hex')))
         self.layer.sendData(data)
 
     def getEffectiveType(self, pdu):
@@ -48,13 +53,13 @@ class MITMChannelObserver:
 
 
 class MITMSlowPathObserver(MITMChannelObserver):
-    def __init__(self, layer, recorder, name="", **kwargs):
+    def __init__(self, layer, recorder, mode, **kwargs):
         """
         :type layer: rdpy.core.newlayer.Layer
         :type recorder: rdpy.recording.recorder.Recorder
-        :type name: str
+        :type mode: ParserMode
         """
-        MITMChannelObserver.__init__(self, layer, RDPDataLayerObserver(**kwargs), recorder, name)
+        MITMChannelObserver.__init__(self, layer, RDPDataLayerObserver(**kwargs), recorder, mode)
 
     def getEffectiveType(self, pdu):
         if hasattr(pdu.header, "subtype"):
@@ -67,13 +72,13 @@ class MITMSlowPathObserver(MITMChannelObserver):
 
 
 class MITMFastPathObserver(MITMChannelObserver):
-    def __init__(self, layer, recorder, name=""):
+    def __init__(self, layer, recorder, mode):
         """
         :type layer: rdpy.core.newlayer.Layer
         :type recorder: rdpy.recording.recorder.Recorder
-        :type name: str
+        :type mode: ParserMode
         """
-        MITMChannelObserver.__init__(self, layer, RDPFastPathDataLayerObserver(), recorder, name)
+        MITMChannelObserver.__init__(self, layer, RDPFastPathDataLayerObserver(), recorder, mode)
 
     def getEffectiveType(self, pdu):
         return str(pdu)

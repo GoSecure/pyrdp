@@ -1,4 +1,5 @@
-from rdpy.core import log
+import logging
+
 from rdpy.core.crypto import SecuritySettings
 from rdpy.enum.core import ParserMode
 from rdpy.layer.gcc import GCCClientConnectionLayer
@@ -26,6 +27,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         :type server: rdpy.mitm.server.MITMServer
         :type fileHandle: file
         """
+        self.mitm_log = logging.getLogger("mitm.client")
         MCSChannelFactory.__init__(self)
         self.server = server
         self.recorder = Recorder([FileLayer(fileHandle)],
@@ -72,34 +74,28 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
     def getProtocol(self):
         return self.tcp
 
-    def log_debug(self, string):
-        log.debug("Client: %s" % string)
-
-    def log_error(self, string):
-        log.error("Client: %s" % string)
-
     def startConnection(self):
         """
         Start the connection sequence to the target machine.
         """
-        self.log_debug("TCP connected")
+        self.mitm_log.debug("TCP connected")
         negotiation = self.server.getNegotiationPDU()
         parser = RDPNegotiationRequestParser()
         self.x224.sendConnectionRequest(parser.write(negotiation))
 
     def onDisconnection(self, reason):
-        self.log_debug("Connection closed")
+        self.mitm_log.debug("Connection closed")
         self.server.disconnect()
 
     def disconnect(self):
-        self.log_debug("Disconnecting")
+        self.mitm_log.debug("Disconnecting")
         self.tcp.disconnect()
 
     def onConnectionConfirm(self, pdu):
         """
         Called when the X224 layer is connected.
         """
-        self.log_debug("Connection Confirm received")
+        self.mitm_log.debug("Connection Confirm received")
 
         parser = RDPNegotiationResponseParser()
         response = parser.parse(pdu.payload)
@@ -116,7 +112,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         :param gccConferenceCreateRequest: the conference create request.
         :param clientData: the RDPClientDataPDU.
         """
-        self.log_debug("Sending Connect Initial")
+        self.mitm_log.debug("Sending Connect Initial")
 
         if clientData.networkData:
             self.channelDefinitions = clientData.networkData.channelDefinitions
@@ -129,10 +125,10 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         Called when an MCS Connect Response PDU is received.
         """
         if pdu.result != 0:
-            log.error("MCS Connection Failed")
+            self.mitm_log.error("MCS Connection Failed")
             self.server.onConnectResponse(pdu, None)
         else:
-            self.log_debug("MCS Connection Successful")
+            self.mitm_log.debug("MCS Connection Successful")
             self.mcsConnect.recv(pdu)
             self.server.onConnectResponse(pdu, self.serverData)
 
@@ -170,7 +166,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.mcs.send(pdu)
 
     def buildChannel(self, mcs, userID, channelID):
-        self.log_debug("building channel {} for user {}".format(channelID, userID))
+        self.mitm_log.debug("building channel {} for user {}".format(channelID, userID))
 
         if channelID != userID and self.channelMap[channelID] == "I/O":
             encryptionMethod = self.serverData.security.encryptionMethod
@@ -191,8 +187,8 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
             self.securityLayer.setNext(self.io)
             self.tpkt.setFastPathParser(self.fastPathParser)
 
-            slowPathObserver = MITMSlowPathObserver(self.io, self.recorder, "Client")
-            self.fastPathObserver = MITMFastPathObserver(self.tpkt, self.recorder, "Client")
+            slowPathObserver = MITMSlowPathObserver(self.io, self.recorder, ParserMode.CLIENT)
+            self.fastPathObserver = MITMFastPathObserver(self.tpkt, self.recorder, ParserMode.CLIENT)
             self.io.setObserver(slowPathObserver)
             self.tpkt.setObserver(self.fastPathObserver)
             self.licensingLayer.createObserver(onPDUReceived=self.onLicensingPDU)
@@ -202,7 +198,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
             if self.useTLS:
                 self.securityLayer.securityHeaderExpected = True
             elif encryptionMethod != 0:
-                self.log_debug("Sending Security Exchange")
+                self.mitm_log.debug("Sending Security Exchange")
                 self.io.previous.sendSecurityExchange(self.securitySettings.encryptClientRandom())
         else:
             channel = None
@@ -214,12 +210,12 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.server.onChannelJoinRefused(user, result, channelID)
 
     def onClientInfoReceived(self, pdu):
-        self.log_debug("Sending Client Info")
+        self.mitm_log.debug("Sending Client Info")
 
         self.securityLayer.sendClientInfo(pdu)
 
     def onLicensingPDU(self, pdu):
-        self.log_debug("Licensing PDU received")
+        self.mitm_log.debug("Licensing PDU received")
 
         if self.useTLS:
             self.securityLayer.securityHeaderExpected = False
@@ -227,7 +223,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.server.onLicensingPDU(pdu)
 
     def onDisconnectProviderUltimatum(self, pdu):
-        self.log_debug("Disconnect Provider Ultimatum received")
+        self.mitm_log.debug("Disconnect Provider Ultimatum received")
         self.server.sendDisconnectProviderUltimatum(pdu)
 
     def getChannelObserver(self, channelID):

@@ -1,5 +1,9 @@
-class RDPFastPathPDU:
+from rdpy.pdu.base_pdu import PDU
+
+
+class RDPFastPathPDU(PDU):
     def __init__(self, header, events):
+        PDU.__init__(self)
         self.header = header
         self.events = events
 
