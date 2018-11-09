@@ -70,8 +70,24 @@ class FastPathBitmapEvent(FastPathOutputEvent):
 
 
 class FastPathOrdersEvent(FastPathOutputEvent):
+    """
+    https://msdn.microsoft.com/en-us/library/cc241573.aspx
+    """
     def __init__(self, header, compressionFlags, orderCount, orderData):
         self.header = header
         self.compressionFlags = compressionFlags
         self.orderCount = orderCount
         self.orderData = orderData
+        self.secondaryDrawingOrders = None
+
+
+class SecondaryDrawingOrder:
+    """
+    https://msdn.microsoft.com/en-us/library/cc241611.aspx
+    """
+    def __init__(self, controlFlags, orderLength, extraFlags, orderType, payload):
+        self.controlFlags = controlFlags
+        self.orderLength = orderLength
+        self.extraFlags = extraFlags
+        self.orderType = orderType
+        self.payload = payload

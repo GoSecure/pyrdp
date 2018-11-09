@@ -3,10 +3,11 @@ from StringIO import StringIO
 from rdpy.core.packing import Uint8, Uint16BE, Uint16LE
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import RDPFastPathInputEventType, \
-    RDPFastPathSecurityFlags, FIPSVersion, FastPathOutputCompressionType, RDPFastPathOutputEventType
+    RDPFastPathSecurityFlags, FIPSVersion, FastPathOutputCompressionType, RDPFastPathOutputEventType, \
+    DrawingOrderControlFlags
 from rdpy.parser.rdp.security import RDPBasicSecurityParser
 from rdpy.pdu.rdp.fastpath import FastPathEventRaw, RDPFastPathPDU, FastPathEventScanCode, FastPathBitmapEvent, \
-    FastPathOrdersEvent, FastPathEventMouse
+    FastPathOrdersEvent, FastPathEventMouse, SecondaryDrawingOrder
 
 
 class RDPBasicFastPathParser(RDPBasicSecurityParser):
@@ -313,10 +314,13 @@ class RDPOutputEventParser:
 
         size = Uint16LE.unpack(stream)
 
-        if header & 0xf == RDPFastPathOutputEventType.FASTPATH_UPDATETYPE_BITMAP:
+        eventType = header & 0xf
+        if eventType == RDPFastPathOutputEventType.FASTPATH_UPDATETYPE_BITMAP:
             return self.parseBitmapEvent(stream, header, compressionFlags, size)
-        elif header & 0xf == RDPFastPathOutputEventType.FASTPATH_UPDATETYPE_ORDERS:
+        elif eventType == RDPFastPathOutputEventType.FASTPATH_UPDATETYPE_ORDERS:
             return self.parseOrdersEvent(stream, header, compressionFlags, size)
+        elif eventType == RDPFastPathOutputEventType.FASTPATH_UPDATETYPE_BITMAP:
+            pass
 
         return FastPathEventRaw(data)
 
@@ -331,7 +335,22 @@ class RDPOutputEventParser:
         orderCount = Uint16LE.unpack(stream)
         orderData = stream.read(size - 2)
         assert len(orderData) == size - 2
-        return FastPathOrdersEvent(header, compressionFlags, orderCount, orderData)
+        ordersEvent = FastPathOrdersEvent(header, compressionFlags, orderCount, orderData)
+        controlFlags = Uint8.unpack(orderData[0])
+        if controlFlags & (DrawingOrderControlFlags.TS_SECONDARY | DrawingOrderControlFlags.TS_STANDARD)\
+                == (DrawingOrderControlFlags.TS_SECONDARY | DrawingOrderControlFlags.TS_STANDARD):
+            ordersEvent.secondaryDrawingOrders = self.parseSecondaryDrawingOrder(orderData)
+        elif controlFlags & DrawingOrderControlFlags.TS_SECONDARY:
+            pass
+        return ordersEvent
+
+    def parseSecondaryDrawingOrder(self, orderData):
+        stream = StringIO(orderData)
+        controlFlags = Uint8.unpack(stream.read(1))
+        orderLength = Uint16LE.unpack(stream.read(2))
+        extraFlags = Uint16LE.unpack(stream.read(2))
+        orderType = Uint8.unpack(stream.read(1))
+        return SecondaryDrawingOrder(controlFlags, orderLength, extraFlags, orderType, stream.read())
 
     def writeOrdersEvent(self, stream, event):
         Uint16LE.pack(event.orderCount, stream)

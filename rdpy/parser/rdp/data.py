@@ -1,10 +1,11 @@
 from StringIO import StringIO
 
 from rdpy.core.packing import Uint16LE, Uint32LE, Uint8
-from rdpy.enum.rdp import RDPDataPDUType, RDPDataPDUSubtype, ErrorInfo, InputEventType
+from rdpy.enum.rdp import RDPDataPDUType, RDPDataPDUSubtype, ErrorInfo, CapabilityType
 from rdpy.exceptions import UnknownPDUTypeError
 from rdpy.parser.rdp.input import RDPInputParser
 from rdpy.parser.rdp.pointer import PointerEventParser
+from rdpy.pdu.rdp.capability import Capability, BitmapCapability, OrderCapability
 from rdpy.pdu.rdp.data import RDPShareControlHeader, RDPShareDataHeader, RDPDemandActivePDU, RDPConfirmActivePDU, \
     RDPSetErrorInfoPDU, RDPSynchronizePDU, RDPControlPDU, RDPInputPDU, RDPPlaySoundPDU, RDPPointerPDU
 
@@ -143,18 +144,116 @@ class RDPDataParser:
         sourceDescriptor = stream.read(lengthSourceDescriptor)
         numberCapabilities = Uint16LE.unpack(stream)
         stream.read(2)
-        capabilitySets = stream.read(lengthCombinedCapabilities - 4)
-        return RDPConfirmActivePDU(header, shareID, originatorID, sourceDescriptor, numberCapabilities, capabilitySets)
+        capabilitySetsRaw = stream.read(lengthCombinedCapabilities - 4)
+        capabilitySets = self.parseCapabilitySets(capabilitySetsRaw, numberCapabilities)
+
+        return RDPConfirmActivePDU(header, shareID, originatorID, sourceDescriptor,
+                                   numberCapabilities, capabilitySets, capabilitySetsRaw)
+
+    def parseCapabilitySets(self, capabilitySetsRaw, numberCapabilities):
+        stream = StringIO(capabilitySetsRaw)
+        capabilitySets = {}
+        # Do minimum parsing for every capability
+        for i in range(numberCapabilities):
+            capabilitySetType = Uint16LE.unpack(stream.read(2))
+            lengthCapability = Uint16LE.unpack(stream.read(2))
+            capabilityData = stream.read(lengthCapability - 4)
+            capability = Capability(capabilitySetType, capabilityData)
+            capabilitySets[capabilitySetType] = capability
+
+        # Fully parse the Bitmap capability set
+        capabilitySets[CapabilityType.CAPSTYPE_BITMAP] = \
+            self.parseBitmapCapability(capabilitySets[CapabilityType.CAPSTYPE_BITMAP].rawData)
+
+        # Fully parse the Order capability set
+        capabilitySets[CapabilityType.CAPSTYPE_ORDER] = self.parseOrderCapability(
+            capabilitySets[CapabilityType.CAPSTYPE_ORDER].rawData)
+        return capabilitySets
+
+    def parseBitmapCapability(self, data):
+        """
+        https://msdn.microsoft.com/en-us/library/cc240554.aspx
+        :type data: str
+        :param data: Raw data starting after lengthCapability
+        :return: BitmapCapability
+        """
+        stream = StringIO(data)
+        preferredBitsPerPixel = Uint16LE.unpack(stream.read(2))
+        receive1bitPerPixel = Uint16LE.unpack(stream.read(2))
+        receive4bitPerPixel = Uint16LE.unpack(stream.read(2))
+        receive8bitPerPixel = Uint16LE.unpack(stream.read(2))
+        desktopWidth = Uint16LE.unpack(stream.read(2))
+        desktopHeight = Uint16LE.unpack(stream.read(2))
+        stream.read(2)  # pad2octets
+        desktopResizeFlag = Uint16LE.unpack(stream.read(2))
+        bitmapCompressionFlag = Uint16LE.unpack(stream.read(2))
+        highColorFlags = Uint8.unpack(stream.read(1))
+        drawingFlags = Uint8.unpack(stream.read(1))
+        multipleRectangleSupport = Uint16LE.unpack(stream.read(2))
+        # ignoring pad2octetsB
+
+        capability = BitmapCapability(preferredBitsPerPixel, receive1bitPerPixel, receive4bitPerPixel,
+                                      receive8bitPerPixel, desktopWidth, desktopHeight, desktopResizeFlag,
+                                      bitmapCompressionFlag, highColorFlags, drawingFlags, multipleRectangleSupport)
+        capability.rawData = data
+        return capability
+
+    def parseOrderCapability(self, data):
+        """
+        https://msdn.microsoft.com/en-us/library/cc240556.aspx
+        :type data: str
+        :param data: Raw data starting after lengthCapability
+        :return: OrderCapability
+        """
+        stream = StringIO(data)
+        terminalDescriptor = stream.read(16)
+        stream.read(4)  # pad4octetsA
+        desktopSaveXGranularity = Uint16LE.unpack(stream.read(2))
+        desktopSaveYGranularity = Uint16LE.unpack(stream.read(2))
+        stream.read(2)  # pad2octetsA
+        maximumOrderLevel = Uint16LE.unpack(stream.read(2))
+        numberFonts = Uint16LE.unpack(stream.read(2))
+        orderFlags = Uint16LE.unpack(stream.read(2))
+        orderSupport = stream.read(32)
+        textFlags = Uint16LE.unpack(stream.read(2))
+        orderSupportExFlags = Uint16LE.unpack(stream.read(2))
+        stream.read(4)  # pad4octetsB
+        desktopSaveSize = Uint32LE.unpack(stream.read(4))
+        stream.read(4)  # pad2octetsC, pad2octetsD
+        textANSICodePage = Uint16LE.unpack(stream.read(2))
+        # ignoring pad2octetsE
+
+        capability = OrderCapability(terminalDescriptor, desktopSaveXGranularity, desktopSaveYGranularity,
+                                     maximumOrderLevel, numberFonts, orderFlags, orderSupport, textFlags,
+                                     orderSupportExFlags, desktopSaveSize, textANSICodePage)
+        capability.rawData = data
+        return capability
 
     def writeConfirmActive(self, stream, pdu):
+        """
+        :type stream: StringIO
+        :type pdu: RDPConfirmActivePDU
+        """
         Uint32LE.pack(pdu.shareID, stream)
         Uint16LE.pack(pdu.originatorID, stream)
         Uint16LE.pack(len(pdu.sourceDescriptor), stream)
         Uint16LE.pack(len(pdu.capabilitySets) + 4, stream)
         stream.write(pdu.sourceDescriptor)
         Uint16LE.pack(pdu.numberCapabilities, stream)
-        stream.write("\x00" * 2)
+        stream.write("\x00" * 2)  # pad2octets
         stream.write(pdu.capabilitySets)
+        for capability in pdu.parsedCapabilitySets.values():
+            # Since the order capability is fully parsed, write it back.
+            if capability.type == CapabilityType.CAPSTYPE_ORDER:
+                self.writeOrderCapability(capability, stream)
+            # Since the bitmap capability is fully parsed, write it back.
+            elif capability.type == CapabilityType.CAPSTYPE_BITMAP:
+                self.writeBitmapCapability(capability, stream)
+            # Every other capability is parsed minimally.
+            else:
+                Uint16LE.pack(capability.type, stream)
+                Uint16LE.pack(len(capability.rawData) + 4, stream)
+                stream.write(capability.rawData)
 
     def parseError(self, stream, header):
         errorInfo = Uint32LE.unpack(stream)
@@ -217,3 +316,56 @@ class RDPDataParser:
     def writePlaySound(self, stream, pdu):
         Uint32LE.pack(pdu.duration, stream)
         Uint32LE.pack(pdu.frequency, stream)
+
+    def writeOrderCapability(self, capability, stream):
+        """
+        :type capability: rdpy.pdu.rdp.capability.OrderCapability
+        :type stream: StringIO
+        """
+        substream = StringIO()
+        Uint16LE.pack(capability.type, stream)
+        substream.write(capability.terminalDescriptor)
+        substream.write("\00"*4)
+        Uint16LE.pack(capability.desktopSaveXGranularity, substream)
+        Uint16LE.pack(capability.desktopSaveYGranularity, substream)
+        substream.write("\00" * 2)
+        Uint16LE.pack(capability.maximumOrderLevel, substream)
+        Uint16LE.pack(capability.numberFonts, substream)
+        Uint16LE.pack(capability.orderFlags, substream)
+        substream.write(capability.orderSupport)
+        Uint16LE.pack(capability.textFlags, substream)
+        Uint16LE.pack(capability.orderSupportExFlags, substream)
+        substream.write("\00" * 4)
+        Uint32LE.pack(capability.desktopSaveSize, substream)
+        substream.write("\00" * 4)
+        Uint16LE.pack(capability.textANSICodePage, substream)
+        substream.write("\00" * 2)
+
+        Uint16LE.pack(len(substream.getvalue()) + 4, stream)
+        stream.write(substream.getvalue())
+
+    def writeBitmapCapability(self, capability, stream):
+        """
+        :type capability: rdpy.pdu.rdp.capability.BitmapCapability
+        :type stream: StringIO
+        """
+        substream = StringIO()
+        Uint16LE.pack(capability.type, stream)
+
+        Uint16LE.pack(capability.preferredBitsPerPixel, substream)
+        Uint16LE.pack(capability.receive1BitPerPixel, substream)
+        Uint16LE.pack(capability.receive4BitsPerPixel, substream)
+        Uint16LE.pack(capability.receive8BitsPerPixel, substream)
+        Uint16LE.pack(capability.desktopWidth, substream)
+        Uint16LE.pack(capability.desktopHeight, substream)
+        substream.write("\00"*2)  # pad2octets
+        Uint16LE.pack(capability.desktopResizeFlag, substream)
+        Uint16LE.pack(capability.bitmapCompressionFlag, substream)
+        Uint8.pack(capability.highColorFlags, substream)
+        Uint8.pack(capability.drawingFlags, substream)
+        Uint16LE.pack(capability.multipleRectangleSupport, substream)
+
+        substream.write("\00" * 2)  # pad2octetsB
+
+        Uint16LE.pack(len(substream.getvalue()) + 4, stream)
+        stream.write(substream.getvalue())

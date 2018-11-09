@@ -2,8 +2,13 @@ from rdpy.enum.rdp import CapabilityType
 
 
 class Capability:
-    def __init__(self, type):
+    def __init__(self, type, rawData=""):
+        """
+        :type type: int
+        :type rawData: str
+        """
         self.type = type
+        self.rawData = rawData
 
 
 class GeneralCapability(Capability):
@@ -23,7 +28,7 @@ class GeneralCapability(Capability):
 
 class BitmapCapability(Capability):
     def __init__(self, preferredBitsPerPixel, receive1BitPerPixel, receive4BitsPerPixel, receive8BitsPerPixel, desktopWidth, desktopHeight, desktopResizeFlag, bitmapCompressionFlag, highColorFlags, drawingFlags, multipleRectangleSupport):
-        Capability.__init__(self, CapabilityType.CAPSTYPE_BITMAPCACHE)
+        Capability.__init__(self, CapabilityType.CAPSTYPE_BITMAP)
         self.preferredBitsPerPixel = preferredBitsPerPixel
         self.receive1BitPerPixel = receive1BitPerPixel
         self.receive4BitsPerPixel = receive4BitsPerPixel

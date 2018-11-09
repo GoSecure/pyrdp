@@ -23,12 +23,14 @@ Implement the main graphic layer
 In this layer are managed all mains bitmap update orders end user inputs
 """
 
-from rdpy.core.layer import LayerAutomata
-from rdpy.core.error import CallPureVirtualFuntion
-from rdpy.core.type import ArrayType
+import caps
+import data
 import rdpy.core.log as log
 import rdpy.protocol.rdp.tpkt as tpkt
-import data, caps
+from rdpy.core.error import CallPureVirtualFuntion
+from rdpy.core.layer import LayerAutomata
+from rdpy.core.type import ArrayType
+
 
 class PDUClientListener(object):
     """
@@ -340,7 +342,7 @@ class Client(PDULayer):
         bitmapCapability.preferredBitsPerPixel = self._gccCore.highColorDepth
         bitmapCapability.desktopWidth = self._gccCore.desktopWidth
         bitmapCapability.desktopHeight = self._gccCore.desktopHeight
-         
+
         #init order capability
         orderCapability = self._clientCapabilities[caps.CapsType.CAPSTYPE_ORDER].capability
         orderCapability.orderFlags.value |= caps.OrderFlag.ZEROBOUNDSDELTASSUPPORT

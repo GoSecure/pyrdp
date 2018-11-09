@@ -27,13 +27,14 @@ class RDPDemandActivePDU:
 
 
 class RDPConfirmActivePDU:
-    def __init__(self, header, shareID, originatorID, sourceDescriptor, numberCapabilities, capabilitySets):
+    def __init__(self, header, shareID, originatorID, sourceDescriptor, numberCapabilities, parsedCapabilitySets, capabilitySetsRaw):
         self.header = header
         self.shareID = shareID
         self.originatorID = originatorID
         self.sourceDescriptor = sourceDescriptor
         self.numberCapabilities = numberCapabilities
-        self.capabilitySets = capabilitySets
+        self.parsedCapabilitySets = parsedCapabilitySets
+        self.capabilitySets = capabilitySetsRaw
 
 
 class RDPSetErrorInfoPDU:

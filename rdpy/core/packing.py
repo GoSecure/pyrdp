@@ -19,9 +19,9 @@ class Integer:
     def pack(cls, value, stream = None):
         """
         :param value: value to pack
-        :type value: int
+        :type value: int | str
         :param stream: stream to pack to (optional)
-        :type stream: file | None
+        :type stream: file | StringIO.StringIO | None
         :return: str | None
         """
         bytes = struct.pack(cls.FORMAT, value)

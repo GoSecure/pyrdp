@@ -56,6 +56,7 @@ class RDPFastPathInputEventType(IntEnum):
     FASTPATH_INPUT_EVENT_UNICODE = 4
     FASTPATH_INPUT_EVENT_QOE_TIMESTAMP = 6
 
+
 class RDPFastPathOutputEventType(IntEnum):
     FASTPATH_UPDATETYPE_ORDERS = 0
     FASTPATH_UPDATETYPE_BITMAP = 1
@@ -633,3 +634,11 @@ class RDPPlayerMessageType(IntEnum):
     INPUT = 1  # Ex: scancode, mouse
     OUTPUT = 2  # Ex: image
     CLIENT_INFO = 3  # Creds on connection
+
+
+class DrawingOrderControlFlags(IntEnum):
+    """
+    https://msdn.microsoft.com/en-us/library/cc241574.aspx
+    """
+    TS_STANDARD = 0b00000001
+    TS_SECONDARY = 0b00000010

@@ -27,6 +27,7 @@ from Queue import Queue
 from threading import Thread
 
 from rdpy.core import log, error
+from rdpy.core.observer import Observer
 from rdpy.core.type import CompositeType, FactoryType, UInt8, UInt16Le, UInt32Le, String, sizeof, StringStream, \
     SocketStream
 from rdpy.enum.core import ParserMode
@@ -387,13 +388,14 @@ class FileReader(object):
         self._s.pos = 0
 
 
-class NewFileReader(FileReader):
+class NewFileReader(FileReader, Observer):
     """
     Class that manages reading of a RDP replay file event per event.
     """
 
     def __init__(self, f):
         super(NewFileReader, self).__init__(f)
+        Observer.__init__(self)
         self.tpkt_layer = TPKTLayer()
         self.rdp_player_event_type_layer = RDPPlayerMessageTypeLayer()
         self.tpkt_layer.setNext(self.rdp_player_event_type_layer)
