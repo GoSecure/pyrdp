@@ -319,8 +319,6 @@ class RDPOutputEventParser:
             return self.parseBitmapEvent(stream, header, compressionFlags, size)
         elif eventType == RDPFastPathOutputEventType.FASTPATH_UPDATETYPE_ORDERS:
             return self.parseOrdersEvent(stream, header, compressionFlags, size)
-        elif eventType == RDPFastPathOutputEventType.FASTPATH_UPDATETYPE_BITMAP:
-            pass
 
         return FastPathEventRaw(data)
 

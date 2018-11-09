@@ -1,7 +1,7 @@
 from rdpy.core import log
 from rdpy.core.newlayer import Layer, LayerStrictRoutedObserver, LayerObserver
 from rdpy.core.subject import ObservedBy
-from rdpy.enum.rdp import RDPDataPDUType, RDPPlayerMessageType
+from rdpy.enum.rdp import RDPDataPDUType, RDPPlayerMessageType, CapabilityType, GeneralExtraFlag
 from rdpy.exceptions import UnknownPDUTypeError
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.data import RDPDataParser
@@ -69,6 +69,14 @@ class RDPDataLayerObserver(RDPBaseDataLayerObserver, LayerStrictRoutedObserver):
         pass
 
     def onConfirmActive(self, pdu):
+        """
+        Change the received ConfirmActivePDU to facilitate data interception.
+        :type pdu: rdpy.pdu.rdp.data.RDPConfirmActivePDU
+        """
+        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderFlags = 0
+        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderSupport = "\00"*32
+
+        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_GENERAL].extraFlags |= GeneralExtraFlag.NO_BITMAP_COMPRESSION_HDR
         pass
 
     def onDeactivateAll(self, pdu):

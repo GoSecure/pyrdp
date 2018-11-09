@@ -108,6 +108,11 @@ class NewRSSEventHandler:
             self._text.insertPlainText(char if self._write_in_caps else char.lower())
 
     def handle_image(self, event):
+        # image = RDPBitmapToQtImage(500, 500, event.event.bpp.value,
+        #                            event.event.format.value == rss.UpdateFormat.BMP, event.event.data.value)
+        # self._viewer.notifyImage(event.event.destLeft.value, event.event.destTop.value, image,
+        #                          event.event.destRight.value - event.event.destLeft.value + 1,
+        #                          event.event.destBottom.value - event.event.destTop.value + 1)
         pass
 
     def handle_client_info(self, pdu):

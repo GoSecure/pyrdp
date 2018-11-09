@@ -5,7 +5,7 @@ from rdpy.enum.rdp import RDPDataPDUType, RDPDataPDUSubtype, ErrorInfo, Capabili
 from rdpy.exceptions import UnknownPDUTypeError
 from rdpy.parser.rdp.input import RDPInputParser
 from rdpy.parser.rdp.pointer import PointerEventParser
-from rdpy.pdu.rdp.capability import Capability, BitmapCapability, OrderCapability
+from rdpy.pdu.rdp.capability import Capability, BitmapCapability, OrderCapability, GeneralCapability
 from rdpy.pdu.rdp.data import RDPShareControlHeader, RDPShareDataHeader, RDPDemandActivePDU, RDPConfirmActivePDU, \
     RDPSetErrorInfoPDU, RDPSynchronizePDU, RDPControlPDU, RDPInputPDU, RDPPlaySoundPDU, RDPPointerPDU
 
@@ -161,6 +161,10 @@ class RDPDataParser:
             capability = Capability(capabilitySetType, capabilityData)
             capabilitySets[capabilitySetType] = capability
 
+        # Fully parse the General capability set
+        capabilitySets[CapabilityType.CAPSTYPE_GENERAL] = \
+            self.parseGeneralCapability(capabilitySets[CapabilityType.CAPSTYPE_GENERAL].rawData)
+
         # Fully parse the Bitmap capability set
         capabilitySets[CapabilityType.CAPSTYPE_BITMAP] = \
             self.parseBitmapCapability(capabilitySets[CapabilityType.CAPSTYPE_BITMAP].rawData)
@@ -169,6 +173,32 @@ class RDPDataParser:
         capabilitySets[CapabilityType.CAPSTYPE_ORDER] = self.parseOrderCapability(
             capabilitySets[CapabilityType.CAPSTYPE_ORDER].rawData)
         return capabilitySets
+
+    def parseGeneralCapability(self, data):
+        """
+        https://msdn.microsoft.com/en-us/library/cc240549.aspx
+        :type data: str
+        :param data: Raw data starting after lengthCapability
+        :return: GeneralCapability
+        """
+        stream = StringIO(data)
+        osMajorType = Uint16LE.unpack(stream.read(2))
+        osMinorType = Uint16LE.unpack(stream.read(2))
+        protocolVersion = Uint16LE.unpack(stream.read(2))
+        stream.read(2)  # pad2octetsA
+        generalCompressionTypes = Uint16LE.unpack(stream.read(2))
+        extraFlags = Uint16LE.unpack(stream.read(2))
+        updateCapabilityFlag = Uint8.unpack(stream.read(1))
+        remoteUnshareFlag = Uint8.unpack(stream.read(1))
+        generalCompressionLevel = Uint16LE.unpack(stream.read(2))
+        refreshRectSupport = Uint8.unpack(stream.read(1))
+        suppressOutputSupport = Uint8.unpack(stream.read(1))
+
+        capability = GeneralCapability(osMajorType, osMinorType, protocolVersion, generalCompressionTypes, extraFlags,
+                                       updateCapabilityFlag, remoteUnshareFlag, generalCompressionLevel,
+                                       refreshRectSupport, suppressOutputSupport)
+        capability.rawData = data
+        return capability
 
     def parseBitmapCapability(self, data):
         """
@@ -243,8 +273,11 @@ class RDPDataParser:
         stream.write("\x00" * 2)  # pad2octets
         stream.write(pdu.capabilitySets)
         for capability in pdu.parsedCapabilitySets.values():
+            # Since the general capability is fully parsed, write it back.
+            if capability.type == CapabilityType.CAPSTYPE_GENERAL:
+                self.writeGeneralCapability(capability, stream)
             # Since the order capability is fully parsed, write it back.
-            if capability.type == CapabilityType.CAPSTYPE_ORDER:
+            elif capability.type == CapabilityType.CAPSTYPE_ORDER:
                 self.writeOrderCapability(capability, stream)
             # Since the bitmap capability is fully parsed, write it back.
             elif capability.type == CapabilityType.CAPSTYPE_BITMAP:
@@ -316,6 +349,29 @@ class RDPDataParser:
     def writePlaySound(self, stream, pdu):
         Uint32LE.pack(pdu.duration, stream)
         Uint32LE.pack(pdu.frequency, stream)
+
+    def writeGeneralCapability(self, capability, stream):
+        """
+        https://msdn.microsoft.com/en-us/library/cc240549.aspx
+        :type capability: rdpy.pdu.rdp.capability.GeneralCapability
+        :type stream: StringIO
+        """
+        substream = StringIO()
+        Uint16LE.pack(capability.type, stream)
+        Uint16LE.pack(capability.majorType, substream)
+        Uint16LE.pack(capability.minorType, substream)
+        Uint16LE.pack(capability.protocolVersion, substream)
+        substream.write("\00" * 2)  # pad2octetsA
+        Uint16LE.pack(capability.generalCompressionTypes, substream)
+        Uint16LE.pack(capability.extraFlags, substream)
+        Uint16LE.pack(capability.updateCapabilityFlag, substream)
+        Uint16LE.pack(capability.remoteUnshareFlag, substream)
+        Uint16LE.pack(capability.generalCompressionLevel, substream)
+        Uint8.pack(capability.refreshRectSupport, substream)
+        Uint8.pack(capability.suppressOutputSupport, substream)
+
+        Uint16LE.pack(len(substream.getvalue()) + 4, stream)
+        stream.write(substream.getvalue())
 
     def writeOrderCapability(self, capability, stream):
         """
