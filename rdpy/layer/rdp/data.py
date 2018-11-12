@@ -73,8 +73,8 @@ class RDPDataLayerObserver(RDPBaseDataLayerObserver, LayerStrictRoutedObserver):
         Change the received ConfirmActivePDU to facilitate data interception.
         :type pdu: rdpy.pdu.rdp.data.RDPConfirmActivePDU
         """
-        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderFlags = 0
-        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderSupport = "\00"*32
+        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderFlags = 8 | 2
+        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderSupport = "\x00" * 32
 
         pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_GENERAL].extraFlags |= GeneralExtraFlag.NO_BITMAP_COMPRESSION_HDR
         pass
