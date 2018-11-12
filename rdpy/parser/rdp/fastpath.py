@@ -7,7 +7,7 @@ from rdpy.enum.rdp import RDPFastPathInputEventType, \
     DrawingOrderControlFlags
 from rdpy.parser.rdp.security import RDPBasicSecurityParser
 from rdpy.pdu.rdp.fastpath import FastPathEventRaw, RDPFastPathPDU, FastPathEventScanCode, FastPathBitmapEvent, \
-    FastPathOrdersEvent, FastPathEventMouse, SecondaryDrawingOrder
+    FastPathOrdersEvent, FastPathEventMouse, SecondaryDrawingOrder, BitmapUpdateData
 
 
 class RDPBasicFastPathParser(RDPBasicSecurityParser):
@@ -296,7 +296,7 @@ class RDPOutputEventParser:
         if isinstance(data, FastPathOrdersEvent):
             size += 2 + len(data.orderData)
         elif isinstance(data, FastPathBitmapEvent):
-            size += len(data.bitmapUpdateData)
+            size += len(data.rawBitmapUpdateData)
 
         return size
 
@@ -323,11 +323,29 @@ class RDPOutputEventParser:
         return FastPathEventRaw(data)
 
     def parseBitmapEvent(self, stream, header, compressionFlags, size):
-        bitmapUpdateData = stream.read(size)
-        return FastPathBitmapEvent(header, compressionFlags, bitmapUpdateData)
+        rawBitmapUpdateData = stream.read(size)
+        stream2 = StringIO(rawBitmapUpdateData)
+        updateType = Uint16LE.unpack(stream2.read(2))
+        numberRectangles = Uint16LE.unpack(stream2.read(2))
+        bitmapData = []
+        for i in range(numberRectangles):
+            destLeft = Uint16LE.unpack(stream2.read(2))
+            destTop = Uint16LE.unpack(stream2.read(2))
+            destRight = Uint16LE.unpack(stream2.read(2))
+            destBottom = Uint16LE.unpack(stream2.read(2))
+            width = Uint16LE.unpack(stream2.read(2))
+            height = Uint16LE.unpack(stream2.read(2))
+            bitsPerPixel = Uint16LE.unpack(stream2.read(2))
+            flags = Uint16LE.unpack(stream2.read(2))
+            bitmapLength = Uint16LE.unpack(stream2.read(2))
+            bitmapStream = stream2.read(bitmapLength)
+            bitmapData.append(BitmapUpdateData(destLeft, destTop, destRight, destBottom, width, height, bitsPerPixel,
+                                               flags, bitmapStream))
+
+        return FastPathBitmapEvent(header, compressionFlags, bitmapData, rawBitmapUpdateData)
 
     def writeBitmapEvent(self, stream, event):
-        stream.write(event.bitmapUpdateData)
+        stream.write(event.rawBitmapUpdateData)
 
     def parseOrdersEvent(self, stream, header, compressionFlags, size):
         orderCount = Uint16LE.unpack(stream)

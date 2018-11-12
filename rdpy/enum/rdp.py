@@ -634,6 +634,7 @@ class RDPPlayerMessageType(IntEnum):
     INPUT = 1  # Ex: scancode, mouse
     OUTPUT = 2  # Ex: image
     CLIENT_INFO = 3  # Creds on connection
+    CONFIRM_ACTIVE = 4  # For desktop width and height
 
 
 class DrawingOrderControlFlags(IntEnum):

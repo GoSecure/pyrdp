@@ -4,6 +4,7 @@ from rdpy.core.observer import Observer
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import RDPPlayerMessageType
 from rdpy.layer.rdp.data import RDPDataLayerObserver, RDPFastPathDataLayerObserver
+from rdpy.pdu.rdp.data import RDPConfirmActivePDU
 from rdpy.pdu.rdp.fastpath import RDPFastPathPDU
 
 
@@ -33,6 +34,8 @@ class MITMChannelObserver(Observer):
         self.mitm_log.debug("Received {}".format(self.getEffectiveType(pdu)))
         if isinstance(pdu, RDPFastPathPDU):
             self.recorder.record(pdu, RDPPlayerMessageType.OUTPUT if self.mode == ParserMode.CLIENT else RDPPlayerMessageType.INPUT)
+        elif isinstance(pdu, RDPConfirmActivePDU):
+            self.recorder.record(pdu, RDPPlayerMessageType.CONFIRM_ACTIVE)
         self.innerObserver.onPDUReceived(pdu)
         self.peer.sendPDU(pdu)
 

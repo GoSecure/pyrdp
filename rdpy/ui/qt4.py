@@ -23,14 +23,16 @@ Qt specific code
 QRemoteDesktop is a widget use for render in rdpy
 """
 
-from PyQt4 import QtGui, QtCore
-from rdpy.protocol.rfb.rfb import RFBClientObserver
-from rdpy.protocol.rdp.rdp import RDPClientObserver
-from rdpy.core.error import CallPureVirtualFuntion
 import sys
+from PyQt4 import QtGui, QtCore
+
+import rle
 
 import rdpy.core.log as log
-import rle
+from rdpy.core.error import CallPureVirtualFuntion
+from rdpy.protocol.rdp.rdp import RDPClientObserver
+from rdpy.protocol.rfb.rfb import RFBClientObserver
+
 
 class QAdaptor(object):
     """
@@ -349,6 +351,7 @@ class QRemoteDesktop(QtGui.QWidget):
         self.setMouseTracking(True)
         #buffer image
         self._buffer = QtGui.QImage(width, height, QtGui.QImage.Format_RGB32)
+
     
     def notifyImage(self, x, y, qimage, width, height):
         """
@@ -362,7 +365,7 @@ class QRemoteDesktop(QtGui.QWidget):
             qp.drawImage(x, y, qimage, 0, 0, width, height)
         #force update
         self.update()
-        
+
     def resize(self, width, height):
         """
         @summary: override resize function

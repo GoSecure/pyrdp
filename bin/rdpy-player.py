@@ -243,7 +243,7 @@ class LivePlayerTab(RDPConnectionTab):
     connection_closed = pyqtSignal(object, name="Close")
 
     def __init__(self, sock, *args, **kwargs):
-        RDPConnectionTab.__init__(self, LivePlayerWidget(800, 600), None, *args, **kwargs)
+        RDPConnectionTab.__init__(self, LivePlayerWidget(1024, 768), None, *args, **kwargs)
 
         self.thread = ReaderThread(sock)
         self.thread.event_received.connect(self._handler.on_message_received)
