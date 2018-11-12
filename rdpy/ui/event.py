@@ -4,8 +4,8 @@ from PyQt4.QtGui import QTextCursor
 
 from rdpy.core import rss, log
 from rdpy.core.scancode import scancodeToChar
-from rdpy.enum.rdp import RDPPlayerMessageType
-from rdpy.pdu.rdp.fastpath import FastPathEventScanCode, FastPathEventMouse, FastPathOrdersEvent
+from rdpy.enum.rdp import RDPPlayerMessageType, CapabilityType
+from rdpy.pdu.rdp.fastpath import FastPathEventScanCode, FastPathEventMouse, FastPathOrdersEvent, FastPathBitmapEvent
 from rdpy.ui.qt4 import RDPBitmapToQtImage
 
 
@@ -69,13 +69,17 @@ class NewRSSEventHandler:
             self.handle_output_event(message.payload)
         elif message.type == RDPPlayerMessageType.CLIENT_INFO:
             self.handle_client_info(message.payload)
+        elif message.type == RDPPlayerMessageType.CONFIRM_ACTIVE:
+            self.handle_resize(message.payload)
         else:
             log.error("Received wrong player message type: {}".format(message.type))
 
     def handle_output_event(self, payload):
         for event in payload.events:
             if isinstance(event, FastPathOrdersEvent):
-                log.info("Not handling image event, not coded :)")
+                log.debug("Not handling orders event, not coded :)")
+            elif isinstance(event, FastPathBitmapEvent):
+                log.debug("Handling bitmap event {}".format(event))
                 self.handle_image(event)
             else:
                 log.debug("Cant handle output event: {}".format(event))
@@ -108,11 +112,15 @@ class NewRSSEventHandler:
             self._text.insertPlainText(char if self._write_in_caps else char.lower())
 
     def handle_image(self, event):
-        # image = RDPBitmapToQtImage(500, 500, event.event.bpp.value,
-        #                            event.event.format.value == rss.UpdateFormat.BMP, event.event.data.value)
-        # self._viewer.notifyImage(event.event.destLeft.value, event.event.destTop.value, image,
-        #                          event.event.destRight.value - event.event.destLeft.value + 1,
-        #                          event.event.destBottom.value - event.event.destTop.value + 1)
+        """
+        :type event: rdpy.pdu.rdp.fastpath.FastPathBitmapEvent
+        """
+        for bitmapData in event.bitmapUpdateData:
+            image = RDPBitmapToQtImage(bitmapData.width, bitmapData.heigth, bitmapData.bitsPerPixel,
+                                       True, bitmapData.bitmapStream)
+            self._viewer.notifyImage(bitmapData.destLeft, bitmapData.destTop, image,
+                                     bitmapData.destRight - bitmapData.destLeft + 1,
+                                     bitmapData.destBottom - bitmapData.destTop + 1)
         pass
 
     def handle_client_info(self, pdu):
@@ -125,3 +133,10 @@ class NewRSSEventHandler:
                                   pdu.password.replace("\0", ""),
                                   pdu.domain.replace("\0", "")))
         self._text.insertPlainText("--------------------\n")
+
+    def handle_resize(self, pdu):
+        """
+        :type pdu: rdpy.pdu.rdp.data.RDPConfirmActivePDU
+        """
+        self._viewer.resize(pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP].desktopWidth,
+                            pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP].desktopHeight)

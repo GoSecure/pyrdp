@@ -100,6 +100,7 @@ class RDPBaseDataLayer(Layer):
         Layer.__init__(self)
         self.fastPathParser = fastPathParser
         self.clientInfoParser = RDPClientInfoParser()
+        self.rdpDataParser = RDPDataParser()
 
     def recv(self, data):
         try:
@@ -114,6 +115,8 @@ class RDPBaseDataLayer(Layer):
     def sendPDU(self, pdu, messageType=None):
         if messageType == RDPPlayerMessageType.CLIENT_INFO:
             data = self.clientInfoParser.write(pdu)
+        elif messageType == RDPPlayerMessageType.CONFIRM_ACTIVE:
+            data = self.rdpDataParser.write(pdu)
         else:
             data = self.fastPathParser.write(pdu)
         self.previous.send(data)
