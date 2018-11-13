@@ -253,7 +253,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         if pdu.channelID == self.serverData.network.mcsChannelID:
             self.client.onChannelJoinRequest(pdu)
         else:
-            self.router.sendChannelJoinConfirm(MCSResult.RT_USER_REJECTED, pdu.initiator, pdu.channelID, False)
+            self.router.sendChannelJoinConfirm(MCSResult.RT_SUCCESSFUL if pdu.channelID == 1004 else MCSResult.RT_USER_REJECTED, pdu.initiator, pdu.channelID, False)
 
     def onChannelJoinAccepted(self, userID, channelID):
         # MCS Channel Join Confirm successful
