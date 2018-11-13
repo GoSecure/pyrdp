@@ -26,6 +26,14 @@ class GeneralCapability(Capability):
         self.suppressOutputSupport = suppressOutputSupport
 
 
+class GlyphCacheCapability(Capability):
+    def __init__(self, glyphCache, fragCache, glyphSupportLevel):
+        Capability.__init__(self, CapabilityType.CAPSTYPE_GLYPHCACHE)
+        self.glyphCache = glyphCache
+        self.fragCache = fragCache
+        self.glyphSupportLevel = glyphSupportLevel
+
+
 class BitmapCapability(Capability):
     def __init__(self, preferredBitsPerPixel, receive1BitPerPixel, receive4BitsPerPixel, receive8BitsPerPixel, desktopWidth, desktopHeight, desktopResizeFlag, bitmapCompressionFlag, highColorFlags, drawingFlags, multipleRectangleSupport):
         Capability.__init__(self, CapabilityType.CAPSTYPE_BITMAP)

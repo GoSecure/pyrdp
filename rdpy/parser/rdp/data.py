@@ -5,7 +5,8 @@ from rdpy.enum.rdp import RDPDataPDUType, RDPDataPDUSubtype, ErrorInfo, Capabili
 from rdpy.exceptions import UnknownPDUTypeError
 from rdpy.parser.rdp.input import RDPInputParser
 from rdpy.parser.rdp.pointer import PointerEventParser
-from rdpy.pdu.rdp.capability import Capability, BitmapCapability, OrderCapability, GeneralCapability
+from rdpy.pdu.rdp.capability import Capability, BitmapCapability, OrderCapability, GeneralCapability, \
+    GlyphCacheCapability, OffscreenBitmapCacheCapability
 from rdpy.pdu.rdp.data import RDPShareControlHeader, RDPShareDataHeader, RDPDemandActivePDU, RDPConfirmActivePDU, \
     RDPSetErrorInfoPDU, RDPSynchronizePDU, RDPControlPDU, RDPInputPDU, RDPPlaySoundPDU, RDPPointerPDU
 
@@ -165,6 +166,14 @@ class RDPDataParser:
         capabilitySets[CapabilityType.CAPSTYPE_GENERAL] = \
             self.parseGeneralCapability(capabilitySets[CapabilityType.CAPSTYPE_GENERAL].rawData)
 
+        capabilitySets[CapabilityType.CAPSTYPE_GLYPHCACHE] = \
+            self.parseGlyphCacheCapability(capabilitySets[CapabilityType.CAPSTYPE_GLYPHCACHE].rawData)
+
+        capabilitySets[CapabilityType.CAPSTYPE_OFFSCREENCACHE] = \
+            self.parseOffscreenCacheCapability(capabilitySets[CapabilityType.CAPSTYPE_OFFSCREENCACHE].rawData)
+
+        capabilitySets[CapabilityType.CAPSTYPE_BITMAPCACHE] = Capability(CapabilityType.CAPSTYPE_BITMAPCACHE, "\x00"*36)
+
         # Fully parse the Bitmap capability set
         capabilitySets[CapabilityType.CAPSTYPE_BITMAP] = \
             self.parseBitmapCapability(capabilitySets[CapabilityType.CAPSTYPE_BITMAP].rawData)
@@ -197,6 +206,39 @@ class RDPDataParser:
         capability = GeneralCapability(osMajorType, osMinorType, protocolVersion, generalCompressionTypes, extraFlags,
                                        updateCapabilityFlag, remoteUnshareFlag, generalCompressionLevel,
                                        refreshRectSupport, suppressOutputSupport)
+        capability.rawData = data
+        return capability
+
+    def parseOffscreenCacheCapability(self, data):
+        """
+        https://msdn.microsoft.com/en-us/library/cc240550.aspx
+        :type data: str
+        :param data: Raw data starting after lengthCapability
+        :return: GeneralCapability
+        """
+        stream = StringIO(data)
+        offscreenSupportLevel = Uint32LE.unpack(stream.read(4))
+        offscreenCacheSize = Uint16LE.unpack(stream.read(2))
+        offscreenCacheEntries = Uint16LE.unpack(stream.read(2))
+
+        capability = OffscreenBitmapCacheCapability(offscreenSupportLevel, offscreenCacheSize, offscreenCacheEntries)
+        capability.rawData = data
+        return capability
+
+    def parseGlyphCacheCapability(self, data):
+        """
+        https://msdn.microsoft.com/en-us/library/cc240565.aspx
+        :type data: str
+        :param data: Raw data starting after lengthCapability
+        :return: GlyphCacheCapability
+        """
+        stream = StringIO(data)
+        glyphCache = stream.read(40)
+        fragCache = Uint32LE.unpack(stream.read(4))
+        glyphSupportLevel = Uint16LE.unpack(stream.read(2))
+        stream.read(2)  # pad2octets
+
+        capability = GlyphCacheCapability(glyphCache, fragCache, glyphSupportLevel)
         capability.rawData = data
         return capability
 
@@ -267,26 +309,34 @@ class RDPDataParser:
         Uint32LE.pack(pdu.shareID, stream)
         Uint16LE.pack(pdu.originatorID, stream)
         Uint16LE.pack(len(pdu.sourceDescriptor), stream)
-        Uint16LE.pack(len(pdu.capabilitySets) + 4, stream)
+
+        substream = StringIO()
+        self.writeCapabilitySets(pdu.parsedCapabilitySets.values(), substream)
+
+        Uint16LE.pack(len(substream.getvalue()) + 4, stream)
         stream.write(pdu.sourceDescriptor)
-        Uint16LE.pack(pdu.numberCapabilities, stream)
+        Uint16LE.pack(len(pdu.parsedCapabilitySets), stream)
         stream.write("\x00" * 2)  # pad2octets
-        stream.write(pdu.capabilitySets)
-        for capability in pdu.parsedCapabilitySets.values():
+        stream.write(substream.getvalue())
+
+    def writeCapabilitySets(self, capabilitySets, substream):
+        for capability in capabilitySets:
             # Since the general capability is fully parsed, write it back.
             if capability.type == CapabilityType.CAPSTYPE_GENERAL:
-                self.writeGeneralCapability(capability, stream)
+                self.writeGeneralCapability(capability, substream)
             # Since the order capability is fully parsed, write it back.
             elif capability.type == CapabilityType.CAPSTYPE_ORDER:
-                self.writeOrderCapability(capability, stream)
+                self.writeOrderCapability(capability, substream)
             # Since the bitmap capability is fully parsed, write it back.
             elif capability.type == CapabilityType.CAPSTYPE_BITMAP:
-                self.writeBitmapCapability(capability, stream)
+                self.writeBitmapCapability(capability, substream)
+            elif capability.type == CapabilityType.CAPSTYPE_OFFSCREENCACHE:
+                self.writeOffscreenCacheCapability(capability, substream)
             # Every other capability is parsed minimally.
             else:
-                Uint16LE.pack(capability.type, stream)
-                Uint16LE.pack(len(capability.rawData) + 4, stream)
-                stream.write(capability.rawData)
+                Uint16LE.pack(capability.type, substream)
+                Uint16LE.pack(len(capability.rawData) + 4, substream)
+                substream.write(capability.rawData)
 
     def parseError(self, stream, header):
         errorInfo = Uint32LE.unpack(stream)
@@ -381,21 +431,21 @@ class RDPDataParser:
         substream = StringIO()
         Uint16LE.pack(capability.type, stream)
         substream.write(capability.terminalDescriptor)
-        substream.write("\00"*4)
+        substream.write("\x00"*4)
         Uint16LE.pack(capability.desktopSaveXGranularity, substream)
         Uint16LE.pack(capability.desktopSaveYGranularity, substream)
-        substream.write("\00" * 2)
+        substream.write("\x00" * 2)
         Uint16LE.pack(capability.maximumOrderLevel, substream)
         Uint16LE.pack(capability.numberFonts, substream)
         Uint16LE.pack(capability.orderFlags, substream)
         substream.write(capability.orderSupport)
         Uint16LE.pack(capability.textFlags, substream)
         Uint16LE.pack(capability.orderSupportExFlags, substream)
-        substream.write("\00" * 4)
+        substream.write("\x00" * 4)
         Uint32LE.pack(capability.desktopSaveSize, substream)
-        substream.write("\00" * 4)
+        substream.write("\x00" * 4)
         Uint16LE.pack(capability.textANSICodePage, substream)
-        substream.write("\00" * 2)
+        substream.write("\x00" * 2)
 
         Uint16LE.pack(len(substream.getvalue()) + 4, stream)
         stream.write(substream.getvalue())
@@ -414,14 +464,29 @@ class RDPDataParser:
         Uint16LE.pack(capability.receive8BitsPerPixel, substream)
         Uint16LE.pack(capability.desktopWidth, substream)
         Uint16LE.pack(capability.desktopHeight, substream)
-        substream.write("\00"*2)  # pad2octets
+        substream.write("\x00"*2)  # pad2octets
         Uint16LE.pack(capability.desktopResizeFlag, substream)
         Uint16LE.pack(capability.bitmapCompressionFlag, substream)
         Uint8.pack(capability.highColorFlags, substream)
         Uint8.pack(capability.drawingFlags, substream)
         Uint16LE.pack(capability.multipleRectangleSupport, substream)
 
-        substream.write("\00" * 2)  # pad2octetsB
+        substream.write("\x00" * 2)  # pad2octetsB
+
+        Uint16LE.pack(len(substream.getvalue()) + 4, stream)
+        stream.write(substream.getvalue())
+
+    def writeOffscreenCacheCapability(self, capability, stream):
+        """
+        :type capability: rdpy.pdu.rdp.capability.OffscreenBitmapCacheCapability
+        :type stream: StringIO
+        """
+        substream = StringIO()
+        Uint16LE.pack(capability.type, stream)
+
+        Uint32LE.pack(capability.offscreenSupportLevel, substream)
+        Uint16LE.pack(capability.offscreenCacheSize, substream)
+        Uint16LE.pack(capability.offscreenCacheEntries, substream)
 
         Uint16LE.pack(len(substream.getvalue()) + 4, stream)
         stream.write(substream.getvalue())

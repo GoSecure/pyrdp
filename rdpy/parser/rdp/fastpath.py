@@ -316,11 +316,14 @@ class RDPOutputEventParser:
 
         eventType = header & 0xf
         if eventType == RDPFastPathOutputEventType.FASTPATH_UPDATETYPE_BITMAP:
-            return self.parseBitmapEvent(stream, header, compressionFlags, size)
+            return self.parseBitmapEventRaw(stream, header, compressionFlags, size)
         elif eventType == RDPFastPathOutputEventType.FASTPATH_UPDATETYPE_ORDERS:
             return self.parseOrdersEvent(stream, header, compressionFlags, size)
 
         return FastPathEventRaw(data)
+
+    def parseBitmapEventRaw(self, stream, header, compressionFlags, size):
+        return FastPathBitmapEvent(header, compressionFlags, None, stream.read(size))
 
     def parseBitmapEvent(self, stream, header, compressionFlags, size):
         rawBitmapUpdateData = stream.read(size)

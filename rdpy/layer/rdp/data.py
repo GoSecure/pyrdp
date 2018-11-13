@@ -1,7 +1,7 @@
 from rdpy.core import log
 from rdpy.core.newlayer import Layer, LayerStrictRoutedObserver, LayerObserver
 from rdpy.core.subject import ObservedBy
-from rdpy.enum.rdp import RDPDataPDUType, RDPPlayerMessageType, CapabilityType, GeneralExtraFlag
+from rdpy.enum.rdp import RDPDataPDUType, RDPPlayerMessageType, CapabilityType, OrderFlag
 from rdpy.exceptions import UnknownPDUTypeError
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.data import RDPDataParser
@@ -73,10 +73,9 @@ class RDPDataLayerObserver(RDPBaseDataLayerObserver, LayerStrictRoutedObserver):
         Change the received ConfirmActivePDU to facilitate data interception.
         :type pdu: rdpy.pdu.rdp.data.RDPConfirmActivePDU
         """
-        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderFlags = 0
-        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderSupport = "\00"*32
-
-        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_GENERAL].extraFlags |= GeneralExtraFlag.NO_BITMAP_COMPRESSION_HDR
+        # Force RDP server to send bitmap events instead of order events.
+        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderFlags = OrderFlag.NEGOTIATEORDERSUPPORT | OrderFlag.ZEROBOUNDSDELTASSUPPORT
+        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderSupport = "\x00"*32
         pass
 
     def onDeactivateAll(self, pdu):
