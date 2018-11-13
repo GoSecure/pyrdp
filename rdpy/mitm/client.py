@@ -66,6 +66,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.mcs.setObserver(self.router)
 
         self.tcp.createObserver(onConnection=self.startConnection, onDisconnection=self.onDisconnection)
+        self.tpkt.createObserver(onUnknownHeader=self.onUnknownTPKTHeader)
         self.x224.createObserver(onConnectionConfirm=self.onConnectionConfirm)
         self.router.createObserver(onConnectResponse=self.onConnectResponse, onDisconnectProviderUltimatum=self.onDisconnectProviderUltimatum)
         self.gccConnect.createObserver(onPDUReceived=self.onConferenceCreateResponse)
@@ -90,6 +91,10 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
     def disconnect(self):
         self.mitm_log.debug("Disconnecting")
         self.tcp.disconnect()
+
+    def onUnknownTPKTHeader(self, header):
+        self.mitm_log.error("Closing the connection because an unknown TPKT header was received. Header: 0x%02lx" % header)
+        self.disconnect()
 
     def onConnectionConfirm(self, pdu):
         """

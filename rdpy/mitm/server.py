@@ -77,6 +77,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.x224.setNext(self.mcs)
 
         self.tcp.createObserver(onConnection=self.onConnection, onDisconnection=self.onDisconnection)
+        self.tpkt.createObserver(onUnknownHeader=self.onUnknownTPKTHeader)
         self.x224.createObserver(onConnectionRequest=self.onConnectionRequest)
         self.mcs.setObserver(self.router)
         self.router.createObserver(
@@ -139,6 +140,10 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         if self.clientConnector:
             self.clientConnector.disconnect()
             self.clientConnector = None
+
+    def onUnknownTPKTHeader(self, header):
+        self.mitm_log.error("Closing the connection because an unknown TPKT header was received. Header: 0x%02lx" % header)
+        self.disconnect()
 
     def onConnectionRequest(self, pdu):
         # X224 Request
