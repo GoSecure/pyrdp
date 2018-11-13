@@ -1,5 +1,6 @@
-from rdpy.core.newlayer import Layer
+from rdpy.core.newlayer import Layer, LayerObserver
 from rdpy.core.packing import Uint8
+from rdpy.core.subject import ObservedBy
 from rdpy.enum.rdp import EncryptionMethod
 from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser, RDPSignedFastPathParser, RDPFIPSFastPathParser
 from rdpy.parser.tpkt import TPKTParser
@@ -16,7 +17,11 @@ def createFastPathParser(tls, encryptionMethod, crypter, mode):
     else:
         raise ValueError("Invalid fast-path layer mode")
 
+class TPKTObserver(LayerObserver):
+    def onUnknownHeader(self, header):
+        pass
 
+@ObservedBy(TPKTObserver)
 class TPKTLayer(Layer):
     """
     Layer to handle TPKT-wrapped traffic
@@ -49,7 +54,15 @@ class TPKTLayer(Layer):
 
         while len(data) > 0:
             header = Uint8.unpack(data[0]) & 0b00000011
-            parser = self.parsers[header]
+
+            try:
+                parser = self.parsers[header]
+            except KeyError:
+                if self.observer:
+                    self.observer.onUnknownHeader(header)
+                    return
+                else:
+                    raise
 
             if not parser.isCompletePDU(data):
                 self.buffer = data

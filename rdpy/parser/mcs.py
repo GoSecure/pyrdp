@@ -130,8 +130,17 @@ class MCSParser:
         :type stream: StringIO
         :return: MCSErectDomainRequestPDU
         """
-        subHeight = per.readInteger(stream)
-        subInterval = per.readInteger(stream)
+        subHeight = 1
+        subInterval = 1
+
+        try:
+            # Windows generally does not seem to care about invalid erect domain requests, so use default values if
+            # parsing fails.
+            subHeight = per.readInteger(stream)
+            subInterval = per.readInteger(stream)
+        except InvalidValue:
+            pass
+
         payload = stream.read()
         return MCSErectDomainRequestPDU(subHeight, subInterval, payload)
 
