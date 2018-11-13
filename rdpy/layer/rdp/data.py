@@ -5,6 +5,7 @@ from rdpy.enum.rdp import RDPDataPDUType, RDPPlayerMessageType, CapabilityType, 
 from rdpy.exceptions import UnknownPDUTypeError
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.data import RDPDataParser
+from rdpy.pdu.rdp.capability import MultifragmentUpdateCapability
 
 
 class RDPBaseDataLayerObserver:
@@ -76,7 +77,8 @@ class RDPDataLayerObserver(RDPBaseDataLayerObserver, LayerStrictRoutedObserver):
         # Force RDP server to send bitmap events instead of order events.
         pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderFlags = OrderFlag.NEGOTIATEORDERSUPPORT | OrderFlag.ZEROBOUNDSDELTASSUPPORT
         pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderSupport = "\x00"*32
-        pass
+
+        pdu.parsedCapabilitySets[CapabilityType.CAPSETTYPE_MULTIFRAGMENTUPDATE] = MultifragmentUpdateCapability(0)
 
     def onDeactivateAll(self, pdu):
         pass

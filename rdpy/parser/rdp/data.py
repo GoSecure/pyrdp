@@ -6,7 +6,7 @@ from rdpy.exceptions import UnknownPDUTypeError
 from rdpy.parser.rdp.input import RDPInputParser
 from rdpy.parser.rdp.pointer import PointerEventParser
 from rdpy.pdu.rdp.capability import Capability, BitmapCapability, OrderCapability, GeneralCapability, \
-    GlyphCacheCapability, OffscreenBitmapCacheCapability
+    GlyphCacheCapability, OffscreenBitmapCacheCapability, MultifragmentUpdateCapability
 from rdpy.pdu.rdp.data import RDPShareControlHeader, RDPShareDataHeader, RDPDemandActivePDU, RDPConfirmActivePDU, \
     RDPSetErrorInfoPDU, RDPSynchronizePDU, RDPControlPDU, RDPInputPDU, RDPPlaySoundPDU, RDPPointerPDU
 
@@ -332,6 +332,9 @@ class RDPDataParser:
                 self.writeBitmapCapability(capability, substream)
             elif capability.type == CapabilityType.CAPSTYPE_OFFSCREENCACHE:
                 self.writeOffscreenCacheCapability(capability, substream)
+            elif capability.type == CapabilityType.CAPSETTYPE_MULTIFRAGMENTUPDATE\
+                    and isinstance(capability, MultifragmentUpdateCapability):
+                self.writeMultiFragmentUpdateCapability(capability, substream)
             # Every other capability is parsed minimally.
             else:
                 Uint16LE.pack(capability.type, substream)
@@ -487,6 +490,19 @@ class RDPDataParser:
         Uint32LE.pack(capability.offscreenSupportLevel, substream)
         Uint16LE.pack(capability.offscreenCacheSize, substream)
         Uint16LE.pack(capability.offscreenCacheEntries, substream)
+
+        Uint16LE.pack(len(substream.getvalue()) + 4, stream)
+        stream.write(substream.getvalue())
+
+    def writeMultiFragmentUpdateCapability(self, capability, stream):
+        """
+        :type capability: rdpy.pdu.rdp.capability.MultifragmentUpdateCapability
+        :type stream: StringIO
+        """
+        substream = StringIO()
+        Uint16LE.pack(capability.type, stream)
+
+        Uint32LE.pack(capability.maxRequestSize, substream)
 
         Uint16LE.pack(len(substream.getvalue()) + 4, stream)
         stream.write(substream.getvalue())

@@ -1,5 +1,6 @@
 from StringIO import StringIO
 
+from rdpy.core import log
 from rdpy.core.packing import Uint8, Uint16BE, Uint16LE
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import RDPFastPathInputEventType, \
@@ -301,7 +302,7 @@ class RDPOutputEventParser:
         return size
 
     def isCompressed(self, header):
-        return (header >> 6) == FastPathOutputCompressionType.FASTPATH_OUTPUT_COMPRESSION_USED
+        return (header >> 6) & FastPathOutputCompressionType.FASTPATH_OUTPUT_COMPRESSION_USED
 
     def parse(self, data):
         stream = StringIO(data)
@@ -315,8 +316,12 @@ class RDPOutputEventParser:
         size = Uint16LE.unpack(stream)
 
         eventType = header & 0xf
+        fragmentation = header & 0b00110000 != 0
+        if fragmentation:
+            log.error("Fragmentation is present in fastpath packets, it is NOT handled.")
+
         if eventType == RDPFastPathOutputEventType.FASTPATH_UPDATETYPE_BITMAP:
-            return self.parseBitmapEventRaw(stream, header, compressionFlags, size)
+            return self.parseBitmapEvent(stream, header, compressionFlags, size)
         elif eventType == RDPFastPathOutputEventType.FASTPATH_UPDATETYPE_ORDERS:
             return self.parseOrdersEvent(stream, header, compressionFlags, size)
 
@@ -331,19 +336,19 @@ class RDPOutputEventParser:
         updateType = Uint16LE.unpack(stream2.read(2))
         numberRectangles = Uint16LE.unpack(stream2.read(2))
         bitmapData = []
-        # for i in range(numberRectangles):
-        #     destLeft = Uint16LE.unpack(stream2.read(2))
-        #     destTop = Uint16LE.unpack(stream2.read(2))
-        #     destRight = Uint16LE.unpack(stream2.read(2))
-        #     destBottom = Uint16LE.unpack(stream2.read(2))
-        #     width = Uint16LE.unpack(stream2.read(2))
-        #     height = Uint16LE.unpack(stream2.read(2))
-        #     bitsPerPixel = Uint16LE.unpack(stream2.read(2))
-        #     flags = Uint16LE.unpack(stream2.read(2))
-        #     bitmapLength = Uint16LE.unpack(stream2.read(2))
-        #     bitmapStream = stream2.read(bitmapLength)
-        #     bitmapData.append(BitmapUpdateData(destLeft, destTop, destRight, destBottom, width, height, bitsPerPixel,
-        #                                        flags, bitmapStream))
+        for i in range(numberRectangles):
+            destLeft = Uint16LE.unpack(stream2.read(2))
+            destTop = Uint16LE.unpack(stream2.read(2))
+            destRight = Uint16LE.unpack(stream2.read(2))
+            destBottom = Uint16LE.unpack(stream2.read(2))
+            width = Uint16LE.unpack(stream2.read(2))
+            height = Uint16LE.unpack(stream2.read(2))
+            bitsPerPixel = Uint16LE.unpack(stream2.read(2))
+            flags = Uint16LE.unpack(stream2.read(2))
+            bitmapLength = Uint16LE.unpack(stream2.read(2))
+            bitmapStream = stream2.read(bitmapLength)
+            bitmapData.append(BitmapUpdateData(destLeft, destTop, destRight, destBottom, width, height, bitsPerPixel,
+                                               flags, bitmapStream))
 
         return FastPathBitmapEvent(header, compressionFlags, bitmapData, rawBitmapUpdateData)
 
