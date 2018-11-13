@@ -67,7 +67,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
         self.tcp.createObserver(onConnection=self.startConnection, onDisconnection=self.onDisconnection)
         self.tpkt.createObserver(onUnknownHeader=self.onUnknownTPKTHeader)
-        self.x224.createObserver(onConnectionConfirm=self.onConnectionConfirm)
+        self.x224.createObserver(onConnectionConfirm=self.onConnectionConfirm, onDisconnectRequest=self.onDisconnectRequest)
         self.router.createObserver(onConnectResponse=self.onConnectResponse, onDisconnectProviderUltimatum=self.onDisconnectProviderUltimatum)
         self.gccConnect.createObserver(onPDUReceived=self.onConferenceCreateResponse)
         self.rdpConnect.createObserver(onPDUReceived=self.onServerData)
@@ -87,6 +87,10 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
     def onDisconnection(self, reason):
         self.mitm_log.debug("Connection closed")
         self.server.disconnect()
+
+    def onDisconnectRequest(self, pdu):
+        self.mitm_log.debug("X224 Disconnect Request received")
+        self.disconnect()
 
     def disconnect(self):
         self.mitm_log.debug("Disconnecting")

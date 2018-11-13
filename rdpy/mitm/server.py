@@ -78,7 +78,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
         self.tcp.createObserver(onConnection=self.onConnection, onDisconnection=self.onDisconnection)
         self.tpkt.createObserver(onUnknownHeader=self.onUnknownTPKTHeader)
-        self.x224.createObserver(onConnectionRequest=self.onConnectionRequest)
+        self.x224.createObserver(onConnectionRequest=self.onConnectionRequest, onDisconnectRequest=self.onDisconnectRequest)
         self.mcs.setObserver(self.router)
         self.router.createObserver(
             onConnectionReceived = self.onConnectInitial,
@@ -126,6 +126,10 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
             self.client.disconnect()
 
         self.disconnectConnector()
+
+    def onDisconnectRequest(self, pdu):
+        self.mitm_log.debug("X224 Disconnect Request received")
+        self.disconnect()
 
     def onDisconnectProviderUltimatum(self, pdu):
         self.mitm_log.debug("Disconnect Provider Ultimatum PDU received")
