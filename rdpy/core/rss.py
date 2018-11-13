@@ -22,12 +22,22 @@ Remote Session Scenario File format
 Private protocol format to save events
 """
 import socket
+import time
 from Queue import Queue
 from threading import Thread
 
-from rdpy.core.type import CompositeType, FactoryType, UInt8, UInt16Le, UInt32Le, String, sizeof, StringStream, SocketStream
 from rdpy.core import log, error
-import time
+from rdpy.core.observer import Observer
+from rdpy.core.type import CompositeType, FactoryType, UInt8, UInt16Le, UInt32Le, String, sizeof, StringStream, \
+    SocketStream
+from rdpy.enum.core import ParserMode
+from rdpy.enum.rdp import RDPPlayerMessageType
+from rdpy.layer.rdp.recording import RDPPlayerMessageTypeLayer
+from rdpy.layer.tpkt import TPKTLayer
+from rdpy.parser.rdp.client_info import RDPClientInfoParser
+from rdpy.parser.rdp.data import RDPDataParser
+from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser
+
 
 class EventType(object):
     """
@@ -362,6 +372,7 @@ class FileReader(object):
         @param f: {file} file pointer use to read
         """
         self._s = StringStream(f.read())
+
     def nextEvent(self):
         """
         @summary: read next event and return it
@@ -371,6 +382,65 @@ class FileReader(object):
         e = Event()
         self._s.readType(e)
         return e
+
+    def reset(self):
+        """
+        Resets the reader's cursor to the beginning of the stream.
+        """
+        self._s.pos = 0
+
+
+class NewFileReader(FileReader, Observer):
+    """
+    Class that manages reading of a RDP replay file event per event.
+    """
+
+    def __init__(self, f):
+        super(NewFileReader, self).__init__(f)
+        Observer.__init__(self)
+        self.tpkt_layer = TPKTLayer()
+        self.rdp_player_event_type_layer = RDPPlayerMessageTypeLayer()
+        self.tpkt_layer.setNext(self.rdp_player_event_type_layer)
+        self.rdp_player_event_type_layer.setObserver(self)
+        self._events_queue = Queue()
+        self.rdp_server_fastpath_parser = RDPBasicFastPathParser(ParserMode.SERVER)
+        self.rdp_client_fastpath_parser = RDPBasicFastPathParser(ParserMode.CLIENT)
+        self.rdp_client_info_parser = RDPClientInfoParser()
+        self.rdp_data_parser = RDPDataParser()
+
+    def nextEvent(self):
+        """
+        :return: The next RDP Event to read.
+        """
+        if self._events_queue.empty():
+            self.tpkt_layer.recv(self._s.read())
+
+        # After tpkt_layer.recv, new events should be in the Queue. if not, its over.
+        if not self._events_queue.empty():
+            return self._events_queue.get()
+
+    def onPDUReceived(self, pdu):
+        """
+        Put the PDU in the events queue after parsing the provided pdu's payload.
+        :type pdu: rdpy.pdu.rdp.recording.RDPPlayerMessagePDU
+        """
+        try:
+            if pdu.type == RDPPlayerMessageType.INPUT:
+                rdpPdu = self.rdp_server_fastpath_parser.parse(pdu.payload)
+            elif pdu.type == RDPPlayerMessageType.OUTPUT:
+                rdpPdu = self.rdp_client_fastpath_parser.parse(pdu.payload)
+            elif pdu.type == RDPPlayerMessageType.CLIENT_INFO:
+                rdpPdu = self.rdp_client_info_parser.parse(pdu.payload)
+            elif pdu.type == RDPPlayerMessageType.CONFIRM_ACTIVE:
+                rdpPdu = self.rdp_data_parser.parse(pdu.payload)
+            else:
+                raise ValueError("Incorrect RDPPlayerMessageType received: {}".format(pdu.type))
+            pdu.payload = rdpPdu
+            self._events_queue.put(pdu)
+            pass
+        except Exception as e:
+            log.error("Error occured when parsing RDP event: {}".format(e.message))
+
 
 class SocketReader:
     """
@@ -426,4 +496,8 @@ def createFileReader(path):
     @return: {FileReader}
     """
     with open(path, "rb") as f:
-        return FileReader(f)
+        if path.endswith(".rss"):
+            return FileReader(f)
+        else:
+            return NewFileReader(f)
+

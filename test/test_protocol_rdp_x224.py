@@ -23,6 +23,8 @@ unit test for rdpy.protocol.rdp.x224 module
 
 import os, sys
 # Change path so we find rdpy
+import rdpy.enum.negotiation
+
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 
 import unittest
@@ -94,7 +96,7 @@ class X224Test(unittest.TestCase):
                 t = x224.ClientConnectionRequestPDU()
                 s.readType(t)
                 
-                if t.protocolNeg.code != x224.NegociationType.TYPE_RDP_NEG_REQ:
+                if t.protocolNeg.code != rdpy.enum.negotiation.NegotiationType.TYPE_RDP_NEG_REQ:
                     raise X224Test.X224_FAIL()
             
         def nextAutomata(data):
@@ -113,7 +115,7 @@ class X224Test(unittest.TestCase):
                     check negotiation failure
         """
         message = x224.ServerConnectionConfirm()
-        message.protocolNeg.code.value = x224.NegociationType.TYPE_RDP_NEG_FAILURE
+        message.protocolNeg.code.value = rdpy.enum.negotiation.NegotiationType.TYPE_RDP_NEG_FAILURE
         s = type.StringStream()
         s.writeType(message)
         s.pos = 0
@@ -167,7 +169,7 @@ class X224Test(unittest.TestCase):
             def send(self, data):
                 if not isinstance(data, x224.ServerConnectionConfirm):
                     raise X224Test.X224_FAIL()
-                if data.protocolNeg.code.value != x224.NegociationType.TYPE_RDP_NEG_FAILURE or data.protocolNeg.failureCode.value != x224.NegotiationFailureCode.SSL_REQUIRED_BY_SERVER:
+                if data.protocolNeg.code.value != rdpy.enum.negotiation.NegotiationType.TYPE_RDP_NEG_FAILURE or data.protocolNeg.failureCode.value != x224.NegotiationFailureCode.SSL_REQUIRED_BY_SERVER:
                     raise X224Test.X224_FAIL()
             def close(self):
                 raise X224Test.X224_PASS()
@@ -206,7 +208,7 @@ class X224Test(unittest.TestCase):
             def send(self, data):
                 if not isinstance(data, x224.ServerConnectionConfirm):
                     raise X224Test.X224_FAIL()
-                if data.protocolNeg.code.value != x224.NegociationType.TYPE_RDP_NEG_RSP or data.protocolNeg.selectedProtocol.value != x224.Protocols.PROTOCOL_SSL: 
+                if data.protocolNeg.code.value != rdpy.enum.negotiation.NegotiationType.TYPE_RDP_NEG_RSP or data.protocolNeg.selectedProtocol.value != x224.Protocols.PROTOCOL_SSL:
                     raise X224Test.X224_FAIL()
                 
         class Presentation(object):
