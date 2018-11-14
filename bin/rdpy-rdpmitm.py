@@ -66,6 +66,10 @@ def prepare_loggers():
     rdpy_logger = log.get_logger()
     rdpy_logger.addHandler(file_handler)
 
+    exceptions_logger = logging.getLogger("rdpy.exceptions")
+    exceptions_logger.propagate = False
+    exceptions_logger.addHandler(file_handler)
+
 
 def main():
     prepare_loggers()
