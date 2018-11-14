@@ -72,7 +72,14 @@ class RDPBasicFastPathParser(RDPBasicSecurityParser):
             eventData = data[: eventLength]
             data = data[eventLength :]
 
-            event = self.readParser.parse(eventData)
+            try:
+                event = self.readParser.parse(eventData)
+            except KeyboardInterrupt:
+                raise
+            except Exception:
+                log.error("Exception occurred when receiving: %s" % eventData.encode("hex"))
+                raise
+
             events.append(event)
 
         return events
