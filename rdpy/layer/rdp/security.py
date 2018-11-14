@@ -52,7 +52,13 @@ class RDPSecurityLayer(Layer):
 
     def recv(self, data):
         pdu = self.securityParser.parse(data)
-        self.dispatchPDU(pdu)
+        try:
+            self.dispatchPDU(pdu)
+        except KeyboardInterrupt:
+            raise
+        except Exception:
+            log.error("Exception occurred when receiving: %s" % pdu.payload.encode("hex"))
+            raise
 
     def dispatchPDU(self, pdu):
         if pdu.header & RDPSecurityFlags.SEC_EXCHANGE_PKT != 0:

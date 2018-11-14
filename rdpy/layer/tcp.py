@@ -1,3 +1,5 @@
+import logging
+
 from rdpy.core import log
 from twisted.internet.protocol import Protocol, connectionDone
 
@@ -47,11 +49,17 @@ class TCPLayer(Protocol, Layer):
         :param data: The byte stream (without the TCP header)
         :type data: str
         """
-        if self.logSSLRequired:
-            self.logSSLParameters()
-            self.logSSLRequired = False
+        try:
+            if self.logSSLRequired:
+                self.logSSLParameters()
+                self.logSSLRequired = False
 
-        self.next.recv(data)
+            self.next.recv(data)
+        except KeyboardInterrupt:
+            raise
+        except Exception as e:
+            logging.getLogger("rdpy.exceptions").exception(e)
+            raise
 
     def send(self, data):
         """

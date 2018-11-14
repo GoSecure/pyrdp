@@ -31,7 +31,7 @@ class MITMChannelObserver(Observer):
         peer.peer = self
 
     def onPDUReceived(self, pdu):
-        self.mitm_log.debug("Received {}".format(self.getEffectiveType(pdu)))
+        self.mitm_log.debug("Received {}".format(str(self.getEffectiveType(pdu))))
         if isinstance(pdu, RDPFastPathPDU):
             self.recorder.record(pdu, RDPPlayerMessageType.OUTPUT if self.mode == ParserMode.CLIENT else RDPPlayerMessageType.INPUT)
         elif isinstance(pdu, RDPConfirmActivePDU):
@@ -45,7 +45,7 @@ class MITMChannelObserver(Observer):
         self.peer.sendData(data)
 
     def sendPDU(self, pdu):
-        self.mitm_log.debug("Sending {}".format(self.getEffectiveType(pdu)))
+        self.mitm_log.debug("Sending {}".format(str(self.getEffectiveType(pdu))))
         self.layer.sendPDU(pdu)
 
     def sendData(self, data):
