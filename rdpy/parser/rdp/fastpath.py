@@ -328,7 +328,7 @@ class RDPOutputEventParser:
             log.error("Fragmentation is present in fastpath packets, it is NOT handled.")
 
         if eventType == RDPFastPathOutputEventType.FASTPATH_UPDATETYPE_BITMAP:
-            return self.parseBitmapEvent(stream, header, compressionFlags, size)
+            return self.parseBitmapEventRaw(stream, header, compressionFlags, size)
         elif eventType == RDPFastPathOutputEventType.FASTPATH_UPDATETYPE_ORDERS:
             return self.parseOrdersEvent(stream, header, compressionFlags, size)
 
