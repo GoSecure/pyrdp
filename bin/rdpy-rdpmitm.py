@@ -13,14 +13,25 @@ from rdpy.mitm.server import MITMServer
 
 
 class MITMServerFactory(ServerFactory):
-    def __init__(self, targetHost, targetPort, privateKeyFileName, certificateFileName):
+    def __init__(self, targetHost, targetPort, privateKeyFileName, certificateFileName, destination_ip, destination_port):
+        """
+        :param targetHost: The IP that points to the RDP server
+        :param targetPort: The port that points to the RDP server
+        :param privateKeyFileName: The private key to use for SSL
+        :param certificateFileName: The certificate to use for SSL
+        :param destination_ip: The IP to which send RDP traffic (for live player).
+        :param destination_port: The port to which send RDP traffic (for live player).
+        """
         self.targetHost = targetHost
         self.targetPort = targetPort
         self.privateKeyFileName = privateKeyFileName
         self.certificateFileName = certificateFileName
+        self.destination_ip = destination_ip
+        self.destination_port = destination_port
 
     def buildProtocol(self, addr):
-        server = MITMServer(self.targetHost, self.targetPort, self.certificateFileName, self.privateKeyFileName)
+        server = MITMServer(self.targetHost, self.targetPort, self.certificateFileName,
+                            self.privateKeyFileName, self.destination_ip, self.destination_port)
         return server.getProtocol()
 
 
@@ -118,7 +129,7 @@ def main():
     else:
         key, certificate = args.private_key, args.certificate
     listenPort = int(args.listen)
-    reactor.listenTCP(listenPort, MITMServerFactory(targetHost, targetPort, key, certificate))
+    reactor.listenTCP(listenPort, MITMServerFactory(targetHost, targetPort, key, certificate, args.destination_ip, int(args.destination_port)))
     mitm_log.info("MITM Server listening on port %d" % listenPort)
     reactor.run()
 

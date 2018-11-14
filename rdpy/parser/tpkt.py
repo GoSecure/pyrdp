@@ -1,6 +1,6 @@
 from StringIO import StringIO
 
-from rdpy.core.packing import Uint8, Uint16BE, Uint16LE
+from rdpy.core.packing import Uint8, Uint16BE
 from rdpy.exceptions import ParsingError
 from rdpy.pdu.tpkt import TPKTPDU
 
@@ -21,6 +21,14 @@ class TPKTParser:
 
     def getPDULength(self, data):
         return Uint16BE.unpack(data[2 : 4])
+
+    def getPDULengthWithSocket(self, socket):
+        """
+        Same as getPDULength, but using a network socket.
+        :type socket: socket.socket
+        """
+        data = socket.recv(3)
+        return data, Uint16BE.unpack(data[1:])
 
     def parse(self, data):
         """

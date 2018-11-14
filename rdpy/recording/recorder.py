@@ -46,7 +46,7 @@ class FileLayer(Layer):
 
     def __init__(self, fileHandle):
         """
-        :type fileHandle: file
+        :type fileHandle: BinaryIO
         """
         super(FileLayer, self).__init__()
         self.file_descriptor = fileHandle
@@ -58,3 +58,24 @@ class FileLayer(Layer):
         """
         log.debug("writing {} to {}".format(data, self.file_descriptor))
         self.file_descriptor.write(data)
+
+
+class SocketLayer(Layer):
+    """
+    Layer that sends RDP events to a network socket for live play.
+    """
+
+    def __init__(self, socket):
+        """
+        :type socket: socket.socket
+        """
+        super(SocketLayer, self).__init__()
+        self.socket = socket
+
+    def send(self, data):
+        """
+        Send data through the socket
+        :type data: str
+        """
+        log.debug("sending {} to {}".format(data, self.socket.getpeername()))
+        self.socket.send(data)

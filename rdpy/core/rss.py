@@ -28,8 +28,7 @@ from threading import Thread
 
 from rdpy.core import log, error
 from rdpy.core.observer import Observer
-from rdpy.core.type import CompositeType, FactoryType, UInt8, UInt16Le, UInt32Le, String, sizeof, StringStream, \
-    SocketStream
+from rdpy.core.type import CompositeType, FactoryType, UInt8, UInt16Le, UInt32Le, String, sizeof, StringStream
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import RDPPlayerMessageType
 from rdpy.layer.rdp.recording import RDPPlayerMessageTypeLayer
@@ -363,41 +362,13 @@ class SocketRecorder(FileRecorder):
         super(SocketRecorder, self).close()
 
 
-class FileReader(object):
+class Reader(Observer):
     """
-    @summary: RSS File reader
-    """
-    def __init__(self, f):
-        """
-        @param f: {file} file pointer use to read
-        """
-        self._s = StringStream(f.read())
-
-    def nextEvent(self):
-        """
-        @summary: read next event and return it
-        """
-        if self._s.eof():
-            return None
-        e = Event()
-        self._s.readType(e)
-        return e
-
-    def reset(self):
-        """
-        Resets the reader's cursor to the beginning of the stream.
-        """
-        self._s.pos = 0
-
-
-class NewFileReader(FileReader, Observer):
-    """
-    Class that manages reading of a RDP replay file event per event.
+    Base class to manage parsing of packets to read RDP events for a Player.
     """
 
-    def __init__(self, f):
-        super(NewFileReader, self).__init__(f)
-        Observer.__init__(self)
+    def __init__(self, **kwargs):
+        Observer.__init__(self, **kwargs)
         self.tpkt_layer = TPKTLayer()
         self.rdp_player_event_type_layer = RDPPlayerMessageTypeLayer()
         self.tpkt_layer.setNext(self.rdp_player_event_type_layer)
@@ -407,17 +378,6 @@ class NewFileReader(FileReader, Observer):
         self.rdp_client_fastpath_parser = RDPBasicFastPathParser(ParserMode.CLIENT)
         self.rdp_client_info_parser = RDPClientInfoParser()
         self.rdp_data_parser = RDPDataParser()
-
-    def nextEvent(self):
-        """
-        :return: The next RDP Event to read.
-        """
-        if self._events_queue.empty():
-            self.tpkt_layer.recv(self._s.read())
-
-        # After tpkt_layer.recv, new events should be in the Queue. if not, its over.
-        if not self._events_queue.empty():
-            return self._events_queue.get()
 
     def onPDUReceived(self, pdu):
         """
@@ -442,34 +402,59 @@ class NewFileReader(FileReader, Observer):
             log.error("Error occured when parsing RDP event: {}".format(e.message))
 
 
-class SocketReader:
+class FileReader(Reader):
     """
-    @summary: RSS Socket reader
+    RDP connections file reader.
     """
-    def __init__(self, sock):
+    def __init__(self, f, **kwargs):
         """
-        @param sock: {socket} socket used to read
+        :type f: file
         """
-        self.stream = SocketStream(sock)
+        Reader.__init__(self, **kwargs)
+        self._s = StringStream(f.read())
 
     def nextEvent(self):
         """
-        @summary: read next event and return it
+        :return: The next RDP Event to read.
         """
-        if self.stream.eof():
-            return None
+        if self._events_queue.empty():
+            self.tpkt_layer.recv(self._s.read())
 
-        e = Event()
+        # After tpkt_layer.recv, new events should be in the Queue. if not, its over.
+        if not self._events_queue.empty():
+            return self._events_queue.get()
 
-        try:
-            self.stream.readType(e)
-        except error.InvalidSize:
-            return None
+    def reset(self):
+        """
+        Resets the reader's cursor to the beginning of the stream.
+        """
+        self._s.pos = 0
 
-        return e
 
-    def close(self):
-        return self.stream.close()
+class SocketReader(Reader):
+    """
+    Class to read RDP events from a live connection using a network socket.
+    """
+
+    def __init__(self, socket, **kwargs):
+        """
+        :type socket: socket.socket
+        """
+        Reader.__init__(self, **kwargs)
+        self._socket = socket
+
+    def nextEvent(self):
+        """
+        :return: The next RDP Event to read.
+        """
+
+        if self._events_queue.empty():
+            self.tpkt_layer.recvWithSocket(self._socket)
+
+        # After tpkt_layer.recv, new events should be in the Queue. if not, its over.
+        if not self._events_queue.empty():
+            return self._events_queue.get()
+
 
 def createRecorder(path):
     """
@@ -489,6 +474,7 @@ def createSocketRecorder(ip, port):
     """
     return SocketRecorder(ip, port)
 
+
 def createFileReader(path):
     """
     @summary: open file from path and return FileReader
@@ -496,8 +482,5 @@ def createFileReader(path):
     @return: {FileReader}
     """
     with open(path, "rb") as f:
-        if path.endswith(".rss"):
             return FileReader(f)
-        else:
-            return NewFileReader(f)
 

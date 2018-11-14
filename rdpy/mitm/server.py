@@ -1,6 +1,7 @@
 import datetime
 import logging
 import random
+import socket
 from Crypto.PublicKey import RSA
 
 from twisted.internet import reactor
@@ -34,14 +35,15 @@ from rdpy.pdu.mcs import MCSConnectResponsePDU
 from rdpy.pdu.rdp.connection import ProprietaryCertificate, ServerSecurityData, RDPServerDataPDU
 from rdpy.pdu.rdp.negotiation import RDPNegotiationResponsePDU, RDPNegotiationRequestPDU
 from rdpy.protocol.rdp.x224 import ServerTLSContext
-from rdpy.recording.recorder import Recorder, FileLayer
+from rdpy.recording.recorder import Recorder, FileLayer, SocketLayer
 
 
 class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
-    def __init__(self, targetHost, targetPort, certificateFileName, privateKeyFileName):
+    def __init__(self, targetHost, targetPort, certificateFileName, privateKeyFileName, recordHost, recordPort):
         self.mitm_log = logging.getLogger("mitm.server")
         self.mitm_connections_log = logging.getLogger("mitm.connections")
         MCSUserObserver.__init__(self)
+        self.socket = None
         self.targetHost = targetHost
         self.targetPort = targetPort
         self.clientConnector = None
@@ -57,11 +59,17 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.fileHandle = open("out/rdp_replay_{}_{}.rdpy"
                                .format(datetime.datetime.now().strftime('%Y%m%d_%H_%M%S'),
                                        random.randint(0, 1000)), "wb")
+        if recordHost is not None and recordPort is not None:
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.connect((recordHost, recordPort))
+
+        recording_layers = [FileLayer(self.fileHandle)]
+        if self.socket is not None:
+            recording_layers.append(SocketLayer(self.socket))
 
         # Since we're intercepting communications from the original client (so we're a server),
         # We need to write back the packets as if they came from the client.
-        self.recorder = Recorder([FileLayer(self.fileHandle)],
-                                 RDPBasicFastPathParser(ParserMode.CLIENT))
+        self.recorder = Recorder(recording_layers, RDPBasicFastPathParser(ParserMode.CLIENT))
 
         self.supportedChannels = []
 
@@ -103,7 +111,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
     def buildProtocol(self, addr):
         # Build protocol for the client side of the connection
-        self.client = MITMClient(self, self.fileHandle)
+        self.client = MITMClient(self, self.fileHandle, self.socket)
         return self.client.getProtocol()
 
     def logSSLParameters(self):
