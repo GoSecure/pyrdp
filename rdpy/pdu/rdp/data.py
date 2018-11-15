@@ -81,3 +81,13 @@ class RDPPointerPDU:
     def __init__(self, header, event):
         self.header = header
         self.event = event
+
+class RDPSuppressOutputPDU:
+    def __init__(self, header, allowDisplayUpdates, left, top, right, bottom):
+        self.header = header
+        self.allowDisplayUpdates = bool(allowDisplayUpdates)
+        self.left = left
+        self.top = top
+        self.right = right
+        self.bottom = bottom
+
