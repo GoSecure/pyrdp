@@ -124,9 +124,12 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         # Connect the client side to the target machine
         self.clientConnector = reactor.connectTCP(self.targetHost, self.targetPort, self)
 
-    def onConnection(self):
+    def onConnection(self, clientInfo):
+        """
+        :param clientInfo: Tuple containing the ip and port of the connected client.
+        """
         # Connection sequence #0
-        self.mitm_log.debug("TCP connected")
+        self.mitm_log.debug("TCP connected from {}:{}".format(clientInfo[0], clientInfo[1]))
 
     def onDisconnection(self, reason):
         self.mitm_log.debug("Connection closed")
