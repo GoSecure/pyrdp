@@ -3,6 +3,7 @@ from StringIO import StringIO
 from rdpy.core.packing import Uint16LE, Uint32LE, Uint8
 from rdpy.enum.rdp import RDPDataPDUType, RDPDataPDUSubtype, ErrorInfo, CapabilityType
 from rdpy.exceptions import UnknownPDUTypeError
+from rdpy.parser.parser import Parser
 from rdpy.parser.rdp.input import RDPInputParser
 from rdpy.parser.rdp.pointer import PointerEventParser
 from rdpy.pdu.rdp.capability import Capability, BitmapCapability, OrderCapability, GeneralCapability, \
@@ -12,7 +13,7 @@ from rdpy.pdu.rdp.data import RDPShareControlHeader, RDPShareDataHeader, RDPDema
     RDPSuppressOutputPDU
 
 
-class RDPDataParser:
+class RDPDataParser(Parser):
     def __init__(self):
         self.parsers = {
             RDPDataPDUType.DEMAND_ACTIVE_PDU: self.parseDemandActive,
@@ -41,6 +42,12 @@ class RDPDataParser:
         }
 
     def parse(self, data):
+        """
+        Decode a data PDU from bytes.
+        :param data: the PDU data.
+        :type data: str
+        :return: an instance of an RDP Data PDU class.
+        """
         stream = StringIO(data)
         header = self.parseShareControlHeader(stream)
 
@@ -58,6 +65,11 @@ class RDPDataParser:
         return self.dataParsers[header.subtype](stream, header)
 
     def write(self, pdu):
+        """
+        Encode an RDP Data PDU instance to bytes.
+        :param pdu: the PDU.
+        :return: str
+        """
         stream = StringIO()
         substream = StringIO()
 

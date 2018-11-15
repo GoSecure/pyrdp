@@ -8,12 +8,13 @@ from rdpy.core.packing import Uint16LE, Uint32LE, Uint8
 from rdpy.enum.rdp import RDPConnectionDataType, ServerCertificateType, RDPVersion, ColorDepth, KeyboardType, \
     HighColorDepth, ConnectionType, DesktopOrientation, EncryptionLevel, EncryptionMethod
 from rdpy.exceptions import ParsingError, UnknownPDUTypeError
+from rdpy.parser.parser import Parser
 from rdpy.pdu.rdp.connection import RDPClientDataPDU, ClientCoreData, ClientSecurityData, ClientChannelDefinition, \
     ClientNetworkData, ClientClusterData, RDPServerDataPDU, ServerCoreData, ServerNetworkData, ServerSecurityData, \
     ProprietaryCertificate
 
 
-class RDPClientConnectionParser:
+class RDPClientConnectionParser(Parser):
     """
     Parser for Client Data PDUs (i.e: servers).
     """
@@ -34,6 +35,12 @@ class RDPClientConnectionParser:
         }
 
     def parse(self, data):
+        """
+        Decode a Client Data PDU from bytes.
+        :param data: Client Data PDU data.
+        :type data: str
+        :return: RDPClientDataPDU
+        """
         core = None
         security = None
         network = None
@@ -143,6 +150,12 @@ class RDPClientConnectionParser:
         return ClientClusterData(flags, redirectedSessionID)
 
     def write(self, pdu):
+        """
+        Encode a Client Data PDU to bytes.
+        :param pdu: the Client Data PDU
+        :type pdu: RDPClientDataPDU
+        :return: str
+        """
         stream = StringIO()
 
         if pdu.coreData:
@@ -225,7 +238,7 @@ class RDPClientConnectionParser:
         stream.write(Uint32LE.pack(cluster.redirectedSessionID))
 
 
-class RDPServerConnectionParser:
+class RDPServerConnectionParser(Parser):
     """
     Parser for Server Data PDUs (i.e: client).
     """
@@ -244,6 +257,12 @@ class RDPServerConnectionParser:
         }
 
     def parse(self, data):
+        """
+        Parse a Server Data PDU from bytes.
+        :param data: Server Data PDU data.
+        :type data: str
+        :return: RDPServerDataPDU
+        """
         core = None
         security = None
         network = None
@@ -361,8 +380,10 @@ class RDPServerConnectionParser:
 
     def write(self, pdu):
         """
-        :param pdu: The RDP pdu to write
-        :return: StringIO to send to the next network protocol layer
+        Encode a Server Data PDU to bytes
+        :param pdu: the Server Data PDU
+        :type pdu: RDPServerDataPDU
+        :return: str
         """
         stream = StringIO()
 
