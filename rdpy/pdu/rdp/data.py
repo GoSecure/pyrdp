@@ -43,47 +43,54 @@ class RDPConfirmActivePDU(PDU):
         self.capabilitySets = capabilitySetsRaw
 
 
-class RDPSetErrorInfoPDU:
+class RDPSetErrorInfoPDU(PDU):
     def __init__(self, header, errorInfo):
+        PDU.__init__(self)
         self.header = header
         self.errorInfo = errorInfo
 
 
-class RDPSynchronizePDU:
+class RDPSynchronizePDU(PDU):
     def __init__(self, header, messageType, targetUser):
+        PDU.__init__(self)
         self.header = header
         self.messageType = messageType
         self.targetUser = targetUser
 
 
-class RDPControlPDU:
+class RDPControlPDU(PDU):
     def __init__(self, header, action, grantID, controlID):
+        PDU.__init__(self)
         self.header = header
         self.action = action
         self.grantID = grantID
         self.controlID = controlID
 
 
-class RDPInputPDU:
+class RDPInputPDU(PDU):
     def __init__(self, header, events):
+        PDU.__init__(self)
         self.header = header
         self.events = events
 
 
-class RDPPlaySoundPDU:
+class RDPPlaySoundPDU(PDU):
     def __init__(self, header, duration, frequency):
+        PDU.__init__(self)
         self.header = header
         self.duration = duration
         self.frequency = frequency
 
 
-class RDPPointerPDU:
+class RDPPointerPDU(PDU):
     def __init__(self, header, event):
+        PDU.__init__(self)
         self.header = header
         self.event = event
 
-class RDPSuppressOutputPDU:
+class RDPSuppressOutputPDU(PDU):
     def __init__(self, header, allowDisplayUpdates, left, top, right, bottom):
+        PDU.__init__(self)
         self.header = header
         self.allowDisplayUpdates = bool(allowDisplayUpdates)
         self.left = left

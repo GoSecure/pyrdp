@@ -1,3 +1,5 @@
+import pprint
+
 from rdpy.enum.mcs import MCSPDUType
 from rdpy.pdu.base_pdu import PDU
 
@@ -114,3 +116,6 @@ class MCSDomainParams:
     @staticmethod
     def createMaximum():
         return MCSDomainParams(65535, 64535, 65535, 1, 0, 1, 65535, 2)
+
+    def __repr__(self):
+        return pprint.pformat(vars(self))

@@ -1,8 +1,10 @@
 from rdpy.enum.rdp import RDPLicensingPDUType
+from rdpy.pdu.base_pdu import PDU
 
 
-class RDPLicensingPDU:
+class RDPLicensingPDU(PDU):
     def __init__(self, header, flags):
+        PDU.__init__(self)
         self.header = header
         self.flags = flags
 
