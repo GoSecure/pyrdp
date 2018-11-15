@@ -35,7 +35,11 @@ class TCPLayer(Protocol, Layer):
         """
         When the TCP handshake is completed, notify the observer.
         """
-        self.observer.onConnection(self.transport.client)
+        if hasattr(self.transport, 'client'):
+            self.observer.onConnection(self.transport.client)
+        else:
+            self.observer.onConnection()
+
 
     def connectionLost(self, reason=connectionDone):
         self.observer.onDisconnection(reason)

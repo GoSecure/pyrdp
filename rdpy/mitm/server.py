@@ -62,7 +62,11 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
                                        random.randint(0, 1000)), "wb")
         if recordHost is not None and recordPort is not None:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socket.connect((recordHost, recordPort))
+            try:
+                self.socket.connect((recordHost, recordPort))
+            except socket.error as e:
+                log.error("Could not connect to liveplayer: {}".format(e))
+                self.socket = None
 
         recording_layers = [FileLayer(self.fileHandle)]
         if self.socket is not None:
