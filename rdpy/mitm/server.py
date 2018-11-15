@@ -132,7 +132,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.mitm_log.debug("TCP connected from {}:{}".format(clientInfo[0], clientInfo[1]))
 
     def onDisconnection(self, reason):
-        self.mitm_log.debug("Connection closed")
+        self.mitm_log.debug("Connection closed: {}".format(reason))
         self.recorder.record(RDPFastPathPDU(0, []), RDPPlayerMessageType.CONNECTION_CLOSE)
         if self.client:
             self.client.disconnect()
