@@ -14,6 +14,7 @@ from rdpy.enum.mcs import MCSResult
 from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, EncryptionMethod, EncryptionLevel, \
     RDPPlayerMessageType
 from rdpy.layer.mcs import MCSLayer
+from rdpy.layer.raw import RawLayer
 from rdpy.layer.rdp.data import RDPDataLayer
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
 from rdpy.layer.rdp.security import createNonTLSSecurityLayer, TLSSecurityLayer
@@ -56,7 +57,9 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.securityLayer = None
         self.fastPathParser = None
         self.rc4RSAKey = RSA.generate(2048)
+        self.crypter = RC4CrypterProxy()
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.SERVER)
+        self.securitySettings.setObserver(self.crypter)
         self.fileHandle = open("out/rdp_replay_{}_{}.rdpy"
                                .format(datetime.datetime.now().strftime('%Y%m%d_%H_%M%S'),
                                        random.randint(0, 1000)), "wb")
@@ -290,32 +293,39 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.router.sendChannelJoinConfirm(result, user.userID, channelID)
 
     def buildChannel(self, mcs, userID, channelID):
-        self.mitm_log.debug("building channel {} for user {}".format(channelID, userID))
-
         if channelID == self.serverData.network.mcsChannelID:
             return self.buildIOChannel(mcs, userID, channelID)
         else:
             return self.buildVirtualChannel(mcs, userID, channelID)
 
+    def createSecurityLayer(self):
+        encryptionMethod = self.serverData.security.encryptionMethod
+
+        if self.useTLS:
+            return TLSSecurityLayer()
+        else:
+            return createNonTLSSecurityLayer(encryptionMethod, self.crypter)
+
     def buildVirtualChannel(self, mcs, userID, channelID):
         channel = MCSServerChannel(mcs, userID, channelID)
+        securityLayer = self.createSecurityLayer()
+        rawLayer = RawLayer()
+
+        channel.setNext(securityLayer)
+        securityLayer.setNext(rawLayer)
+
         peer = self.client.getChannelObserver(channelID)
-        observer = MITMVirtualChannelObserver(channel)
+        observer = MITMVirtualChannelObserver(rawLayer)
         observer.setPeer(peer)
-        channel.setObserver(observer)
+        rawLayer.setObserver(observer)
+
         return channel
 
     def buildIOChannel(self, mcs, userID, channelID):
         encryptionMethod = self.serverData.security.encryptionMethod
-        crypterProxy = RC4CrypterProxy()
+        self.securityLayer = self.createSecurityLayer()
 
-        if self.useTLS:
-            self.securityLayer = TLSSecurityLayer()
-        else:
-            self.securityLayer = createNonTLSSecurityLayer(encryptionMethod, crypterProxy)
-
-        self.securitySettings.setObserver(crypterProxy)
-        self.fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, crypterProxy, ParserMode.SERVER)
+        self.fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, self.crypter, ParserMode.SERVER)
         self.licensingLayer = RDPLicensingLayer()
         channel = MCSServerChannel(mcs, userID, channelID)
 
