@@ -33,6 +33,7 @@ from rdpy.parser.rdp.negotiation import RDPNegotiationRequestParser, RDPNegotiat
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.pdu.mcs import MCSConnectResponsePDU
 from rdpy.pdu.rdp.connection import ProprietaryCertificate, ServerSecurityData, RDPServerDataPDU
+from rdpy.pdu.rdp.fastpath import RDPFastPathPDU
 from rdpy.pdu.rdp.negotiation import RDPNegotiationResponsePDU, RDPNegotiationRequestPDU
 from rdpy.protocol.rdp.x224 import ServerTLSContext
 from rdpy.recording.recorder import Recorder, FileLayer, SocketLayer
@@ -129,7 +130,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
     def onDisconnection(self, reason):
         self.mitm_log.debug("Connection closed")
-
+        self.recorder.record(RDPFastPathPDU(0, []), RDPPlayerMessageType.CONNECTION_CLOSE)
         if self.client:
             self.client.disconnect()
 

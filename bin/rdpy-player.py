@@ -30,7 +30,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 from rdpy.core import log, rss
-from rdpy.ui.event import NewRSSEventHandler
+from rdpy.ui.event import RSSEventHandler
 from rdpy.ui.qt4 import QRemoteDesktop
 
 global qApp  # Here so the linter stops crying :)
@@ -137,7 +137,7 @@ class RDPConnectionTab(QWidget):
         self._text = QTextEdit()
         self._text.setReadOnly(True)
         self._text.setMinimumHeight(150)
-        self._handler = NewRSSEventHandler(self._viewer, self._text)
+        self._handler = RSSEventHandler(self._viewer, self._text)
 
         scrollViewer = QScrollArea()
         scrollViewer.setWidget(self._viewer)

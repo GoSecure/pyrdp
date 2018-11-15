@@ -635,6 +635,7 @@ class RDPPlayerMessageType(IntEnum):
     OUTPUT = 2  # Ex: image
     CLIENT_INFO = 3  # Creds on connection
     CONFIRM_ACTIVE = 4  # For desktop width and height
+    CONNECTION_CLOSE = 5  # To advertise the end of the connection
 
 
 class DrawingOrderControlFlags(IntEnum):

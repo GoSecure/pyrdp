@@ -362,8 +362,12 @@ class RDPOutputEventParser:
     def parseBitmapEventRaw(self, stream, header, compressionFlags, size):
         return FastPathBitmapEvent(header, compressionFlags, None, stream.read(size))
 
-    def parseBitmapEvent(self, stream, header, compressionFlags, size):
-        rawBitmapUpdateData = stream.read(size)
+    def parseBitmapEvent(self, fastPathBitmapEvent):
+        """
+        :type fastPathBitmapEvent: FastPathBitmapEvent
+        :return: a FastPathBitmapEvent with bitmapUpdateData
+        """
+        rawBitmapUpdateData = fastPathBitmapEvent.rawBitmapUpdateData
         stream2 = StringIO(rawBitmapUpdateData)
         updateType = Uint16LE.unpack(stream2.read(2))
         numberRectangles = Uint16LE.unpack(stream2.read(2))
@@ -382,7 +386,8 @@ class RDPOutputEventParser:
             bitmapData.append(BitmapUpdateData(destLeft, destTop, destRight, destBottom, width, height, bitsPerPixel,
                                                flags, bitmapStream))
 
-        return FastPathBitmapEvent(header, compressionFlags, bitmapData, rawBitmapUpdateData)
+        return FastPathBitmapEvent(fastPathBitmapEvent.header, fastPathBitmapEvent.compressionFlags,
+                                   bitmapData, rawBitmapUpdateData)
 
     def writeBitmapEvent(self, stream, event):
         stream.write(event.rawBitmapUpdateData)

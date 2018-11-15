@@ -393,6 +393,8 @@ class Reader(Observer):
                 rdpPdu = self.rdp_client_info_parser.parse(pdu.payload)
             elif pdu.type == RDPPlayerMessageType.CONFIRM_ACTIVE:
                 rdpPdu = self.rdp_data_parser.parse(pdu.payload)
+            elif pdu.type == RDPPlayerMessageType.CONNECTION_CLOSE:
+                rdpPdu = None
             else:
                 raise ValueError("Incorrect RDPPlayerMessageType received: {}".format(pdu.type))
             pdu.payload = rdpPdu
@@ -449,11 +451,21 @@ class SocketReader(Reader):
         """
 
         if self._events_queue.empty():
-            self.tpkt_layer.recvWithSocket(self._socket)
+            try:
+                self.tpkt_layer.recvWithSocket(self._socket)
+            except Exception as e:
+                log.error("Error while receiving data from the network socket: {}".format(e.message))
 
         # After tpkt_layer.recv, new events should be in the Queue. if not, its over.
         if not self._events_queue.empty():
-            return self._events_queue.get()
+            event = self._events_queue.get()
+            if event.type == RDPPlayerMessageType.CONNECTION_CLOSE:
+                return None
+            else:
+                return event
+
+    def close(self):
+        self._socket.close()
 
 
 def createRecorder(path):

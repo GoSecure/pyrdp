@@ -6,7 +6,7 @@ class Integer:
     def unpack(cls, data):
         """
         :param data: data to unpack from.
-        :type data: str | file
+        :type data: str | file | StringIO.StringIO
         :return: int
         """
         if isinstance(data, str):
