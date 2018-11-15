@@ -173,6 +173,11 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         parser = RDPNegotiationRequestParser()
         self.originalNegotiationPDU = parser.parse(pdu.payload)
 
+        if self.originalNegotiationPDU.cookie:
+            self.mitm_log.info(self.originalNegotiationPDU.cookie)
+        else:
+            self.mitm_log.info("No cookie for this connection")
+
         self.targetNegotiationPDU = RDPNegotiationRequestPDU(
             self.originalNegotiationPDU.cookie,
             self.originalNegotiationPDU.flags,
