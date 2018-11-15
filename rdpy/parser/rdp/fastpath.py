@@ -28,6 +28,16 @@ class RDPBasicFastPathParser(RDPBasicSecurityParser):
         stream.read(1)
         return self.parseLength(stream)
 
+    def getPDULengthWithSocket(self, socket):
+        """
+        Same as getPDULength, but with a network socket.
+        :type socket: socket.socket
+        """
+        data = socket.recv(1)
+        data2, length = self.parseLengthWithSocket(socket)
+        data += data2
+        return data, length
+
     def isCompletePDU(self, data):
         if len(data) == 1:
             return False
@@ -63,6 +73,21 @@ class RDPBasicFastPathParser(RDPBasicSecurityParser):
             length = ((length & 0x7f) << 8) | Uint8.unpack(stream)
 
         return length
+
+    def parseLengthWithSocket(self, socket):
+        """
+        Same as parseLength, but with a network socket.
+        :type socket: socket.socket
+        """
+        data = socket.recv(1)
+        length = Uint8.unpack(data)
+
+        if length & 0x80 != 0:
+            data2 = socket.recv(1)
+            data += data2
+            length = ((length & 0x7f) << 8) | Uint8.unpack(data2)
+
+        return data, length
 
     def parseEvents(self, data):
         events = []

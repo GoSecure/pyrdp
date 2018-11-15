@@ -90,12 +90,12 @@ class NewRSSEventHandler:
                 log.debug("handling {}".format(event))
                 self.handle_scancode(event)
             elif isinstance(event, FastPathEventMouse):
-                log.info("Not handling Mouse event since it has not yet been coded :)")
+                log.debug("Not handling Mouse event since it has not yet been coded :)")
             else:
                 log.debug("Cant handle input event: {}".format(event))
 
     def handle_scancode(self, event):
-        log.info("Reading scancode {}".format(event.scancode))
+        log.debug("Reading scancode {}".format(event.scancode))
         code = event.scancode
         is_pressed = not event.isReleased
         if code in [0x2A, 0x36]:

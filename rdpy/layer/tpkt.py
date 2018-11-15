@@ -46,7 +46,6 @@ class TPKTLayer(Layer):
         """
         Since there can be more than one TPKT message per TCP packet, parse
         a TPKT message, handle the packet then check if we have more messages left.
-        Note that TPKT reassembly (when a TPKT message is in more than one TCP packet) is not tested to be working.
         :param data: The TCP packet's payload
         :type data: str
         """
@@ -76,6 +75,21 @@ class TPKTLayer(Layer):
 
                 data = data[pduLength :]
                 self.buffer = ""
+
+    def recvWithSocket(self, socket):
+        """
+        Same as recv, but using a socket.
+        :type socket: socket.socket
+        """
+        data = socket.recv(1)
+        header = Uint8.unpack(data) & 0b00000011
+        parser = self.parsers[header]
+        data2, pduLength = parser.getPDULengthWithSocket(socket)
+        data += data2
+        pduData = data + socket.recv(pduLength - 4)
+
+        pdu = parser.parse(pduData)
+        self.pduReceived(pdu, header == 3)
 
     def send(self, data):
         """

@@ -290,7 +290,7 @@ class ReplayTab(RDPConnectionTab):
 
     def __init__(self, reader, file_name, *args, **kwargs):
         """
-        :type reader: rdpy.core.rss.NewFileReader
+        :type reader: rdpy.core.rss.FileReader
         """
         self.file_name = file_name
         self.stopped = True

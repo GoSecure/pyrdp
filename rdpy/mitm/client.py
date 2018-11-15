@@ -18,20 +18,23 @@ from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver
 from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser
 from rdpy.parser.rdp.negotiation import RDPNegotiationResponseParser, RDPNegotiationRequestParser
 from rdpy.protocol.rdp.x224 import ClientTLSContext
-from rdpy.recording.recorder import Recorder, FileLayer
+from rdpy.recording.recorder import Recorder, FileLayer, SocketLayer
 
 
 class MITMClient(MCSChannelFactory, MCSUserObserver):
-    def __init__(self, server, fileHandle):
+    def __init__(self, server, fileHandle, socket):
         """
         :type server: rdpy.mitm.server.MITMServer
         :type fileHandle: file
+        :type socket: socket.socket
         """
         self.mitm_log = logging.getLogger("mitm.client")
         MCSChannelFactory.__init__(self)
         self.server = server
-        self.recorder = Recorder([FileLayer(fileHandle)],
-                                 RDPBasicFastPathParser(ParserMode.SERVER))
+        record_layers = [FileLayer(fileHandle)]
+        if socket is not None:
+            record_layers.append(SocketLayer(socket))
+        self.recorder = Recorder(record_layers, RDPBasicFastPathParser(ParserMode.SERVER))
 
         self.tcp = TCPLayer()
         self.tpkt = TPKTLayer()
