@@ -13,7 +13,8 @@ class RDPClientInfoParser:
 
     def parse(self, data):
         """
-        Read the bytestream and return a RDPClientInfoPDU.
+        Decode a Client Info PDU from bytes.
+        :param data: the Client Info PDU bytes.
         :type data: str
         :return: RDPClientInfoPDU
         """
@@ -58,7 +59,8 @@ class RDPClientInfoParser:
 
     def write(self, pdu):
         """
-        Encode the provided RDPClientInfoPDU and return it as a byte stream.
+        Encode a Client Info PDU to bytes.
+        :param pdu: the Client Info PDU.
         :type pdu: RDPClientInfoPDU
         :return: str
         """

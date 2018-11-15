@@ -2,10 +2,11 @@ from StringIO import StringIO
 
 from rdpy.core.packing import Uint8, Uint16LE, Uint32LE
 from rdpy.enum.negotiation import NegotiationRequestFlags, NegotiationType
+from rdpy.parser.parser import Parser
 from rdpy.pdu.rdp.negotiation import RDPNegotiationRequestPDU, RDPNegotiationResponsePDU
 
 
-class RDPNegotiationRequestParser:
+class RDPNegotiationRequestParser(Parser):
     """
     Parser for RDP negotiaton requests (Connection Request payloads).
     """
@@ -74,7 +75,7 @@ class RDPNegotiationRequestParser:
         return stream.getvalue()
 
 
-class RDPNegotiationResponseParser:
+class RDPNegotiationResponseParser(Parser):
     """
     Parser for RDP negotiation responses (Connection Confirm payloads).
     """

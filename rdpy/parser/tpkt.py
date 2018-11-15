@@ -2,10 +2,11 @@ from StringIO import StringIO
 
 from rdpy.core.packing import Uint8, Uint16BE
 from rdpy.exceptions import ParsingError
+from rdpy.parser.parser import Parser
 from rdpy.pdu.tpkt import TPKTPDU
 
 
-class TPKTParser:
+class TPKTParser(Parser):
     """
     Parser for TPKT traffic to read and write TPKT messages
     """

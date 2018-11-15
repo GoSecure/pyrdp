@@ -3,11 +3,12 @@ from StringIO import StringIO
 from rdpy.core.packing import Uint8, Uint16BE, Uint16LE
 from rdpy.enum.x224 import X224PDUType
 from rdpy.exceptions import ParsingError, UnknownPDUTypeError
+from rdpy.parser.parser import Parser
 from rdpy.pdu.x224 import X224ConnectionConfirmPDU, X224ConnectionRequestPDU, X224DisconnectRequestPDU, X224DataPDU, \
     X224ErrorPDU
 
 
-class X224Parser:
+class X224Parser(Parser):
     """
     Parser to read and write X224 (COTP) PDUs.
     """
