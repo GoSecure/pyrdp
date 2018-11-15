@@ -4,10 +4,11 @@ from rdpy.core import per
 from rdpy.core.packing import Uint16BE
 from rdpy.enum.gcc import GCCPDUType
 from rdpy.exceptions import ParsingError, UnknownPDUTypeError
+from rdpy.parser.parser import Parser
 from rdpy.pdu.gcc import GCCConferenceCreateRequestPDU, GCCConferenceCreateResponsePDU
 
 
-class GCCParser:
+class GCCParser(Parser):
     """
     Parser class to read and write GCC (T.124) PDUs.
     """
@@ -31,6 +32,7 @@ class GCCParser:
     def parse(self, data):
         """
         Parses the raw data bytes into a GCCPDU
+        :param data: PDU data.
         :type data: str
         :return: GCCPDU
         """
@@ -113,6 +115,12 @@ class GCCParser:
         return GCCConferenceCreateResponsePDU(nodeID, tag, result, payload)
 
     def write(self, pdu):
+        """
+        Encode a GCC PDU to bytes.
+        :param pdu: gcc PDU.
+        :type pdu: GCCPDU
+        :return: str
+        """
         if pdu.header not in self.writers:
             raise UnknownPDUTypeError("Trying to write unknown GCC PDU type %s" % pdu.header, pdu.header)
 

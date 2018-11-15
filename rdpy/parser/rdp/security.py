@@ -1,13 +1,12 @@
 from StringIO import StringIO
 
-from rdpy.core import log
-
 from rdpy.core.packing import Uint16LE, Uint8, Uint32LE
 from rdpy.enum.rdp import RDPSecurityFlags, FIPSVersion
+from rdpy.parser.parser import Parser
 from rdpy.pdu.rdp.security import RDPSecurityPDU, RDPSecurityExchangePDU
 
 
-class RDPBasicSecurityParser:
+class RDPBasicSecurityParser(Parser):
     def parse(self, data):
         stream = StringIO(data)
         header = Uint32LE.unpack(stream)

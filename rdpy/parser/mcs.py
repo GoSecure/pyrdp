@@ -2,16 +2,17 @@ from StringIO import StringIO
 from collections import defaultdict
 
 from rdpy.core import ber, per
-from rdpy.core.error import InvalidValue, InvalidSize
+from rdpy.core.error import InvalidValue
 from rdpy.core.packing import Uint8, Uint16BE
 from rdpy.enum.mcs import MCSChannelID, MCSPDUType
 from rdpy.exceptions import UnknownPDUTypeError, ParsingError
+from rdpy.parser.parser import Parser
 from rdpy.pdu.mcs import MCSConnectInitialPDU, MCSConnectResponsePDU, MCSErectDomainRequestPDU, \
     MCSDisconnectProviderUltimatumPDU, MCSAttachUserRequestPDU, MCSAttachUserConfirmPDU, MCSChannelJoinRequestPDU, \
     MCSChannelJoinConfirmPDU, MCSSendDataRequestPDU, MCSSendDataIndicationPDU, MCSDomainParams
 
 
-class MCSParser:
+class MCSParser(Parser):
     """
     Parser class to read and write MCS (T.125) PDUs.
     """

@@ -3,11 +3,12 @@ from StringIO import StringIO
 from rdpy.core.packing import Uint16LE, Uint32LE
 from rdpy.enum.rdp import PointerEventType
 from rdpy.exceptions import ParsingError
+from rdpy.parser.parser import Parser
 from rdpy.pdu.rdp.pointer import PointerSystemEvent, Point, PointerPositionEvent, PointerColorEvent, PointerCacheEvent, \
     PointerNewEvent
 
 
-class PointerEventParser:
+class PointerEventParser(Parser):
     def __init__(self):
         self.parsers = {
             PointerEventType.TS_PTRMSGTYPE_SYSTEM: self.parseSystemEvent,

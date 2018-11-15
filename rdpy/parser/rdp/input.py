@@ -3,11 +3,12 @@ from StringIO import StringIO
 from rdpy.core.packing import Uint32LE, Uint16LE
 from rdpy.enum.rdp import InputEventType
 from rdpy.exceptions import ParsingError, WritingError
-from rdpy.pdu.rdp.input import SlowPathInput, SynchronizeEvent, UnusedEvent, KeyboardEvent, UnicodeKeyboardEvent, \
+from rdpy.parser.parser import Parser
+from rdpy.pdu.rdp.input import SynchronizeEvent, UnusedEvent, KeyboardEvent, UnicodeKeyboardEvent, \
     MouseEvent, ExtendedMouseEvent
 
 
-class RDPInputParser:
+class RDPInputParser(Parser):
     def __init__(self):
         self.parsers = {
             InputEventType.INPUT_EVENT_SYNC: self.parseSynchronizeEvent,
