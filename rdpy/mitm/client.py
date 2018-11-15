@@ -1,10 +1,11 @@
 import logging
 import pprint
 
-from rdpy.core.crypto import SecuritySettings
+from rdpy.core.crypto import SecuritySettings, RC4CrypterProxy
 from rdpy.enum.core import ParserMode
 from rdpy.layer.gcc import GCCClientConnectionLayer
 from rdpy.layer.mcs import MCSLayer, MCSClientConnectionLayer
+from rdpy.layer.raw import RawLayer
 from rdpy.layer.rdp.connection import RDPClientConnectionLayer
 from rdpy.layer.rdp.data import RDPDataLayer
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
@@ -12,7 +13,7 @@ from rdpy.layer.rdp.security import createNonTLSSecurityLayer, TLSSecurityLayer
 from rdpy.layer.tcp import TCPLayer
 from rdpy.layer.tpkt import TPKTLayer, createFastPathParser
 from rdpy.layer.x224 import X224Layer
-from rdpy.mcs.channel import MCSChannelFactory, MCSClientChannel
+from rdpy.mcs.channel import MCSChannelFactory, MCSClientChannel, MCSServerChannel
 from rdpy.mcs.client import MCSClientRouter
 from rdpy.mcs.user import MCSUserObserver
 from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver, MITMVirtualChannelObserver
@@ -50,13 +51,15 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.channelObservers = {}
         self.useTLS = False
         self.user = None
-        self.securitySettings = SecuritySettings(SecuritySettings.Mode.CLIENT)
         self.securityLayer = None
         self.fastPathParser = None
         self.fastPathObserver = None
         self.licensingLayer = None
         self.conferenceCreateResponse = None
         self.serverData = None
+        self.crypter = RC4CrypterProxy()
+        self.securitySettings = SecuritySettings(SecuritySettings.Mode.CLIENT)
+        self.securitySettings.setObserver(self.crypter)
 
         self.mcsConnect = MCSClientConnectionLayer(self.mcs)
         self.gccConnect = GCCClientConnectionLayer("1")
@@ -186,8 +189,9 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.mcs.send(pdu)
 
     def buildChannel(self, mcs, userID, channelID):
-        self.mitm_log.debug("building channel {} for user {}".format(channelID, userID))
         channelName = self.channelMap.get(channelID, None)
+        channelLog = channelName + " (%d)" % channelID if channelName else channelID
+        self.mitm_log.debug("building channel {} for user {}".format(channelLog, userID))
 
         if channelName == "I/O":
             channel = self.buildIOChannel(mcs, userID, channelID)
@@ -197,24 +201,33 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.server.onChannelJoinAccepted(userID, channelID)
         return channel
 
+    def createSecurityLayer(self):
+        encryptionMethod = self.serverData.security.encryptionMethod
+
+        if self.useTLS:
+            return TLSSecurityLayer()
+        else:
+            return createNonTLSSecurityLayer(encryptionMethod, self.crypter)
+
     def buildVirtualChannel(self, mcs, userID, channelID):
         channel = MCSClientChannel(mcs, userID, channelID)
-        observer = MITMVirtualChannelObserver(channel)
-        channel.setObserver(observer)
+        securityLayer = self.createSecurityLayer()
+        rawLayer = RawLayer()
+
+        channel.setNext(securityLayer)
+        securityLayer.setNext(rawLayer)
+
+        observer = MITMVirtualChannelObserver(rawLayer)
+        rawLayer.setObserver(observer)
         self.channelObservers[channelID] = observer
+
         return channel
 
     def buildIOChannel(self, mcs, userID, channelID):
         encryptionMethod = self.serverData.security.encryptionMethod
+        self.securityLayer = self.createSecurityLayer()
 
-        if self.useTLS:
-            crypter = None
-            self.securityLayer = TLSSecurityLayer()
-        else:
-            crypter = self.securitySettings.getCrypter()
-            self.securityLayer = createNonTLSSecurityLayer(encryptionMethod, crypter)
-
-        self.fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, crypter, ParserMode.CLIENT)
+        self.fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, self.crypter, ParserMode.CLIENT)
         self.licensingLayer = RDPLicensingLayer()
         channel = MCSClientChannel(mcs, userID, channelID)
 
