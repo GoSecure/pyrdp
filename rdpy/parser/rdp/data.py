@@ -8,7 +8,8 @@ from rdpy.parser.rdp.pointer import PointerEventParser
 from rdpy.pdu.rdp.capability import Capability, BitmapCapability, OrderCapability, GeneralCapability, \
     GlyphCacheCapability, OffscreenBitmapCacheCapability, MultifragmentUpdateCapability
 from rdpy.pdu.rdp.data import RDPShareControlHeader, RDPShareDataHeader, RDPDemandActivePDU, RDPConfirmActivePDU, \
-    RDPSetErrorInfoPDU, RDPSynchronizePDU, RDPControlPDU, RDPInputPDU, RDPPlaySoundPDU, RDPPointerPDU
+    RDPSetErrorInfoPDU, RDPSynchronizePDU, RDPControlPDU, RDPInputPDU, RDPPlaySoundPDU, RDPPointerPDU, \
+    RDPSuppressOutputPDU
 
 
 class RDPDataParser:
@@ -26,6 +27,7 @@ class RDPDataParser:
             RDPDataPDUSubtype.PDUTYPE2_INPUT: self.parseInput,
             # RDPDataPDUSubtype.PDUTYPE2_POINTER: self.parsePointer,
             RDPDataPDUSubtype.PDUTYPE2_PLAY_SOUND: self.parsePlaySound,
+            RDPDataPDUSubtype.PDUTYPE2_SUPPRESS_OUTPUT: self.parseSuppressOutput,
         }
 
         self.dataWriters = {
@@ -35,6 +37,7 @@ class RDPDataParser:
             RDPDataPDUSubtype.PDUTYPE2_INPUT: self.writeInput,
             # RDPDataPDUSubtype.PDUTYPE2_POINTER: self.writePointer,
             RDPDataPDUSubtype.PDUTYPE2_PLAY_SOUND: self.writePlaySound,
+            RDPDataPDUSubtype.PDUTYPE2_SUPPRESS_OUTPUT: self.writeSuppressOutput,
         }
 
     def parse(self, data):
@@ -169,8 +172,9 @@ class RDPDataParser:
         capabilitySets[CapabilityType.CAPSTYPE_GLYPHCACHE] = \
             self.parseGlyphCacheCapability(capabilitySets[CapabilityType.CAPSTYPE_GLYPHCACHE].rawData)
 
-        capabilitySets[CapabilityType.CAPSTYPE_OFFSCREENCACHE] = \
-            self.parseOffscreenCacheCapability(capabilitySets[CapabilityType.CAPSTYPE_OFFSCREENCACHE].rawData)
+        if CapabilityType.CAPSTYPE_OFFSCREENCACHE in capabilitySets:
+            capabilitySets[CapabilityType.CAPSTYPE_OFFSCREENCACHE] = \
+                self.parseOffscreenCacheCapability(capabilitySets[CapabilityType.CAPSTYPE_OFFSCREENCACHE].rawData)
 
         capabilitySets[CapabilityType.CAPSTYPE_BITMAPCACHE] = Capability(CapabilityType.CAPSTYPE_BITMAPCACHE, "\x00"*36)
 
@@ -402,6 +406,24 @@ class RDPDataParser:
     def writePlaySound(self, stream, pdu):
         Uint32LE.pack(pdu.duration, stream)
         Uint32LE.pack(pdu.frequency, stream)
+
+    def parseSuppressOutput(self, stream, header):
+        allowDisplayUpdates = Uint8.unpack(stream)
+        stream.read(3)
+        left = Uint16LE.unpack(stream)
+        top = Uint16LE.unpack(stream)
+        right = Uint16LE.unpack(stream)
+        bottom = Uint16LE.unpack(stream)
+        return RDPSuppressOutputPDU(header, allowDisplayUpdates, left, top, right, bottom)
+
+    def writeSuppressOutput(self, stream, pdu):
+        Uint8.pack(int(pdu.allowDisplayUpdates), stream)
+        stream.write("\x00" * 3)
+        Uint16LE.pack(pdu.left, stream)
+        Uint16LE.pack(pdu.top, stream)
+        Uint16LE.pack(pdu.right, stream)
+        Uint16LE.pack(pdu.bottom, stream)
+
 
     def writeGeneralCapability(self, capability, stream):
         """
