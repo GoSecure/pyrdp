@@ -73,7 +73,7 @@ class MCSClientChannel(MCSChannel, Layer):
         Layer.__init__(self)
     
     def recvSendDataIndication(self, pdu):
-        self.next.recv(pdu.payload)
+        self.pduReceived(pdu, True)
     
     def send(self, data):
         self.sendSendDataRequest(data)
@@ -86,7 +86,7 @@ class MCSServerChannel(MCSChannel, Layer):
         pass
     
     def recvSendDataRequest(self, pdu):
-        self.next.recv(pdu)
+        self.pduReceived(pdu, True)
     
     def send(self, data):
         self.sendSendDataIndication(data)

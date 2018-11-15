@@ -146,6 +146,6 @@ class MCSServerRouter(MCSRouter, Subject):
             raise ValueError("User does not exist")
 
         user = self.users[userID]
-        user.recvSendDataRequest(pdu.channelID, pdu.payload)
+        user.recvSendDataRequest(pdu.channelID, pdu)
         
     
