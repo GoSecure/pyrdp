@@ -169,8 +169,9 @@ class RDPDataParser:
         capabilitySets[CapabilityType.CAPSTYPE_GLYPHCACHE] = \
             self.parseGlyphCacheCapability(capabilitySets[CapabilityType.CAPSTYPE_GLYPHCACHE].rawData)
 
-        capabilitySets[CapabilityType.CAPSTYPE_OFFSCREENCACHE] = \
-            self.parseOffscreenCacheCapability(capabilitySets[CapabilityType.CAPSTYPE_OFFSCREENCACHE].rawData)
+        if CapabilityType.CAPSTYPE_OFFSCREENCACHE in capabilitySets:
+            capabilitySets[CapabilityType.CAPSTYPE_OFFSCREENCACHE] = \
+                self.parseOffscreenCacheCapability(capabilitySets[CapabilityType.CAPSTYPE_OFFSCREENCACHE].rawData)
 
         capabilitySets[CapabilityType.CAPSTYPE_BITMAPCACHE] = Capability(CapabilityType.CAPSTYPE_BITMAPCACHE, "\x00"*36)
 
