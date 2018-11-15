@@ -1,4 +1,5 @@
 import logging
+import pprint
 
 from rdpy.core.crypto import SecuritySettings
 from rdpy.enum.core import ParserMode
@@ -14,10 +15,12 @@ from rdpy.layer.x224 import X224Layer
 from rdpy.mcs.channel import MCSChannelFactory, MCSClientChannel
 from rdpy.mcs.client import MCSClientRouter
 from rdpy.mcs.user import MCSUserObserver
-from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver
+from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver, MITMVirtualChannelObserver
 from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser
 from rdpy.parser.rdp.negotiation import RDPNegotiationResponseParser, RDPNegotiationRequestParser
 from rdpy.protocol.rdp.x224 import ClientTLSContext
+
+from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.recording.recorder import Recorder, FileLayer, SocketLayer
 
 
@@ -145,6 +148,11 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
             self.server.onConnectResponse(pdu, self.serverData)
 
     def onConferenceCreateResponse(self, pdu):
+        """
+        Called when a GCC Conference Create Response is received.
+        :param pdu: the conference response PDU
+        :type pdu: GCCConferenceCreateResponsePDU
+        """
         self.conferenceCreateResponse = pdu
 
     def onServerData(self, serverData):
@@ -179,43 +187,56 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
     def buildChannel(self, mcs, userID, channelID):
         self.mitm_log.debug("building channel {} for user {}".format(channelID, userID))
+        channelName = self.channelMap.get(channelID, None)
 
-        if channelID != userID and self.channelMap[channelID] == "I/O":
-            encryptionMethod = self.serverData.security.encryptionMethod
-
-            if self.useTLS:
-                crypter = None
-                self.securityLayer = TLSSecurityLayer()
-            else:
-                crypter = self.securitySettings.getCrypter()
-                self.securityLayer = createNonTLSSecurityLayer(encryptionMethod, crypter)
-
-            self.fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, crypter, ParserMode.CLIENT)
-            self.licensingLayer = RDPLicensingLayer()
-            channel = MCSClientChannel(mcs, userID, channelID)
-
-            channel.setNext(self.securityLayer)
-            self.securityLayer.setLicensingLayer(self.licensingLayer)
-            self.securityLayer.setNext(self.io)
-            self.tpkt.setFastPathParser(self.fastPathParser)
-
-            slowPathObserver = MITMSlowPathObserver(self.io, self.recorder, ParserMode.CLIENT)
-            self.fastPathObserver = MITMFastPathObserver(self.tpkt, self.recorder, ParserMode.CLIENT)
-            self.io.setObserver(slowPathObserver)
-            self.tpkt.setObserver(self.fastPathObserver)
-            self.licensingLayer.createObserver(onPDUReceived=self.onLicensingPDU)
-
-            self.channelObservers[channelID] = slowPathObserver
-
-            if self.useTLS:
-                self.securityLayer.securityHeaderExpected = True
-            elif encryptionMethod != 0:
-                self.mitm_log.debug("Sending Security Exchange")
-                self.io.previous.sendSecurityExchange(self.securitySettings.encryptClientRandom())
+        if channelName == "I/O":
+            channel = self.buildIOChannel(mcs, userID, channelID)
         else:
-            channel = None
+            channel = self.buildVirtualChannel(mcs, userID, channelID)
 
         self.server.onChannelJoinAccepted(userID, channelID)
+        return channel
+
+    def buildVirtualChannel(self, mcs, userID, channelID):
+        channel = MCSClientChannel(mcs, userID, channelID)
+        observer = MITMVirtualChannelObserver(channel)
+        channel.setObserver(observer)
+        self.channelObservers[channelID] = observer
+        return channel
+
+    def buildIOChannel(self, mcs, userID, channelID):
+        encryptionMethod = self.serverData.security.encryptionMethod
+
+        if self.useTLS:
+            crypter = None
+            self.securityLayer = TLSSecurityLayer()
+        else:
+            crypter = self.securitySettings.getCrypter()
+            self.securityLayer = createNonTLSSecurityLayer(encryptionMethod, crypter)
+
+        self.fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, crypter, ParserMode.CLIENT)
+        self.licensingLayer = RDPLicensingLayer()
+        channel = MCSClientChannel(mcs, userID, channelID)
+
+        channel.setNext(self.securityLayer)
+        self.securityLayer.setLicensingLayer(self.licensingLayer)
+        self.securityLayer.setNext(self.io)
+        self.tpkt.setFastPathParser(self.fastPathParser)
+
+        slowPathObserver = MITMSlowPathObserver(self.io, self.recorder, ParserMode.CLIENT)
+        self.fastPathObserver = MITMFastPathObserver(self.tpkt, self.recorder, ParserMode.CLIENT)
+        self.io.setObserver(slowPathObserver)
+        self.tpkt.setObserver(self.fastPathObserver)
+        self.licensingLayer.createObserver(onPDUReceived=self.onLicensingPDU)
+
+        self.channelObservers[channelID] = slowPathObserver
+
+        if self.useTLS:
+            self.securityLayer.securityHeaderExpected = True
+        elif encryptionMethod != 0:
+            self.mitm_log.debug("Sending Security Exchange")
+            self.io.previous.sendSecurityExchange(self.securitySettings.encryptClientRandom())
+
         return channel
 
     def onChannelJoinRefused(self, user, result, channelID):
