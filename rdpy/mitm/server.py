@@ -33,6 +33,7 @@ from rdpy.parser.rdp.negotiation import RDPNegotiationRequestParser, RDPNegotiat
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.pdu.mcs import MCSConnectResponsePDU
 from rdpy.pdu.rdp.connection import ProprietaryCertificate, ServerSecurityData, RDPServerDataPDU
+from rdpy.pdu.rdp.fastpath import RDPFastPathPDU
 from rdpy.pdu.rdp.negotiation import RDPNegotiationResponsePDU, RDPNegotiationRequestPDU
 from rdpy.protocol.rdp.x224 import ServerTLSContext
 from rdpy.recording.recorder import Recorder, FileLayer, SocketLayer
@@ -61,7 +62,11 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
                                        random.randint(0, 1000)), "wb")
         if recordHost is not None and recordPort is not None:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socket.connect((recordHost, recordPort))
+            try:
+                self.socket.connect((recordHost, recordPort))
+            except socket.error as e:
+                log.error("Could not connect to liveplayer: {}".format(e))
+                self.socket = None
 
         recording_layers = [FileLayer(self.fileHandle)]
         if self.socket is not None:
@@ -123,13 +128,16 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         # Connect the client side to the target machine
         self.clientConnector = reactor.connectTCP(self.targetHost, self.targetPort, self)
 
-    def onConnection(self):
+    def onConnection(self, clientInfo):
+        """
+        :param clientInfo: Tuple containing the ip and port of the connected client.
+        """
         # Connection sequence #0
-        self.mitm_log.debug("TCP connected")
+        self.mitm_log.debug("TCP connected from {}:{}".format(clientInfo[0], clientInfo[1]))
 
     def onDisconnection(self, reason):
-        self.mitm_log.debug("Connection closed")
-
+        self.mitm_log.debug("Connection closed: {}".format(reason))
+        self.recorder.record(RDPFastPathPDU(0, []), RDPPlayerMessageType.CONNECTION_CLOSE)
         if self.client:
             self.client.disconnect()
 

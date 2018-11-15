@@ -71,11 +71,17 @@ class SocketLayer(Layer):
         """
         super(SocketLayer, self).__init__()
         self.socket = socket
+        self.isConnected = True
 
     def send(self, data):
         """
         Send data through the socket
         :type data: str
         """
-        log.debug("sending {} to {}".format(data, self.socket.getpeername()))
-        self.socket.send(data)
+        if self.isConnected:
+            try:
+                log.debug("sending {} to {}".format(data, self.socket.getpeername()))
+                self.socket.send(data)
+            except Exception as e:
+                log.error("Cant send data over the network socket: {}".format(e.message))
+                self.isConnected = False

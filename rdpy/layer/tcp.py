@@ -1,8 +1,8 @@
 import logging
 
-from rdpy.core import log
 from twisted.internet.protocol import Protocol, connectionDone
 
+from rdpy.core import log
 from rdpy.core.newlayer import Layer, LayerObserver
 from rdpy.core.subject import ObservedBy
 
@@ -35,7 +35,11 @@ class TCPLayer(Protocol, Layer):
         """
         When the TCP handshake is completed, notify the observer.
         """
-        self.observer.onConnection()
+        if hasattr(self.transport, 'client'):
+            self.observer.onConnection(self.transport.client)
+        else:
+            self.observer.onConnection()
+
 
     def connectionLost(self, reason=connectionDone):
         self.observer.onDisconnection(reason)
