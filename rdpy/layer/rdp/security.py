@@ -57,7 +57,10 @@ class RDPSecurityLayer(Layer):
         except KeyboardInterrupt:
             raise
         except Exception:
-            log.error("Exception occurred when receiving: %s" % pdu.payload.encode("hex"))
+            if isinstance(pdu, RDPSecurityExchangePDU):
+                log.error("Exception occurred when receiving Security Exchange. Data: %s" % data.encode("hex"))
+            else:
+                log.error("Exception occurred when receiving: %s" % pdu.payload.encode("hex"))
             raise
 
     def dispatchPDU(self, pdu):
