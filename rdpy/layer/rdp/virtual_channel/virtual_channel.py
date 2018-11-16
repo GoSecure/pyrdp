@@ -13,18 +13,24 @@ class VirtualChannelLayer(Layer):
     def __init__(self):
         super(VirtualChannelLayer, self).__init__()
         self.virtualChannelParser = VirtualChannelParser()
+        self.pduBuffer = ""
 
     def recv(self, data):
         """
         :type data: str
         """
         virtualChannelPDU = self.virtualChannelParser.parse(data)
-        completeChunk = ChannelFlag.CHANNEL_FLAG_FIRST | ChannelFlag.CHANNEL_FLAG_LAST
 
-        if virtualChannelPDU.flags & completeChunk != completeChunk:
-            raise RuntimeError("The virtual channel packet must be reassembled. It is not handled.")
+        flags = virtualChannelPDU.flags
+        if flags & ChannelFlag.CHANNEL_FLAG_FIRST:
+            self.pduBuffer = virtualChannelPDU.payload
+        else:
+            self.pduBuffer += virtualChannelPDU.payload
 
-        self.pduReceived(virtualChannelPDU, True)
+        if flags & ChannelFlag.CHANNEL_FLAG_LAST:
+            # Reassembly done, change the payload of the virtualChannelPDU for processing by the observer.
+            virtualChannelPDU.payload = self.pduBuffer
+            self.pduReceived(virtualChannelPDU, True)
 
     def send(self, payload):
         """
@@ -33,4 +39,7 @@ class VirtualChannelLayer(Layer):
         """
         flags = ChannelFlag.CHANNEL_FLAG_FIRST | ChannelFlag.CHANNEL_FLAG_LAST | ChannelFlag.CHANNEL_FLAG_SHOW_PROTOCOL
         virtualChannelPDU = VirtualChannelPDU(len(payload), flags, payload)
-        self.previous.send(self.virtualChannelParser.write(virtualChannelPDU))
+        rawVirtualChannelPDUsList = self.virtualChannelParser.write(virtualChannelPDU)
+        # Since a virtualChannelPDU may need to be sent using several packets
+        for data in rawVirtualChannelPDUsList:
+            self.previous.send(data)
