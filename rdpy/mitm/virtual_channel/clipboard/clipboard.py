@@ -1,0 +1,55 @@
+import logging
+
+from rdpy.core.observer import Observer
+from rdpy.enum.core import ParserMode
+
+
+class MITMClipboardChannelObserver(Observer):
+    """
+    MITM observer to intercept clipboard data from the Clipboard virtual channel.
+    """
+
+    def __init__(self, layer, mode, **kwargs):
+        Observer.__init__(self, **kwargs)
+        self.peer = None
+        self.layer = layer
+        self.mitm_log = logging.getLogger("mitm.clipboard.{}"
+                                          .format("client" if mode == ParserMode.CLIENT else "server"))
+
+    def setPeer(self, peer):
+        """
+        Set this observer's peer observer.
+        :param peer: other observer.
+        :type peer: rdpy.mitm.observer.MITMVirtualChannelObserver
+        """
+        self.peer = peer
+        peer.peer = self
+
+    def onPDUReceived(self, pdu):
+        """
+        Called when a PDU on the observed layer is received.
+        :param pdu: the PDU that was received.
+        :type pdu: rdpy.pdu.rdp.virtual_channel.clipboard.clipboard.ClipboardPDU
+        """
+        self.mitm_log.debug("PDU received: {}".format(str(pdu.msgType)))
+        if self.peer:
+            self.peer.sendPDU(pdu)
+
+    def sendPDU(self, pdu):
+        """
+        Send a clipboard PDU through the layer.
+        :type pdu: rdpy.pdu.rdp.virtual_channel.clipboard.clipboard.ClipboardPDU
+        """
+        self.layer.send(pdu)
+
+
+class MITMClientClipboardChannelObserver(MITMClipboardChannelObserver):
+
+    def __init__(self, layer, **kwargs):
+        MITMClipboardChannelObserver.__init__(self, layer, ParserMode.CLIENT, **kwargs)
+
+
+class MITMServerClipboardChannelObserver(MITMClipboardChannelObserver):
+
+    def __init__(self, layer, **kwargs):
+        MITMClipboardChannelObserver.__init__(self, layer, ParserMode.SERVER, **kwargs)

@@ -13,10 +13,13 @@ from rdpy.core.crypto import SecuritySettings, RC4CrypterProxy
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, EncryptionMethod, EncryptionLevel, \
     RDPPlayerMessageType, CapabilityType, OrderFlag
+from rdpy.enum.virtual_channel.virtual_channel import VirtualChannel
 from rdpy.layer.mcs import MCSLayer
 from rdpy.layer.raw import RawLayer
 from rdpy.layer.rdp.data import RDPDataLayer
 from rdpy.layer.rdp.security import TLSSecurityLayer, RDPSecurityLayer
+from rdpy.layer.rdp.virtual_channel.clipboard.clipboard import ClipboardLayer
+from rdpy.layer.rdp.virtual_channel.virtual_channel import VirtualChannelLayer
 from rdpy.layer.tcp import TCPLayer
 from rdpy.layer.tpkt import TPKTLayer
 from rdpy.layer.x224 import X224Layer
@@ -24,7 +27,9 @@ from rdpy.mcs.channel import MCSChannelFactory, MCSServerChannel
 from rdpy.mcs.server import MCSServerRouter
 from rdpy.mcs.user import MCSUserObserver
 from rdpy.mitm.client import MITMClient
-from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver, MITMVirtualChannelObserver
+from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver
+from rdpy.mitm.virtual_channel.clipboard.clipboard import MITMServerClipboardChannelObserver
+from rdpy.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
 from rdpy.parser.gcc import GCCParser
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.connection import RDPClientConnectionParser, RDPServerConnectionParser
@@ -291,8 +296,11 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.router.sendChannelJoinConfirm(result, user.userID, channelID)
 
     def buildChannel(self, mcs, userID, channelID):
+        channelMap = self.client.channelMap
         if channelID == self.serverData.network.mcsChannelID:
             return self.buildIOChannel(mcs, userID, channelID)
+        elif channelID in channelMap.keys() and channelMap[channelID] == VirtualChannel.CLIPBOARD:
+            return self.buildClipboardChannel(mcs, userID, channelID)
         else:
             return self.buildVirtualChannel(mcs, userID, channelID)
 
@@ -316,6 +324,33 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         observer = MITMVirtualChannelObserver(rawLayer)
         observer.setPeer(peer)
         rawLayer.setObserver(observer)
+
+        return channel
+
+    def buildClipboardChannel(self, mcs, userID, channelID):
+        """
+        :type mcs: MCSLayer
+        :param userID: The mcs user that builds the channel
+        :param channelID: The channel ID to use to communicate in that channel
+        :return: MCSServerChannel that handles the Clipboard virtual channel traffic from the client to the MITM.
+        """
+        # Create all necessary layers
+        channel = MCSServerChannel(mcs, userID, channelID)
+        securityLayer = self.createSecurityLayer()
+        virtualChannelLayer = VirtualChannelLayer()
+        clipboardLayer = ClipboardLayer()
+
+        # Link layers together in the good order: MCS --> Security --> VirtualChannel --> Clipboard
+        channel.setNext(securityLayer)
+        securityLayer.setNext(virtualChannelLayer)
+        virtualChannelLayer.setNext(clipboardLayer)
+
+        # Create and link the MITM Observer for the server side to the clipboard layer.
+        # Also link both MITM Observers (client and server) so they can send traffic the other way.
+        peer = self.client.getChannelObserver(channelID)
+        observer = MITMServerClipboardChannelObserver(clipboardLayer)
+        observer.setPeer(peer)
+        clipboardLayer.setObserver(observer)
 
         return channel
 
