@@ -101,14 +101,6 @@ class TPKTLayer(Layer):
         data = parser.write(pdu)
         self.previous.send(data)
 
-    def sendData(self, data):
-        """
-        Send data straight to the previous layer without wrapping it in a PDU.
-        :param data: the data to send.
-        :type data: str
-        """
-        self.previous.send(data)
-
     def startTLS(self, tlsContext):
         """
         Tell the previous layer (in our case the TCP layer) to do the TLS handshake to encrypt further communications.
