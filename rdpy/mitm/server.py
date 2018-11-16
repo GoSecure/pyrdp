@@ -372,18 +372,22 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.securitySettings.setClientRandom(clientRandom)
 
     # Client Info Packet
-    def onClientInfoReceived(self, pdu):
+    def onClientInfoReceived(self, data):
         """
+        Called when client info data is received.
         Record the PDU and send it to the MITMClient.
-        :type pdu: rdpy.pdu.rdp.client_info.RDPClientInfoPDU
+        :type data: str
         """
+        pdu = RDPClientInfoParser().parse(data)
+
         self.mitm_log.debug("Client Info received")
         self.mitm_connections_log.info("CLIENT INFO RECEIVED")
         self.mitm_connections_log.info("USER: {}".format(pdu.username))
         self.mitm_connections_log.info("PASSWORD: {}".format(pdu.password))
         self.mitm_connections_log.info("DOMAIN: {}".format(pdu.domain))
+
         self.recorder.record(pdu, RDPPlayerMessageType.CLIENT_INFO)
-        self.client.onClientInfoReceived(pdu)
+        self.client.onClientInfoPDUReceived(pdu)
 
     def onLicensingPDU(self, pdu):
         self.mitm_log.debug("Sending Licensing PDU")

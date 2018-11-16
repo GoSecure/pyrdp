@@ -16,12 +16,14 @@ class RDPSecurityObserver(LayerObserver):
     def onSecurityExchangeReceived(self, pdu):
         """
         Called when a Security Exchange PDU is received.
+        :type pdu: RDPSecurityExchangePDU
         """
         pass
 
-    def onClientInfoReceived(self, pdu):
+    def onClientInfoReceived(self, data):
         """
-        Called when a Client Info PDU is received.
+        Called when client info data is received.
+        :type data: str
         """
         pass
 
@@ -91,8 +93,7 @@ class RDPSecurityLayer(Layer):
         if pdu.header & RDPSecurityFlags.SEC_EXCHANGE_PKT != 0:
             self.observer.onSecurityExchangeReceived(pdu)
         elif pdu.header & RDPSecurityFlags.SEC_INFO_PKT != 0:
-            clientInfo = self.clientInfoParser.parse(pdu.payload)
-            self.observer.onClientInfoReceived(clientInfo)
+            self.observer.onClientInfoReceived(pdu.payload)
         elif pdu.header & RDPSecurityFlags.SEC_LICENSE_PKT != 0:
             self.licensing.recv(pdu.payload)
         else:

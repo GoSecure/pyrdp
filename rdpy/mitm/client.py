@@ -254,7 +254,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
     def onChannelJoinRefused(self, user, result, channelID):
         self.server.onChannelJoinRefused(user, result, channelID)
 
-    def onClientInfoReceived(self, pdu):
+    def onClientInfoPDUReceived(self, pdu):
         self.mitm_log.debug("Sending Client Info")
 
         self.securityLayer.sendClientInfo(pdu)
