@@ -36,4 +36,8 @@ class RDPPlayerMessageTypeLayer(Layer):
         self.previous.send(stream.getvalue())
 
     def setMessageType(self, newType):
+        """
+        Set the current message type to use when send is called.
+        :param newType: RDPPlayerMessageType
+        """
         self.messageType = newType

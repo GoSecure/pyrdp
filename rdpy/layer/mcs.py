@@ -33,8 +33,16 @@ class MCSLayer(Layer):
 
 
 class MCSClientConnectionLayer(Layer):
+    """
+    A layer to make it more simple to send MCS Connect Initial PDUs. Every parameter other than the payload is saved
+    in this layer.
+    """
 
     def __init__(self, mcs):
+        """
+        :param mcs: the MCS layer.
+        :type mcs: MCSLayer
+        """
         Layer.__init__(self)
         self.mcs = mcs
         self.callingDomain = "\x01"

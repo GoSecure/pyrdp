@@ -3,6 +3,9 @@ from rdpy.parser.rdp.licensing import RDPLicensingParser
 
 
 class RDPLicensingLayer(Layer):
+    """
+    Layer for traffic related to RDP licensing.
+    """
     def __init__(self):
         Layer.__init__(self)
         self.parser = RDPLicensingParser()

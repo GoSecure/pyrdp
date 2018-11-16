@@ -1,17 +1,25 @@
 from collections import namedtuple
 
 from rdpy.core import log
+from rdpy.core.crypto import RC4Crypter
 
 from rdpy.core.newlayer import Layer, LayerObserver
 from rdpy.core.subject import ObservedBy
 from rdpy.enum.rdp import RDPSecurityFlags, EncryptionMethod
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.security import RDPBasicSecurityParser, RDPSignedSecurityParser, RDPFIPSSecurityParser
+from rdpy.pdu.rdp.client_info import RDPClientInfoPDU
 from rdpy.pdu.rdp.security import RDPSecurityExchangePDU, \
     RDPSecurityPDU
 
 
 def createNonTLSSecurityLayer(encryptionMethod, crypter):
+    """
+    Create a (non-tls) security layer using the chosen encryption method and crypter.
+    :type encryptionMethod: EncryptionMethod
+    :type crypter: RC4Crypter
+    :return: RDPSecurityLayer
+    """
     if encryptionMethod in [EncryptionMethod.ENCRYPTION_40BIT, EncryptionMethod.ENCRYPTION_56BIT, EncryptionMethod.ENCRYPTION_128BIT]:
         parser = RDPSignedSecurityParser(crypter)
         return RDPSecurityLayer(parser)
@@ -38,13 +46,26 @@ class RDPSecurityObserver(LayerObserver):
 
 @ObservedBy(RDPSecurityObserver)
 class RDPSecurityLayer(Layer):
+    """
+    Layer for security related traffic.
+    """
+
     def __init__(self, parser):
+        """
+        :param parser: the parser to use for security traffic.
+        :type parser: Parser
+        """
         Layer.__init__(self)
         self.securityParser = parser
         self.licensing = None
         self.clientInfoParser = RDPClientInfoParser()
 
     def setLicensingLayer(self, licensing):
+        """
+        Set the layer that should receive licensing PDUs.
+        :param licensing: the licensing layer.
+        :type licensing: Layer
+        """
         securityProxy = namedtuple("SecurityProxy", "send")(send = self.sendLicensing)
 
         self.licensing = licensing
@@ -64,6 +85,11 @@ class RDPSecurityLayer(Layer):
             raise
 
     def dispatchPDU(self, pdu):
+        """
+        Send the PDU to the proper object depending on its type.
+        :param pdu: the pdu.
+        :type pdu: PDU.
+        """
         if pdu.header & RDPSecurityFlags.SEC_EXCHANGE_PKT != 0:
             self.observer.onSecurityExchangeReceived(pdu)
         elif pdu.header & RDPSecurityFlags.SEC_INFO_PKT != 0:
@@ -80,23 +106,42 @@ class RDPSecurityLayer(Layer):
         self.previous.send(data)
 
     def sendSecurityExchange(self, clientRandom):
+        """
+        Send a security exchange PDU through the layer.
+        :param clientRandom: the client random data.
+        :type clientRandom: str
+        """
         pdu = RDPSecurityExchangePDU(RDPSecurityFlags.SEC_EXCHANGE_PKT, clientRandom + "\x00" * 8)
         data = self.securityParser.writeSecurityExchange(pdu)
         self.previous.send(data)
 
     def sendClientInfo(self, pdu):
+        """
+        Send a client info PDU.
+        :type pdu: RDPClientInfoPDU
+        """
         data = self.clientInfoParser.write(pdu)
         pdu = RDPSecurityPDU(RDPSecurityFlags.SEC_INFO_PKT, data)
         data = self.securityParser.write(pdu)
         self.previous.send(data)
 
     def sendLicensing(self, data):
+        """
+        Send raw licensing data.
+        :type data: str
+        """
         pdu = RDPSecurityPDU(RDPSecurityFlags.SEC_LICENSE_PKT, data)
         self.previous.send(self.securityParser.write(pdu))
 
 
 
 class TLSSecurityLayer(RDPSecurityLayer):
+    """
+    Security layer used when the connection uses TLS.
+    If securityHeadExpected, then the layer expects to receive a basic security header.
+    Otherwise, the layer just forwards all the data it receives to the next layer.
+    """
+
     def __init__(self):
         RDPSecurityLayer.__init__(self, RDPBasicSecurityParser())
         self.securityHeaderExpected = False
