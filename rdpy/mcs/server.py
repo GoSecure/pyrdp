@@ -1,7 +1,7 @@
 from rdpy.core.observer import Observer
 from rdpy.core.subject import Subject, ObservedBy
 from rdpy.pdu.mcs import MCSAttachUserConfirmPDU, MCSChannelJoinConfirmPDU
-from router import MCSRouter, whenConnected
+from router import MCSRouter
 from user import MCSUser
 
 
@@ -71,21 +71,18 @@ class MCSServerRouter(MCSRouter, Subject):
         """
         self.observer.onDisconnectProviderUltimatum(pdu)
 
-    @whenConnected
     def onErectDomainRequest(self, pdu):
         """
         Called when an Erect Domain Request PDU is received
         """
         pass
 
-    @whenConnected
     def onAttachUserRequest(self, pdu):
         """
         Called when an Attach User Request PDU is received
         """
         self.observer.onAttachUserRequest(pdu)
 
-    @whenConnected
     def sendAttachUserConfirm(self, success, param):
         """
         Send an Attach User Confirm PDU to the client.
@@ -105,14 +102,12 @@ class MCSServerRouter(MCSRouter, Subject):
 
         self.mcs.send(pdu)
     
-    @whenConnected
     def onChannelJoinRequest(self, pdu):
         """
         Called when a Channel Join Request PDU is received
         """
         self.observer.onChannelJoinRequest(pdu)
 
-    @whenConnected
     def sendChannelJoinConfirm(self, result, userID, channelID, notify = True):
         """
         Send a Channel Join Confirm PDU.
@@ -135,7 +130,6 @@ class MCSServerRouter(MCSRouter, Subject):
         pdu = MCSChannelJoinConfirmPDU(result, userID, channelID, channelID, "")
         self.mcs.send(pdu)
 
-    @whenConnected
     def onSendDataRequest(self, pdu):
         """
         Called when a Send Data Request PDU is received.

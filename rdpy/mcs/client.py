@@ -1,7 +1,7 @@
 from rdpy.core.observer import Observer
 from rdpy.core.subject import Subject, ObservedBy
 from rdpy.pdu.mcs import MCSAttachUserRequestPDU, MCSChannelJoinRequestPDU, MCSConnectResponsePDU, MCSDisconnectProviderUltimatumPDU
-from router import MCSRouter, whenConnected
+from router import MCSRouter
 from user import MCSUser
 
 
@@ -104,7 +104,6 @@ class MCSClientRouter(MCSRouter, Subject):
         """
         self.observer.onDisconnectProviderUltimatum(pdu)
 
-    @whenConnected
     def onAttachUserConfirm(self, pdu):
         """
         Called when an Attach User Confirm PDU is received
@@ -119,7 +118,6 @@ class MCSClientRouter(MCSRouter, Subject):
         else:
             user.onAttachRefused(pdu.result)
     
-    @whenConnected
     def onChannelJoinConfirm(self, pdu):
         """
         Called when a Channel Join Confirm PDU is received
@@ -133,7 +131,6 @@ class MCSClientRouter(MCSRouter, Subject):
         else:
             self.users[userID].channelJoinRefused(pdu.result, channelID)
     
-    @whenConnected
     def onSendDataIndication(self, pdu):
         """
         Called when a Send Data Indication PDU is received
