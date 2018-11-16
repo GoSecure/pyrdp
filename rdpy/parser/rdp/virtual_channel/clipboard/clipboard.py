@@ -1,8 +1,9 @@
 from StringIO import StringIO
 
 from rdpy.core.packing import Uint16LE, Uint32LE
-from rdpy.enum.virtual_channel.clipboard.clipboard import ClipboardMessageType
+from rdpy.enum.virtual_channel.clipboard.clipboard import ClipboardMessageType, ClipboardMessageFlags
 from rdpy.pdu.rdp.virtual_channel.clipboard.clipboard import ClipboardPDU
+from rdpy.pdu.rdp.virtual_channel.clipboard.paste import FormatDataResponsePDU
 
 
 class ClipboardParser:
@@ -16,11 +17,15 @@ class ClipboardParser:
         msgFlags = Uint16LE.unpack(stream)
         dataLen = Uint32LE.unpack(stream)
         payload = stream.read(dataLen)
-        if msgType == ClipboardMessageType.CB_FORMAT_DATA_REQUEST:
-            clipboardPDU = ClipboardPDU(ClipboardMessageType(msgType), msgFlags, payload)
+        if msgType == ClipboardMessageType.CB_FORMAT_DATA_RESPONSE:
+            clipboardPDU = self.parseFormatDataResponse(payload, msgFlags)
         else:
             clipboardPDU = ClipboardPDU(ClipboardMessageType(msgType), msgFlags, payload)
         return clipboardPDU
+
+    def parseFormatDataResponse(self, payload, msgFlags):
+        isSuccessful = True if msgFlags & ClipboardMessageFlags.CB_RESPONSE_OK else False
+        return FormatDataResponsePDU(payload, isSuccessful)
 
     def write(self, pdu):
         """
@@ -31,6 +36,18 @@ class ClipboardParser:
         stream = StringIO()
         Uint16LE.pack(pdu.msgType, stream)
         Uint16LE.pack(pdu.msgFlags, stream)
-        Uint32LE.pack(len(pdu.payload), stream)
-        stream.write(pdu.payload)
+        if pdu.msgType == ClipboardMessageType.CB_FORMAT_DATA_RESPONSE:
+            self.writeFormatDataResponse(stream, pdu)
+        else:
+            Uint32LE.pack(len(pdu.payload), stream)
+            stream.write(pdu.payload)
         return stream.getvalue()
+
+    def writeFormatDataResponse(self, stream, pdu):
+        """
+        Write the FormatDataResponsePDU starting at dataLen.
+        :type stream: StringIO
+        :type pdu: FormatDataResponsePDU
+        """
+        Uint32LE.pack(len(pdu.requestedFormatData), stream)
+        stream.write(pdu.requestedFormatData)

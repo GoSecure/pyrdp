@@ -2,7 +2,7 @@
 Paste sequence: https://msdn.microsoft.com/en-us/library/cc241121.aspx
 """
 from rdpy.enum.virtual_channel.clipboard.clipboard import ClipboardMessageType, ClipboardMessageFlags
-from rdpy.pdu.rdp.virtual_channel.clipboard import ClipboardPDU
+from rdpy.pdu.rdp.virtual_channel.clipboard.clipboard import ClipboardPDU
 
 
 class FormatDataRequestPDU(ClipboardPDU):

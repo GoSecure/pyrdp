@@ -636,6 +636,7 @@ class RDPPlayerMessageType(IntEnum):
     CLIENT_INFO = 3  # Creds on connection
     CONFIRM_ACTIVE = 4  # For desktop width and height
     CONNECTION_CLOSE = 5  # To advertise the end of the connection
+    CLIPBOARD_DATA = 6  # To collect clipboard data
 
 
 class DrawingOrderControlFlags(IntEnum):

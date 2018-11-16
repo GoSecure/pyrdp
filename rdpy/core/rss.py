@@ -36,6 +36,7 @@ from rdpy.layer.tpkt import TPKTLayer
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.data import RDPDataParser
 from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser
+from rdpy.parser.rdp.virtual_channel.clipboard.clipboard import ClipboardParser
 
 
 class EventType(object):
@@ -378,6 +379,7 @@ class Reader(Observer):
         self.rdp_client_fastpath_parser = RDPBasicFastPathParser(ParserMode.CLIENT)
         self.rdp_client_info_parser = RDPClientInfoParser()
         self.rdp_data_parser = RDPDataParser()
+        self.clipboardParser = ClipboardParser()
 
     def onPDUReceived(self, pdu):
         """
@@ -395,6 +397,8 @@ class Reader(Observer):
                 rdpPdu = self.rdp_data_parser.parse(pdu.payload)
             elif pdu.type == RDPPlayerMessageType.CONNECTION_CLOSE:
                 rdpPdu = None
+            elif pdu.type == RDPPlayerMessageType.CLIPBOARD_DATA:
+                rdpPdu = self.clipboardParser.parse(pdu.payload)
             else:
                 raise ValueError("Incorrect RDPPlayerMessageType received: {}".format(pdu.type))
             pdu.payload = rdpPdu
