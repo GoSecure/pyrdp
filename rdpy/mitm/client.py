@@ -12,13 +12,13 @@ from rdpy.layer.rdp.data import RDPDataLayer
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
 from rdpy.layer.rdp.security import TLSSecurityLayer, RDPSecurityLayer
 from rdpy.layer.tcp import TCPLayer
-from rdpy.layer.tpkt import TPKTLayer, createFastPathParser
+from rdpy.layer.tpkt import TPKTLayer
 from rdpy.layer.x224 import X224Layer
 from rdpy.mcs.channel import MCSChannelFactory, MCSClientChannel
 from rdpy.mcs.client import MCSClientRouter
 from rdpy.mcs.user import MCSUserObserver
 from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver, MITMVirtualChannelObserver
-from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser
+from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser, createFastPathParser
 from rdpy.parser.rdp.negotiation import RDPNegotiationResponseParser, RDPNegotiationRequestParser
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.recording.recorder import Recorder, FileLayer, SocketLayer

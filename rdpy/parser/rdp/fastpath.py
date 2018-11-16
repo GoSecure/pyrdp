@@ -1,11 +1,12 @@
 from StringIO import StringIO
 
 from rdpy.core import log
+from rdpy.core.crypto import RC4Crypter
 from rdpy.core.packing import Uint8, Uint16BE, Uint16LE
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import RDPFastPathInputEventType, \
     RDPFastPathSecurityFlags, FIPSVersion, FastPathOutputCompressionType, RDPFastPathOutputEventType, \
-    DrawingOrderControlFlags
+    DrawingOrderControlFlags, EncryptionMethod
 from rdpy.parser.rdp.security import RDPBasicSecurityParser
 from rdpy.pdu.rdp.fastpath import FastPathEventRaw, RDPFastPathPDU, FastPathEventScanCode, FastPathBitmapEvent, \
     FastPathOrdersEvent, FastPathEventMouse, SecondaryDrawingOrder, BitmapUpdateData
@@ -439,3 +440,25 @@ class RDPOutputEventParser:
         stream.write(updateData)
 
         return stream.getvalue()
+
+
+def createFastPathParser(tls, encryptionMethod, crypter, mode):
+    """
+    Create a fast-path parser based on which encryption method is used.
+    :param tls: whether TLS is used or not.
+    :type tls: bool
+    :param encryptionMethod: the encryption method.
+    :type encryptionMethod: EncryptionMethod
+    :param crypter: the crypter for this connection.
+    :type crypter: RC4Crypter
+    :param mode: the fast-path parser mode.
+    :type mode: ParserMode
+    """
+    if tls:
+        return RDPBasicFastPathParser(mode)
+    elif encryptionMethod in [EncryptionMethod.ENCRYPTION_40BIT, EncryptionMethod.ENCRYPTION_56BIT, EncryptionMethod.ENCRYPTION_128BIT]:
+        return RDPSignedFastPathParser(crypter, mode)
+    elif encryptionMethod == EncryptionMethod.ENCRYPTION_FIPS:
+        return RDPFIPSFastPathParser(crypter, mode)
+    else:
+        raise ValueError("Invalid fast-path layer mode")

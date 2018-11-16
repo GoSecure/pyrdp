@@ -1,21 +1,9 @@
 from rdpy.core.newlayer import Layer, LayerObserver
 from rdpy.core.packing import Uint8
 from rdpy.core.subject import ObservedBy
-from rdpy.enum.rdp import EncryptionMethod
-from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser, RDPSignedFastPathParser, RDPFIPSFastPathParser
 from rdpy.parser.tpkt import TPKTParser
 from rdpy.pdu.tpkt import TPKTPDU
 
-
-def createFastPathParser(tls, encryptionMethod, crypter, mode):
-    if tls:
-        return RDPBasicFastPathParser(mode)
-    elif encryptionMethod in [EncryptionMethod.ENCRYPTION_40BIT, EncryptionMethod.ENCRYPTION_56BIT, EncryptionMethod.ENCRYPTION_128BIT]:
-        return RDPSignedFastPathParser(crypter, mode)
-    elif encryptionMethod == EncryptionMethod.ENCRYPTION_FIPS:
-        return RDPFIPSFastPathParser(crypter, mode)
-    else:
-        raise ValueError("Invalid fast-path layer mode")
 
 class TPKTObserver(LayerObserver):
     def onUnknownHeader(self, header):

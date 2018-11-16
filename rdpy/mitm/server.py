@@ -19,7 +19,7 @@ from rdpy.layer.rdp.data import RDPDataLayer
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
 from rdpy.layer.rdp.security import TLSSecurityLayer, RDPSecurityLayer
 from rdpy.layer.tcp import TCPLayer
-from rdpy.layer.tpkt import TPKTLayer, createFastPathParser
+from rdpy.layer.tpkt import TPKTLayer
 from rdpy.layer.x224 import X224Layer
 from rdpy.mcs.channel import MCSChannelFactory, MCSServerChannel
 from rdpy.mcs.server import MCSServerRouter
@@ -29,7 +29,7 @@ from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver, MITMV
 from rdpy.parser.gcc import GCCParser
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.connection import RDPClientConnectionParser, RDPServerConnectionParser
-from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser
+from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser, createFastPathParser
 from rdpy.parser.rdp.negotiation import RDPNegotiationRequestParser, RDPNegotiationResponseParser
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.pdu.mcs import MCSConnectResponsePDU
