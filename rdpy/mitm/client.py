@@ -9,7 +9,6 @@ from rdpy.layer.mcs import MCSLayer, MCSClientConnectionLayer
 from rdpy.layer.raw import RawLayer
 from rdpy.layer.rdp.connection import RDPClientConnectionLayer
 from rdpy.layer.rdp.data import RDPDataLayer
-from rdpy.layer.rdp.licensing import RDPLicensingLayer
 from rdpy.layer.rdp.security import TLSSecurityLayer, RDPSecurityLayer
 from rdpy.layer.tcp import TCPLayer
 from rdpy.layer.tpkt import TPKTLayer
@@ -53,7 +52,6 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.securityLayer = None
         self.fastPathParser = None
         self.fastPathObserver = None
-        self.licensingLayer = None
         self.conferenceCreateResponse = None
         self.serverData = None
         self.crypter = RC4CrypterProxy()
@@ -227,11 +225,9 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.securityLayer = self.createSecurityLayer()
 
         self.fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, self.crypter, ParserMode.CLIENT)
-        self.licensingLayer = RDPLicensingLayer()
         channel = MCSClientChannel(mcs, userID, channelID)
 
         channel.setNext(self.securityLayer)
-        self.securityLayer.setLicensingLayer(self.licensingLayer)
         self.securityLayer.setNext(self.io)
         self.tpkt.setFastPathParser(self.fastPathParser)
 
@@ -239,7 +235,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.fastPathObserver = MITMFastPathObserver(self.tpkt, self.recorder, ParserMode.CLIENT)
         self.io.setObserver(slowPathObserver)
         self.tpkt.setObserver(self.fastPathObserver)
-        self.licensingLayer.createObserver(onPDUReceived=self.onLicensingPDU)
+        self.securityLayer.createObserver(onLicensingDataReceived=self.onLicensingDataReceived)
 
         self.channelObservers[channelID] = slowPathObserver
 
@@ -259,13 +255,13 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
         self.securityLayer.sendClientInfo(pdu)
 
-    def onLicensingPDU(self, pdu):
-        self.mitm_log.debug("Licensing PDU received")
+    def onLicensingDataReceived(self, data):
+        self.mitm_log.debug("Licensing data received")
 
         if self.useTLS:
             self.securityLayer.securityHeaderExpected = False
 
-        self.server.onLicensingPDU(pdu)
+        self.server.onLicensingDataReceived(data)
 
     def onDisconnectProviderUltimatum(self, pdu):
         self.mitm_log.debug("Disconnect Provider Ultimatum received")

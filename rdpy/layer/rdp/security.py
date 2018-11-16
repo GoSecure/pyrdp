@@ -1,5 +1,3 @@
-from collections import namedtuple
-
 from rdpy.core import log
 from rdpy.core.crypto import RC4Crypter
 from rdpy.core.newlayer import Layer, LayerObserver
@@ -27,6 +25,13 @@ class RDPSecurityObserver(LayerObserver):
         """
         pass
 
+    def onLicensingDataReceived(self, data):
+        """
+        Called when licensing data is received.
+        :type data: str
+        """
+        pass
+
 
 
 @ObservedBy(RDPSecurityObserver)
@@ -42,7 +47,6 @@ class RDPSecurityLayer(Layer):
         """
         Layer.__init__(self)
         self.securityParser = parser
-        self.licensing = None
         self.clientInfoParser = RDPClientInfoParser()
 
     @staticmethod
@@ -59,17 +63,6 @@ class RDPSecurityLayer(Layer):
         elif encryptionMethod == EncryptionMethod.ENCRYPTION_FIPS:
             parser = RDPFIPSSecurityParser(crypter)
             return RDPSecurityLayer(parser)
-
-    def setLicensingLayer(self, licensing):
-        """
-        Set the layer that should receive licensing PDUs.
-        :param licensing: the licensing layer.
-        :type licensing: Layer
-        """
-        securityProxy = namedtuple("SecurityProxy", "send")(send = self.sendLicensing)
-
-        self.licensing = licensing
-        self.licensing.previous = securityProxy
 
     def recv(self, data):
         pdu = self.securityParser.parse(data)
@@ -91,13 +84,17 @@ class RDPSecurityLayer(Layer):
         :type pdu: PDU.
         """
         if pdu.header & RDPSecurityFlags.SEC_EXCHANGE_PKT != 0:
-            self.observer.onSecurityExchangeReceived(pdu)
+            if self.observer:
+                self.observer.onSecurityExchangeReceived(pdu)
         elif pdu.header & RDPSecurityFlags.SEC_INFO_PKT != 0:
-            self.observer.onClientInfoReceived(pdu.payload)
+            if self.observer:
+                self.observer.onClientInfoReceived(pdu.payload)
         elif pdu.header & RDPSecurityFlags.SEC_LICENSE_PKT != 0:
-            self.licensing.recv(pdu.payload)
+            if self.observer:
+                self.observer.onLicensingDataReceived(pdu.payload)
         else:
             self.pduReceived(pdu, True)
+
 
     def send(self, data, header = 0):
         pdu = RDPSecurityPDU(header, data)
