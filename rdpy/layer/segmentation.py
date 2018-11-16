@@ -1,35 +1,39 @@
 from rdpy.core.newlayer import Layer, LayerObserver
 from rdpy.core.packing import Uint8
 from rdpy.core.subject import ObservedBy
+from rdpy.enum.segmentation import SegmentationPDUType
+from rdpy.parser.segmentation import SegmentationParser
 from rdpy.parser.tpkt import TPKTParser
-from rdpy.pdu.tpkt import TPKTPDU
+from rdpy.pdu.segmentation import TPKTPDU
 
 
-class TPKTObserver(LayerObserver):
+class SegmentationObserver(LayerObserver):
+    """
+    Observer class for the segmentation layer.
+    """
+
     def onUnknownHeader(self, header):
         pass
 
-@ObservedBy(TPKTObserver)
-class TPKTLayer(Layer):
+@ObservedBy(SegmentationObserver)
+class SegmentationLayer(Layer):
     """
-    Layer to handle TPKT-wrapped traffic
+    Layer to handle segmentation PDUs (e.g: TPKT and fast-path).
     """
 
     def __init__(self):
         Layer.__init__(self)
         self.buffer = ""
         self.fastPathLayer = None
-        self.parsers = {
-            3: TPKTParser()
-        }
+        self.parsers = {}
 
-    def setFastPathParser(self, parser):
+    def setParser(self, type, parser):
         """
-        Set the parser used for fast-path PDUs.
-        :param parser: the parser.
-        :type parser: Parser
+        Set the parser used for a given PDU type.
+        :type type: int
+        :type parser: SegmentationParser
         """
-        self.parsers[0] = parser
+        self.parsers[type] = parser
 
     def recv(self, data):
         """
@@ -60,7 +64,7 @@ class TPKTLayer(Layer):
                 pduData = data[: pduLength]
 
                 pdu = parser.parse(pduData)
-                self.pduReceived(pdu, header == 3)
+                self.pduReceived(pdu, False)
 
                 data = data[pduLength :]
                 self.buffer = ""
@@ -80,15 +84,6 @@ class TPKTLayer(Layer):
         pdu = parser.parse(pduData)
         self.pduReceived(pdu, header == 3)
 
-    def send(self, data):
-        """
-        Wrap the data inside a TPKT message and send it to the previous layer (TCP).
-        :param data: The data we wish to send in a TPKT message
-        :type data: str
-        """
-        pdu = TPKTPDU(3, data)
-        self.previous.send(self.parsers[3].write(pdu))
-
     def sendPDU(self, pdu):
         """
         Send a PDU for one of the registered classes.
@@ -96,15 +91,33 @@ class TPKTLayer(Layer):
         :type pdu: TPKTPDU
         :return:
         """
-        header = pdu.header & 3
-        parser = self.parsers[header]
+        type = pdu.getType()
+        parser = self.parsers[type]
         data = parser.write(pdu)
         self.previous.send(data)
 
-    def startTLS(self, tlsContext):
+class TPKTLayer(SegmentationLayer):
+    def __init__(self):
+        SegmentationLayer.__init__(self)
+        self.setParser(SegmentationPDUType.TPKT, TPKTParser())
+
+    def pduReceived(self, pdu, forward):
+        SegmentationLayer.pduReceived(self, pdu, pdu.getType() & SegmentationPDUType.TPKT)
+
+    def send(self, data):
+        self.sendPDU(TPKTPDU(data))
+
+class TPKTProxyLayer(Layer):
+    def __init__(self, segmentation):
         """
-        Tell the previous layer (in our case the TCP layer) to do the TLS handshake to encrypt further communications.
-        :param tlsContext: Twisted TLS Context object (like DefaultOpenSSLContextFactory)
-        :type tlsContext: ServerTLSContext
+        :type segmentation: SegmentationLayer
         """
-        self.previous.startTLS(tlsContext)
+        Layer.__init__(self)
+        self.segmentation = segmentation
+        self.parser = TPKTParser()
+
+    def recv(self, data):
+        raise NotImplementedError("recv is not supported for TPKTProxyLayer")
+
+    def send(self, data):
+        self.segmentation.sendPDU(TPKTPDU(data))
