@@ -450,7 +450,7 @@ def createFastPathParser(tls, encryptionMethod, crypter, mode):
     :param encryptionMethod: the encryption method.
     :type encryptionMethod: EncryptionMethod
     :param crypter: the crypter for this connection.
-    :type crypter: RC4Crypter
+    :type crypter: RC4Crypter | RC4CrypterProxy
     :param mode: the fast-path parser mode.
     :type mode: ParserMode
     """
