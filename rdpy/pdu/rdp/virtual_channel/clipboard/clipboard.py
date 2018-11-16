@@ -7,7 +7,7 @@ class ClipboardPDU(PDU):
     https://msdn.microsoft.com/en-us/library/cc241097.aspx
     """
 
-    def __init__(self, msgType, msgFlags):
-        PDU.__init__(self)
+    def __init__(self, msgType, msgFlags, payload=None):
+        PDU.__init__(self, payload)
         self.msgType = msgType
         self.msgFlags = msgFlags

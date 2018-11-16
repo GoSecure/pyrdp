@@ -1,8 +1,8 @@
 """
 Copy sequence: https://msdn.microsoft.com/en-us/library/cc241104.aspx
 """
-from rdpy.enum.clipboard.clipboard import ClipboardMessageFlags, ClipboardMessageType
-from rdpy.pdu.rdp.clipboard.clipboard import ClipboardPDU
+from rdpy.enum.virtual_channel.clipboard.clipboard import ClipboardMessageFlags, ClipboardMessageType
+from rdpy.pdu.rdp.virtual_channel.clipboard import ClipboardPDU
 
 
 class FormatListPDU(ClipboardPDU):
