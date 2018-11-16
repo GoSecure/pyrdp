@@ -2,6 +2,7 @@ import logging
 
 from rdpy.core.crypto import SecuritySettings, RC4CrypterProxy
 from rdpy.enum.core import ParserMode
+from rdpy.enum.segmentation import SegmentationPDUType
 from rdpy.enum.virtual_channel.virtual_channel import VirtualChannel
 from rdpy.layer.gcc import GCCClientConnectionLayer
 from rdpy.layer.mcs import MCSLayer, MCSClientConnectionLayer
@@ -12,7 +13,8 @@ from rdpy.layer.rdp.security import TLSSecurityLayer, RDPSecurityLayer
 from rdpy.layer.rdp.virtual_channel.clipboard.clipboard import ClipboardLayer
 from rdpy.layer.rdp.virtual_channel.virtual_channel import VirtualChannelLayer
 from rdpy.layer.tcp import TCPLayer
-from rdpy.layer.tpkt import TPKTLayer
+from rdpy.layer.segmentation import SegmentationLayer
+from rdpy.layer.tpkt import TPKTProxyLayer
 from rdpy.layer.x224 import X224Layer
 from rdpy.mcs.channel import MCSChannelFactory, MCSClientChannel
 from rdpy.mcs.client import MCSClientRouter
@@ -22,6 +24,7 @@ from rdpy.mitm.virtual_channel.clipboard.clipboard import MITMClientClipboardCha
 from rdpy.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
 from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser, createFastPathParser
 from rdpy.parser.rdp.negotiation import RDPNegotiationResponseParser, RDPNegotiationRequestParser
+from rdpy.parser.tpkt import TPKTParser
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.protocol.rdp.x224 import ClientTLSContext
 from rdpy.recording.recorder import Recorder, FileLayer, SocketLayer
@@ -34,53 +37,63 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         :type fileHandle: file
         :type socket: socket.socket
         """
-        self.mitm_log = logging.getLogger("mitm.client")
         MCSChannelFactory.__init__(self)
-        self.server = server
-        record_layers = [FileLayer(fileHandle)]
-        if socket is not None:
-            record_layers.append(SocketLayer(socket))
-        self.recorder = Recorder(record_layers, RDPBasicFastPathParser(ParserMode.SERVER))
 
-        self.tcp = TCPLayer()
-        self.tpkt = TPKTLayer()
-        self.x224 = X224Layer()
-        self.mcs = MCSLayer()
-        self.router = MCSClientRouter(self.mcs, self)
-        self.io = RDPDataLayer()
+        self.server = server
         self.channelMap = {}
         self.channelDefinitions = []
         self.channelObservers = {}
         self.useTLS = False
         self.user = None
-        self.securityLayer = None
-        self.fastPathParser = None
         self.fastPathObserver = None
         self.conferenceCreateResponse = None
         self.serverData = None
         self.crypter = RC4CrypterProxy()
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.CLIENT)
         self.securitySettings.setObserver(self.crypter)
+        self.mitm_log = logging.getLogger("mitm.client")
+
+        self.tcp = TCPLayer()
+        self.tcp.createObserver(onConnection=self.startConnection, onDisconnection=self.onDisconnection)
+
+        self.segmentation = SegmentationLayer()
+        self.segmentation.setParser(SegmentationPDUType.TPKT, TPKTParser())
+        self.segmentationObserver = self.segmentation.createObserver(onUnknownHeader=self.onUnknownTPKTHeader)
+        self.segmentationObserver.setHandler(SegmentationPDUType.TPKT, lambda pdu: self.x224.recv(pdu.payload))
+
+        self.x224 = X224Layer()
+        self.x224.createObserver(onConnectionConfirm=self.onConnectionConfirm, onDisconnectRequest=self.onDisconnectRequest)
+
+        self.mcs = MCSLayer()
+        self.router = MCSClientRouter(self.mcs, self)
+        self.mcs.setObserver(self.router)
+        self.router.createObserver(onConnectResponse=self.onConnectResponse, onDisconnectProviderUltimatum=self.onDisconnectProviderUltimatum)
 
         self.mcsConnect = MCSClientConnectionLayer(self.mcs)
+
         self.gccConnect = GCCClientConnectionLayer("1")
+        self.gccConnect.createObserver(onPDUReceived=self.onConferenceCreateResponse)
+
         self.rdpConnect = RDPClientConnectionLayer()
+        self.rdpConnect.createObserver(onPDUReceived=self.onServerData)
 
-        self.tcp.setNext(self.tpkt)
-        self.tpkt.setNext(self.x224)
+        self.securityLayer = None
+        self.io = RDPDataLayer()
+
+        self.tcp.setNext(self.segmentation)
+        TPKTProxyLayer(self.segmentation).setNext(self.x224)
         self.x224.setNext(self.mcs)
-
         self.mcsConnect.setNext(self.gccConnect)
         self.gccConnect.setNext(self.rdpConnect)
 
-        self.mcs.setObserver(self.router)
 
-        self.tcp.createObserver(onConnection=self.startConnection, onDisconnection=self.onDisconnection)
-        self.tpkt.createObserver(onUnknownHeader=self.onUnknownTPKTHeader)
-        self.x224.createObserver(onConnectionConfirm=self.onConnectionConfirm, onDisconnectRequest=self.onDisconnectRequest)
-        self.router.createObserver(onConnectResponse=self.onConnectResponse, onDisconnectProviderUltimatum=self.onDisconnectProviderUltimatum)
-        self.gccConnect.createObserver(onPDUReceived=self.onConferenceCreateResponse)
-        self.rdpConnect.createObserver(onPDUReceived=self.onServerData)
+
+        record_layers = [FileLayer(fileHandle)]
+
+        if socket is not None:
+            record_layers.append(SocketLayer(socket))
+
+        self.recorder = Recorder(record_layers, RDPBasicFastPathParser(ParserMode.SERVER))
 
     def getProtocol(self):
         return self.tcp
@@ -256,20 +269,22 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         encryptionMethod = self.serverData.security.encryptionMethod
         self.securityLayer = self.createSecurityLayer()
 
-        self.fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, self.crypter, ParserMode.CLIENT)
+        fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, self.crypter, ParserMode.CLIENT)
         channel = MCSClientChannel(mcs, userID, channelID)
 
         channel.setNext(self.securityLayer)
         self.securityLayer.setNext(self.io)
-        self.tpkt.setFastPathParser(self.fastPathParser)
 
         slowPathObserver = MITMSlowPathObserver(self.io, self.recorder, ParserMode.CLIENT)
-        self.fastPathObserver = MITMFastPathObserver(self.tpkt, self.recorder, ParserMode.CLIENT)
-        self.io.setObserver(slowPathObserver)
-        self.tpkt.setObserver(self.fastPathObserver)
-        self.securityLayer.createObserver(onLicensingDataReceived=self.onLicensingDataReceived)
-
         self.channelObservers[channelID] = slowPathObserver
+
+        self.fastPathObserver = MITMFastPathObserver(self.segmentation, self.recorder, ParserMode.CLIENT)
+
+        self.segmentation.setParser(SegmentationPDUType.FAST_PATH, fastPathParser)
+        self.segmentationObserver.setHandler(SegmentationPDUType.FAST_PATH, self.fastPathObserver.onPDUReceived)
+
+        self.securityLayer.createObserver(onLicensingDataReceived=self.onLicensingDataReceived)
+        self.io.setObserver(slowPathObserver)
 
         if self.useTLS:
             self.securityLayer.securityHeaderExpected = True

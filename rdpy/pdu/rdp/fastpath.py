@@ -1,11 +1,16 @@
+from rdpy.enum.segmentation import SegmentationPDUType
 from rdpy.pdu.base_pdu import PDU
+from rdpy.pdu.segmentation import SegmentationPDU
 
 
-class RDPFastPathPDU(PDU):
+class RDPFastPathPDU(SegmentationPDU):
     def __init__(self, header, events):
         PDU.__init__(self)
         self.header = header
         self.events = events
+
+    def getSegmentationType(self):
+        return SegmentationPDUType.FAST_PATH
 
     def __repr__(self):
         return str([str(e.__class__) for e in self.events])

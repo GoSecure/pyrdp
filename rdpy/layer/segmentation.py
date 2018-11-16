@@ -3,22 +3,46 @@ from rdpy.core.packing import Uint8
 from rdpy.core.subject import ObservedBy
 from rdpy.enum.segmentation import SegmentationPDUType
 from rdpy.parser.segmentation import SegmentationParser
-from rdpy.parser.tpkt import TPKTParser
-from rdpy.pdu.segmentation import TPKTPDU
+from rdpy.pdu.segmentation import SegmentationPDU
 
 
 class SegmentationObserver(LayerObserver):
     """
     Observer class for the segmentation layer.
     """
+    def __init__(self, **kwargs):
+        LayerObserver.__init__(self, **kwargs)
+        self.handlers = {}
+
+    def onPDUReceived(self, pdu):
+        """
+        Called when a PDU is received.
+        :type pdu: SegmentationPDU
+        """
+        type = pdu.getSegmentationType()
+        if type in self.handlers:
+            self.handlers[type](pdu)
+
+    def setHandler(self, type, handler):
+        """
+        Add a handler for a given PDU type.
+        :param type: the PDU type.
+        :type type: int
+        :param handler: callable object
+        """
+        self.handlers[type] = handler
 
     def onUnknownHeader(self, header):
         pass
+
+
 
 @ObservedBy(SegmentationObserver)
 class SegmentationLayer(Layer):
     """
     Layer to handle segmentation PDUs (e.g: TPKT and fast-path).
+    Handles buffering data until there is enough to parse a full PDU.
+    PDUs are not forwarded. Use the observer to receive the individual PDUs for each type.
     """
 
     def __init__(self):
@@ -37,15 +61,13 @@ class SegmentationLayer(Layer):
 
     def recv(self, data):
         """
-        Since there can be more than one TPKT message per TCP packet, parse
-        a TPKT message, handle the packet then check if we have more messages left.
-        :param data: The TCP packet's payload
+        All the data received is buffered until there is enough to parse a complete PDU.
         :type data: str
         """
         data = self.buffer + data
 
         while len(data) > 0:
-            header = Uint8.unpack(data[0]) & 0b00000011
+            header = Uint8.unpack(data[0]) & SegmentationPDUType.MASK
 
             try:
                 parser = self.parsers[header]
@@ -87,37 +109,9 @@ class SegmentationLayer(Layer):
     def sendPDU(self, pdu):
         """
         Send a PDU for one of the registered classes.
-        :param pdu: the pdu.
-        :type pdu: TPKTPDU
-        :return:
+        :type pdu: SegmentationPDU
         """
-        type = pdu.getType()
+        type = pdu.getSegmentationType()
         parser = self.parsers[type]
         data = parser.write(pdu)
         self.previous.send(data)
-
-class TPKTLayer(SegmentationLayer):
-    def __init__(self):
-        SegmentationLayer.__init__(self)
-        self.setParser(SegmentationPDUType.TPKT, TPKTParser())
-
-    def pduReceived(self, pdu, forward):
-        SegmentationLayer.pduReceived(self, pdu, pdu.getType() & SegmentationPDUType.TPKT)
-
-    def send(self, data):
-        self.sendPDU(TPKTPDU(data))
-
-class TPKTProxyLayer(Layer):
-    def __init__(self, segmentation):
-        """
-        :type segmentation: SegmentationLayer
-        """
-        Layer.__init__(self)
-        self.segmentation = segmentation
-        self.parser = TPKTParser()
-
-    def recv(self, data):
-        raise NotImplementedError("recv is not supported for TPKTProxyLayer")
-
-    def send(self, data):
-        self.segmentation.sendPDU(TPKTPDU(data))

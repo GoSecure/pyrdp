@@ -1,15 +1,13 @@
 from rdpy.pdu.base_pdu import PDU
 
 
-class TPKTPDU(PDU):
-
-    def __init__(self, header, payload):
+class SegmentationPDU(PDU):
+    def __init__(self, payload):
         """
-        :param header: usually 3
         :type payload: str
         """
-
         PDU.__init__(self, payload)
-        self.header = header
-        self.padding = 0  # Unused byte
-        self.length = len(payload) + 4
+
+    def getSegmentationType(self):
+        raise NotImplementedError("getType must be overridden")
+
