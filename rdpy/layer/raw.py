@@ -4,7 +4,7 @@ from rdpy.pdu.base_pdu import PDU
 
 class RawLayer(Layer):
     """
-    Layer that does nothing with the data beside passing it through the good place.
+    Simple layer that uses raw PDUs and always forwards data.
     """
 
     def recv(self, data):

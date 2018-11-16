@@ -68,6 +68,11 @@ class MCSChannel:
 
 
 class MCSClientChannel(MCSChannel, Layer):
+    """
+    MCSChannel class and layer for clients.
+    Sends SendDataRequest PDUs when send is called.
+    """
+
     def __init__(self, mcs, userID, channelID):
         MCSChannel.__init__(self, mcs, userID, channelID)
         Layer.__init__(self)
@@ -80,6 +85,11 @@ class MCSClientChannel(MCSChannel, Layer):
 
 
 class MCSServerChannel(MCSChannel, Layer):
+    """
+    MCSChannel class and layer for servers.
+    Sends SendDataIndication PDUs when send is called.
+    """
+
     def __init__(self, mcs, userID, channelID):
         MCSChannel.__init__(self, mcs, userID, channelID)
         Layer.__init__(self)

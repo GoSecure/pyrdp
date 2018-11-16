@@ -36,11 +36,12 @@ class TPKTLayer(Layer):
         }
 
     def setFastPathParser(self, parser):
+        """
+        Set the parser used for fast-path PDUs.
+        :param parser: the parser.
+        :type parser: Parser
+        """
         self.parsers[0] = parser
-
-    def setFastPathLayer(self, layer):
-        self.fastPathLayer = layer
-        layer.previous = self.previous
 
     def recv(self, data):
         """
@@ -101,12 +102,23 @@ class TPKTLayer(Layer):
         self.previous.send(self.parsers[3].write(pdu))
 
     def sendPDU(self, pdu):
+        """
+        Send a PDU for one of the registered classes.
+        :param pdu: the pdu.
+        :type pdu: TPKTPDU
+        :return:
+        """
         header = pdu.header & 3
         parser = self.parsers[header]
         data = parser.write(pdu)
         self.previous.send(data)
 
     def sendData(self, data):
+        """
+        Send data straight to the previous layer without wrapping it in a PDU.
+        :param data: the data to send.
+        :type data: str
+        """
         self.previous.send(data)
 
     def startTLS(self, tlsContext):

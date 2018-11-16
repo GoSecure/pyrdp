@@ -4,7 +4,14 @@ from rdpy.pdu.gcc import GCCConferenceCreateRequestPDU
 
 
 class GCCClientConnectionLayer(Layer):
+    """
+    GCC Layer for parsing GCC conference PDUs.
+    """
     def __init__(self, conferenceName):
+        """
+        :param conferenceName: the conference name
+        :type conferenceName: str
+        """
         Layer.__init__(self)
         self.conferenceName = conferenceName
         self.parser = GCCParser()

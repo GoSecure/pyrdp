@@ -2,6 +2,10 @@ from rdpy.core.observer import Observer
 from rdpy.core.subject import Subject, ObservedBy
 
 class MCSUserObserver(Observer):
+    """
+    Base observer class for MCS users.
+    """
+
     def onAttachConfirmed(self, user):
         pass
 
@@ -47,6 +51,11 @@ class MCSUser(Subject):
             self.observer.onAttachRefused(self, result)
     
     def isInChannel(self, channelID):
+        """
+        Check if the user is in a channel.
+        :param channelID: the channel ID.
+        :type channelID: int
+        """
         return channelID in self.channels
     
     def channelJoinAccepted(self, mcs, channelID):

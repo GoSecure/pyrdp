@@ -11,7 +11,7 @@ from rdpy.core import log
 from rdpy.core.crypto import SecuritySettings, RC4CrypterProxy
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, EncryptionMethod, EncryptionLevel, \
-    RDPPlayerMessageType
+    RDPPlayerMessageType, CapabilityType, OrderFlag
 from rdpy.enum.virtual_channel.virtual_channel import VirtualChannel
 from rdpy.layer.mcs import MCSLayer
 from rdpy.layer.raw import RawLayer
@@ -37,6 +37,7 @@ from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser
 from rdpy.parser.rdp.negotiation import RDPNegotiationRequestParser, RDPNegotiationResponseParser
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.pdu.mcs import MCSConnectResponsePDU
+from rdpy.pdu.rdp.capability import MultifragmentUpdateCapability
 from rdpy.pdu.rdp.connection import ProprietaryCertificate, ServerSecurityData, RDPServerDataPDU
 from rdpy.pdu.rdp.fastpath import RDPFastPathPDU
 from rdpy.pdu.rdp.negotiation import RDPNegotiationResponsePDU, RDPNegotiationRequestPDU
@@ -368,7 +369,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.securityLayer.setNext(self.io)
         self.tpkt.setFastPathParser(self.fastPathParser)
 
-        slowPathObserver = MITMSlowPathObserver(self.io, self.recorder, mode=ParserMode.SERVER)
+        slowPathObserver = MITMSlowPathObserver(self.io, self.recorder, mode=ParserMode.SERVER, onConfirmActive=self.onConfirmActive)
         fastPathObserver = MITMFastPathObserver(self.tpkt, self.recorder, mode=ParserMode.SERVER)
         self.io.setObserver(slowPathObserver)
         self.tpkt.setObserver(fastPathObserver)
@@ -387,6 +388,13 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
             self.securityLayer.securityHeaderExpected = True
 
         return channel
+
+    def onConfirmActive(self, pdu):
+        # Force RDP server to send bitmap events instead of order events.
+        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderFlags = OrderFlag.NEGOTIATEORDERSUPPORT | OrderFlag.ZEROBOUNDSDELTASSUPPORT
+        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderSupport = "\x00" * 32
+
+        pdu.parsedCapabilitySets[CapabilityType.CAPSETTYPE_MULTIFRAGMENTUPDATE] = MultifragmentUpdateCapability(0)
 
     # Security Exchange
     def onSecurityExchangeReceived(self, pdu):

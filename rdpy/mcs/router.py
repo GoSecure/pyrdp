@@ -1,22 +1,11 @@
-from rdpy.enum.mcs import MCSPDUType
 from rdpy.core.newlayer import LayerStrictRoutedObserver
-from rdpy.exceptions import StateError
+from rdpy.enum.mcs import MCSPDUType
 
-
-def whenConnected(method):
-    """
-    Decorator used to check if a router has been connected before running a method
-    """
-    def wrapper(*args):
-        router = args[0]
-        if not router.connected:
-            raise StateError("Not connected")
-        
-        method(*args)
-    
-    return wrapper
 
 class MCSRouter(LayerStrictRoutedObserver):
+    """
+    Base observer class for MCS layers. Simply routes PDU types to methods.
+    """
     def __init__(self, mcs):
         LayerStrictRoutedObserver.__init__(self, {
             MCSPDUType.CONNECT_INITIAL: "onConnectInitial",

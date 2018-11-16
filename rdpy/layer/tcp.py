@@ -9,9 +9,16 @@ from rdpy.core.subject import ObservedBy
 
 class TCPObserver(LayerObserver):
     def onConnection(self):
+        """
+        Called when a TCP connection is made.
+        """
         pass
 
     def onDisconnection(self, reason):
+        """
+        Called when the TCP connection is lost.
+        :param reason: reason for disconnection.
+        """
         pass
 
 
@@ -28,6 +35,9 @@ class TCPLayer(Protocol, Layer):
         self.logSSLRequired = False
 
     def logSSLParameters(self):
+        """
+        Log the SSL parameters of the connection in a format suitable for decryption by Wireshark.
+        """
         log.get_ssl_logger().info(self.transport.protocol._tlsConnection.client_random(),
                                   self.transport.protocol._tlsConnection.master_key())
 
@@ -42,9 +52,15 @@ class TCPLayer(Protocol, Layer):
 
 
     def connectionLost(self, reason=connectionDone):
+        """
+        :param reason: reason for disconnection.
+        """
         self.observer.onDisconnection(reason)
 
     def disconnect(self):
+        """
+        Close the TCP connection.
+        """
         self.transport.loseConnection()
 
     def dataReceived(self, data):

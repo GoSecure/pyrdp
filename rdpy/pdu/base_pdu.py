@@ -1,3 +1,6 @@
+import pprint
+
+
 class PDU:
     """
     Base class to represent a Protocol Data Unit (PDU).
@@ -11,3 +14,6 @@ class PDU:
         """
 
         self.payload = payload
+
+    def __repr__(self):
+        return pprint.pformat(vars(self))

@@ -3,6 +3,9 @@ from rdpy.parser.rdp.connection import RDPClientConnectionParser, RDPServerConne
 
 
 class RDPClientConnectionLayer(Layer):
+    """
+    Layer for client RDP connection data. Sends Client PDUs and receives Server PDUs.
+    """
     def __init__(self):
         Layer.__init__(self)
         self.clientRDP = RDPClientConnectionParser()
