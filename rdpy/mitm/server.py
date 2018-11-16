@@ -4,7 +4,6 @@ import random
 import socket
 from Crypto.PublicKey import RSA
 
-from rdpy.protocol.rdp.x224 import ServerTLSContext
 from twisted.internet import reactor
 from twisted.internet.protocol import ClientFactory
 
@@ -44,6 +43,7 @@ from rdpy.pdu.rdp.capability import MultifragmentUpdateCapability
 from rdpy.pdu.rdp.connection import ProprietaryCertificate, ServerSecurityData, RDPServerDataPDU
 from rdpy.pdu.rdp.fastpath import RDPFastPathPDU
 from rdpy.pdu.rdp.negotiation import RDPNegotiationResponsePDU, RDPNegotiationRequestPDU
+from rdpy.protocol.rdp.x224 import ServerTLSContext
 from rdpy.recording.recorder import Recorder, FileLayer, SocketLayer
 
 
@@ -354,7 +354,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         # Create and link the MITM Observer for the server side to the clipboard layer.
         # Also link both MITM Observers (client and server) so they can send traffic the other way.
         peer = self.client.getChannelObserver(channelID)
-        observer = MITMServerClipboardChannelObserver(clipboardLayer)
+        observer = MITMServerClipboardChannelObserver(clipboardLayer, self.recorder)
         observer.setPeer(peer)
         clipboardLayer.setObserver(observer)
 

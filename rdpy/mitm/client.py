@@ -258,7 +258,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         virtualChannelLayer.setNext(clipboardLayer)
 
         # Create and link the MITM Observer for the client side to the clipboard layer.
-        observer = MITMClientClipboardChannelObserver(clipboardLayer)
+        observer = MITMClientClipboardChannelObserver(clipboardLayer,  self.recorder)
         clipboardLayer.setObserver(observer)
 
         self.channelObservers[channelID] = observer

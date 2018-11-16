@@ -34,6 +34,8 @@ class RSSEventHandler:
             self.handle_client_info(message.payload)
         elif message.type == RDPPlayerMessageType.CONFIRM_ACTIVE:
             self.handle_resize(message.payload)
+        elif message.type == RDPPlayerMessageType.CLIPBOARD_DATA:
+            self.handle_clipboard_data(message.payload)
         else:
             log.error("Received wrong player message type: {}".format(message.type))
 
@@ -104,3 +106,11 @@ class RSSEventHandler:
         """
         self._viewer.resize(pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP].desktopWidth,
                             pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP].desktopHeight)
+
+    def handle_clipboard_data(self, pdu):
+        """
+        :type pdu: rdpy.pdu.rdp.virtual_channel.clipboard.paste.FormatDataResponsePDU
+        """
+        self._text.insertPlainText("\n=============\n")
+        self._text.insertPlainText("CLIPBOARD DATA: {}".format(pdu.requestedFormatData.replace("\x00", "")))
+        self._text.insertPlainText("\n=============\n")

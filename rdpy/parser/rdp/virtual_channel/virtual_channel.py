@@ -1,6 +1,7 @@
 from StringIO import StringIO
 
 from rdpy.core.packing import Uint32LE
+from rdpy.enum.virtual_channel.virtual_channel import ChannelFlag
 from rdpy.parser.parser import Parser
 from rdpy.pdu.rdp.virtual_channel.virtual_channel import VirtualChannelPDU
 
@@ -9,6 +10,8 @@ class VirtualChannelParser(Parser):
     """
     Parser class for VirtualChannel PDUs.
     """
+
+    MAX_CHUNK_SIZE = 1600  # https://msdn.microsoft.com/en-us/library/cc240548.aspx
 
     def parse(self, data):
         """
@@ -24,10 +27,25 @@ class VirtualChannelParser(Parser):
     def write(self, pdu):
         """
         :type pdu: VirtualChannelPDU
-        :return: str
+        :return: A LIST of VirtualChannelPDUs as raw bytes. The first one has the CHANNEL_FLAG_FIRST
+                 set and the last one has the CHANNEL_FLAG_LAST set.
         """
-        stream = StringIO()
-        Uint32LE.pack(pdu.length, stream)
-        Uint32LE.pack(pdu.flags, stream)
-        stream.write(pdu.payload)
-        return stream.getvalue()
+        rawPacketList = []
+        length = pdu.length
+        dataStream = StringIO(pdu.payload)
+        while length > 0:
+            stream = StringIO()
+            Uint32LE.pack(pdu.length, stream)
+            flags = pdu.flags & 0b11111111111111111111111111111100
+            if len(rawPacketList) == 0:
+                # Means it's the first packet.
+                flags |= ChannelFlag.CHANNEL_FLAG_FIRST
+            if length <= self.MAX_CHUNK_SIZE:
+                # Means it's the last packet.
+                flags |= ChannelFlag.CHANNEL_FLAG_LAST
+            Uint32LE.pack(flags, stream)
+            toWrite = self.MAX_CHUNK_SIZE if length >= self.MAX_CHUNK_SIZE else length
+            stream.write(dataStream.read(toWrite))
+            rawPacketList.append(stream.getvalue())
+            length -= toWrite
+        return rawPacketList
