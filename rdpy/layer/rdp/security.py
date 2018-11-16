@@ -2,7 +2,6 @@ from collections import namedtuple
 
 from rdpy.core import log
 from rdpy.core.crypto import RC4Crypter
-
 from rdpy.core.newlayer import Layer, LayerObserver
 from rdpy.core.subject import ObservedBy
 from rdpy.enum.rdp import RDPSecurityFlags, EncryptionMethod
@@ -11,22 +10,6 @@ from rdpy.parser.rdp.security import RDPBasicSecurityParser, RDPSignedSecurityPa
 from rdpy.pdu.rdp.client_info import RDPClientInfoPDU
 from rdpy.pdu.rdp.security import RDPSecurityExchangePDU, \
     RDPSecurityPDU
-
-
-def createNonTLSSecurityLayer(encryptionMethod, crypter):
-    """
-    Create a (non-tls) security layer using the chosen encryption method and crypter.
-    :type encryptionMethod: EncryptionMethod
-    :type crypter: RC4Crypter
-    :return: RDPSecurityLayer
-    """
-    if encryptionMethod in [EncryptionMethod.ENCRYPTION_40BIT, EncryptionMethod.ENCRYPTION_56BIT, EncryptionMethod.ENCRYPTION_128BIT]:
-        parser = RDPSignedSecurityParser(crypter)
-        return RDPSecurityLayer(parser)
-    elif encryptionMethod == EncryptionMethod.ENCRYPTION_FIPS:
-        parser = RDPFIPSSecurityParser(crypter)
-        return RDPSecurityLayer(parser)
-
 
 
 class RDPSecurityObserver(LayerObserver):
@@ -59,6 +42,21 @@ class RDPSecurityLayer(Layer):
         self.securityParser = parser
         self.licensing = None
         self.clientInfoParser = RDPClientInfoParser()
+
+    @staticmethod
+    def create(encryptionMethod, crypter):
+        """
+        Create a security layer using the chosen encryption method and crypter.
+        :type encryptionMethod: EncryptionMethod
+        :type crypter: RC4Crypter
+        :return: RDPSecurityLayer
+        """
+        if encryptionMethod in [EncryptionMethod.ENCRYPTION_40BIT, EncryptionMethod.ENCRYPTION_56BIT, EncryptionMethod.ENCRYPTION_128BIT]:
+            parser = RDPSignedSecurityParser(crypter)
+            return RDPSecurityLayer(parser)
+        elif encryptionMethod == EncryptionMethod.ENCRYPTION_FIPS:
+            parser = RDPFIPSSecurityParser(crypter)
+            return RDPSecurityLayer(parser)
 
     def setLicensingLayer(self, licensing):
         """

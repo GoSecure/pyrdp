@@ -1,5 +1,6 @@
 import logging
-import pprint
+
+from rdpy.protocol.rdp.x224 import ClientTLSContext
 
 from rdpy.core.crypto import SecuritySettings, RC4CrypterProxy
 from rdpy.enum.core import ParserMode
@@ -9,18 +10,16 @@ from rdpy.layer.raw import RawLayer
 from rdpy.layer.rdp.connection import RDPClientConnectionLayer
 from rdpy.layer.rdp.data import RDPDataLayer
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
-from rdpy.layer.rdp.security import createNonTLSSecurityLayer, TLSSecurityLayer
+from rdpy.layer.rdp.security import TLSSecurityLayer, RDPSecurityLayer
 from rdpy.layer.tcp import TCPLayer
 from rdpy.layer.tpkt import TPKTLayer, createFastPathParser
 from rdpy.layer.x224 import X224Layer
-from rdpy.mcs.channel import MCSChannelFactory, MCSClientChannel, MCSServerChannel
+from rdpy.mcs.channel import MCSChannelFactory, MCSClientChannel
 from rdpy.mcs.client import MCSClientRouter
 from rdpy.mcs.user import MCSUserObserver
 from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver, MITMVirtualChannelObserver
 from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser
 from rdpy.parser.rdp.negotiation import RDPNegotiationResponseParser, RDPNegotiationRequestParser
-from rdpy.protocol.rdp.x224 import ClientTLSContext
-
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.recording.recorder import Recorder, FileLayer, SocketLayer
 
@@ -207,7 +206,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         if self.useTLS:
             return TLSSecurityLayer()
         else:
-            return createNonTLSSecurityLayer(encryptionMethod, self.crypter)
+            return RDPSecurityLayer.create(encryptionMethod, self.crypter)
 
     def buildVirtualChannel(self, mcs, userID, channelID):
         channel = MCSClientChannel(mcs, userID, channelID)

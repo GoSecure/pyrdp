@@ -4,20 +4,20 @@ import random
 import socket
 from Crypto.PublicKey import RSA
 
+from rdpy.protocol.rdp.x224 import ServerTLSContext
 from twisted.internet import reactor
 from twisted.internet.protocol import ClientFactory
 
 from rdpy.core import log
 from rdpy.core.crypto import SecuritySettings, RC4CrypterProxy
 from rdpy.enum.core import ParserMode
-from rdpy.enum.mcs import MCSResult
 from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, EncryptionMethod, EncryptionLevel, \
-    RDPPlayerMessageType, RDPDataPDUType, CapabilityType, OrderFlag
+    RDPPlayerMessageType, CapabilityType, OrderFlag
 from rdpy.layer.mcs import MCSLayer
 from rdpy.layer.raw import RawLayer
 from rdpy.layer.rdp.data import RDPDataLayer
 from rdpy.layer.rdp.licensing import RDPLicensingLayer
-from rdpy.layer.rdp.security import createNonTLSSecurityLayer, TLSSecurityLayer
+from rdpy.layer.rdp.security import TLSSecurityLayer, RDPSecurityLayer
 from rdpy.layer.tcp import TCPLayer
 from rdpy.layer.tpkt import TPKTLayer, createFastPathParser
 from rdpy.layer.x224 import X224Layer
@@ -37,7 +37,6 @@ from rdpy.pdu.rdp.capability import MultifragmentUpdateCapability
 from rdpy.pdu.rdp.connection import ProprietaryCertificate, ServerSecurityData, RDPServerDataPDU
 from rdpy.pdu.rdp.fastpath import RDPFastPathPDU
 from rdpy.pdu.rdp.negotiation import RDPNegotiationResponsePDU, RDPNegotiationRequestPDU
-from rdpy.protocol.rdp.x224 import ServerTLSContext
 from rdpy.recording.recorder import Recorder, FileLayer, SocketLayer
 
 
@@ -305,7 +304,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         if self.useTLS:
             return TLSSecurityLayer()
         else:
-            return createNonTLSSecurityLayer(encryptionMethod, self.crypter)
+            return RDPSecurityLayer.create(encryptionMethod, self.crypter)
 
     def buildVirtualChannel(self, mcs, userID, channelID):
         channel = MCSServerChannel(mcs, userID, channelID)
