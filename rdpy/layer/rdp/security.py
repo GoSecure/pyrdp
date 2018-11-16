@@ -54,7 +54,7 @@ class RDPSecurityLayer(Layer):
         """
         Create a security layer using the chosen encryption method and crypter.
         :type encryptionMethod: EncryptionMethod
-        :type crypter: RC4Crypter
+        :type crypter: RC4Crypter | RC4CrypterProxy
         :return: RDPSecurityLayer
         """
         if encryptionMethod in [EncryptionMethod.ENCRYPTION_40BIT, EncryptionMethod.ENCRYPTION_56BIT, EncryptionMethod.ENCRYPTION_128BIT]:
