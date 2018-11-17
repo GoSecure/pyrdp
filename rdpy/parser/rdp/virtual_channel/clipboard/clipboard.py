@@ -3,6 +3,7 @@ from StringIO import StringIO
 from rdpy.core.packing import Uint16LE, Uint32LE
 from rdpy.enum.virtual_channel.clipboard.clipboard import ClipboardMessageType, ClipboardMessageFlags
 from rdpy.pdu.rdp.virtual_channel.clipboard.clipboard import ClipboardPDU
+from rdpy.pdu.rdp.virtual_channel.clipboard.copy import FormatListPDU, LongFormatName
 from rdpy.pdu.rdp.virtual_channel.clipboard.paste import FormatDataResponsePDU
 
 
@@ -19,6 +20,8 @@ class ClipboardParser:
         payload = stream.read(dataLen)
         if msgType == ClipboardMessageType.CB_FORMAT_DATA_RESPONSE:
             clipboardPDU = self.parseFormatDataResponse(payload, msgFlags)
+        elif msgType == ClipboardMessageType.CB_FORMAT_LIST:
+            clipboardPDU = self.parseFormatList(payload, msgFlags)
         else:
             clipboardPDU = ClipboardPDU(ClipboardMessageType(msgType), msgFlags, payload)
         return clipboardPDU
@@ -26,6 +29,21 @@ class ClipboardParser:
     def parseFormatDataResponse(self, payload, msgFlags):
         isSuccessful = True if msgFlags & ClipboardMessageFlags.CB_RESPONSE_OK else False
         return FormatDataResponsePDU(payload, isSuccessful)
+
+    def parseFormatList(self, payload, msgFlags):
+        # Assumes LongFormatNames. This might be bad. Should check capabilities beforehand
+
+        stream = StringIO(payload)
+        formats = {}
+        while stream.pos < stream.len:
+            formatId = Uint32LE.unpack(stream)
+            formatName = ""
+            lastChar = ""
+            while lastChar != "\x00\x00":
+                lastChar = stream.read(2)
+                formatName += lastChar
+            formats[formatId] = LongFormatName(formatId, formatName)
+        return FormatListPDU(formats, msgFlags)
 
     def write(self, pdu):
         """
@@ -38,6 +56,8 @@ class ClipboardParser:
         Uint16LE.pack(pdu.msgFlags, stream)
         if pdu.msgType == ClipboardMessageType.CB_FORMAT_DATA_RESPONSE:
             self.writeFormatDataResponse(stream, pdu)
+        elif pdu.msgType == ClipboardMessageType.CB_FORMAT_LIST:
+            self.writeFormatList(stream, pdu)
         else:
             Uint32LE.pack(len(pdu.payload), stream)
             stream.write(pdu.payload)
@@ -51,3 +71,22 @@ class ClipboardParser:
         """
         Uint32LE.pack(len(pdu.requestedFormatData), stream)
         stream.write(pdu.requestedFormatData)
+
+    def writeFormatList(self, stream, pdu):
+        """
+        Write the FormatListPDU starting at dataLen. Assumes LongFormatNames
+        :type stream: StringIO
+        :type pdu: FormatListPDU
+        """
+        substream = StringIO()
+        for format in pdu.formatList.values():
+            Uint32LE.pack(format.formatId, substream)
+            formatName = format.formatName
+            lastChar = ""
+            pos = 0
+            while lastChar != "\x00\x00":
+                lastChar = formatName[pos:pos + 2]
+                substream.write(lastChar)
+                pos += 2
+        Uint32LE.pack(len(substream.getvalue()), stream)
+        stream.write(substream.getvalue())
