@@ -67,6 +67,7 @@ class SegmentationLayer(Layer):
         data = self.buffer + data
 
         while len(data) > 0:
+            # The PDU type is contained within the first byte of every message.
             header = Uint8.unpack(data[0]) & SegmentationPDUType.MASK
 
             try:
