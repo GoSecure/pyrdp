@@ -134,7 +134,7 @@ class RDPSecurityLayer(Layer):
 class TLSSecurityLayer(RDPSecurityLayer):
     """
     Security layer used when the connection uses TLS.
-    If securityHeadExpected, then the layer expects to receive a basic security header.
+    If securityHeadExpected is True, then the layer expects to receive a basic security header.
     Otherwise, the layer just forwards all the data it receives to the next layer.
     """
 

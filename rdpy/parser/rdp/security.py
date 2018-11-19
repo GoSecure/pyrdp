@@ -1,5 +1,6 @@
 from StringIO import StringIO
 
+from rdpy.core.crypto import RC4Crypter, RC4CrypterProxy
 from rdpy.core.packing import Uint16LE, Uint8, Uint32LE
 from rdpy.enum.rdp import RDPSecurityFlags, FIPSVersion
 from rdpy.parser.parser import Parser
@@ -7,7 +8,18 @@ from rdpy.pdu.rdp.security import RDPSecurityPDU, RDPSecurityExchangePDU
 
 
 class RDPBasicSecurityParser(Parser):
+    """
+    Base class for all security parsers.
+    This class only reads a small header before the payload.
+    Writing is split between 3 methods for reusability.
+    """
+
     def parse(self, data):
+        """
+        Decode a security PDU from bytes.
+        :type data: str
+        :return: RDPSecurityPDU
+        """
         stream = StringIO(data)
         header = Uint32LE.unpack(stream)
 
@@ -18,11 +30,22 @@ class RDPBasicSecurityParser(Parser):
         return RDPSecurityPDU(header, payload)
 
     def parseSecurityExchange(self, stream, header):
+        """
+        Decode a security exchange PDU.
+        :type stream: StringIO
+        :type header: int
+        :return: RDPSecurityExchangePDU
+        """
         length = Uint32LE.unpack(stream)
         clientRandom = stream.read(length)
         return RDPSecurityExchangePDU(header, clientRandom)
 
     def write(self, pdu):
+        """
+        Encode a security PDU to bytes.
+        :type pdu: RDPSecurityPDU
+        :return: str
+        """
         stream = StringIO()
         self.writeHeader(stream, pdu)
         self.writeBody(stream, pdu)
@@ -30,6 +53,11 @@ class RDPBasicSecurityParser(Parser):
         return stream.getvalue()
 
     def writeSecurityExchange(self, pdu):
+        """
+        Encode a RDPSecurityExchangePDU to bytes.
+        :type pdu: RDPSecurityExchangePDU
+        :return: str
+        """
         stream = StringIO()
         Uint32LE.pack(RDPSecurityFlags.SEC_EXCHANGE_PKT | RDPSecurityFlags.SEC_LICENSE_ENCRYPT_SC, stream)
         Uint32LE.pack(len(pdu.clientRandom), stream)
@@ -37,18 +65,42 @@ class RDPBasicSecurityParser(Parser):
         return stream.getvalue()
 
     def writeHeader(self, stream, pdu):
+        """
+        Write the PDU header.
+        :type stream: StringIO
+        :type pdu: RDPSecurityPDU
+        """
         Uint32LE.pack(pdu.header, stream)
 
     def writeBody(self, stream, pdu):
+        """
+        Write the PDU body.
+        :type stream: StringIO
+        :type pdu: RDPSecurityPDU
+        """
         pass
 
     def writePayload(self, stream, pdu):
+        """
+        Write the PDU payload.
+        :type stream: StringIO
+        :type pdu: RDPSecurityPDU
+        """
         stream.write(pdu.payload)
 
 
 
 class RDPSignedSecurityParser(RDPBasicSecurityParser):
+    """
+    Parser to use when standard RDP security is used.
+    This class handles RC4 decryption and encryption and increments the operation count automatically.
+    """
+
     def __init__(self, crypter):
+        """
+        :type crypter: RC4Crypter | RC4CrypterProxy
+        """
+        RDPBasicSecurityParser.__init__(self)
         self.crypter = crypter
 
     def parse(self, data):
@@ -69,10 +121,12 @@ class RDPSignedSecurityParser(RDPBasicSecurityParser):
 
 
     def writeHeader(self, stream, pdu):
+        # Make sure the header contains the flags for encryption and salted signatures.
         header = pdu.header | RDPSecurityFlags.SEC_ENCRYPT | RDPSecurityFlags.SEC_SECURE_CHECKSUM
         Uint32LE.pack(header, stream)
 
     def writeBody(self, stream, pdu):
+        # Write the signature before writing the payload.
         signature = self.crypter.sign(pdu.payload, True)
         stream.write(signature)
 
@@ -84,7 +138,15 @@ class RDPSignedSecurityParser(RDPBasicSecurityParser):
 
 
 class RDPFIPSSecurityParser(RDPSignedSecurityParser):
+    """
+    Parser to use when FIPS security is used.
+    Note that FIPS cryptography is not implemented yet.
+    """
+
     def __init__(self, crypter):
+        """
+        :type crypter: RC4Crypter | RC4CrypterProxy
+        """
         RDPSignedSecurityParser.__init__(self, crypter)
 
     def parse(self, data):
