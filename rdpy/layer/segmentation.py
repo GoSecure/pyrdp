@@ -1,39 +1,18 @@
+from collections import namedtuple
+
 from rdpy.core.newlayer import Layer, LayerObserver
 from rdpy.core.packing import Uint8
 from rdpy.core.subject import ObservedBy
 from rdpy.enum.segmentation import SegmentationPDUType
-from rdpy.parser.segmentation import SegmentationParser
-from rdpy.pdu.segmentation import SegmentationPDU
-
+from rdpy.layer.buffered import BufferedLayer
 
 class SegmentationObserver(LayerObserver):
-    """
-    Observer class for the segmentation layer.
-    """
-    def __init__(self, **kwargs):
-        LayerObserver.__init__(self, **kwargs)
-        self.handlers = {}
-
-    def onPDUReceived(self, pdu):
-        """
-        Called when a PDU is received.
-        :type pdu: SegmentationPDU
-        """
-        type = pdu.getSegmentationType()
-        if type in self.handlers:
-            self.handlers[type](pdu)
-
-    def setHandler(self, type, handler):
-        """
-        Add a handler for a given PDU type.
-        :param type: the PDU type.
-        :type type: int
-        :param handler: callable object
-        """
-        self.handlers[type] = handler
-
     def onUnknownHeader(self, header):
         pass
+
+
+
+SegmentationProxy = namedtuple("SegmentationProxy", "send")
 
 
 
@@ -41,78 +20,73 @@ class SegmentationObserver(LayerObserver):
 class SegmentationLayer(Layer):
     """
     Layer to handle segmentation PDUs (e.g: TPKT and fast-path).
-    Handles buffering data until there is enough to parse a full PDU.
-    PDUs are not forwarded. Use the observer to receive the individual PDUs for each type.
+    Sends data to the proper BufferedLayer by checking the PDU's header.
     """
 
     def __init__(self):
         Layer.__init__(self)
         self.buffer = ""
         self.fastPathLayer = None
-        self.parsers = {}
+        self.layers = {}
 
-    def setParser(self, type, parser):
+    def attachLayer(self, type, layer):
         """
-        Set the parser used for a given PDU type.
+        Set the layer used for a type of segmentation PDU.
+        :param type: the PDU type.
         :type type: int
-        :type parser: SegmentationParser
+        :param layer: the layer to use.
+        :type layer: BufferedLayer
         """
-        self.parsers[type] = parser
+        # The segmentation layer is bypassed when sending data.
+        layer.previous = self.previous
+        self.layers[type] = layer
 
     def recv(self, data):
         """
-        All the data received is buffered until there is enough to parse a complete PDU.
+        Forward data to the proper layer depending on the PDU type.qq
         :type data: str
         """
-        data = self.buffer + data
 
         while len(data) > 0:
-            # The PDU type is contained within the first byte of every message.
-            header = Uint8.unpack(data[0]) & SegmentationPDUType.MASK
+            layer = None
+            length = 0
 
-            try:
-                parser = self.parsers[header]
-            except KeyError:
-                if self.observer:
-                    self.observer.onUnknownHeader(header)
-                    return
-                else:
-                    raise
+            # Check if any layer still needs to receive more data.
+            for _, layer in self.layers.items():
+                length = layer.getDataLengthRequired()
 
-            if not parser.isCompletePDU(data):
-                self.buffer = data
-                data = ""
-            else:
-                pduLength = parser.getPDULength(data)
-                pduData = data[: pduLength]
+                if length > 0:
+                    break
 
-                pdu = parser.parse(pduData)
-                self.pduReceived(pdu, False)
+            if length == 0:
+                # All layers are clear, this is a new PDU.
+                # The PDU type is contained within the first byte of every message.
+                header = Uint8.unpack(data[0]) & SegmentationPDUType.MASK
 
-                data = data[pduLength :]
-                self.buffer = ""
+                try:
+                    layer = self.layers[header]
+                except KeyError:
+                    if self.observer:
+                        self.observer.onUnknownHeader(header)
+                        return
+                    else:
+                        raise
+
+                layer.recv(data[0])
+                data = data[1 :]
+                length = layer.getDataLengthRequired()
+
+            # Send data to the selected layer as long as it needs some and as long as we have data to send.
+            while length > 0 and len(data) > 0:
+                forwarded = data[: length]
+                data = data[length :]
+                layer.recv(forwarded)
+                length = layer.getDataLengthRequired()
 
     def recvWithSocket(self, socket):
         """
         Same as recv, but using a socket.
         :type socket: socket.socket
         """
-        data = socket.recv(1)
-        header = Uint8.unpack(data) & 0b00000011
-        parser = self.parsers[header]
-        data2, pduLength = parser.getPDULengthWithSocket(socket)
-        data += data2
-        pduData = data + socket.recv(pduLength - 4)
-
-        pdu = parser.parse(pduData)
-        self.pduReceived(pdu, header == 3)
-
-    def sendPDU(self, pdu):
-        """
-        Send a PDU for one of the registered classes.
-        :type pdu: SegmentationPDU
-        """
-        type = pdu.getSegmentationType()
-        parser = self.parsers[type]
-        data = parser.write(pdu)
-        self.previous.send(data)
+        data = socket.recv(1024)
+        self.recv(data)
