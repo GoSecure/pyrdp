@@ -70,6 +70,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.fileHandle = open("out/rdp_replay_{}_{}.rdpy".format(datetime.datetime.now().strftime('%Y%m%d_%H_%M%S'), random.randint(0, 1000)), "wb")
         self.mitm_log = logging.getLogger("mitm.server")
         self.mitm_connections_log = logging.getLogger("mitm.connections")
+        self.origin = None
 
         self.tcp = TCPLayer()
         self.tcp.createObserver(onConnection=self.onConnection, onDisconnection=self.onDisconnection)
@@ -125,6 +126,24 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         # We need to write back the packets as if they came from the client.
         self.recorder = Recorder(recording_layers, RDPBasicFastPathParser(ParserMode.CLIENT))
 
+    def getOrigin(self):
+        return self.origin
+
+    def formatLog(self, message):
+        if self.origin:
+            return "%s - %s" % (self.origin, message)
+        else:
+            return message
+
+    def info(self, message):
+        self.mitm_log.info(self.formatLog(message))
+
+    def debug(self, message):
+        self.mitm_log.debug(self.formatLog(message))
+
+    def error(self, message):
+        self.mitm_log.error(self.formatLog(message))
+
     def getProtocol(self):
         return self.tcp
 
@@ -145,10 +164,11 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         :param clientInfo: Tuple containing the ip and port of the connected client.
         """
         # Connection sequence #0
-        self.mitm_log.debug("TCP connected from {}:{}".format(clientInfo[0], clientInfo[1]))
+        self.origin = "{}:{}".format(clientInfo[0], clientInfo[1])
+        self.debug("TCP connected")
 
     def onDisconnection(self, reason):
-        self.mitm_log.debug("Connection closed: {}".format(reason))
+        self.debug("Connection closed: {}".format(reason))
         self.recorder.record(RDPFastPathPDU(0, []), RDPPlayerMessageType.CONNECTION_CLOSE)
         if self.client:
             self.client.disconnect()
@@ -156,15 +176,15 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.disconnectConnector()
 
     def onDisconnectRequest(self, pdu):
-        self.mitm_log.debug("X224 Disconnect Request received")
+        self.debug("X224 Disconnect Request received")
         self.disconnect()
 
     def onDisconnectProviderUltimatum(self, pdu):
-        self.mitm_log.debug("Disconnect Provider Ultimatum PDU received")
+        self.debug("Disconnect Provider Ultimatum PDU received")
         self.disconnect()
 
     def disconnect(self):
-        self.mitm_log.debug("Disconnecting")
+        self.debug("Disconnecting")
         self.tcp.disconnect()
         self.disconnectConnector()
 
@@ -174,21 +194,21 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
             self.clientConnector = None
 
     def onUnknownTPKTHeader(self, header):
-        self.mitm_log.error("Closing the connection because an unknown TPKT header was received. Header: 0x%02lx" % header)
+        self.error("Closing the connection because an unknown TPKT header was received. Header: 0x%02lx" % header)
         self.disconnect()
 
     def onConnectionRequest(self, pdu):
         # X224 Request
-        self.mitm_log.debug("Connection Request received")
+        self.debug("Connection Request received")
 
         # We need to save the original negotiation PDU because Windows will cut the connection if it sees that the requested protocols have changed.
         parser = RDPNegotiationRequestParser()
         self.originalNegotiationPDU = parser.parse(pdu.payload)
 
         if self.originalNegotiationPDU.cookie:
-            self.mitm_log.info(self.originalNegotiationPDU.cookie)
+            self.info(self.originalNegotiationPDU.cookie)
         else:
-            self.mitm_log.info("No cookie for this connection")
+            self.info("No cookie for this connection")
 
         self.targetNegotiationPDU = RDPNegotiationRequestPDU(
             self.originalNegotiationPDU.cookie,
@@ -222,7 +242,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         Parse the ClientData PDU and send a ServerData PDU back.
         :param pdu: The GCC ConferenceCreateResponse PDU that contains the ClientData PDU.
         """
-        self.mitm_log.debug("Connect Initial received")
+        self.debug("Connect Initial received")
         gccConferenceCreateRequestPDU = self.gcc.parse(pdu.payload)
 
         # FIPS is not implemented, so remove this flag if it's set
@@ -302,7 +322,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.router.sendChannelJoinConfirm(result, user.userID, channelID)
 
     def buildChannel(self, mcs, userID, channelID):
-        self.mitm_log.debug("building channel {} for user {}".format(channelID, userID))
+        self.debug("building channel {} for user {}".format(channelID, userID))
 
         channelMap = self.client.channelMap
         if channelID == self.serverData.network.mcsChannelID:
@@ -407,7 +427,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         :type pdu: RDPSecurityExchangePDU
         :return:
         """
-        self.mitm_log.debug("Security Exchange received")
+        self.debug("Security Exchange received")
         clientRandom = self.rc4RSAKey.decrypt(pdu.clientRandom[:: -1])[:: -1]
         self.securitySettings.setClientRandom(clientRandom)
 
@@ -420,7 +440,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         """
         pdu = RDPClientInfoParser().parse(data)
 
-        self.mitm_log.debug("Client Info received")
+        self.debug("Client Info received")
         self.mitm_connections_log.info("CLIENT INFO RECEIVED")
         self.mitm_connections_log.info("USER: {}".format(pdu.username))
         self.mitm_connections_log.info("PASSWORD: {}".format(pdu.password))
@@ -430,7 +450,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.client.onClientInfoPDUReceived(pdu)
 
     def onLicensingDataReceived(self, data):
-        self.mitm_log.debug("Sending Licensing data")
+        self.debug("Sending Licensing data")
 
         if self.useTLS:
             self.securityLayer.securityHeaderExpected = False
@@ -444,6 +464,6 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         # Unsure if still useful
         for event in pdu.events:
             if event.messageType == InputEventType.INPUT_EVENT_SCANCODE:
-                self.mitm_log.debug("Key pressed: 0x%2lx" % event.keyCode)
+                self.debug("Key pressed: 0x%2lx" % event.keyCode)
             elif event.messageType == InputEventType.INPUT_EVENT_MOUSE:
-                self.mitm_log.debug("Mouse position: x = %d, y = %d" % (event.x, event.y))
+                self.debug("Mouse position: x = %d, y = %d" % (event.x, event.y))

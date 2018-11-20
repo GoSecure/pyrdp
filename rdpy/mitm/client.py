@@ -98,6 +98,15 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
         self.recorder = Recorder(record_layers, RDPBasicFastPathParser(ParserMode.SERVER))
 
+    def info(self, message):
+        self.mitm_log.info(self.server.formatLog(message))
+
+    def debug(self, message):
+        self.mitm_log.debug(self.server.formatLog(message))
+
+    def error(self, message):
+        self.mitm_log.error(self.server.formatLog(message))
+
     def getProtocol(self):
         return self.tcp
 
@@ -105,32 +114,32 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         """
         Start the connection sequence to the target machine.
         """
-        self.mitm_log.debug("TCP connected")
+        self.debug("TCP connected")
         negotiation = self.server.getNegotiationPDU()
         parser = RDPNegotiationRequestParser()
         self.x224.sendConnectionRequest(parser.write(negotiation))
 
     def onDisconnection(self, reason):
-        self.mitm_log.debug("Connection closed")
+        self.debug("Connection closed")
         self.server.disconnect()
 
     def onDisconnectRequest(self, pdu):
-        self.mitm_log.debug("X224 Disconnect Request received")
+        self.debug("X224 Disconnect Request received")
         self.disconnect()
 
     def disconnect(self):
-        self.mitm_log.debug("Disconnecting")
+        self.debug("Disconnecting")
         self.tcp.disconnect()
 
     def onUnknownTPKTHeader(self, header):
-        self.mitm_log.error("Closing the connection because an unknown TPKT header was received. Header: 0x%02lx" % header)
+        self.error("Closing the connection because an unknown TPKT header was received. Header: 0x%02lx" % header)
         self.disconnect()
 
     def onConnectionConfirm(self, pdu):
         """
         Called when the X224 layer is connected.
         """
-        self.mitm_log.debug("Connection Confirm received")
+        self.debug("Connection Confirm received")
 
         parser = RDPNegotiationResponseParser()
         response = parser.parse(pdu.payload)
@@ -147,7 +156,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         :param gccConferenceCreateRequest: the conference create request.
         :param clientData: the RDPClientDataPDU.
         """
-        self.mitm_log.debug("Sending Connect Initial")
+        self.debug("Sending Connect Initial")
 
         if clientData.networkData:
             self.channelDefinitions = clientData.networkData.channelDefinitions
@@ -160,10 +169,10 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         Called when an MCS Connect Response PDU is received.
         """
         if pdu.result != 0:
-            self.mitm_log.error("MCS Connection Failed")
+            self.error("MCS Connection Failed")
             self.server.onConnectResponse(pdu, None)
         else:
-            self.mitm_log.debug("MCS Connection Successful")
+            self.debug("MCS Connection Successful")
             self.mcsConnect.recv(pdu)
             self.server.onConnectResponse(pdu, self.serverData)
 
@@ -208,7 +217,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
     def buildChannel(self, mcs, userID, channelID):
         channelName = self.channelMap.get(channelID, None)
         channelLog = channelName + " (%d)" % channelID if channelName else channelID
-        self.mitm_log.debug("building channel {} for user {}".format(channelLog, userID))
+        self.debug("building channel {} for user {}".format(channelLog, userID))
 
         if channelName == "I/O":
             channel = self.buildIOChannel(mcs, userID, channelID)
@@ -291,7 +300,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         if self.useTLS:
             self.securityLayer.securityHeaderExpected = True
         elif encryptionMethod != 0:
-            self.mitm_log.debug("Sending Security Exchange")
+            self.debug("Sending Security Exchange")
             self.io.previous.sendSecurityExchange(self.securitySettings.encryptClientRandom())
 
         return channel
@@ -300,12 +309,12 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.server.onChannelJoinRefused(user, result, channelID)
 
     def onClientInfoPDUReceived(self, pdu):
-        self.mitm_log.debug("Sending Client Info")
+        self.debug("Sending Client Info")
 
         self.securityLayer.sendClientInfo(pdu)
 
     def onLicensingDataReceived(self, data):
-        self.mitm_log.debug("Licensing data received")
+        self.debug("Licensing data received")
 
         if self.useTLS:
             self.securityLayer.securityHeaderExpected = False
@@ -313,7 +322,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.server.onLicensingDataReceived(data)
 
     def onDisconnectProviderUltimatum(self, pdu):
-        self.mitm_log.debug("Disconnect Provider Ultimatum received")
+        self.debug("Disconnect Provider Ultimatum received")
         self.server.sendDisconnectProviderUltimatum(pdu)
 
     def getChannelObserver(self, channelID):
