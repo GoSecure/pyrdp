@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding=utf-8
 
 from distutils.core import setup, Extension
 
@@ -6,13 +7,14 @@ setup(name='rdpy',
     version='1.3.2',
     description='Remote Desktop Protocol in Python',
     long_description="""
-    RDPY is a pure Python implementation of the Microsoft RDP (Remote Desktop Protocol) protocol (Client and Server side). RDPY is built over the event driven network engine Twisted.
-    
-    RDPY provide RDP and VNC binaries : RDP Man In The Middle proxy which record session, RDP Honeypot, RDP screenshoter, RDP client, VNC client, VNC screenshoter, RSS Player
+    This is a Python implementation of the RDP protocol. This started as a fork of https://github.com/citronneur/rdpy,
+    but ended up being a major reimplementation as we started changing the type / parsing systems. Still, part of the
+    code comes from the original rdpy implementation, especially the packages related to encoding and
+    cryptography.
     """,
-    author='Sylvain Peyrefitte',
-    author_email='citronneur@gmail.com',
-    url='https://github.com/citronneur/rdpy',
+    author='Émilio Gonzalez, Francis Labelle',
+    author_email='egonzalez@gosecure.ca, flabelle@gosecure.ca',
+    url='https://github.com/GoSecure/rdpy',
     packages=[
         'rdpy',
         'rdpy.core',
