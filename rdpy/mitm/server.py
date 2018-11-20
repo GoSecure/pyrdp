@@ -4,12 +4,11 @@ import random
 import socket
 from Crypto.PublicKey import RSA
 
-from rdpy.protocol.rdp.x224 import ServerTLSContext
 from twisted.internet import reactor
 from twisted.internet.protocol import ClientFactory
 
-from rdpy.core import log
 from rdpy.core.crypto import SecuritySettings, RC4CrypterProxy
+from rdpy.core.ssl import ServerTLSContext
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, EncryptionMethod, EncryptionLevel, \
     RDPPlayerMessageType, CapabilityType, OrderFlag

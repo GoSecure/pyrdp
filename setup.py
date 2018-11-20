@@ -9,7 +9,7 @@ setup(name='rdpy',
     long_description="""
     This is a Python implementation of the RDP protocol. This started as a fork of https://github.com/citronneur/rdpy,
     but ended up being a major reimplementation as we started changing the type / parsing systems. Still, part of the
-    code comes from the original rdpy implementation, especially the packages related to encoding and
+    code comes from the original rdpy implementation, especially the packages related to encoding, Qt and
     cryptography.
     """,
     author='Émilio Gonzalez, Francis Labelle',
