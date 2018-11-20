@@ -26,6 +26,8 @@ setup(name='rdpy',
         'rdpy.ui',
 
         'rdpy.enum',
+        'rdpy.enum.virtual_channel',
+        'rdpy.enum.virtual_channel.clipboard',
         'rdpy.layer',
         'rdpy.layer.rdp',
         'rdpy.layer.rdp.virtual_channel',
