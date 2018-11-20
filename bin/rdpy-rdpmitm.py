@@ -3,12 +3,13 @@ import argparse
 import logging
 import os
 import sys
+from itertools import cycle
 
 import appdirs
 from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
 
-from rdpy.core import log
+from rdpy.core import log, names
 from rdpy.mitm.server import MITMServer
 
 
@@ -28,9 +29,10 @@ class MITMServerFactory(ServerFactory):
         self.certificateFileName = certificateFileName
         self.destination_ip = destination_ip
         self.destination_port = destination_port
+        self.names = cycle(names.getNames())
 
     def buildProtocol(self, addr):
-        server = MITMServer(self.targetHost, self.targetPort, self.certificateFileName,
+        server = MITMServer(next(self.names), self.targetHost, self.targetPort, self.certificateFileName,
                             self.privateKeyFileName, self.destination_ip, self.destination_port)
         return server.getProtocol()
 
