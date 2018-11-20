@@ -42,7 +42,6 @@ setup(name='rdpy',
         'rdpy.pdu.rdp.virtual_channel',
         'rdpy.pdu.rdp.virtual_channel.clipboard',
         'rdpy.recording',
-        'rdpy.security',
     ],
     ext_modules=[Extension('rle', ['ext/rle.c'])],
     scripts=[
