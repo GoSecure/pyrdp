@@ -1,6 +1,6 @@
 import logging
 
-from rdpy.core.crypto import SecuritySettings, RC4CrypterProxy
+from rdpy.crypto.crypto import SecuritySettings, RC4CrypterProxy
 from rdpy.core.ssl import ClientTLSContext
 from rdpy.enum.core import ParserMode
 from rdpy.enum.segmentation import SegmentationPDUType

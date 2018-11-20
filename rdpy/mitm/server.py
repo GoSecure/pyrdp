@@ -7,7 +7,7 @@ from Crypto.PublicKey import RSA
 from twisted.internet import reactor
 from twisted.internet.protocol import ClientFactory
 
-from rdpy.core.crypto import SecuritySettings, RC4CrypterProxy
+from rdpy.crypto.crypto import SecuritySettings, RC4CrypterProxy
 from rdpy.core.ssl import ServerTLSContext
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, EncryptionMethod, EncryptionLevel, \

@@ -1,6 +1,6 @@
 from StringIO import StringIO
 
-from rdpy.core.crypto import RC4Crypter, RC4CrypterProxy
+from rdpy.crypto.crypto import RC4Crypter, RC4CrypterProxy
 from rdpy.core.packing import Uint16LE, Uint8, Uint32LE
 from rdpy.enum.rdp import RDPSecurityFlags, FIPSVersion
 from rdpy.parser.parser import Parser
