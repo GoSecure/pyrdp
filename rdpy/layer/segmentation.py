@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from rdpy.core.newlayer import Layer, LayerObserver
+from rdpy.core.layer import Layer, LayerObserver
 from rdpy.core.packing import Uint8
 from rdpy.core.subject import ObservedBy
 from rdpy.enum.segmentation import SegmentationPDUType

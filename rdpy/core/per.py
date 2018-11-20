@@ -22,7 +22,7 @@ PER encoding / decoding functions
 """
 
 from rdpy.core.packing import Uint8, Uint16BE, Uint32BE
-from rdpy.core.error import InvalidValue, InvalidExpectedDataException
+
 
 def readLength(s):
     """
@@ -139,7 +139,7 @@ def readInteger(s):
     elif size == 4:
         return Uint32BE.unpack(s.read(4))
     else:
-        raise InvalidValue("invalid integer size %d" % size)
+        raise ValueError("invalid integer size %d" % size)
 
 def writeInteger(value):
     """
@@ -163,7 +163,7 @@ def readObjectIdentifier(s):
     """
     size = readLength(s)
     if size != 5:
-        raise InvalidValue("Object identifier size must be 5 (got %d instead)" % size)
+        raise ValueError("Object identifier size must be 5 (got %d instead)" % size)
     
     a_oid = [0, 0, 0, 0, 0, 0]
     t12 = Uint8.unpack(s.read(1))

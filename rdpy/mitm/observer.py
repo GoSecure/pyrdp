@@ -11,7 +11,7 @@ from rdpy.pdu.rdp.fastpath import RDPFastPathPDU
 class MITMChannelObserver(Observer):
     def __init__(self, log, layer, innerObserver, recorder, mode, **kwargs):
         """
-        :type layer: rdpy.core.newlayer.Layer
+        :type layer: rdpy.core.layer.Layer
         :type recorder: rdpy.recording.recorder.Recorder
         :type mode: ParserMode
         """
@@ -59,7 +59,7 @@ class MITMChannelObserver(Observer):
 class MITMSlowPathObserver(MITMChannelObserver):
     def __init__(self, log, layer, recorder, mode, **kwargs):
         """
-        :type layer: rdpy.core.newlayer.Layer
+        :type layer: rdpy.core.layer.Layer
         :type recorder: rdpy.recording.recorder.Recorder
         :type mode: ParserMode
         """
@@ -78,7 +78,7 @@ class MITMSlowPathObserver(MITMChannelObserver):
 class MITMFastPathObserver(MITMChannelObserver):
     def __init__(self, log, layer, recorder, mode):
         """
-        :type layer: rdpy.core.newlayer.Layer
+        :type layer: rdpy.core.layer.Layer
         :type recorder: rdpy.recording.recorder.Recorder
         :type mode: ParserMode
         """

@@ -20,7 +20,6 @@
 """
 Fake widget
 """
-from rdpy.core.error import CallPureVirtualFuntion
 from PyQt4 import QtGui, QtCore
 
 
@@ -42,20 +41,20 @@ class IRender(object):
         @param dx: delta x
         @param dy: delta y
         """
-        raise CallPureVirtualFuntion("%s:%s defined by interface %s"%(self.__class__, "translate", "IRender"))
+        raise NotImplementedError("%s:%s defined by interface %s"%(self.__class__, "translate", "IRender"))
     
     def drawImage(self, image):
         """
         Draw QImage
         @param image: QImage
         """
-        raise CallPureVirtualFuntion("%s:%s defined by interface %s"%(self.__class__, "drawImage", "IRender"))
+        raise NotImplementedError("%s:%s defined by interface %s"%(self.__class__, "drawImage", "IRender"))
     
     def getImageFormat(self):
         """
         @return: Image format use for render
         """
-        raise CallPureVirtualFuntion("%s:%s defined by interface %s"%(self.__class__, "getImageFormat", "IRender"))
+        raise NotImplementedError("%s:%s defined by interface %s"%(self.__class__, "getImageFormat", "IRender"))
 
 class IView(object):
     """
@@ -66,7 +65,7 @@ class IView(object):
         Key event notification
         @param code: scan code
         """
-        raise CallPureVirtualFuntion("%s:%s defined by interface %s"%(self.__class__, "keyEvent", "IView"))
+        raise NotImplementedError("%s:%s defined by interface %s"%(self.__class__, "keyEvent", "IView"))
 
     def pointerEvent(self, x, y, button):
         """
@@ -75,7 +74,7 @@ class IView(object):
         @param y: y position
         @param button: button pressed
         """
-        raise CallPureVirtualFuntion("%s:%s defined by interface %s"%(self.__class__, "pointerEvent", "IView"))
+        raise NotImplementedError("%s:%s defined by interface %s"%(self.__class__, "pointerEvent", "IView"))
 
     def update(self, render, force = False):
         """
@@ -83,7 +82,7 @@ class IView(object):
         @param render: IRender
         @param force: force update
         """
-        raise CallPureVirtualFuntion("%s:%s defined by interface %s"%(self.__class__, "update", "IView"))
+        raise NotImplementedError("%s:%s defined by interface %s"%(self.__class__, "update", "IView"))
 
 
 class Anchor(IView):

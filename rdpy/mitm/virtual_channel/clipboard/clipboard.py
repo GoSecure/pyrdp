@@ -13,7 +13,7 @@ class MITMClipboardChannelObserver(Observer):
 
     def __init__(self, layer, recorder, mode, **kwargs):
         """
-        :type layer: rdpy.core.newlayer.Layer
+        :type layer: rdpy.core.layer.Layer
         :type recorder: rdpy.recording.recorder.Recorder
         :type mode: rdpy.enum.core.ParserMode
         """

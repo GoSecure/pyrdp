@@ -1,8 +1,6 @@
 #!/usr/bin/env python2
 import struct
 
-from rdpy.core import log
-
 
 class Integer:
     @classmethod

@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
-from rdpy.core.newlayer import Layer
+from rdpy.core.layer import Layer
 from rdpy.pdu.mcs import MCSSendDataRequestPDU, MCSSendDataIndicationPDU
 
 

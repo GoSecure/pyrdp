@@ -1,4 +1,4 @@
-from rdpy.core.newlayer import Layer
+from rdpy.core.layer import Layer
 from rdpy.enum.virtual_channel.virtual_channel import ChannelFlag
 from rdpy.parser.rdp.virtual_channel.virtual_channel import VirtualChannelParser
 from rdpy.pdu.rdp.virtual_channel.virtual_channel import VirtualChannelPDU
@@ -11,7 +11,7 @@ class VirtualChannelLayer(Layer):
     """
 
     def __init__(self):
-        super(VirtualChannelLayer, self).__init__()
+        Layer.__init__(self)
         self.virtualChannelParser = VirtualChannelParser()
         self.pduBuffer = ""
 

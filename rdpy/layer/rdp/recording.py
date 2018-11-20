@@ -1,7 +1,7 @@
 import time
 from StringIO import StringIO
 
-from rdpy.core.newlayer import Layer
+from rdpy.core.layer import Layer
 from rdpy.core.packing import Uint8, Uint64LE
 from rdpy.pdu.rdp.recording import RDPPlayerMessagePDU
 
@@ -13,7 +13,7 @@ class RDPPlayerMessageTypeLayer(Layer):
     """
 
     def __init__(self):
-        super(RDPPlayerMessageTypeLayer, self).__init__()
+        Layer.__init__(self)
         self.messageType = None
 
     def recv(self, data):

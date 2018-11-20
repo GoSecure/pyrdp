@@ -1,4 +1,4 @@
-class Subject(object):
+class Subject:
     """
     Base class for objects that can have observers.
     """

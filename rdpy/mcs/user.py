@@ -27,7 +27,7 @@ class MCSUser(Subject):
         :param router: the MCS router
         :param factory: the channel factory
         """
-        super(MCSUser, self).__init__()
+        Subject.__init__(self)
         self.userID = None
         self.factory = factory
         self.channels = {}

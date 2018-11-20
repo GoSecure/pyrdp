@@ -1,6 +1,6 @@
 from rdpy.core import log
 
-from rdpy.core.newlayer import Layer
+from rdpy.core.layer import Layer
 from rdpy.layer.rdp.data import RDPBaseDataLayer
 from rdpy.layer.rdp.recording import RDPPlayerMessageTypeLayer
 from rdpy.layer.tpkt import TPKTLayer
@@ -48,7 +48,7 @@ class FileLayer(Layer):
         """
         :type fileHandle: BinaryIO
         """
-        super(FileLayer, self).__init__()
+        Layer.__init__(self)
         self.file_descriptor = fileHandle
 
     def send(self, data):
@@ -69,7 +69,7 @@ class SocketLayer(Layer):
         """
         :type socket: socket.socket
         """
-        super(SocketLayer, self).__init__()
+        Layer.__init__(self)
         self.socket = socket
         self.isConnected = True
 

@@ -20,7 +20,8 @@
 import md5
 import sha
 
-from rdpy.core.type import StringStream, UInt32Le
+from rdpy.core.packing import Uint32LE
+from rdpy.core.stream import ByteStream
 from rdpy.crypto import rc4
 from rdpy.enum.rdp import EncryptionMethod
 
@@ -113,8 +114,8 @@ def macData(macKey, data):
     sha1Digest = sha.new()
     md5Digest = md5.new()
 
-    dataLength = StringStream()
-    dataLength.writeType(UInt32Le(len(data)))
+    dataLength = ByteStream()
+    Uint32LE.pack(len(data), dataLength)
 
     sha1Digest.update(macKey)
     sha1Digest.update("\x36" * 40)
@@ -145,11 +146,11 @@ def macSaltedData(macKey, data, encryptionCount):
     sha1Digest = sha.new()
     md5Digest = md5.new()
 
-    dataLengthS = StringStream()
-    dataLengthS.writeType(UInt32Le(len(data)))
+    dataLengthS = ByteStream()
+    Uint32LE.pack(len(data), dataLengthS)
 
-    encryptionCountS = StringStream()
-    encryptionCountS.writeType(UInt32Le(encryptionCount))
+    encryptionCountS = ByteStream()
+    Uint32LE.pack(encryptionCount, encryptionCountS)
 
     sha1Digest.update(macKey)
     sha1Digest.update("\x36" * 40)

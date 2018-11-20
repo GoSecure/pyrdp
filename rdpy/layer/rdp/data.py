@@ -1,5 +1,5 @@
 from rdpy.core import log
-from rdpy.core.newlayer import Layer, LayerStrictRoutedObserver, LayerObserver
+from rdpy.core.layer import Layer, LayerStrictRoutedObserver, LayerObserver
 from rdpy.core.subject import ObservedBy
 from rdpy.enum.rdp import RDPDataPDUType, RDPPlayerMessageType
 from rdpy.exceptions import UnknownPDUTypeError

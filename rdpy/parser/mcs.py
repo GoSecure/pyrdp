@@ -2,7 +2,6 @@ from StringIO import StringIO
 from collections import defaultdict
 
 from rdpy.core import ber, per
-from rdpy.core.error import InvalidValue
 from rdpy.core.packing import Uint8, Uint16BE
 from rdpy.enum.mcs import MCSChannelID, MCSPDUType
 from rdpy.exceptions import UnknownPDUTypeError, ParsingError
@@ -139,7 +138,7 @@ class MCSParser(Parser):
             # parsing fails.
             subHeight = per.readInteger(stream)
             subInterval = per.readInteger(stream)
-        except InvalidValue:
+        except ValueError:
             pass
 
         payload = stream.read()
