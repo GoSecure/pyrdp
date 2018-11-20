@@ -49,14 +49,9 @@ setup(name='rdpy',
     ],
     ext_modules=[Extension('rle', ['ext/rle.c'])],
     scripts=[
-            'bin/rdpy-rdpclient.py',
-            'bin/rdpy-rdphoneypot.py',
             'bin/rdpy-rdpmitm.py',
-            'bin/rdpy-rdpscreenshot.py',
-            'bin/rdpy-vncclient.py',
-            'bin/rdpy-vncscreenshot.py',
             'bin/rdpy-player.py'
-        ],
+    ],
     install_requires=[
             'twisted',
             'pyopenssl',
