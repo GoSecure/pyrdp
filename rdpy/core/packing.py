@@ -1,6 +1,9 @@
 #!/usr/bin/env python2
 import struct
 
+from rdpy.core import log
+
+
 class Integer:
     @classmethod
     def unpack(cls, data):
@@ -9,11 +12,14 @@ class Integer:
         :type data: str | file | StringIO.StringIO
         :return: int
         """
-        if isinstance(data, str):
-            return struct.unpack(cls.FORMAT, data)[0]
-        else:
-            length = {"b": 1, "h": 2, "i": 4}[cls.FORMAT[1].lower()]
-            return struct.unpack(cls.FORMAT, data.read(length))[0]
+        try:
+            if isinstance(data, str):
+                return struct.unpack(cls.FORMAT, data)[0]
+            else:
+                length = {"b": 1, "h": 2, "i": 4}[cls.FORMAT[1].lower()]
+                return struct.unpack(cls.FORMAT, data.read(length))[0]
+        except struct.error as e:
+            raise ValueError(e.message)
 
     @classmethod
     def pack(cls, value, stream = None):

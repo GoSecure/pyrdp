@@ -33,7 +33,9 @@ def ObservedBy(ObserverClass):
             """
             Creates a new observer by forwarding all keyword arguments to it.
             """
-            self.setObserver(ObserverClass(**kwargs))
+            observer = ObserverClass(**kwargs)
+            self.setObserver(observer)
+            return observer
 
         SubjectClass.createObserver = createObserver
         return SubjectClass

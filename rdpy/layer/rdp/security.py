@@ -54,7 +54,7 @@ class RDPSecurityLayer(Layer):
         """
         Create a security layer using the chosen encryption method and crypter.
         :type encryptionMethod: EncryptionMethod
-        :type crypter: RC4Crypter
+        :type crypter: RC4Crypter | RC4CrypterProxy
         :return: RDPSecurityLayer
         """
         if encryptionMethod in [EncryptionMethod.ENCRYPTION_40BIT, EncryptionMethod.ENCRYPTION_56BIT, EncryptionMethod.ENCRYPTION_128BIT]:
@@ -134,7 +134,7 @@ class RDPSecurityLayer(Layer):
 class TLSSecurityLayer(RDPSecurityLayer):
     """
     Security layer used when the connection uses TLS.
-    If securityHeadExpected, then the layer expects to receive a basic security header.
+    If securityHeadExpected is True, then the layer expects to receive a basic security header.
     Otherwise, the layer just forwards all the data it receives to the next layer.
     """
 

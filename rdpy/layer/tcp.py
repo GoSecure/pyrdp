@@ -61,7 +61,7 @@ class TCPLayer(Protocol, Layer):
         """
         Close the TCP connection.
         """
-        self.transport.loseConnection()
+        self.transport.abortConnection()
 
     def dataReceived(self, data):
         """

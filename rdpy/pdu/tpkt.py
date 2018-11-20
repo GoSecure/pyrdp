@@ -1,15 +1,16 @@
+from rdpy.enum.segmentation import SegmentationPDUType
 from rdpy.pdu.base_pdu import PDU
+from rdpy.pdu.segmentation import SegmentationPDU
 
 
-class TPKTPDU(PDU):
+class TPKTPDU(SegmentationPDU):
 
-    def __init__(self, header, payload):
+    def __init__(self, payload):
         """
-        :param header: usually 3
         :type payload: str
         """
-
         PDU.__init__(self, payload)
-        self.header = header
-        self.padding = 0  # Unused byte
-        self.length = len(payload) + 4
+        self.header = 3
+
+    def getSegmentationType(self):
+        return SegmentationPDUType.TPKT

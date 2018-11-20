@@ -3,14 +3,21 @@ from StringIO import StringIO
 from rdpy.core.packing import Uint8, Uint16BE
 from rdpy.exceptions import ParsingError
 from rdpy.parser.parser import Parser
+from rdpy.parser.segmentation import SegmentationParser
 from rdpy.pdu.tpkt import TPKTPDU
 
 
-class TPKTParser(Parser):
+class TPKTParser(SegmentationParser):
     """
     Parser for TPKT traffic to read and write TPKT messages
     """
     def isCompletePDU(self, data):
+        """
+        Check if the PDU is fully contained in data.
+        :param data: the data.
+        :type data: str
+        :return: bool
+        """
         if len(data) < 4:
             return False
 
@@ -18,9 +25,21 @@ class TPKTParser(Parser):
         return len(data) >= length
 
     def isTPKTPDU(self, data):
+        """
+        Check if the PDU in data is a TPKT PDU.
+        :param data: the data.
+        :type data: str
+        :return: bool
+        """
         return Uint8.unpack(data[0]) == 3
 
     def getPDULength(self, data):
+        """
+        Get the length of the PDU contained in data.
+        :param data: the PDU data.
+        :type data: str
+        :return: int
+        """
         return Uint16BE.unpack(data[2 : 4])
 
     def getPDULengthWithSocket(self, socket):
@@ -46,7 +65,7 @@ class TPKTParser(Parser):
         if len(payload) != length - 4:
             raise ParsingError("Payload is too short for TPKT length field")
 
-        return TPKTPDU(version, payload)
+        return TPKTPDU(payload)
 
     def write(self, pdu):
         """
@@ -57,8 +76,8 @@ class TPKTParser(Parser):
 
         stream = StringIO()
         stream.write(Uint8.pack(pdu.header))
-        stream.write(Uint8.pack(pdu.padding))
-        stream.write(Uint16BE.pack(pdu.length))
+        stream.write("\x00")
+        stream.write(Uint16BE.pack(len(pdu.payload) + 4))
         stream.write(pdu.payload)
 
         return stream.getvalue()
