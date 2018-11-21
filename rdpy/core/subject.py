@@ -1,17 +1,28 @@
+from rdpy.core.observer import CompositeObserver
+
+
 class Subject:
     """
     Base class for objects that can have observers.
     """
     def __init__(self):
-        self.observer = None
-    
-    def setObserver(self, observer):
+        self.observer = CompositeObserver()
+
+    def addObserver(self, observer):
         """
-        Set this object's observer.
+        Add an observer to this subject.
         :param observer: the observer.
         :type observer: rdpy.core.observer.Observer
         """
-        self.observer = observer
+        return self.observer.addObserver(observer)
+
+    def removeObserver(self, observer):
+        """
+        Remove an observer from this subject.
+        :param observer: the observer.
+        :type observer: rdpy.core.observer.Observer
+        """
+        return self.observer.removeObserver(observer)
 
 def ObservedBy(ObserverClass):
     """
@@ -34,7 +45,7 @@ def ObservedBy(ObserverClass):
             Creates a new observer by forwarding all keyword arguments to it.
             """
             observer = ObserverClass(**kwargs)
-            self.setObserver(observer)
+            self.addObserver(observer)
             return observer
 
         SubjectClass.createObserver = createObserver

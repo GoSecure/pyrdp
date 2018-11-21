@@ -50,7 +50,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.serverData = None
         self.crypter = RC4CrypterProxy()
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.CLIENT)
-        self.securitySettings.setObserver(self.crypter)
+        self.securitySettings.addObserver(self.crypter)
         self.log = logging.getLogger("mitm.client.%s" % server.getFriendlyName())
 
         self.tcp = TCPLayer()
@@ -66,7 +66,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
         self.mcs = MCSLayer()
         self.router = MCSClientRouter(self.mcs, self)
-        self.mcs.setObserver(self.router)
+        self.mcs.addObserver(self.router)
         self.router.createObserver(onConnectResponse=self.onConnectResponse, onDisconnectProviderUltimatum=self.onDisconnectProviderUltimatum)
 
         self.mcsConnect = MCSClientConnectionLayer(self.mcs)
@@ -190,7 +190,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
     def onAttachUserRequest(self):
         self.user = self.router.createUser()
-        self.user.setObserver(self)
+        self.user.addObserver(self)
         self.user.attach()
 
     def onAttachConfirmed(self, user):
@@ -236,7 +236,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         securityLayer.setNext(rawLayer)
 
         observer = MITMVirtualChannelObserver(rawLayer)
-        rawLayer.setObserver(observer)
+        rawLayer.addObserver(observer)
         self.channelObservers[channelID] = observer
 
         return channel
@@ -261,7 +261,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
         # Create and link the MITM Observer for the client side to the clipboard layer.
         observer = MITMClientClipboardChannelObserver(clipboardLayer,  self.recorder)
-        clipboardLayer.setObserver(observer)
+        clipboardLayer.addObserver(observer)
 
         self.channelObservers[channelID] = observer
 
@@ -273,13 +273,13 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.securityLayer.createObserver(onLicensingDataReceived=self.onLicensingDataReceived)
 
         slowPathObserver = MITMSlowPathObserver(self.log, self.io, self.recorder, ParserMode.CLIENT)
-        self.io.setObserver(slowPathObserver)
+        self.io.addObserver(slowPathObserver)
         self.channelObservers[channelID] = slowPathObserver
 
         fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, self.crypter, ParserMode.CLIENT)
         self.fastPathLayer = FastPathLayer(fastPathParser)
         self.fastPathObserver = MITMFastPathObserver(self.log, self.fastPathLayer, self.recorder, ParserMode.CLIENT)
-        self.fastPathLayer.setObserver(self.fastPathObserver)
+        self.fastPathLayer.addObserver(self.fastPathObserver)
 
         channel = MCSClientChannel(mcs, userID, channelID)
         channel.setNext(self.securityLayer)

@@ -48,7 +48,7 @@ class Reader(Observer):
         self.tpkt_layer = TPKTLayer()
         self.rdp_player_event_type_layer = RDPPlayerMessageTypeLayer()
         self.tpkt_layer.setNext(self.rdp_player_event_type_layer)
-        self.rdp_player_event_type_layer.setObserver(self)
+        self.rdp_player_event_type_layer.addObserver(self)
         self._events_queue = Queue()
         self.rdp_server_fastpath_parser = RDPBasicFastPathParser(ParserMode.SERVER)
         self.rdp_client_fastpath_parser = RDPBasicFastPathParser(ParserMode.CLIENT)

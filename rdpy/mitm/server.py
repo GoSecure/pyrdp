@@ -63,7 +63,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.rc4RSAKey = RSA.generate(2048)
         self.crypter = RC4CrypterProxy()
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.SERVER)
-        self.securitySettings.setObserver(self.crypter)
+        self.securitySettings.addObserver(self.crypter)
         self.supportedChannels = []
         self.socket = None
         self.fileHandle = open("out/rdp_replay_{}_{}.rdpy".format(datetime.datetime.now().strftime('%Y%m%d_%H_%M%S'), random.randint(0, 1000)), "wb")
@@ -84,7 +84,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
         self.mcs = MCSLayer()
         self.router = MCSServerRouter(self.mcs, self)
-        self.mcs.setObserver(self.router)
+        self.mcs.addObserver(self.router)
         self.router.createObserver(
             onConnectionReceived=self.onConnectInitial,
             onDisconnectProviderUltimatum=self.onDisconnectProviderUltimatum,
@@ -334,7 +334,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         peer = self.client.getChannelObserver(channelID)
         observer = MITMVirtualChannelObserver(rawLayer)
         observer.setPeer(peer)
-        rawLayer.setObserver(observer)
+        rawLayer.addObserver(observer)
 
         return channel
 
@@ -361,7 +361,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         peer = self.client.getChannelObserver(channelID)
         observer = MITMServerClipboardChannelObserver(clipboardLayer, self.recorder)
         observer.setPeer(peer)
-        clipboardLayer.setObserver(observer)
+        clipboardLayer.addObserver(observer)
 
         return channel
 
@@ -378,13 +378,13 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         slowPathObserver.setDataHandler(RDPDataPDUSubtype.PDUTYPE2_INPUT, self.onInputPDUReceived)
         clientObserver = self.client.getChannelObserver(channelID)
         slowPathObserver.setPeer(clientObserver)
-        self.io.setObserver(slowPathObserver)
+        self.io.addObserver(slowPathObserver)
 
         fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, self.crypter, ParserMode.SERVER)
         self.fastPathLayer = FastPathLayer(fastPathParser)
         fastPathObserver = MITMFastPathObserver(self.log, self.fastPathLayer, self.recorder, mode=ParserMode.SERVER)
         fastPathObserver.setPeer(self.client.getFastPathObserver())
-        self.fastPathLayer.setObserver(fastPathObserver)
+        self.fastPathLayer.addObserver(fastPathObserver)
 
         channel = MCSServerChannel(mcs, userID, channelID)
         channel.setNext(self.securityLayer)
