@@ -35,7 +35,7 @@ from rdpy.layer.tpkt import TPKTLayer
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.data import RDPDataParser
 from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser
-from rdpy.parser.rdp.virtual_channel.clipboard.clipboard import ClipboardParser
+from rdpy.parser.rdp.virtual_channel.clipboard import ClipboardParser
 
 
 class Reader(Observer):

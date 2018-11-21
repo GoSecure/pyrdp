@@ -1,5 +1,5 @@
 from rdpy.core.layer import Layer
-from rdpy.parser.rdp.virtual_channel.clipboard.clipboard import ClipboardParser
+from rdpy.parser.rdp.virtual_channel.clipboard import ClipboardParser
 
 
 class ClipboardLayer(Layer):

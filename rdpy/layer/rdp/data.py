@@ -5,7 +5,7 @@ from rdpy.enum.rdp import RDPDataPDUType, RDPPlayerMessageType
 from rdpy.exceptions import UnknownPDUTypeError
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.data import RDPDataParser
-from rdpy.parser.rdp.virtual_channel.clipboard.clipboard import ClipboardParser
+from rdpy.parser.rdp.virtual_channel.clipboard import ClipboardParser
 from rdpy.pdu.rdp.data import RDPDemandActivePDU
 
 

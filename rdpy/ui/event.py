@@ -109,7 +109,7 @@ class RSSEventHandler:
 
     def handle_clipboard_data(self, pdu):
         """
-        :type pdu: rdpy.pdu.rdp.virtual_channel.clipboard.paste.FormatDataResponsePDU
+        :type pdu: rdpy.pdu.rdp.virtual_channel.clipboard.FormatDataResponsePDU
         """
         self._text.insertPlainText("\n=============\n")
         self._text.insertPlainText("CLIPBOARD DATA: {}".format(pdu.requestedFormatData.replace("\x00", "")))

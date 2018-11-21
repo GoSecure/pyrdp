@@ -3,7 +3,7 @@ import logging
 from rdpy.core.observer import Observer
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import RDPPlayerMessageType
-from rdpy.pdu.rdp.virtual_channel.clipboard.paste import FormatDataResponsePDU
+from rdpy.pdu.rdp.virtual_channel.clipboard import FormatDataResponsePDU
 
 
 class MITMClipboardChannelObserver(Observer):

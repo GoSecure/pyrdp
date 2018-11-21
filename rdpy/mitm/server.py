@@ -19,7 +19,7 @@ from rdpy.layer.raw import RawLayer
 from rdpy.layer.rdp.data import RDPDataLayer
 from rdpy.layer.rdp.fastpath import FastPathLayer
 from rdpy.layer.rdp.security import TLSSecurityLayer, RDPSecurityLayer
-from rdpy.layer.rdp.virtual_channel.clipboard.clipboard import ClipboardLayer
+from rdpy.layer.rdp.virtual_channel.clipboard import ClipboardLayer
 from rdpy.layer.rdp.virtual_channel.virtual_channel import VirtualChannelLayer
 from rdpy.layer.segmentation import SegmentationLayer
 from rdpy.layer.tcp import TCPLayer
@@ -30,7 +30,7 @@ from rdpy.mcs.server import MCSServerRouter
 from rdpy.mcs.user import MCSUserObserver
 from rdpy.mitm.client import MITMClient
 from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver
-from rdpy.mitm.virtual_channel.clipboard.clipboard import MITMServerClipboardChannelObserver
+from rdpy.mitm.virtual_channel.clipboard import MITMServerClipboardChannelObserver
 from rdpy.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
 from rdpy.parser.gcc import GCCParser
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
