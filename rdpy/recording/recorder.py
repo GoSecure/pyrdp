@@ -2,7 +2,7 @@ from rdpy.core import log
 
 from rdpy.core.layer import Layer
 from rdpy.layer.rdp.data import RDPBaseDataLayer
-from rdpy.layer.rdp.recording import RDPPlayerMessageTypeLayer
+from rdpy.layer.recording import RDPPlayerMessageTypeLayer
 from rdpy.layer.tpkt import TPKTLayer
 
 

@@ -30,7 +30,7 @@ from rdpy.core.observer import Observer
 from rdpy.core.stream import ByteStream
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import RDPPlayerMessageType
-from rdpy.layer.rdp.recording import RDPPlayerMessageTypeLayer
+from rdpy.layer.recording import RDPPlayerMessageTypeLayer
 from rdpy.layer.tpkt import TPKTLayer
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.data import RDPDataParser
