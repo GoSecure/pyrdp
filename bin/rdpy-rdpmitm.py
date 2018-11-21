@@ -97,7 +97,7 @@ def prepare_loggers():
     formatter = logging.Formatter("[%(asctime)s] - %(name)s - %(levelname)s - %(message)s")
 
     stream_handler = logging.StreamHandler()
-    file_handler = logging.handlers.WatchedFileHandler("log/mitm.log")
+    file_handler = logging.handlers.RotatingFileHandler("log/mitm.log", maxBytes=10 * 1024 * 1024, backupCount=10)
     stream_handler.setFormatter(formatter)
     file_handler.setFormatter(formatter)
     mitm_logger.addHandler(stream_handler)
