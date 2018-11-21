@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 import argparse
 import logging
+import logging.handlers
 import os
 import random
 import sys
@@ -96,7 +97,7 @@ def prepare_loggers():
     formatter = logging.Formatter("[%(asctime)s] - %(name)s - %(levelname)s - %(message)s")
 
     stream_handler = logging.StreamHandler()
-    file_handler = logging.FileHandler("log/mitm.log")
+    file_handler = logging.handlers.WatchedFileHandler("log/mitm.log")
     stream_handler.setFormatter(formatter)
     file_handler.setFormatter(formatter)
     mitm_logger.addHandler(stream_handler)
