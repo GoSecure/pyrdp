@@ -31,7 +31,7 @@ class MITMClipboardChannelObserver(Observer):
         """
         Set this observer's peer observer.
         :param peer: other observer.
-        :type peer: rdpy.mitm.virtual_channel.clipboard.clipboard.MITMClipboardChannelObserver
+        :type peer: rdpy.mitm.virtual_channel.clipboard.MITMClipboardChannelObserver
         """
         self.peer = peer
         peer.peer = self
@@ -40,7 +40,7 @@ class MITMClipboardChannelObserver(Observer):
         """
         Called when a PDU on the observed layer is received.
         :param pdu: the PDU that was received.
-        :type pdu: rdpy.pdu.rdp.virtual_channel.clipboard.clipboard.ClipboardPDU
+        :type pdu: rdpy.pdu.rdp.virtual_channel.clipboard.ClipboardPDU
         """
 
         self.mitm_log.debug("PDU received: {}".format(str(pdu.msgType)))
@@ -51,7 +51,7 @@ class MITMClipboardChannelObserver(Observer):
     def sendPDU(self, pdu):
         """
         Send a clipboard PDU through the layer.
-        :type pdu: rdpy.pdu.rdp.virtual_channel.clipboard.clipboard.ClipboardPDU
+        :type pdu: rdpy.pdu.rdp.virtual_channel.clipboard.ClipboardPDU
         """
         self.layer.send(pdu)
 
@@ -68,7 +68,7 @@ class MITMClientClipboardChannelObserver(MITMClipboardChannelObserver):
         Make sure that the response to this request is NOT transferred to the server, as it can make
         the connection crash.
         For every other messages, just transfer the message normally.
-        :type pdu: rdpy.pdu.rdp.virtual_channel.clipboard.clipboard.ClipboardPDU
+        :type pdu: rdpy.pdu.rdp.virtual_channel.clipboard.ClipboardPDU
         """
         MITMClipboardChannelObserver.onPDUReceived(self, pdu)
         if pdu.msgType == ClipboardMessageType.CB_FORMAT_LIST_RESPONSE:
@@ -102,7 +102,7 @@ class MITMServerClipboardChannelObserver(MITMClipboardChannelObserver):
         Log and record every FormatDataResponsePDU (clipboard data).
         Transfer only the FormatDataResponsePDU if it didn't originate from the MITM.
         For the other PDUs, just transfer it.
-        :type pdu: rdpy.pdu.rdp.virtual_channel.clipboard.clipboard.ClipboardPDU
+        :type pdu: rdpy.pdu.rdp.virtual_channel.clipboard.ClipboardPDU
         """
         if self.forwardNextDataResponse:
             MITMClipboardChannelObserver.onPDUReceived(self, pdu)

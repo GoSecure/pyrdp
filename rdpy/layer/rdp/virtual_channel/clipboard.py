@@ -21,6 +21,6 @@ class ClipboardLayer(Layer):
 
     def send(self, pdu):
         """
-        :type pdu: rdpy.pdu.rdp.virtual_channel.clipboard.clipboard.ClipboardPDU
+        :type pdu: rdpy.pdu.rdp.virtual_channel.clipboard.ClipboardPDU
         """
         self.previous.send(self.clipboardParser.write(pdu))

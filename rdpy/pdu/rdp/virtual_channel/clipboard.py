@@ -21,7 +21,7 @@ class FormatDataRequestPDU(ClipboardPDU):
 
     def __init__(self, requestedFormatId):
         """
-        :type requestedFormatId: rdpy.enum.clipboard.clipboard.ClipboardFormat
+        :type requestedFormatId: rdpy.enum.clipboard.ClipboardFormat
         """
         ClipboardPDU.__init__(self, ClipboardMessageType.CB_FORMAT_DATA_REQUEST, 0x0000)
         self.requestedFormatId = requestedFormatId
