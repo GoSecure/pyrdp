@@ -156,7 +156,7 @@ class RDPSignedFastPathParser(RDPBasicFastPathParser):
     def __init__(self, crypter, mode):
         RDPBasicFastPathParser.__init__(self, mode)
         self.crypter = crypter
-        self.eventData = ""
+        self.eventData = b""
 
     def parse(self, data):
         stream = StringIO(data)
@@ -189,7 +189,7 @@ class RDPSignedFastPathParser(RDPBasicFastPathParser):
     def writePayload(self, stream, pdu):
         eventData = self.crypter.encrypt(self.eventData)
         self.crypter.addEncryption()
-        self.eventData = ""
+        self.eventData = b""
 
         stream.write(eventData)
 

@@ -84,7 +84,7 @@ class MCSClientRouter(MCSRouter, Subject):
         :param userID: the user ID that will join the channel
         :param channelID: the channel ID
         """
-        pdu = MCSChannelJoinRequestPDU(userID, channelID, "")
+        pdu = MCSChannelJoinRequestPDU(userID, channelID, b"")
         self.mcs.send(pdu)
     
     # PDU handlers

@@ -91,11 +91,11 @@ class RDPClientConnectionParser(Parser):
         sasSequence = Uint16LE.unpack(stream)
         keyboardLayout = Uint32LE.unpack(stream)
         clientBuild = Uint32LE.unpack(stream)
-        clientName = stream.read(32).decode("utf-16le").strip("\x00")
+        clientName = stream.read(32).decode("utf-16le").strip(b"\x00")
         keyboardType = KeyboardType(Uint32LE.unpack(stream))
         keyboardSubType = Uint32LE.unpack(stream)
         keyboardFunctionKey = Uint32LE.unpack(stream)
-        imeFileName = stream.read(64).decode("utf-16le").strip("\x00")
+        imeFileName = stream.read(64).decode("utf-16le").strip(b"\x00")
 
         core = ClientCoreData(version, desktopWidth, desktopHeight, colorDepth, sasSequence, keyboardLayout, clientBuild, clientName, keyboardType, keyboardSubType, keyboardFunctionKey, imeFileName)
 
@@ -108,7 +108,7 @@ class RDPClientConnectionParser(Parser):
             core.highColorDepth = HighColorDepth(Uint16LE.unpack(stream))
             core.supportedColorDepths = Uint16LE.unpack(stream)
             core.earlyCapabilityFlags = Uint16LE.unpack(stream)
-            core.clientDigProductId = stream.read(64).decode("utf-16le").strip("\x00")
+            core.clientDigProductId = stream.read(64).decode("utf-16le").strip(b"\x00")
             core.connectionType = ConnectionType(Uint8.unpack(stream))
             core.pad1octet = stream.read(1)
             core.serverSelectedProtocol = Uint32LE.unpack(stream)
@@ -138,7 +138,7 @@ class RDPClientConnectionParser(Parser):
         channelDefinitions = []
 
         for _ in range(channelCount):
-            name = stream.read(8).strip("\x00")
+            name = stream.read(8).strip(b"\x00")
             options = Uint32LE.unpack(stream)
             channelDefinitions.append(ClientChannelDefinition(name, options))
 
@@ -193,11 +193,11 @@ class RDPClientConnectionParser(Parser):
         stream.write(Uint16LE.pack(core.sasSequence))
         stream.write(Uint32LE.pack(core.keyboardLayout))
         stream.write(Uint32LE.pack(core.clientBuild))
-        stream.write(core.clientName.encode("utf-16le").ljust(32, "\x00")[: 32])
+        stream.write(core.clientName.encode("utf-16le").ljust(32, b"\x00")[: 32])
         stream.write(Uint32LE.pack(core.keyboardType))
         stream.write(Uint32LE.pack(core.keyboardSubType))
         stream.write(Uint32LE.pack(core.keyboardFunctionKey))
-        stream.write(core.imeFileName.encode("utf-16le").ljust(64, "\x00")[: 64])
+        stream.write(core.imeFileName.encode("utf-16le").ljust(64, b"\x00")[: 64])
 
         try:
             stream.write(Uint16LE.pack(core.postBeta2ColorDepth))
@@ -206,9 +206,9 @@ class RDPClientConnectionParser(Parser):
             stream.write(Uint16LE.pack(core.highColorDepth))
             stream.write(Uint16LE.pack(core.supportedColorDepths))
             stream.write(Uint16LE.pack(core.earlyCapabilityFlags))
-            stream.write(core.clientDigProductId.encode("utf-16le").ljust(64, "\x00")[: 64])
+            stream.write(core.clientDigProductId.encode("utf-16le").ljust(64, b"\x00")[: 64])
             stream.write(Uint8.pack(core.connectionType))
-            stream.write("\x00")
+            stream.write(b"\x00")
             stream.write(Uint32LE.pack(core.serverSelectedProtocol))
             stream.write(Uint32LE.pack(core.desktopPhysicalWidth))
             stream.write(Uint32LE.pack(core.desktopPhysicalHeight))
@@ -230,7 +230,7 @@ class RDPClientConnectionParser(Parser):
             if len(channel.name) > 8:
                 raise ParsingError("Channel name must have 8 characters maximum")
 
-            stream.write(channel.name.ljust(8, "\x00")[: 8])
+            stream.write(channel.name.ljust(8, b"\x00")[: 8])
             stream.write(Uint32LE.pack(channel.options))
 
     def writeClientClusterData(self, stream, cluster):
@@ -477,7 +477,7 @@ class RDPServerConnectionParser(Parser):
         Uint16LE.pack(cert.signatureType, stream)
         Uint16LE.pack(len(cert.signature) + 8, stream)
         stream.write(cert.signature)
-        stream.write("\x00" * 8)
+        stream.write(b"\x00" * 8)
 
     def writePublicKey(self, publicKey):
         modulus = publicKey.n
@@ -487,11 +487,11 @@ class RDPServerConnectionParser(Parser):
         modulusBytes = long_to_bytes(modulus)[:: -1]
 
         stream = StringIO()
-        stream.write("RSA1")
+        stream.write(b"RSA1")
         Uint32LE.pack(len(modulusBytes) + 8, stream)
         Uint32LE.pack(2048, stream)
         Uint32LE.pack(255, stream)
         Uint32LE.pack(publicExponent, stream)
         stream.write(modulusBytes)
-        stream.write("\x00" * 8)
+        stream.write(b"\x00" * 8)
         return stream.getvalue()

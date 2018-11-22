@@ -13,7 +13,7 @@ class VirtualChannelLayer(Layer):
     def __init__(self):
         Layer.__init__(self)
         self.virtualChannelParser = VirtualChannelParser()
-        self.pduBuffer = ""
+        self.pduBuffer = b""
 
     def recv(self, data):
         """

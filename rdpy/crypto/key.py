@@ -16,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
-
-import md5
-import sha
+import hashlib
 
 from rdpy.core.packing import Uint32LE
 from rdpy.core.stream import ByteStream
@@ -41,8 +39,8 @@ def saltedHash(inputData, salt, salt1, salt2):
     :type salt2: str
     :return: str
     """
-    sha1Digest = sha.new()
-    md5Digest = md5.new()
+    sha1Digest = hashlib.sha1()
+    md5Digest = hashlib.md5()
 
     sha1Digest.update(inputData)
     sha1Digest.update(salt[:48])
@@ -67,7 +65,7 @@ def finalHash(key, random1, random2):
     :type random2: str
     :return: MD5(in0[:16] + in1[:32] + in2[:32])
     """
-    md5Digest = md5.new()
+    md5Digest = hashlib.md5()
     md5Digest.update(key)
     md5Digest.update(random1)
     md5Digest.update(random2)
@@ -85,7 +83,7 @@ def generateMasterSecret(preMasterSecret, clientRandom, serverRandom):
     :param serverRandom: server random
     :type serverRandom: str
     """
-    return saltedHash("A", preMasterSecret, clientRandom, serverRandom) + saltedHash("BB", preMasterSecret, clientRandom, serverRandom) + saltedHash("CCC", preMasterSecret, clientRandom, serverRandom)
+    return saltedHash(b"A", preMasterSecret, clientRandom, serverRandom) + saltedHash(b"BB", preMasterSecret, clientRandom, serverRandom) + saltedHash(b"CCC", preMasterSecret, clientRandom, serverRandom)
 
 
 def generateSessionKeyBlob(masterSecret, clientRandom, serverRandom):
@@ -98,7 +96,7 @@ def generateSessionKeyBlob(masterSecret, clientRandom, serverRandom):
     :param serverRandom: server random
     :type serverRandom: str
     """
-    return saltedHash("X", masterSecret, clientRandom, serverRandom) + saltedHash("YY", masterSecret, clientRandom, serverRandom) + saltedHash("ZZZ", masterSecret, clientRandom, serverRandom)
+    return saltedHash(b"X", masterSecret, clientRandom, serverRandom) + saltedHash(b"YY", masterSecret, clientRandom, serverRandom) + saltedHash(b"ZZZ", masterSecret, clientRandom, serverRandom)
 
 
 def macData(macKey, data):
@@ -111,21 +109,21 @@ def macData(macKey, data):
     :type data: str
     :return: str
     """
-    sha1Digest = sha.new()
-    md5Digest = md5.new()
+    sha1Digest = hashlib.sha1()
+    md5Digest = hashlib.md5()
 
     dataLength = ByteStream()
     Uint32LE.pack(len(data), dataLength)
 
     sha1Digest.update(macKey)
-    sha1Digest.update("\x36" * 40)
+    sha1Digest.update(b"\x36" * 40)
     sha1Digest.update(dataLength.getvalue())
     sha1Digest.update(data)
 
     sha1Sig = sha1Digest.digest()
 
     md5Digest.update(macKey)
-    md5Digest.update("\x5c" * 48)
+    md5Digest.update(b"\x5c" * 48)
     md5Digest.update(sha1Sig)
 
     return md5Digest.digest()
@@ -143,8 +141,8 @@ def macSaltedData(macKey, data, encryptionCount):
     :type encryptionCount: int
     :return: str
     """
-    sha1Digest = sha.new()
-    md5Digest = md5.new()
+    sha1Digest = hashlib.sha1()
+    md5Digest = hashlib.md5()
 
     dataLengthS = ByteStream()
     Uint32LE.pack(len(data), dataLengthS)
@@ -153,7 +151,7 @@ def macSaltedData(macKey, data, encryptionCount):
     Uint32LE.pack(encryptionCount, encryptionCountS)
 
     sha1Digest.update(macKey)
-    sha1Digest.update("\x36" * 40)
+    sha1Digest.update(b"\x36" * 40)
     sha1Digest.update(dataLengthS.getvalue())
     sha1Digest.update(data)
     sha1Digest.update(encryptionCountS.getvalue())
@@ -161,7 +159,7 @@ def macSaltedData(macKey, data, encryptionCount):
     sha1Sig = sha1Digest.digest()
 
     md5Digest.update(macKey)
-    md5Digest.update("\x5c" * 48)
+    md5Digest.update(b"\x5c" * 48)
     md5Digest.update(sha1Sig)
 
     return md5Digest.digest()
@@ -175,17 +173,17 @@ def tempKey(initialKey, currentKey):
     :param currentKey: current key.
     :return: str
     """
-    sha1Digest = sha.new()
-    md5Digest = md5.new()
+    sha1Digest = hashlib.sha1()
+    md5Digest = hashlib.md5()
 
     sha1Digest.update(initialKey)
-    sha1Digest.update("\x36" * 40)
+    sha1Digest.update(b"\x36" * 40)
     sha1Digest.update(currentKey)
 
     sha1Sig = sha1Digest.digest()
 
     md5Digest.update(initialKey)
-    md5Digest.update("\x5c" * 48)
+    md5Digest.update(b"\x5c" * 48)
     md5Digest.update(sha1Sig)
 
     return md5Digest.digest()
@@ -199,7 +197,7 @@ def gen40bits(data):
     :type data: str
     :return: dict
     """
-    return "\xd1\x26\x9e" + data[:8][-5:]
+    return b"\xd1\x26\x9e" + data[:8][-5:]
 
 
 def gen56bits(data):
@@ -210,7 +208,7 @@ def gen56bits(data):
     :type data: str
     :return: str
     """
-    return "\xd1" + data[:8][-7:]
+    return b"\xd1" + data[:8][-7:]
 
 
 def generateKeys(clientRandom, serverRandom, method):

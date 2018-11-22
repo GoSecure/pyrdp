@@ -222,7 +222,7 @@ class MCSParser(Parser):
             payload = data[6 :]
         else:
             channelID = None
-            payload = ""
+            payload = b""
 
         initiator = Uint16BE.unpack(data[0 : 2]) + MCSChannelID.USERCHANNEL_BASE
         requested = Uint16BE.unpack(data[2 : 4])

@@ -46,18 +46,18 @@ class MCSErectDomainRequestPDU(MCSPDU):
 
 class MCSDisconnectProviderUltimatumPDU(MCSPDU):
     def __init__(self, reason):
-        MCSPDU.__init__(self, MCSPDUType.DISCONNECT_PROVIDER_ULTIMATUM, "")
+        MCSPDU.__init__(self, MCSPDUType.DISCONNECT_PROVIDER_ULTIMATUM, b"")
         self.reason = reason
 
 
 class MCSAttachUserRequestPDU(MCSPDU):
     def __init__(self):
-        MCSPDU.__init__(self, MCSPDUType.ATTACH_USER_REQUEST, "")
+        MCSPDU.__init__(self, MCSPDUType.ATTACH_USER_REQUEST, b"")
 
 
 class MCSAttachUserConfirmPDU(MCSPDU):
     def __init__(self, result, initiator = None):
-        MCSPDU.__init__(self, MCSPDUType.ATTACH_USER_CONFIRM, "")
+        MCSPDU.__init__(self, MCSPDUType.ATTACH_USER_CONFIRM, b"")
         self.result = result
         self.initiator = initiator
 

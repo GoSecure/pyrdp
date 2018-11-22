@@ -38,7 +38,7 @@ class PointerEventParser(Parser):
     def write(self, event):
         stream = StringIO()
         Uint16LE.pack(event.messageType, stream)
-        stream.write("\x00" * 2)
+        stream.write(b"\x00" * 2)
 
         if event.messageType not in self.writers:
             raise ParsingError("Trying to write invalid pointer event type")
@@ -84,7 +84,7 @@ class PointerEventParser(Parser):
         Uint16LE.pack(len(event.xorMask), stream)
         stream.write(event.xorMask)
         stream.write(event.andMask)
-        stream.write("\x00")
+        stream.write(b"\x00")
 
     def parseCacheEvent(self, stream):
         cacheIndex = Uint16LE.unpack(stream)

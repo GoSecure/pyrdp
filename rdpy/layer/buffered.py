@@ -9,7 +9,7 @@ class BufferedLayer(Layer):
         """
         Layer.__init__(self)
         self.parser = parser
-        self.buffer = ""
+        self.buffer = b""
 
     def getDataLengthRequired(self):
         """
@@ -19,7 +19,7 @@ class BufferedLayer(Layer):
         This should always return 0 if the buffer is empty.
         :return: int
         """
-        if self.buffer == "":
+        if self.buffer == b"":
             return 0
 
         try:
@@ -35,7 +35,7 @@ class BufferedLayer(Layer):
         while len(data) > 0:
             if not self.parser.isCompletePDU(data):
                 self.buffer = data
-                data = ""
+                data = b""
             else:
                 pduLength = self.parser.getPDULength(data)
                 pduData = data[: pduLength]
@@ -43,7 +43,7 @@ class BufferedLayer(Layer):
                 pdu = self.parser.parse(pduData)
                 self.pduReceived(pdu, True)
                 data = data[pduLength :]
-                self.buffer = ""
+                self.buffer = b""
 
     def sendPDU(self, pdu):
         data = self.parser.write(pdu)

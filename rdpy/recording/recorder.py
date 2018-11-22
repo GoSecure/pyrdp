@@ -57,7 +57,7 @@ class Recorder:
         if pdu:
             data = self.parsers[messageType].write(pdu)
         else:
-            data = ""
+            data = b""
 
         for layer in self.topLayers:
             layer.sendMessage(data, messageType)

@@ -127,7 +127,7 @@ class MCSServerRouter(MCSRouter, Subject):
             else:
                 self.users[userID].channelJoinRefused(result, channelID)
 
-        pdu = MCSChannelJoinConfirmPDU(result, userID, channelID, channelID, "")
+        pdu = MCSChannelJoinConfirmPDU(result, userID, channelID, channelID, b"")
         self.mcs.send(pdu)
 
     def onSendDataRequest(self, pdu):

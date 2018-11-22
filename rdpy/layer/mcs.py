@@ -45,8 +45,8 @@ class MCSClientConnectionLayer(Layer):
         """
         Layer.__init__(self)
         self.mcs = mcs
-        self.callingDomain = "\x01"
-        self.calledDomain = "\x01"
+        self.callingDomain = b"\x01"
+        self.calledDomain = b"\x01"
         self.upward = True
         self.targetParams = MCSDomainParams.createTarget(34, 2)
         self.minParams = MCSDomainParams.createMinimum()

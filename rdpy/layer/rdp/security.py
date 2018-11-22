@@ -107,7 +107,7 @@ class RDPSecurityLayer(Layer):
         :param clientRandom: the client random data.
         :type clientRandom: str
         """
-        pdu = RDPSecurityExchangePDU(RDPSecurityFlags.SEC_EXCHANGE_PKT, clientRandom + "\x00" * 8)
+        pdu = RDPSecurityExchangePDU(RDPSecurityFlags.SEC_EXCHANGE_PKT, clientRandom + b"\x00" * 8)
         data = self.securityParser.writeSecurityExchange(pdu)
         self.previous.send(data)
 

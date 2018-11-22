@@ -14,8 +14,8 @@ class GCCParser(Parser):
     """
 
     T124_02_98_OID = (0, 0, 20, 124, 0, 1)
-    H221_CLIENT_KEY = "Duca"
-    H221_SERVER_KEY = "McDn"
+    H221_CLIENT_KEY = b"Duca"
+    H221_SERVER_KEY = b"McDn"
     NODE_ID = 0x79f3
 
     def __init__(self):

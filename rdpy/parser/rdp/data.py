@@ -119,7 +119,7 @@ class RDPDataParser(Parser):
     def writeShareDataHeader(self, stream, header, dataLength):
         substream = StringIO()
         substream.write(Uint32LE.pack(header.shareID))
-        substream.write("\x00")
+        substream.write(b"\x00")
         substream.write(Uint8.pack(header.streamID))
         substream.write(Uint16LE.pack(header.uncompressedLength))
         substream.write(Uint8.pack(header.subtype))
@@ -148,7 +148,7 @@ class RDPDataParser(Parser):
         Uint16LE.pack(len(pdu.capabilitySets) + 4, stream)
         stream.write(pdu.sourceDescriptor)
         Uint16LE.pack(pdu.numberCapabilities, stream)
-        stream.write("\x00" * 2)
+        stream.write(b"\x00" * 2)
         stream.write(pdu.capabilitySets)
         Uint32LE.pack(pdu.sessionID, stream)
 
@@ -188,7 +188,7 @@ class RDPDataParser(Parser):
             capabilitySets[CapabilityType.CAPSTYPE_OFFSCREENCACHE] = \
                 self.parseOffscreenCacheCapability(capabilitySets[CapabilityType.CAPSTYPE_OFFSCREENCACHE].rawData)
 
-        capabilitySets[CapabilityType.CAPSTYPE_BITMAPCACHE] = Capability(CapabilityType.CAPSTYPE_BITMAPCACHE, "\x00"*36)
+        capabilitySets[CapabilityType.CAPSTYPE_BITMAPCACHE] = Capability(CapabilityType.CAPSTYPE_BITMAPCACHE, b"\x00" * 36)
 
         # Fully parse the Bitmap capability set
         capabilitySets[CapabilityType.CAPSTYPE_BITMAP] = \
@@ -332,7 +332,7 @@ class RDPDataParser(Parser):
         Uint16LE.pack(len(substream.getvalue()) + 4, stream)
         stream.write(pdu.sourceDescriptor)
         Uint16LE.pack(len(pdu.parsedCapabilitySets), stream)
-        stream.write("\x00" * 2)  # pad2octets
+        stream.write(b"\x00" * 2)  # pad2octets
         stream.write(substream.getvalue())
 
     def writeCapabilitySets(self, capabilitySets, substream):
@@ -395,7 +395,7 @@ class RDPDataParser(Parser):
 
     def writeInput(self, stream, pdu):
         Uint16LE.pack(len(pdu.events), stream)
-        stream.write("\x00" * 2)
+        stream.write(b"\x00" * 2)
 
         parser = RDPInputParser()
         for event in pdu.events:
@@ -430,7 +430,7 @@ class RDPDataParser(Parser):
 
     def writeSuppressOutput(self, stream, pdu):
         Uint8.pack(int(pdu.allowDisplayUpdates), stream)
-        stream.write("\x00" * 3)
+        stream.write(b"\x00" * 3)
         Uint16LE.pack(pdu.left, stream)
         Uint16LE.pack(pdu.top, stream)
         Uint16LE.pack(pdu.right, stream)
@@ -448,7 +448,7 @@ class RDPDataParser(Parser):
         Uint16LE.pack(capability.majorType, substream)
         Uint16LE.pack(capability.minorType, substream)
         Uint16LE.pack(capability.protocolVersion, substream)
-        substream.write("\00" * 2)  # pad2octetsA
+        substream.write(b"\00" * 2)  # pad2octetsA
         Uint16LE.pack(capability.generalCompressionTypes, substream)
         Uint16LE.pack(capability.extraFlags, substream)
         Uint16LE.pack(capability.updateCapabilityFlag, substream)
@@ -468,21 +468,21 @@ class RDPDataParser(Parser):
         substream = StringIO()
         Uint16LE.pack(capability.type, stream)
         substream.write(capability.terminalDescriptor)
-        substream.write("\x00"*4)
+        substream.write(b"\x00"*4)
         Uint16LE.pack(capability.desktopSaveXGranularity, substream)
         Uint16LE.pack(capability.desktopSaveYGranularity, substream)
-        substream.write("\x00" * 2)
+        substream.write(b"\x00" * 2)
         Uint16LE.pack(capability.maximumOrderLevel, substream)
         Uint16LE.pack(capability.numberFonts, substream)
         Uint16LE.pack(capability.orderFlags, substream)
         substream.write(capability.orderSupport)
         Uint16LE.pack(capability.textFlags, substream)
         Uint16LE.pack(capability.orderSupportExFlags, substream)
-        substream.write("\x00" * 4)
+        substream.write(b"\x00" * 4)
         Uint32LE.pack(capability.desktopSaveSize, substream)
-        substream.write("\x00" * 4)
+        substream.write(b"\x00" * 4)
         Uint16LE.pack(capability.textANSICodePage, substream)
-        substream.write("\x00" * 2)
+        substream.write(b"\x00" * 2)
 
         Uint16LE.pack(len(substream.getvalue()) + 4, stream)
         stream.write(substream.getvalue())
@@ -501,14 +501,14 @@ class RDPDataParser(Parser):
         Uint16LE.pack(capability.receive8BitsPerPixel, substream)
         Uint16LE.pack(capability.desktopWidth, substream)
         Uint16LE.pack(capability.desktopHeight, substream)
-        substream.write("\x00"*2)  # pad2octets
+        substream.write(b"\x00"*2)  # pad2octets
         Uint16LE.pack(capability.desktopResizeFlag, substream)
         Uint16LE.pack(capability.bitmapCompressionFlag, substream)
         Uint8.pack(capability.highColorFlags, substream)
         Uint8.pack(capability.drawingFlags, substream)
         Uint16LE.pack(capability.multipleRectangleSupport, substream)
 
-        substream.write("\x00" * 2)  # pad2octetsB
+        substream.write(b"\x00" * 2)  # pad2octetsB
 
         Uint16LE.pack(len(substream.getvalue()) + 4, stream)
         stream.write(substream.getvalue())

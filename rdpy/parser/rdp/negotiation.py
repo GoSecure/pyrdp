@@ -20,9 +20,9 @@ class RDPNegotiationRequestParser(Parser):
 
         cookie = None
 
-        if "\r\n" in data:
-            cookie = data[: data.index("\r\n")]
-            data = data[data.index("\r\n") + 2 :]
+        if b"\r\n" in data:
+            cookie = data[: data.index(b"\r\n")]
+            data = data[data.index(b"\r\n") + 2 :]
 
         stream = StringIO(data)
 
@@ -57,7 +57,7 @@ class RDPNegotiationRequestParser(Parser):
         stream = StringIO()
 
         if pdu.cookie is not None:
-            stream.write(pdu.cookie + "\r\n")
+            stream.write(pdu.cookie + b"\r\n")
 
         if pdu.flags is not None and pdu.requestedProtocols is not None:
             Uint8.pack(NegotiationType.TYPE_RDP_NEG_REQ, stream)

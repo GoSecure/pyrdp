@@ -54,4 +54,4 @@ def RC4Key(key):
     return RC4([ord(c) for c in key])
 
 def crypt(keystream, plaintext):
-    return "".join([chr(ord(c) ^ keystream.next()) for c in plaintext])
+    return b"".join([chr(ord(c) ^ keystream.next()).encode() for c in plaintext])

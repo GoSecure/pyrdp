@@ -54,7 +54,7 @@ class RDPInputParser(Parser):
         return SynchronizeEvent(eventTime, flags)
 
     def writeSynchronizeEvent(self, stream, event):
-        stream.write("\x00" * 2)
+        stream.write(b"\x00" * 2)
         Uint32LE.pack(event.flags, stream)
 
     def parseUnusedEvent(self, stream, eventTime):
@@ -62,7 +62,7 @@ class RDPInputParser(Parser):
         return UnusedEvent(eventTime)
 
     def writeUnusedEvent(self, stream, _):
-        stream.write("\x00" * 6)
+        stream.write(b"\x00" * 6)
 
     def parseKeyboardEvent(self, stream, eventTime):
         flags = Uint16LE.unpack(stream)
@@ -73,7 +73,7 @@ class RDPInputParser(Parser):
     def writeKeyboardEvent(self, stream, event):
         Uint16LE.pack(event.flags, stream)
         Uint16LE.pack(event.keyCode, stream)
-        stream.write("\x00" * 2)
+        stream.write(b"\x00" * 2)
 
     def parseUnicodeKeyboardEvent(self, stream, eventTime):
         event = self.parseKeyboardEvent(stream)

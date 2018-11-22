@@ -402,7 +402,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
     def onConfirmActive(self, pdu):
         # Force RDP server to send bitmap events instead of order events.
         pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderFlags = OrderFlag.NEGOTIATEORDERSUPPORT | OrderFlag.ZEROBOUNDSDELTASSUPPORT
-        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderSupport = "\x00" * 32
+        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderSupport = b"\x00" * 32
 
         pdu.parsedCapabilitySets[CapabilityType.CAPSETTYPE_MULTIFRAGMENTUPDATE] = MultifragmentUpdateCapability(0)
         self.recorder.record(pdu, RDPPlayerMessageType.CONFIRM_ACTIVE)

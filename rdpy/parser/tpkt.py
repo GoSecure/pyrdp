@@ -2,7 +2,6 @@ from StringIO import StringIO
 
 from rdpy.core.packing import Uint8, Uint16BE
 from rdpy.exceptions import ParsingError
-from rdpy.parser.parser import Parser
 from rdpy.parser.segmentation import SegmentationParser
 from rdpy.pdu.tpkt import TPKTPDU
 
@@ -76,7 +75,7 @@ class TPKTParser(SegmentationParser):
 
         stream = StringIO()
         stream.write(Uint8.pack(pdu.header))
-        stream.write("\x00")
+        stream.write(b"\x00")
         stream.write(Uint16BE.pack(len(pdu.payload) + 4))
         stream.write(pdu.payload)
 

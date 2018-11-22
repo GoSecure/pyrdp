@@ -25,7 +25,6 @@ class SegmentationLayer(Layer):
 
     def __init__(self):
         Layer.__init__(self)
-        self.buffer = ""
         self.fastPathLayer = None
         self.layers = {}
 
