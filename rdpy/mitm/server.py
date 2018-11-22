@@ -7,8 +7,8 @@ from Crypto.PublicKey import RSA
 from twisted.internet import reactor
 from twisted.internet.protocol import ClientFactory
 
-from rdpy.crypto.crypto import SecuritySettings, RC4CrypterProxy
 from rdpy.core.ssl import ServerTLSContext
+from rdpy.crypto.crypto import SecuritySettings, RC4CrypterProxy
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, EncryptionMethod, EncryptionLevel, \
     RDPPlayerMessageType, CapabilityType, OrderFlag
@@ -35,14 +35,14 @@ from rdpy.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
 from rdpy.parser.gcc import GCCParser
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.connection import RDPClientConnectionParser, RDPServerConnectionParser
-from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser, createFastPathParser
+from rdpy.parser.rdp.fastpath import createFastPathParser
 from rdpy.parser.rdp.negotiation import RDPNegotiationRequestParser, RDPNegotiationResponseParser
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.pdu.mcs import MCSConnectResponsePDU
 from rdpy.pdu.rdp.capability import MultifragmentUpdateCapability
 from rdpy.pdu.rdp.connection import ProprietaryCertificate, ServerSecurityData, RDPServerDataPDU
-from rdpy.pdu.rdp.fastpath import RDPFastPathPDU
 from rdpy.pdu.rdp.negotiation import RDPNegotiationResponsePDU, RDPNegotiationRequestPDU
+from rdpy.recording.observer import RecordingFastPathObserver
 from rdpy.recording.recorder import Recorder, FileLayer, SocketLayer
 
 
@@ -123,7 +123,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
         # Since we're intercepting communications from the original client (so we're a server),
         # We need to write back the packets as if they came from the client.
-        self.recorder = Recorder(recordingLayers, RDPBasicFastPathParser(ParserMode.CLIENT))
+        self.recorder = Recorder(recordingLayers)
 
     def getFriendlyName(self):
         return self.friendlyName
@@ -151,8 +151,9 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.log.debug("TCP connected from {}:{}".format(clientInfo[0], clientInfo[1]))
 
     def onDisconnection(self, reason):
+        self.recorder.record(None, RDPPlayerMessageType.CONNECTION_CLOSE)
         self.log.debug("Connection closed: {}".format(reason))
-        self.recorder.record(RDPFastPathPDU(0, []), RDPPlayerMessageType.CONNECTION_CLOSE)
+
         if self.client:
             self.client.disconnect()
 
@@ -374,7 +375,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
             onLicensingDataReceived=self.onLicensingDataReceived
         )
 
-        slowPathObserver = MITMSlowPathObserver(self.log, self.io, self.recorder, mode=ParserMode.SERVER, onConfirmActive=self.onConfirmActive)
+        slowPathObserver = MITMSlowPathObserver(self.log, self.io, onConfirmActive=self.onConfirmActive)
         slowPathObserver.setDataHandler(RDPDataPDUSubtype.PDUTYPE2_INPUT, self.onInputPDUReceived)
         clientObserver = self.client.getChannelObserver(channelID)
         slowPathObserver.setPeer(clientObserver)
@@ -382,9 +383,10 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
         fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, self.crypter, ParserMode.SERVER)
         self.fastPathLayer = FastPathLayer(fastPathParser)
-        fastPathObserver = MITMFastPathObserver(self.log, self.fastPathLayer, self.recorder, mode=ParserMode.SERVER)
+        fastPathObserver = MITMFastPathObserver(self.log, self.fastPathLayer)
         fastPathObserver.setPeer(self.client.getFastPathObserver())
         self.fastPathLayer.addObserver(fastPathObserver)
+        self.fastPathLayer.addObserver(RecordingFastPathObserver(self.recorder, RDPPlayerMessageType.INPUT))
 
         channel = MCSServerChannel(mcs, userID, channelID)
         channel.setNext(self.securityLayer)
@@ -403,6 +405,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderSupport = "\x00" * 32
 
         pdu.parsedCapabilitySets[CapabilityType.CAPSETTYPE_MULTIFRAGMENTUPDATE] = MultifragmentUpdateCapability(0)
+        self.recorder.record(pdu, RDPPlayerMessageType.CONFIRM_ACTIVE)
 
     # Security Exchange
     def onSecurityExchangeReceived(self, pdu):

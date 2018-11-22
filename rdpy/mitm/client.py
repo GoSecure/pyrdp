@@ -1,8 +1,9 @@
 import logging
 
-from rdpy.crypto.crypto import SecuritySettings, RC4CrypterProxy
 from rdpy.core.ssl import ClientTLSContext
+from rdpy.crypto.crypto import SecuritySettings, RC4CrypterProxy
 from rdpy.enum.core import ParserMode
+from rdpy.enum.rdp import RDPPlayerMessageType
 from rdpy.enum.segmentation import SegmentationPDUType
 from rdpy.enum.virtual_channel.virtual_channel import VirtualChannel
 from rdpy.layer.gcc import GCCClientConnectionLayer
@@ -24,9 +25,10 @@ from rdpy.mcs.user import MCSUserObserver
 from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver
 from rdpy.mitm.virtual_channel.clipboard import MITMClientClipboardChannelObserver
 from rdpy.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
-from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser, createFastPathParser
+from rdpy.parser.rdp.fastpath import createFastPathParser
 from rdpy.parser.rdp.negotiation import RDPNegotiationResponseParser, RDPNegotiationRequestParser
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
+from rdpy.recording.observer import RecordingFastPathObserver
 from rdpy.recording.recorder import Recorder, FileLayer, SocketLayer
 
 
@@ -95,7 +97,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         if socket is not None:
             record_layers.append(SocketLayer(socket))
 
-        self.recorder = Recorder(record_layers, RDPBasicFastPathParser(ParserMode.SERVER))
+        self.recorder = Recorder(record_layers)
 
     def getProtocol(self):
         return self.tcp
@@ -272,14 +274,15 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.securityLayer = self.createSecurityLayer()
         self.securityLayer.createObserver(onLicensingDataReceived=self.onLicensingDataReceived)
 
-        slowPathObserver = MITMSlowPathObserver(self.log, self.io, self.recorder, ParserMode.CLIENT)
+        slowPathObserver = MITMSlowPathObserver(self.log, self.io)
         self.io.addObserver(slowPathObserver)
         self.channelObservers[channelID] = slowPathObserver
 
         fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, self.crypter, ParserMode.CLIENT)
         self.fastPathLayer = FastPathLayer(fastPathParser)
-        self.fastPathObserver = MITMFastPathObserver(self.log, self.fastPathLayer, self.recorder, ParserMode.CLIENT)
+        self.fastPathObserver = MITMFastPathObserver(self.log, self.fastPathLayer)
         self.fastPathLayer.addObserver(self.fastPathObserver)
+        self.fastPathLayer.addObserver(RecordingFastPathObserver(self.recorder, RDPPlayerMessageType.OUTPUT))
 
         channel = MCSClientChannel(mcs, userID, channelID)
         channel.setNext(self.securityLayer)

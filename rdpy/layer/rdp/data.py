@@ -1,11 +1,9 @@
 from rdpy.core import log
 from rdpy.core.layer import Layer, LayerStrictRoutedObserver, LayerObserver
 from rdpy.core.subject import ObservedBy
-from rdpy.enum.rdp import RDPDataPDUType, RDPPlayerMessageType
+from rdpy.enum.rdp import RDPDataPDUType
 from rdpy.exceptions import UnknownPDUTypeError
-from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.data import RDPDataParser
-from rdpy.parser.rdp.virtual_channel.clipboard import ClipboardParser
 from rdpy.pdu.rdp.data import RDPDemandActivePDU
 
 
@@ -158,9 +156,6 @@ class RDPBaseDataLayer(Layer):
     def __init__(self, dataParser):
         Layer.__init__(self)
         self.dataParser = dataParser
-        self.clientInfoParser = RDPClientInfoParser()
-        self.rdpDataParser = RDPDataParser()
-        self.clipboardParser = ClipboardParser()
 
     def recv(self, data):
         try:
@@ -172,15 +167,8 @@ class RDPBaseDataLayer(Layer):
         else:
             self.pduReceived(pdu, False)
 
-    def sendPDU(self, pdu, messageType=None):
-        if messageType == RDPPlayerMessageType.CLIENT_INFO:
-            data = self.clientInfoParser.write(pdu)
-        elif messageType == RDPPlayerMessageType.CONFIRM_ACTIVE:
-            data = self.rdpDataParser.write(pdu)
-        elif messageType == RDPPlayerMessageType.CLIPBOARD_DATA:
-            data = self.clipboardParser.write(pdu)
-        else:
-            data = self.dataParser.write(pdu)
+    def sendPDU(self, pdu):
+        data = self.dataParser.write(pdu)
         self.previous.send(data)
 
     def sendData(self, data):
