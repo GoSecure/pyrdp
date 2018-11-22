@@ -1,7 +1,5 @@
 import logging
 
-from rdpy.protocol.rdp.x224 import ClientTLSContext
-
 from rdpy.core.crypto import SecuritySettings, RC4CrypterProxy
 from rdpy.enum.core import ParserMode
 from rdpy.enum.segmentation import SegmentationPDUType
@@ -28,6 +26,7 @@ from rdpy.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
 from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser, createFastPathParser
 from rdpy.parser.rdp.negotiation import RDPNegotiationResponseParser, RDPNegotiationRequestParser
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
+from rdpy.protocol.rdp.x224 import ClientTLSContext
 from rdpy.recording.recorder import Recorder, FileLayer, SocketLayer
 
 
@@ -44,6 +43,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.channelMap = {}
         self.channelDefinitions = []
         self.channelObservers = {}
+        self.clipboardObserver = None
         self.useTLS = False
         self.user = None
         self.fastPathObserver = None
@@ -261,10 +261,10 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         virtualChannelLayer.setNext(clipboardLayer)
 
         # Create and link the MITM Observer for the client side to the clipboard layer.
-        observer = MITMClientClipboardChannelObserver(clipboardLayer,  self.recorder)
-        clipboardLayer.setObserver(observer)
+        self.clipboardObserver = MITMClientClipboardChannelObserver(clipboardLayer, self.recorder)
+        clipboardLayer.setObserver(self.clipboardObserver)
 
-        self.channelObservers[channelID] = observer
+        self.channelObservers[channelID] = self.clipboardObserver
 
         return channel
 

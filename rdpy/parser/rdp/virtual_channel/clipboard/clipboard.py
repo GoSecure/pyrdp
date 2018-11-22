@@ -4,7 +4,7 @@ from rdpy.core.packing import Uint16LE, Uint32LE
 from rdpy.enum.virtual_channel.clipboard.clipboard import ClipboardMessageType, ClipboardMessageFlags
 from rdpy.pdu.rdp.virtual_channel.clipboard.clipboard import ClipboardPDU
 from rdpy.pdu.rdp.virtual_channel.clipboard.copy import FormatListPDU, LongFormatName
-from rdpy.pdu.rdp.virtual_channel.clipboard.paste import FormatDataResponsePDU
+from rdpy.pdu.rdp.virtual_channel.clipboard.paste import FormatDataResponsePDU, FormatDataRequestPDU
 
 
 class ClipboardParser:
@@ -54,9 +54,11 @@ class ClipboardParser:
         stream = StringIO()
         Uint16LE.pack(pdu.msgType, stream)
         Uint16LE.pack(pdu.msgFlags, stream)
-        if pdu.msgType == ClipboardMessageType.CB_FORMAT_DATA_RESPONSE:
+        if isinstance(pdu, FormatDataResponsePDU):
             self.writeFormatDataResponse(stream, pdu)
-        elif pdu.msgType == ClipboardMessageType.CB_FORMAT_LIST:
+        elif isinstance(pdu, FormatDataRequestPDU):
+            self.writeFormatDataRequest(stream, pdu)
+        elif isinstance(pdu, FormatListPDU):
             self.writeFormatList(stream, pdu)
         else:
             Uint32LE.pack(len(pdu.payload), stream)
@@ -90,3 +92,12 @@ class ClipboardParser:
                 pos += 2
         Uint32LE.pack(len(substream.getvalue()), stream)
         stream.write(substream.getvalue())
+
+    def writeFormatDataRequest(self, stream, pdu):
+        """
+        Write the FormatDataRequestPDU starting at dataLen. Assumes LongFormatNames.
+        :type stream: StringIO
+        :type pdu: FormatDataRequestPDU
+        """
+        Uint32LE.pack(4, stream)  # datalen
+        Uint32LE.pack(pdu.requestedFormatId, stream)

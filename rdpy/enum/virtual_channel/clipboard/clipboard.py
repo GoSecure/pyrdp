@@ -33,6 +33,7 @@ class ClipboardFormat(IntEnum):
     """
     https://msdn.microsoft.com/en-us/library/cc241079.aspx
     """
+    GENERIC = 13
     PALETTE = 9
     METAFILE = 3
 
