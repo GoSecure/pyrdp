@@ -1,4 +1,4 @@
-from rdpy.core.newlayer import Layer, LayerStrictRoutedObserver
+from rdpy.core.layer import Layer, LayerStrictRoutedObserver
 from rdpy.core.subject import ObservedBy
 from rdpy.enum.x224 import X224PDUType
 from rdpy.parser.x224 import X224Parser

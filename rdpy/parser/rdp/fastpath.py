@@ -1,8 +1,8 @@
 from StringIO import StringIO
 
 from rdpy.core import log
-from rdpy.core.crypto import RC4Crypter
 from rdpy.core.packing import Uint8, Uint16BE, Uint16LE
+from rdpy.crypto.crypto import RC4Crypter
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import RDPFastPathInputEventType, \
     RDPFastPathSecurityFlags, FIPSVersion, FastPathOutputCompressionType, RDPFastPathOutputEventType, \

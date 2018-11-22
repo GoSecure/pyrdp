@@ -1,7 +1,9 @@
 import logging
 
-from rdpy.core.crypto import SecuritySettings, RC4CrypterProxy
+from rdpy.core.ssl import ClientTLSContext
+from rdpy.crypto.crypto import SecuritySettings, RC4CrypterProxy
 from rdpy.enum.core import ParserMode
+from rdpy.enum.rdp import RDPPlayerMessageType
 from rdpy.enum.segmentation import SegmentationPDUType
 from rdpy.enum.virtual_channel.virtual_channel import VirtualChannel
 from rdpy.layer.gcc import GCCClientConnectionLayer
@@ -11,7 +13,7 @@ from rdpy.layer.rdp.connection import RDPClientConnectionLayer
 from rdpy.layer.rdp.data import RDPDataLayer
 from rdpy.layer.rdp.fastpath import FastPathLayer
 from rdpy.layer.rdp.security import TLSSecurityLayer, RDPSecurityLayer
-from rdpy.layer.rdp.virtual_channel.clipboard.clipboard import ClipboardLayer
+from rdpy.layer.rdp.virtual_channel.clipboard import ClipboardLayer
 from rdpy.layer.rdp.virtual_channel.virtual_channel import VirtualChannelLayer
 from rdpy.layer.segmentation import SegmentationLayer
 from rdpy.layer.tcp import TCPLayer
@@ -21,12 +23,12 @@ from rdpy.mcs.channel import MCSChannelFactory, MCSClientChannel
 from rdpy.mcs.client import MCSClientRouter
 from rdpy.mcs.user import MCSUserObserver
 from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver
-from rdpy.mitm.virtual_channel.clipboard.clipboard import MITMClientClipboardChannelObserver
+from rdpy.mitm.virtual_channel.clipboard import MITMClientClipboardChannelObserver
 from rdpy.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
-from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser, createFastPathParser
+from rdpy.parser.rdp.fastpath import createFastPathParser
 from rdpy.parser.rdp.negotiation import RDPNegotiationResponseParser, RDPNegotiationRequestParser
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
-from rdpy.protocol.rdp.x224 import ClientTLSContext
+from rdpy.recording.observer import RecordingFastPathObserver
 from rdpy.recording.recorder import Recorder, FileLayer, SocketLayer
 
 
@@ -51,7 +53,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.serverData = None
         self.crypter = RC4CrypterProxy()
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.CLIENT)
-        self.securitySettings.setObserver(self.crypter)
+        self.securitySettings.addObserver(self.crypter)
         self.log = logging.getLogger("mitm.client.%s" % server.getFriendlyName())
 
         self.tcp = TCPLayer()
@@ -67,7 +69,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
         self.mcs = MCSLayer()
         self.router = MCSClientRouter(self.mcs, self)
-        self.mcs.setObserver(self.router)
+        self.mcs.addObserver(self.router)
         self.router.createObserver(onConnectResponse=self.onConnectResponse, onDisconnectProviderUltimatum=self.onDisconnectProviderUltimatum)
 
         self.mcsConnect = MCSClientConnectionLayer(self.mcs)
@@ -96,7 +98,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         if socket is not None:
             record_layers.append(SocketLayer(socket))
 
-        self.recorder = Recorder(record_layers, RDPBasicFastPathParser(ParserMode.SERVER))
+        self.recorder = Recorder(record_layers)
 
     def getProtocol(self):
         return self.tcp
@@ -191,7 +193,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
     def onAttachUserRequest(self):
         self.user = self.router.createUser()
-        self.user.setObserver(self)
+        self.user.addObserver(self)
         self.user.attach()
 
     def onAttachConfirmed(self, user):
@@ -237,7 +239,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         securityLayer.setNext(rawLayer)
 
         observer = MITMVirtualChannelObserver(rawLayer)
-        rawLayer.setObserver(observer)
+        rawLayer.addObserver(observer)
         self.channelObservers[channelID] = observer
 
         return channel
@@ -262,7 +264,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
         # Create and link the MITM Observer for the client side to the clipboard layer.
         self.clipboardObserver = MITMClientClipboardChannelObserver(clipboardLayer, self.recorder)
-        clipboardLayer.setObserver(self.clipboardObserver)
+        clipboardLayer.addObserver(self.clipboardObserver)
 
         self.channelObservers[channelID] = self.clipboardObserver
 
@@ -273,14 +275,15 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.securityLayer = self.createSecurityLayer()
         self.securityLayer.createObserver(onLicensingDataReceived=self.onLicensingDataReceived)
 
-        slowPathObserver = MITMSlowPathObserver(self.log, self.io, self.recorder, ParserMode.CLIENT)
-        self.io.setObserver(slowPathObserver)
+        slowPathObserver = MITMSlowPathObserver(self.log, self.io)
+        self.io.addObserver(slowPathObserver)
         self.channelObservers[channelID] = slowPathObserver
 
         fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, self.crypter, ParserMode.CLIENT)
         self.fastPathLayer = FastPathLayer(fastPathParser)
-        self.fastPathObserver = MITMFastPathObserver(self.log, self.fastPathLayer, self.recorder, ParserMode.CLIENT)
-        self.fastPathLayer.setObserver(self.fastPathObserver)
+        self.fastPathObserver = MITMFastPathObserver(self.log, self.fastPathLayer)
+        self.fastPathLayer.addObserver(self.fastPathObserver)
+        self.fastPathLayer.addObserver(RecordingFastPathObserver(self.recorder, RDPPlayerMessageType.OUTPUT))
 
         channel = MCSClientChannel(mcs, userID, channelID)
         channel.setNext(self.securityLayer)

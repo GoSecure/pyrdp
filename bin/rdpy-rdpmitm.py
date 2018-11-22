@@ -1,7 +1,9 @@
 #!/usr/bin/env python2
 import argparse
 import logging
+import logging.handlers
 import os
+import random
 import sys
 from itertools import cycle
 
@@ -9,7 +11,7 @@ import appdirs
 from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
 
-from rdpy.core import log, names
+from rdpy.core import log
 from rdpy.mitm.server import MITMServer
 
 
@@ -29,7 +31,33 @@ class MITMServerFactory(ServerFactory):
         self.certificateFileName = certificateFileName
         self.destination_ip = destination_ip
         self.destination_port = destination_port
-        self.names = cycle(names.getNames())
+
+        names = [
+            "Anthony",
+            "Kenneth",
+            "Jeffrey",
+            "Juliano",
+            "Matthew",
+            "Michael",
+            "Richard",
+            "Timothy",
+            "Vincent",
+            "William",
+
+            "Barbara",
+            "Carolyn",
+            "Deborah",
+            "Dorothy",
+            "Jessica",
+            "Heather",
+            "Madison",
+            "Melissa",
+            "Shirley",
+            "Theresa",
+        ]
+
+        random.shuffle(names)
+        self.names = cycle(names)
 
     def buildProtocol(self, addr):
         server = MITMServer(next(self.names), self.targetHost, self.targetPort, self.certificateFileName,
@@ -69,7 +97,7 @@ def prepare_loggers():
     formatter = logging.Formatter("[%(asctime)s] - %(name)s - %(levelname)s - %(message)s")
 
     stream_handler = logging.StreamHandler()
-    file_handler = logging.FileHandler("log/mitm.log")
+    file_handler = logging.handlers.TimedRotatingFileHandler("log/mitm.log", when="D")
     stream_handler.setFormatter(formatter)
     file_handler.setFormatter(formatter)
     mitm_logger.addHandler(stream_handler)

@@ -24,7 +24,7 @@ ASN.1 standard.
 from enum import IntEnum
 
 from rdpy.core.packing import Uint8, Uint16BE, Uint32BE
-from rdpy.core.error import InvalidExpectedDataException, InvalidSize
+
 
 class PC(IntEnum):
     BER_PC_MASK = 0x20
@@ -78,7 +78,7 @@ def readLength(s):
         elif byte == 2:
             return Uint16BE.unpack(s.read(2))
         else:
-            raise InvalidExpectedDataException("BER length must be 1 or 2")
+            raise ValueError("BER length must be 1 or 2")
     else:
         return byte
 
@@ -132,14 +132,14 @@ def readApplicationTag(s, tag):
     
     if tag > 30:
         if byte != ((Class.BER_CLASS_APPL | PC.BER_CONSTRUCT) | Tag.BER_TAG_MASK):
-            raise InvalidExpectedDataException()
+            raise ValueError("Invalid BER tag")
         
         byte = Uint8.unpack(s.read(1))
         if byte != tag:
-            raise InvalidExpectedDataException("bad tag")
+            raise ValueError("Unexpected application tag")
     else:
-        if byte != ((Class.BER_CLASS_APPL | PC.BER_CONSTRUCT) | (Tag.BER_TAG_MASK & tag)):
-            raise InvalidExpectedDataException()
+        if byte != ((Class.BER_CLASS_APPL | PC.BER_CONSTRUCT) | (tag & Tag.BER_TAG_MASK)):
+            raise ValueError("Unexpected application tag")
         
     return readLength(s)
 
@@ -164,11 +164,11 @@ def readBoolean(s):
     :return: bool
     """
     if not readUniversalTag(s, Tag.BER_TAG_BOOLEAN, False):
-        raise InvalidExpectedDataException("Bad boolean tag")
+        raise ValueError("Bad boolean tag")
 
     size = readLength(s)
     if size != 1:
-        raise InvalidExpectedDataException("Bad boolean size")
+        raise ValueError("Bad boolean size")
     
     b = Uint8.unpack(s.read(1))
     return bool(b)
@@ -190,7 +190,7 @@ def readInteger(s):
     :return: int
     """
     if not readUniversalTag(s, Tag.BER_TAG_INTEGER, False):
-        raise InvalidExpectedDataException("Bad integer tag")
+        raise ValueError("Bad integer tag")
     
     size = readLength(s)
     
@@ -205,7 +205,7 @@ def readInteger(s):
     elif size == 4:
         return Uint32BE.unpack(s.read(4))
     else:
-        raise InvalidExpectedDataException("Wrong integer size")
+        raise ValueError("Wrong integer size")
     
 def writeInteger(value):
     """
@@ -228,7 +228,7 @@ def readOctetString(s):
     :return: str
     """
     if not readUniversalTag(s, Tag.BER_TAG_OCTET_STRING, False):
-        raise InvalidExpectedDataException("Bad octet string tag")
+        raise ValueError("Bad octet string tag")
     
     size = readLength(s)
     return s.read(size)
@@ -249,10 +249,10 @@ def readEnumeration(s):
     :return: int
     """
     if not readUniversalTag(s, Tag.BER_TAG_ENUMERATED, False):
-        raise InvalidExpectedDataException("Bad enumeration tag")
+        raise ValueError("Bad enumeration tag")
     
     if readLength(s) != 1:
-        raise InvalidSize("Enumeration size must be 1")
+        raise ValueError("Enumeration size must be 1")
     
     return Uint8.unpack(s.read(1))
 

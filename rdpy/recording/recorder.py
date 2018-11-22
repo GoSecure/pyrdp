@@ -1,9 +1,14 @@
 from rdpy.core import log
-
-from rdpy.core.newlayer import Layer
-from rdpy.layer.rdp.data import RDPBaseDataLayer
-from rdpy.layer.rdp.recording import RDPPlayerMessageTypeLayer
+from rdpy.core.layer import Layer
+from rdpy.enum.core import ParserMode
+from rdpy.enum.rdp import RDPPlayerMessageType
+from rdpy.layer.recording import RDPPlayerMessageTypeLayer
 from rdpy.layer.tpkt import TPKTLayer
+from rdpy.parser.parser import Parser
+from rdpy.parser.rdp.client_info import RDPClientInfoParser
+from rdpy.parser.rdp.data import RDPDataParser
+from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser
+from rdpy.parser.rdp.virtual_channel.clipboard import ClipboardParser
 
 
 class Recorder:
@@ -13,30 +18,49 @@ class Recorder:
     receive binary data and handle them as they wish. They perform the actual recording.
     """
 
-    def __init__(self, transport_layers, parser):
+    def __init__(self, transportLayers):
         """
-        :type transport_layers: list
+        :type transportLayers: list
         """
-        self.rdpLayers = []
-        for transport_layer in transport_layers:
-            tpktLayer = TPKTLayer()
-            rdpPlayerMessageTypeLayer = RDPPlayerMessageTypeLayer()
-            rdp = RDPBaseDataLayer(parser)
+        self.parsers = {
+            RDPPlayerMessageType.INPUT: RDPBasicFastPathParser(ParserMode.CLIENT),
+            RDPPlayerMessageType.OUTPUT: RDPBasicFastPathParser(ParserMode.SERVER),
+            RDPPlayerMessageType.CLIENT_INFO: RDPClientInfoParser(),
+            RDPPlayerMessageType.CONFIRM_ACTIVE: RDPDataParser(),
+            RDPPlayerMessageType.CLIPBOARD_DATA: ClipboardParser(),
+        }
 
-            transport_layer.setNext(tpktLayer)
-            tpktLayer.setNext(rdpPlayerMessageTypeLayer)
-            rdpPlayerMessageTypeLayer.setNext(rdp)
-            self.rdpLayers.append(rdp)
+        self.topLayers = []
+
+        for transportLayer in transportLayers:
+            tpktLayer = TPKTLayer()
+            messageLayer = RDPPlayerMessageTypeLayer()
+
+            transportLayer.setNext(tpktLayer)
+            tpktLayer.setNext(messageLayer)
+            self.topLayers.append(messageLayer)
+
+    def setParser(self, messageType, parser):
+        """
+        Set the parser to use for a given message type.
+        :type messageType: rdpy.enum.rdp.RDPPlayerMessageType
+        :type parser: Parser
+        """
+        self.parsers[messageType] = parser
 
     def record(self, pdu, messageType):
         """
         Encapsulate the pdu properly, then record the data
+        :type pdu: rdpy.pdu.base_pdu.PDU | None
         :type messageType: rdpy.enum.rdp.RDPPlayerMessageType
-        :type pdu: rdpy.pdu.base_pdu.PDU
         """
-        for rdpLayer in self.rdpLayers:
-            rdpLayer.previous.setMessageType(messageType)
-            rdpLayer.sendPDU(pdu, messageType)
+        if pdu:
+            data = self.parsers[messageType].write(pdu)
+        else:
+            data = ""
+
+        for layer in self.topLayers:
+            layer.sendMessage(data, messageType)
 
 
 class FileLayer(Layer):
@@ -48,7 +72,7 @@ class FileLayer(Layer):
         """
         :type fileHandle: BinaryIO
         """
-        super(FileLayer, self).__init__()
+        Layer.__init__(self)
         self.file_descriptor = fileHandle
 
     def send(self, data):
@@ -69,7 +93,7 @@ class SocketLayer(Layer):
         """
         :type socket: socket.socket
         """
-        super(SocketLayer, self).__init__()
+        Layer.__init__(self)
         self.socket = socket
         self.isConnected = True
 

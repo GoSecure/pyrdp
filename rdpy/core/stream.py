@@ -1,3 +1,12 @@
+from StringIO import StringIO
+
+
+class ByteStream(StringIO):
+    """
+    Stream used to read bytes.
+    """
+
+
 class StrictStream:
     """
     Stream wrapper class that throws an EOFError when it reads fewer bytes than required.
@@ -8,7 +17,7 @@ class StrictStream:
         :type stream: file
         """
         self.stream = stream
-    
+
     def read(self, length):
         """
         Read data from the stream and raise an EOFError if not enough bytes were read.
@@ -21,5 +30,5 @@ class StrictStream:
 
         if len(data) != length:
             raise EOFError("Expected to read %d bytes, got %d bytes instead" % (length, len(data)))
-        
+
         return data

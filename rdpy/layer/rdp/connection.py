@@ -1,4 +1,4 @@
-from rdpy.core.newlayer import Layer
+from rdpy.core.layer import Layer
 from rdpy.parser.rdp.connection import RDPClientConnectionParser, RDPServerConnectionParser
 
 

@@ -3,8 +3,8 @@ import logging
 from rdpy.core.observer import Observer
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import RDPPlayerMessageType
-from rdpy.enum.virtual_channel.clipboard.clipboard import ClipboardMessageType, ClipboardFormat
-from rdpy.pdu.rdp.virtual_channel.clipboard.paste import FormatDataResponsePDU, FormatDataRequestPDU
+from rdpy.enum.virtual_channel.clipboard import ClipboardMessageType, ClipboardFormat
+from rdpy.pdu.rdp.virtual_channel.clipboard import FormatDataResponsePDU, FormatDataRequestPDU
 
 
 class MITMClipboardChannelObserver(Observer):
@@ -14,7 +14,7 @@ class MITMClipboardChannelObserver(Observer):
 
     def __init__(self, layer, recorder, mode, **kwargs):
         """
-        :type layer: rdpy.core.newlayer.Layer
+        :type layer: rdpy.core.layer.Layer
         :type recorder: rdpy.recording.recorder.Recorder
         :type mode: rdpy.enum.core.ParserMode
         """

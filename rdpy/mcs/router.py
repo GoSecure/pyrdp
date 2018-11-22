@@ -1,4 +1,4 @@
-from rdpy.core.newlayer import LayerStrictRoutedObserver
+from rdpy.core.layer import LayerStrictRoutedObserver
 from rdpy.enum.mcs import MCSPDUType
 
 

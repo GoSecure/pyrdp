@@ -3,7 +3,7 @@ import logging
 from twisted.internet.protocol import Protocol, connectionDone
 
 from rdpy.core import log
-from rdpy.core.newlayer import Layer, LayerObserver
+from rdpy.core.layer import Layer, LayerObserver
 from rdpy.core.subject import ObservedBy
 
 

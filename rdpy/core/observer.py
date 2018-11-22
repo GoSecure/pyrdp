@@ -14,3 +14,54 @@ class Observer:
                 setattr(self, name, handler)
             else:
                 raise TypeError("Unexpected keyword argument '%s'" % name)
+
+class CompositeObserver:
+    """
+    Observer class that contains other observers and delegates method calls to them.
+    """
+    def __init__(self):
+        self.observers = []
+
+    def __getattr__(self, item):
+        """
+        Creates a CompositeObserverCall object, which will invoke doCall when it is called.
+        """
+        return CompositeObserverCall(self, item)
+
+    def __nonzero__(self):
+        return True
+
+    def doCall(self, item, args, kwargs):
+        """
+        When a method is called, invoke the same method on every observer object.
+        """
+        for observer in self.observers:
+            getattr(observer, item)(*args, **kwargs)
+
+    def addObserver(self, observer):
+        """
+        Add an observer to the composite.
+        :type observer: Observer
+        """
+        self.observers.append(observer)
+
+    def removeObserver(self, observer):
+        """
+        Remove an observer from the composite.
+        :type observer: Observer
+        """
+        self.observers.remove(observer)
+
+class CompositeObserverCall:
+    """
+    Object that calls back to the CompositeObserver when it is called.
+    """
+    def __init__(self, composite, item):
+        self.composite = composite
+        self.item = item
+
+    def __call__(self, *args, **kwargs):
+        """
+        Delegate the call to the composite.
+        """
+        self.composite.doCall(self.item, args, kwargs)

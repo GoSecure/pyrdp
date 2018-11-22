@@ -1,10 +1,9 @@
 from StringIO import StringIO
 
 from rdpy.core.packing import Uint16LE, Uint32LE
-from rdpy.enum.virtual_channel.clipboard.clipboard import ClipboardMessageType, ClipboardMessageFlags
-from rdpy.pdu.rdp.virtual_channel.clipboard.clipboard import ClipboardPDU
-from rdpy.pdu.rdp.virtual_channel.clipboard.copy import FormatListPDU, LongFormatName
-from rdpy.pdu.rdp.virtual_channel.clipboard.paste import FormatDataResponsePDU, FormatDataRequestPDU
+from rdpy.enum.virtual_channel.clipboard import ClipboardMessageType, ClipboardMessageFlags
+from rdpy.pdu.rdp.virtual_channel.clipboard import ClipboardPDU, FormatDataResponsePDU, FormatListPDU, \
+    FormatDataRequestPDU, LongFormatName
 
 
 class ClipboardParser:
