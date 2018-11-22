@@ -1,4 +1,4 @@
-from StringIO import StringIO
+from io import BytesIO
 
 from rdpy.core.packing import Uint8, Uint16LE, Uint32LE
 from rdpy.enum.rdp import RDPLicensingPDUType, RDPLicenseBinaryBlobType, RDPLicenseErrorCode, RDPStateTransition
@@ -23,7 +23,7 @@ class RDPLicensingParser:
         :return: RDPLicensingPDU
         """
 
-        stream = StringIO(data)
+        stream = BytesIO(data)
         header = Uint8.unpack(stream)
         flags = Uint8.unpack(stream)
         size = Uint16LE.unpack(stream)
@@ -36,7 +36,7 @@ class RDPLicensingParser:
     def parseLicenseBlob(self, stream):
         """
         Parse the provided byte stream and return the corresponding RDPLicenseBinaryBlob
-        :type stream: StringIO
+        :type stream: BytesIO
         :return: RDPLicenseBinaryBlob
         """
         type = RDPLicenseBinaryBlobType(Uint16LE.unpack(stream))
@@ -47,7 +47,7 @@ class RDPLicensingParser:
     def parseErrorAlert(self, stream, flags):
         """
         Parse the provided byte stream and return the corresponding RDPLicenseErrorAlertPDU
-        :type stream: StringIO
+        :type stream: BytesIO
         :param flags: The flags of the Licencing PDU.
         :return: RDPLicenseErrorAlertPDU
         """
@@ -62,10 +62,10 @@ class RDPLicensingParser:
         :type pdu: rdpy.pdu.rdp.licensing.RDPLicensingPDU
         :return: RDPLicensingPDU
         """
-        stream = StringIO()
+        stream = BytesIO()
         stream.write(Uint8.pack(pdu.header))
         stream.write(Uint8.pack(pdu.flags))
-        substream = StringIO()
+        substream = BytesIO()
 
         if isinstance(pdu, RDPLicenseErrorAlertPDU):
             self.writeErrorAlert(substream, pdu)
@@ -79,7 +79,7 @@ class RDPLicensingParser:
     def writeErrorAlert(self, stream, pdu):
         """
         Writes LicenceErrorAlertPDU-specific fields to stream
-        :type stream: StringIO
+        :type stream: BytesIO
         :type pdu: RDPLicenseErrorAlertPDU
         """
         stream.write(Uint32LE.pack(pdu.errorCode))

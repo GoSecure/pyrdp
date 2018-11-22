@@ -1,7 +1,7 @@
 import struct
 from Crypto.PublicKey import RSA
 from Crypto.Util.number import bytes_to_long, long_to_bytes
-from StringIO import StringIO
+from io import BytesIO
 
 from rdpy.core.stream import StrictStream
 from rdpy.core.packing import Uint16LE, Uint32LE, Uint8
@@ -46,8 +46,8 @@ class RDPClientConnectionParser(Parser):
         network = None
         cluster = None
 
-        stream = StringIO(data)
-        while stream.pos != stream.len and (core is None or security is None or network is None or cluster is None):
+        stream = BytesIO(data)
+        while stream.tell() != len(stream.getvalue()) and (core is None or security is None or network is None or cluster is None):
             structure = self.parseStructure(stream)
 
             if structure.header == RDPConnectionDataType.CLIENT_CORE:
@@ -72,7 +72,7 @@ class RDPClientConnectionParser(Parser):
         if len(data) != length:
             raise ParsingError("Client Data length field does not match actual size")
 
-        substream = StringIO(data)
+        substream = BytesIO(data)
 
         if header not in self.parsers:
             raise UnknownPDUTypeError("Trying to parse unknown client data structure %s" % header, header)
@@ -91,11 +91,11 @@ class RDPClientConnectionParser(Parser):
         sasSequence = Uint16LE.unpack(stream)
         keyboardLayout = Uint32LE.unpack(stream)
         clientBuild = Uint32LE.unpack(stream)
-        clientName = stream.read(32).decode("utf-16le").strip(b"\x00")
+        clientName = stream.read(32).decode("utf-16le").strip("\x00")
         keyboardType = KeyboardType(Uint32LE.unpack(stream))
         keyboardSubType = Uint32LE.unpack(stream)
         keyboardFunctionKey = Uint32LE.unpack(stream)
-        imeFileName = stream.read(64).decode("utf-16le").strip(b"\x00")
+        imeFileName = stream.read(64).decode("utf-16le").strip("\x00")
 
         core = ClientCoreData(version, desktopWidth, desktopHeight, colorDepth, sasSequence, keyboardLayout, clientBuild, clientName, keyboardType, keyboardSubType, keyboardFunctionKey, imeFileName)
 
@@ -108,7 +108,7 @@ class RDPClientConnectionParser(Parser):
             core.highColorDepth = HighColorDepth(Uint16LE.unpack(stream))
             core.supportedColorDepths = Uint16LE.unpack(stream)
             core.earlyCapabilityFlags = Uint16LE.unpack(stream)
-            core.clientDigProductId = stream.read(64).decode("utf-16le").strip(b"\x00")
+            core.clientDigProductId = stream.read(64).decode("utf-16le").strip("\x00")
             core.connectionType = ConnectionType(Uint8.unpack(stream))
             core.pad1octet = stream.read(1)
             core.serverSelectedProtocol = Uint32LE.unpack(stream)
@@ -138,7 +138,7 @@ class RDPClientConnectionParser(Parser):
         channelDefinitions = []
 
         for _ in range(channelCount):
-            name = stream.read(8).strip(b"\x00")
+            name = stream.read(8).strip(b"\x00").decode()
             options = Uint32LE.unpack(stream)
             channelDefinitions.append(ClientChannelDefinition(name, options))
 
@@ -156,7 +156,7 @@ class RDPClientConnectionParser(Parser):
         :type pdu: RDPClientDataPDU
         :return: str
         """
-        stream = StringIO()
+        stream = BytesIO()
 
         if pdu.coreData:
             self.writeStructure(stream, pdu.coreData)
@@ -176,7 +176,7 @@ class RDPClientConnectionParser(Parser):
         if data.header not in self.writers:
             raise UnknownPDUTypeError("Trying to write unknown Client Data structure %s" % data.header, data.header)
 
-        substream = StringIO()
+        substream = BytesIO()
         self.writers[data.header](substream, data)
 
         substream = substream.getvalue()
@@ -230,7 +230,7 @@ class RDPClientConnectionParser(Parser):
             if len(channel.name) > 8:
                 raise ParsingError("Channel name must have 8 characters maximum")
 
-            stream.write(channel.name.ljust(8, b"\x00")[: 8])
+            stream.write(channel.name.encode().ljust(8, b"\x00")[: 8])
             stream.write(Uint32LE.pack(channel.options))
 
     def writeClientClusterData(self, stream, cluster):
@@ -267,7 +267,7 @@ class RDPServerConnectionParser(Parser):
         security = None
         network = None
 
-        stream = StringIO(data)
+        stream = BytesIO(data)
         while core is None or security is None or network is None:
             structure = self.parseStructure(stream)
 
@@ -291,7 +291,7 @@ class RDPServerConnectionParser(Parser):
         if len(data) < length:
             raise ParsingError("Server Data length field does not match actual size")
 
-        substream = StringIO(data)
+        substream = BytesIO(data)
 
         if header not in self.parsers:
             raise UnknownPDUTypeError("Trying to parse unknown server data structure %s" % header, header)
@@ -339,7 +339,7 @@ class RDPServerConnectionParser(Parser):
         return ServerSecurityData(encryptionMethod, encryptionLevel, serverRandom, serverCertificate)
 
     def parseServerCertificate(self, data):
-        stream = StringIO(data)
+        stream = BytesIO(data)
         version = Uint32LE.unpack(stream)
 
         if version == ServerCertificateType.PROPRIETARY:
@@ -363,7 +363,7 @@ class RDPServerConnectionParser(Parser):
         return ProprietaryCertificate(signatureAlgorithmID, keyAlgorithmID, publicKeyType, publicKey, signatureType, signature, padding)
 
     def parsePublicKey(self, data):
-        stream = StringIO(data)
+        stream = BytesIO(data)
         magic = stream.read(4)
         keyLength = Uint32LE.unpack(stream)
         bitLength = Uint32LE.unpack(stream)
@@ -374,7 +374,7 @@ class RDPServerConnectionParser(Parser):
 
         # Modulus must be reversed because bytes_to_long expects it to be in big endian format
         modulus = bytes_to_long(modulus[:: -1])
-        publicExponent = long(publicExponent)
+        publicExponent = int(publicExponent)
         publicKey = RSA.construct((modulus, publicExponent))
         return publicKey
 
@@ -385,7 +385,7 @@ class RDPServerConnectionParser(Parser):
         :type pdu: RDPServerDataPDU
         :return: str
         """
-        stream = StringIO()
+        stream = BytesIO()
 
         if pdu.core:
             self.writeStructure(stream, pdu.core)
@@ -400,13 +400,13 @@ class RDPServerConnectionParser(Parser):
 
     def writeStructure(self, stream, data):
         """
-        :param stream: StringIO to write to
+        :param stream: BytesIO to write to
         :param data: The structure to write (ex: ServerCoreData)
         """
         if data.header not in self.writers:
             raise UnknownPDUTypeError("Trying to write unknown Server Data structure %s" % data.header, data.header)
 
-        substream = StringIO()
+        substream = BytesIO()
         self.writers[data.header](substream, data)
 
         substream = substream.getvalue()
@@ -417,7 +417,7 @@ class RDPServerConnectionParser(Parser):
 
     def writeServerCoreData(self, stream, data):
         """
-        :type stream: StringIO
+        :type stream: BytesIO
         :type data: ServerCoreData
         """
         stream.write(Uint32LE.pack(data.version))
@@ -430,7 +430,7 @@ class RDPServerConnectionParser(Parser):
 
     def writeServerNetworkData(self, stream, data):
         """
-        :type stream: StringIO
+        :type stream: BytesIO
         :type data: ServerNetworkData
         """
         stream.write(Uint16LE.pack(data.mcsChannelID))
@@ -442,7 +442,7 @@ class RDPServerConnectionParser(Parser):
 
     def writeServerSecurityData(self, stream, data):
         """
-        :type stream: StringIO
+        :type stream: BytesIO
         :type data: ServerSecurityData
         """
         stream.write(Uint32LE.pack(data.encryptionMethod))
@@ -456,7 +456,7 @@ class RDPServerConnectionParser(Parser):
             stream.write(serverCertificate)
 
     def writeServerCertificate(self, certificate):
-        stream = StringIO()
+        stream = BytesIO()
 
         if certificate.type == ServerCertificateType.PROPRIETARY:
             Uint32LE.pack(ServerCertificateType.PROPRIETARY, stream)
@@ -486,7 +486,7 @@ class RDPServerConnectionParser(Parser):
         # Modulus must be reversed because bytes_to_long expects it to be in big endian format
         modulusBytes = long_to_bytes(modulus)[:: -1]
 
-        stream = StringIO()
+        stream = BytesIO()
         stream.write(b"RSA1")
         Uint32LE.pack(len(modulusBytes) + 8, stream)
         Uint32LE.pack(2048, stream)

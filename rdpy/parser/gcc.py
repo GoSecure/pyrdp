@@ -1,4 +1,4 @@
-from StringIO import StringIO
+from io import BytesIO
 
 from rdpy.core import per
 from rdpy.core.packing import Uint16BE
@@ -36,7 +36,7 @@ class GCCParser(Parser):
         :type data: str
         :return: GCCPDU
         """
-        stream = StringIO(data)
+        stream = BytesIO(data)
 
         tag = per.readChoice(stream)
 
@@ -62,7 +62,7 @@ class GCCParser(Parser):
         """
         Parse ConferenceCreateRequest data into a GCCPDU
         :param stream: byte stream containing the PDU data
-        :type stream: StringIO
+        :type stream: BytesIO
         :return: GCCConferenceCreateRequestPDU
         """
         property = per.readSelection(stream)
@@ -91,7 +91,7 @@ class GCCParser(Parser):
         """
         Parse ConferenceCreateResponse data into a GCCPDU
         :param stream: byte stream containing the PDU data
-        :type stream: StringIO
+        :type stream: BytesIO
         :return: GCCConferenceCreateResponsePDU
         """
 
@@ -124,7 +124,7 @@ class GCCParser(Parser):
         if pdu.header not in self.writers:
             raise UnknownPDUTypeError("Trying to write unknown GCC PDU type %s" % pdu.header, pdu.header)
 
-        stream = StringIO()
+        stream = BytesIO()
         stream.write(per.writeChoice(0))
         stream.write(per.writeObjectIdentifier(GCCParser.T124_02_98_OID))
         stream.write(per.writeLength(len(pdu.payload) + 14))
@@ -137,7 +137,7 @@ class GCCParser(Parser):
         """
         Read a GCCConferenceCreateRequestPDU and put its raw data into stream
         :param stream: byte stream to put the ConferenceCreateRequest data in
-        :type stream: StringIO
+        :type stream: BytesIO
         :type pdu: GCCConferenceCreateRequestPDU
         """
         stream.write(per.writeSelection(8))
@@ -152,7 +152,7 @@ class GCCParser(Parser):
         """
         Read a GCCConferenceCreateResponsePDU and put its raw data into stream
         :param stream: byte stream to put the ConferenceCreateResponse data in
-        :type stream: StringIO
+        :type stream: BytesIO
         :type pdu: GCCConferenceCreateResponsePDU
         """
 

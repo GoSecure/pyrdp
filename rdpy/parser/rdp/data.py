@@ -1,4 +1,4 @@
-from StringIO import StringIO
+from io import BytesIO
 
 from rdpy.core.packing import Uint16LE, Uint32LE, Uint8
 from rdpy.enum.rdp import RDPDataPDUType, RDPDataPDUSubtype, ErrorInfo, CapabilityType
@@ -48,7 +48,7 @@ class RDPDataParser(Parser):
         :type data: str
         :return: an instance of an RDP Data PDU class.
         """
-        stream = StringIO(data)
+        stream = BytesIO(data)
         header = self.parseShareControlHeader(stream)
 
         if header.type not in self.parsers:
@@ -70,8 +70,8 @@ class RDPDataParser(Parser):
         :param pdu: the PDU.
         :return: str
         """
-        stream = StringIO()
-        substream = StringIO()
+        stream = BytesIO()
+        substream = BytesIO()
 
         if pdu.header.type == RDPDataPDUType.DEMAND_ACTIVE_PDU:
             headerWriter = self.writeShareControlHeader
@@ -117,7 +117,7 @@ class RDPDataParser(Parser):
         return RDPShareDataHeader(controlHeader.type, controlHeader.version, controlHeader.source, shareID, streamID, uncompressedLength, RDPDataPDUSubtype(pduSubtype), compressedType, compressedLength)
 
     def writeShareDataHeader(self, stream, header, dataLength):
-        substream = StringIO()
+        substream = BytesIO()
         substream.write(Uint32LE.pack(header.shareID))
         substream.write(b"\x00")
         substream.write(Uint8.pack(header.streamID))
@@ -167,7 +167,7 @@ class RDPDataParser(Parser):
                                    numberCapabilities, capabilitySets, capabilitySetsRaw)
 
     def parseCapabilitySets(self, capabilitySetsRaw, numberCapabilities):
-        stream = StringIO(capabilitySetsRaw)
+        stream = BytesIO(capabilitySetsRaw)
         capabilitySets = {}
         # Do minimum parsing for every capability
         for i in range(numberCapabilities):
@@ -206,7 +206,7 @@ class RDPDataParser(Parser):
         :param data: Raw data starting after lengthCapability
         :return: GeneralCapability
         """
-        stream = StringIO(data)
+        stream = BytesIO(data)
         osMajorType = Uint16LE.unpack(stream.read(2))
         osMinorType = Uint16LE.unpack(stream.read(2))
         protocolVersion = Uint16LE.unpack(stream.read(2))
@@ -232,7 +232,7 @@ class RDPDataParser(Parser):
         :param data: Raw data starting after lengthCapability
         :return: GeneralCapability
         """
-        stream = StringIO(data)
+        stream = BytesIO(data)
         offscreenSupportLevel = Uint32LE.unpack(stream.read(4))
         offscreenCacheSize = Uint16LE.unpack(stream.read(2))
         offscreenCacheEntries = Uint16LE.unpack(stream.read(2))
@@ -248,7 +248,7 @@ class RDPDataParser(Parser):
         :param data: Raw data starting after lengthCapability
         :return: GlyphCacheCapability
         """
-        stream = StringIO(data)
+        stream = BytesIO(data)
         glyphCache = stream.read(40)
         fragCache = Uint32LE.unpack(stream.read(4))
         glyphSupportLevel = Uint16LE.unpack(stream.read(2))
@@ -265,7 +265,7 @@ class RDPDataParser(Parser):
         :param data: Raw data starting after lengthCapability
         :return: BitmapCapability
         """
-        stream = StringIO(data)
+        stream = BytesIO(data)
         preferredBitsPerPixel = Uint16LE.unpack(stream.read(2))
         receive1bitPerPixel = Uint16LE.unpack(stream.read(2))
         receive4bitPerPixel = Uint16LE.unpack(stream.read(2))
@@ -293,7 +293,7 @@ class RDPDataParser(Parser):
         :param data: Raw data starting after lengthCapability
         :return: OrderCapability
         """
-        stream = StringIO(data)
+        stream = BytesIO(data)
         terminalDescriptor = stream.read(16)
         stream.read(4)  # pad4octetsA
         desktopSaveXGranularity = Uint16LE.unpack(stream.read(2))
@@ -319,14 +319,14 @@ class RDPDataParser(Parser):
 
     def writeConfirmActive(self, stream, pdu):
         """
-        :type stream: StringIO
+        :type stream: BytesIO
         :type pdu: RDPConfirmActivePDU
         """
         Uint32LE.pack(pdu.shareID, stream)
         Uint16LE.pack(pdu.originatorID, stream)
         Uint16LE.pack(len(pdu.sourceDescriptor), stream)
 
-        substream = StringIO()
+        substream = BytesIO()
         self.writeCapabilitySets(pdu.parsedCapabilitySets.values(), substream)
 
         Uint16LE.pack(len(substream.getvalue()) + 4, stream)
@@ -441,9 +441,9 @@ class RDPDataParser(Parser):
         """
         https://msdn.microsoft.com/en-us/library/cc240549.aspx
         :type capability: rdpy.pdu.rdp.capability.GeneralCapability
-        :type stream: StringIO
+        :type stream: BytesIO
         """
-        substream = StringIO()
+        substream = BytesIO()
         Uint16LE.pack(capability.type, stream)
         Uint16LE.pack(capability.majorType, substream)
         Uint16LE.pack(capability.minorType, substream)
@@ -463,9 +463,9 @@ class RDPDataParser(Parser):
     def writeOrderCapability(self, capability, stream):
         """
         :type capability: rdpy.pdu.rdp.capability.OrderCapability
-        :type stream: StringIO
+        :type stream: BytesIO
         """
-        substream = StringIO()
+        substream = BytesIO()
         Uint16LE.pack(capability.type, stream)
         substream.write(capability.terminalDescriptor)
         substream.write(b"\x00"*4)
@@ -490,9 +490,9 @@ class RDPDataParser(Parser):
     def writeBitmapCapability(self, capability, stream):
         """
         :type capability: rdpy.pdu.rdp.capability.BitmapCapability
-        :type stream: StringIO
+        :type stream: BytesIO
         """
-        substream = StringIO()
+        substream = BytesIO()
         Uint16LE.pack(capability.type, stream)
 
         Uint16LE.pack(capability.preferredBitsPerPixel, substream)
@@ -516,9 +516,9 @@ class RDPDataParser(Parser):
     def writeOffscreenCacheCapability(self, capability, stream):
         """
         :type capability: rdpy.pdu.rdp.capability.OffscreenBitmapCacheCapability
-        :type stream: StringIO
+        :type stream: BytesIO
         """
-        substream = StringIO()
+        substream = BytesIO()
         Uint16LE.pack(capability.type, stream)
 
         Uint32LE.pack(capability.offscreenSupportLevel, substream)
@@ -531,9 +531,9 @@ class RDPDataParser(Parser):
     def writeMultiFragmentUpdateCapability(self, capability, stream):
         """
         :type capability: rdpy.pdu.rdp.capability.MultifragmentUpdateCapability
-        :type stream: StringIO
+        :type stream: BytesIO
         """
-        substream = StringIO()
+        substream = BytesIO()
         Uint16LE.pack(capability.type, stream)
 
         Uint32LE.pack(capability.maxRequestSize, substream)

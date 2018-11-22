@@ -1,4 +1,4 @@
-from StringIO import StringIO
+from io import BytesIO
 
 from rdpy.core.packing import Uint8, Uint16BE, Uint16LE
 from rdpy.enum.x224 import X224PDUType
@@ -152,7 +152,7 @@ class X224Parser(Parser):
         :return: str The byte stream to send to the previous layer
         """
 
-        stream = StringIO()
+        stream = BytesIO()
         stream.write(Uint8.pack(pdu.length))
 
         if pdu.header not in self.writers:
@@ -165,7 +165,7 @@ class X224Parser(Parser):
     def writeConnectionPDU(self, stream, header, destination, source, options):
         """
         Write a connection PDU (connectionRequest/connectionConfirm/disconnectRequest) in the provided byte stream.
-        :type stream: StringIO
+        :type stream: BytesIO
         :type header: X224PDUType
         :type destination: int
         :type source: int
@@ -179,7 +179,7 @@ class X224Parser(Parser):
     def writeConnectionRequest(self, stream, pdu):
         """
         Write a connection request PDU onto the provided stream
-        :type stream: StringIO
+        :type stream: BytesIO
         :type pdu: X224ConnectionRequestPDU
         """
         header = (pdu.header << 4) | (pdu.credit & 0xf)
@@ -188,7 +188,7 @@ class X224Parser(Parser):
     def writeConnectionConfirm(self, stream, pdu):
         """
         Write a connection confirm PDU onto the provided stream
-        :type stream: StringIO
+        :type stream: BytesIO
         :type pdu: X224ConnectionConfirmPDU
         """
         header = (pdu.header << 4) | (pdu.credit & 0xf)
@@ -197,7 +197,7 @@ class X224Parser(Parser):
     def writeDisconnectRequest(self, stream, pdu):
         """
         Write a disconnect request PDU onto the provided stream
-        :type stream: StringIO
+        :type stream: BytesIO
         :type pdu: X224DisconnectRequestPDU
         """
         self.writeConnectionPDU(stream, pdu.header, pdu.destination, pdu.source, pdu.reason)
@@ -205,7 +205,7 @@ class X224Parser(Parser):
     def writeData(self, stream, pdu):
         """
         Write a Data PDU onto the provided stream
-        :type stream: StringIO
+        :type stream: BytesIO
         :type pdu: X224DataPDU
         """
         header = (pdu.header << 4) | int(pdu.roa)
@@ -215,7 +215,7 @@ class X224Parser(Parser):
     def writeError(self, stream, pdu):
         """
         Write an error PDU onto the provided stream
-        :type stream: StringIO
+        :type stream: BytesIO
         :type pdu: X224ErrorPDU
         """
         stream.write(Uint8.pack(pdu.header))

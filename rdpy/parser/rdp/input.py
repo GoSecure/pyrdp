@@ -1,4 +1,4 @@
-from StringIO import StringIO
+from io import BytesIO
 
 from rdpy.core.packing import Uint32LE, Uint16LE
 from rdpy.enum.rdp import InputEventType
@@ -38,7 +38,7 @@ class RDPInputParser(Parser):
         return self.parsers[messageType](stream, eventTime)
 
     def write(self, input):
-        stream = StringIO()
+        stream = BytesIO()
         Uint32LE.pack(input.eventTime, stream)
         Uint16LE.pack(input.messageType, stream)
 

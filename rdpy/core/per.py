@@ -182,7 +182,7 @@ def writeObjectIdentifier(oid):
     :type oid: (int, int, int, int, int, int)
     :return: str
     """
-    return writeLength(5) + Uint8.pack((oid[0] << 4) & (oid[1] & 0x0f)) + "".join(Uint8.pack(b) for b in oid[2 :])
+    return writeLength(5) + Uint8.pack((oid[0] << 4) & (oid[1] & 0x0f)) + b"".join(Uint8.pack(b) for b in oid[2 :])
 
 def readNumericString(s, minValue):
     """
@@ -194,15 +194,15 @@ def readNumericString(s, minValue):
     :return: str
     """
     length = readLength(s)
-    length = (length + minValue + 1) / 2
+    length = (length + minValue + 1) // 2
     data = s.read(length)
 
-    result = ""
+    result = b""
     for b in data:
         b = Uint8.unpack(b)
         c1 = (b >> 4) + 0x30
         c2 = (b & 0xf) + 0x30
-        result += chr(c1) + chr(c2)
+        result += bytes([c1, c2])
     
     return result
 
@@ -220,12 +220,12 @@ def writeNumericString(string, minValue):
     if length >= minValue:
         mlength = length - minValue
     
-    result = ""
+    result = b""
     
     for i in range(0, length, 2):
-        c1 = ord(string[i])
+        c1 = ord(string[i : i + 1])
         if i + 1 < length:
-            c2 = ord(string[i + 1])
+            c2 = ord(string[i + 1 : i + 2])
         else:
             c2 = 0x30
         c1 = (c1 - 0x30) % 10

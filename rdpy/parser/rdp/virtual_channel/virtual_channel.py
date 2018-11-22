@@ -1,4 +1,4 @@
-from StringIO import StringIO
+from io import BytesIO
 
 from rdpy.core.packing import Uint32LE
 from rdpy.enum.virtual_channel.virtual_channel import ChannelFlag
@@ -18,7 +18,7 @@ class VirtualChannelParser(Parser):
         :type data: str
         :return: VirtualChannelPDU
         """
-        stream = StringIO(data)
+        stream = BytesIO(data)
         length = Uint32LE.unpack(stream)
         flags = Uint32LE.unpack(stream)
         payload = stream.read(length)
@@ -32,9 +32,9 @@ class VirtualChannelParser(Parser):
         """
         rawPacketList = []
         length = pdu.length
-        dataStream = StringIO(pdu.payload)
+        dataStream = BytesIO(pdu.payload)
         while length > 0:
-            stream = StringIO()
+            stream = BytesIO()
             Uint32LE.pack(pdu.length, stream)
             flags = pdu.flags & 0b11111111111111111111111111111100
             if len(rawPacketList) == 0:

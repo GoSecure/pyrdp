@@ -1,4 +1,4 @@
-from StringIO import StringIO
+from io import BytesIO
 
 from rdpy.core.packing import Uint16LE, Uint32LE
 from rdpy.enum.rdp import PointerEventType
@@ -36,7 +36,7 @@ class PointerEventParser(Parser):
         return self.parsers[messageType](stream)
 
     def write(self, event):
-        stream = StringIO()
+        stream = BytesIO()
         Uint16LE.pack(event.messageType, stream)
         stream.write(b"\x00" * 2)
 

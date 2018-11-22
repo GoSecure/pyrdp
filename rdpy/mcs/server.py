@@ -1,8 +1,8 @@
 from rdpy.core.observer import Observer
 from rdpy.core.subject import Subject, ObservedBy
 from rdpy.pdu.mcs import MCSAttachUserConfirmPDU, MCSChannelJoinConfirmPDU
-from router import MCSRouter
-from user import MCSUser
+from rdpy.mcs.router import MCSRouter
+from rdpy.mcs.user import MCSUser
 
 
 class MCSServerConnectionObserver(Observer):

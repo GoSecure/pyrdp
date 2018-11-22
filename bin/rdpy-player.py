@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 # Copyright (c) 2014-2015 Sylvain Peyrefitte
 #
@@ -89,7 +89,9 @@ class ServerThread(QThread):
                 self.connection_received.emit(sock, addr)
             except socket.timeout:
                 pass
-            except socket.error as (code, msg):
+            except socket.error as error:
+                print(error)
+                raise
                 if code != errno.EINTR:
                     raise
         
@@ -305,8 +307,12 @@ class ReplayTab(RDPConnectionTab):
         """
         self.stopped = False
         event = self._reader.nextEvent()
-        self.last_timestamp = event.timestamp
-        self.loop(event, speed_multiplier=self.speed_multiplier)
+
+        if event:
+            self.last_timestamp = event.timestamp
+            self.loop(event, speed_multiplier=self.speed_multiplier)
+        else:
+            mlog.debug("RSS file ended, replay done.")
 
     def stop(self):
         """

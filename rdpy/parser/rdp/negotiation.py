@@ -1,4 +1,4 @@
-from StringIO import StringIO
+from io import BytesIO
 
 from rdpy.core.packing import Uint8, Uint16LE, Uint32LE
 from rdpy.enum.negotiation import NegotiationRequestFlags, NegotiationType
@@ -24,7 +24,7 @@ class RDPNegotiationRequestParser(Parser):
             cookie = data[: data.index(b"\r\n")]
             data = data[data.index(b"\r\n") + 2 :]
 
-        stream = StringIO(data)
+        stream = BytesIO(data)
 
         if len(data) >= 8:
             type = Uint8.unpack(stream)
@@ -54,7 +54,7 @@ class RDPNegotiationRequestParser(Parser):
         :type pdu: RDPNegotiationRequestPDU
         :return: str
         """
-        stream = StringIO()
+        stream = BytesIO()
 
         if pdu.cookie is not None:
             stream.write(pdu.cookie + b"\r\n")
@@ -86,7 +86,7 @@ class RDPNegotiationResponseParser(Parser):
         :type data: str
         :return: RDPNegotiationResponsePDU
         """
-        stream = StringIO(data)
+        stream = BytesIO(data)
 
         if len(data) == 8:
             type = Uint8.unpack(stream)
@@ -104,7 +104,7 @@ class RDPNegotiationResponseParser(Parser):
         :type pdu: RDPNegotiationResponsePDU
         :return: str
         """
-        stream = StringIO()
+        stream = BytesIO()
 
         if pdu.flags is not None and pdu.selectedProtocols is not None:
             Uint8.pack(NegotiationType.TYPE_RDP_NEG_RSP, stream)

@@ -1,4 +1,4 @@
-from StringIO import StringIO
+from io import BytesIO
 
 from rdpy.core.packing import Uint16LE, Uint32LE
 from rdpy.enum.virtual_channel.clipboard import ClipboardMessageType, ClipboardMessageFlags
@@ -11,7 +11,7 @@ class ClipboardParser:
     """
 
     def parse(self, data):
-        stream = StringIO(data)
+        stream = BytesIO(data)
         msgType = Uint16LE.unpack(stream)
         msgFlags = Uint16LE.unpack(stream)
         dataLen = Uint32LE.unpack(stream)
@@ -32,7 +32,7 @@ class ClipboardParser:
         :return: str
         """
 
-        stream = StringIO()
+        stream = BytesIO()
         Uint16LE.pack(pdu.msgType, stream)
         Uint16LE.pack(pdu.msgFlags, stream)
         if pdu.msgType == ClipboardMessageType.CB_FORMAT_DATA_RESPONSE:
@@ -45,7 +45,7 @@ class ClipboardParser:
     def writeFormatDataResponse(self, stream, pdu):
         """
         Write the FormatDataResponsePDU starting at dataLen.
-        :type stream: StringIO
+        :type stream: BytesIO
         :type pdu: FormatDataResponsePDU
         """
         Uint32LE.pack(len(pdu.requestedFormatData), stream)

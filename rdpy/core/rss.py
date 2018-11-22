@@ -22,7 +22,7 @@ Remote Session Scenario File format
 Private protocol format to save events
 """
 import socket
-from Queue import Queue
+from queue import Queue
 from typing import BinaryIO
 
 from rdpy.core import log

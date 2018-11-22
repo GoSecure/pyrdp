@@ -24,7 +24,7 @@
 def KSA(key):
     keylength = len(key)
 
-    S = range(256)
+    S = list(range(256))
 
     j = 0
     for i in range(256):
@@ -51,7 +51,7 @@ def RC4(key):
     return PRGA(S)
 
 def RC4Key(key):
-    return RC4([ord(c) for c in key])
+    return RC4([c for c in key])
 
 def crypt(keystream, plaintext):
-    return b"".join([chr(ord(c) ^ keystream.next()).encode() for c in plaintext])
+    return bytes([c ^ next(keystream) for c in plaintext])

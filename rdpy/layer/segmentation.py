@@ -71,7 +71,7 @@ class SegmentationLayer(Layer):
                     else:
                         raise
 
-                layer.recv(data[0])
+                layer.recv(data[0 : 1])
                 data = data[1 :]
                 length = layer.getDataLengthRequired()
 

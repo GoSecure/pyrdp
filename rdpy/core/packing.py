@@ -7,17 +7,20 @@ class Integer:
     def unpack(cls, data):
         """
         :param data: data to unpack from.
-        :type data: str | file | StringIO.StringIO
+        :type data: str | file | io.BytesIO
         :return: int
         """
         try:
-            if isinstance(data, str):
+            if isinstance(data, bytes):
                 return struct.unpack(cls.FORMAT, data)[0]
+            elif isinstance(data, int):
+                # Indexing bytes in Python 3 gives you an int instead of bytes object of length 1...
+                return data
             else:
                 length = {"b": 1, "h": 2, "i": 4}[cls.FORMAT[1].lower()]
                 return struct.unpack(cls.FORMAT, data.read(length))[0]
         except struct.error as e:
-            raise ValueError(e.message)
+            raise ValueError(str(e))
 
     @classmethod
     def pack(cls, value, stream = None):
@@ -25,7 +28,7 @@ class Integer:
         :param value: value to pack
         :type value: int | str
         :param stream: stream to pack to (optional)
-        :type stream: file | StringIO.StringIO | None
+        :type stream: file | io.BytesIO | None
         :return: str | None
         """
         bytes = struct.pack(cls.FORMAT, value)

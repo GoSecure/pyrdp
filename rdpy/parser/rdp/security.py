@@ -1,4 +1,4 @@
-from StringIO import StringIO
+from io import BytesIO
 
 from rdpy.crypto.crypto import RC4Crypter, RC4CrypterProxy
 from rdpy.core.packing import Uint16LE, Uint8, Uint32LE
@@ -20,7 +20,7 @@ class RDPBasicSecurityParser(Parser):
         :type data: str
         :return: RDPSecurityPDU
         """
-        stream = StringIO(data)
+        stream = BytesIO(data)
         header = Uint32LE.unpack(stream)
 
         if header & RDPSecurityFlags.SEC_EXCHANGE_PKT != 0:
@@ -32,7 +32,7 @@ class RDPBasicSecurityParser(Parser):
     def parseSecurityExchange(self, stream, header):
         """
         Decode a security exchange PDU.
-        :type stream: StringIO
+        :type stream: BytesIO
         :type header: int
         :return: RDPSecurityExchangePDU
         """
@@ -46,7 +46,7 @@ class RDPBasicSecurityParser(Parser):
         :type pdu: RDPSecurityPDU
         :return: str
         """
-        stream = StringIO()
+        stream = BytesIO()
         self.writeHeader(stream, pdu)
         self.writeBody(stream, pdu)
         self.writePayload(stream, pdu)
@@ -58,7 +58,7 @@ class RDPBasicSecurityParser(Parser):
         :type pdu: RDPSecurityExchangePDU
         :return: str
         """
-        stream = StringIO()
+        stream = BytesIO()
         Uint32LE.pack(RDPSecurityFlags.SEC_EXCHANGE_PKT | RDPSecurityFlags.SEC_LICENSE_ENCRYPT_SC, stream)
         Uint32LE.pack(len(pdu.clientRandom), stream)
         stream.write(pdu.clientRandom)
@@ -67,7 +67,7 @@ class RDPBasicSecurityParser(Parser):
     def writeHeader(self, stream, pdu):
         """
         Write the PDU header.
-        :type stream: StringIO
+        :type stream: BytesIO
         :type pdu: RDPSecurityPDU
         """
         Uint32LE.pack(pdu.header, stream)
@@ -75,7 +75,7 @@ class RDPBasicSecurityParser(Parser):
     def writeBody(self, stream, pdu):
         """
         Write the PDU body.
-        :type stream: StringIO
+        :type stream: BytesIO
         :type pdu: RDPSecurityPDU
         """
         pass
@@ -83,7 +83,7 @@ class RDPBasicSecurityParser(Parser):
     def writePayload(self, stream, pdu):
         """
         Write the PDU payload.
-        :type stream: StringIO
+        :type stream: BytesIO
         :type pdu: RDPSecurityPDU
         """
         stream.write(pdu.payload)
@@ -104,7 +104,7 @@ class RDPSignedSecurityParser(RDPBasicSecurityParser):
         self.crypter = crypter
 
     def parse(self, data):
-        stream = StringIO(data)
+        stream = BytesIO(data)
         header = Uint32LE.unpack(stream)
 
         if header & RDPSecurityFlags.SEC_EXCHANGE_PKT != 0:
@@ -150,7 +150,7 @@ class RDPFIPSSecurityParser(RDPSignedSecurityParser):
         RDPSignedSecurityParser.__init__(self, crypter)
 
     def parse(self, data):
-        stream = StringIO(data)
+        stream = BytesIO(data)
         header = Uint32LE.unpack(stream)
 
         if header & RDPSecurityFlags.SEC_EXCHANGE_PKT != 0:

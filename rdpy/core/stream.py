@@ -1,7 +1,7 @@
-from StringIO import StringIO
+from io import BytesIO
 
 
-class ByteStream(StringIO):
+class ByteStream(BytesIO):
     """
     Stream used to read bytes.
     """

@@ -1,3 +1,5 @@
+from binascii import hexlify
+
 from rdpy.core.observer import Observer
 from rdpy.enum.core import ParserMode
 from rdpy.layer.rdp.data import RDPDataLayerObserver, RDPFastPathDataLayerObserver
@@ -28,7 +30,7 @@ class MITMChannelObserver(Observer):
         self.peer.sendPDU(pdu)
 
     def onUnparsedData(self, data):
-        self.log.debug("Received unparsed data: {}".format(data.encode('hex')))
+        self.log.debug("Received unparsed data: {}".format(hexlify(data)))
         self.peer.sendData(data)
 
     def sendPDU(self, pdu):
@@ -36,7 +38,7 @@ class MITMChannelObserver(Observer):
         self.layer.sendPDU(pdu)
 
     def sendData(self, data):
-        self.log.debug("Sending data: {}".format(data.encode('hex')))
+        self.log.debug("Sending data: {}".format(hexlify(data)))
         self.layer.sendData(data)
 
     def getEffectiveType(self, pdu):

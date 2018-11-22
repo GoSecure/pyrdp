@@ -1,4 +1,5 @@
-from StringIO import StringIO
+from binascii import hexlify
+from io import BytesIO
 
 from rdpy.core import log
 from rdpy.crypto.crypto import RC4Crypter
@@ -25,7 +26,7 @@ class RDPBasicFastPathParser(RDPBasicSecurityParser):
             self.writeParser = output
 
     def getPDULength(self, data):
-        stream = StringIO(data)
+        stream = BytesIO(data)
         stream.read(1)
         return self.parseLength(stream)
 
@@ -49,7 +50,7 @@ class RDPBasicFastPathParser(RDPBasicSecurityParser):
         return len(data) >= self.getPDULength(data)
 
     def parse(self, data):
-        stream = StringIO(data)
+        stream = BytesIO(data)
         header = Uint8.unpack(stream)
         eventCount = self.parseEventCount(header)
         pduLength = self.parseLength(stream)
@@ -57,7 +58,7 @@ class RDPBasicFastPathParser(RDPBasicSecurityParser):
         if eventCount == 0:
             eventCount = Uint8.unpack(stream)
 
-        data = stream.read(pduLength - stream.pos)
+        data = stream.read(pduLength - stream.tell())
         events = self.parseEvents(data)
         return RDPFastPathPDU(header, events)
 
@@ -103,7 +104,7 @@ class RDPBasicFastPathParser(RDPBasicSecurityParser):
             except KeyboardInterrupt:
                 raise
             except Exception:
-                log.error("Exception occurred when receiving: %s" % eventData.encode("hex"))
+                log.error("Exception occurred when receiving: %s" % hexlify(eventData.encode))
                 raise
 
             events.append(event)
@@ -159,7 +160,7 @@ class RDPSignedFastPathParser(RDPBasicFastPathParser):
         self.eventData = b""
 
     def parse(self, data):
-        stream = StringIO(data)
+        stream = BytesIO(data)
         header = Uint8.unpack(stream)
         eventCount = self.parseEventCount(header)
         pduLength = self.parseLength(stream)
@@ -168,7 +169,7 @@ class RDPSignedFastPathParser(RDPBasicFastPathParser):
         if eventCount == 0:
             eventCount = Uint8.unpack(stream)
 
-        data = stream.read(pduLength - stream.pos)
+        data = stream.read(pduLength - stream.tell())
 
         if header & RDPFastPathSecurityFlags.FASTPATH_OUTPUT_ENCRYPTED != 0:
             data = self.crypter.decrypt(data)
@@ -178,7 +179,7 @@ class RDPSignedFastPathParser(RDPBasicFastPathParser):
         return RDPFastPathPDU(header, events)
 
     def writeBody(self, stream, pdu):
-        eventStream = StringIO()
+        eventStream = BytesIO()
         self.writeEvents(eventStream, pdu)
         self.eventData = eventStream.getvalue()
         signature = self.crypter.sign(self.eventData, True)
@@ -206,7 +207,7 @@ class RDPFIPSFastPathParser(RDPSignedFastPathParser):
         RDPSignedFastPathParser.__init__(self, crypter, mode)
 
     def parse(self, data):
-        stream = StringIO(data)
+        stream = BytesIO(data)
         header = Uint8.unpack(stream)
         eventCount = self.parseEventCount(header)
         pduLength = self.parseLength(stream)
@@ -218,7 +219,7 @@ class RDPFIPSFastPathParser(RDPSignedFastPathParser):
         if eventCount == 0:
             eventCount = Uint8.unpack(stream)
 
-        data = stream.read(pduLength - stream.pos)
+        data = stream.read(pduLength - stream.tell())
 
         if header & RDPFastPathSecurityFlags.FASTPATH_OUTPUT_ENCRYPTED != 0:
             data = self.crypter.decrypt(data)
@@ -228,7 +229,7 @@ class RDPFIPSFastPathParser(RDPSignedFastPathParser):
         return RDPFastPathPDU(header, events)
 
     def writeBody(self, stream, pdu):
-        bodyStream = StringIO()
+        bodyStream = BytesIO()
         RDPSignedFastPathParser.writeBody(self, bodyStream, pdu)
         body = bodyStream.getvalue()
 
@@ -255,7 +256,7 @@ class RDPInputEventParser:
     def getEventLength(self, data):
         if isinstance(data, FastPathEventRaw):
             return len(data.data)
-        elif isinstance(data, str):
+        elif isinstance(data, bytes):
             header = Uint8.unpack(data[0])
             type = (header & 0b11100000) >> 5
             return RDPInputEventParser.INPUT_EVENT_LENGTHS[type]
@@ -266,7 +267,7 @@ class RDPInputEventParser:
         raise ValueError("Unsupported event type?")
 
     def parse(self, data):
-        stream = StringIO(data)
+        stream = BytesIO(data)
         eventHeader = Uint8.unpack(stream.read(1))
         eventCode = (eventHeader & 0b11100000) >> 5
         eventFlags= eventHeader & 0b00011111
@@ -297,13 +298,13 @@ class RDPInputEventParser:
         raise ValueError("Invalid FastPath event: {}".format(event))
 
     def writeScanCodeEvent(self, event):
-        raw_data = StringIO()
+        raw_data = BytesIO()
         Uint8.pack(event.rawHeaderByte, raw_data)
         Uint8.pack(event.scancode, raw_data)
         return raw_data.getvalue()
 
     def writeMouseEvent(self, event):
-        rawData = StringIO()
+        rawData = BytesIO()
         Uint8.pack(event.rawHeaderByte, rawData)
         Uint16LE.pack(event.pointerFlags, rawData)
         Uint16LE.pack(event.mouseX, rawData)
@@ -315,7 +316,7 @@ class RDPOutputEventParser:
     def getEventLength(self, data):
         if isinstance(data, FastPathEventRaw):
             return len(data.data)
-        elif isinstance(data, str):
+        elif isinstance(data, bytes):
             header = Uint8.unpack(data[0])
             if self.isCompressed(header):
                 return Uint16LE.unpack(data[2 : 4]) + 4
@@ -338,7 +339,7 @@ class RDPOutputEventParser:
         return (header >> 6) & FastPathOutputCompressionType.FASTPATH_OUTPUT_COMPRESSION_USED
 
     def parse(self, data):
-        stream = StringIO(data)
+        stream = BytesIO(data)
         header = Uint8.unpack(stream)
 
         compressionFlags = None
@@ -369,7 +370,7 @@ class RDPOutputEventParser:
         :return: a FastPathBitmapEvent with bitmapUpdateData
         """
         rawBitmapUpdateData = fastPathBitmapEvent.rawBitmapUpdateData
-        stream2 = StringIO(rawBitmapUpdateData)
+        stream2 = BytesIO(rawBitmapUpdateData)
         updateType = Uint16LE.unpack(stream2.read(2))
         numberRectangles = Uint16LE.unpack(stream2.read(2))
         bitmapData = []
@@ -407,7 +408,7 @@ class RDPOutputEventParser:
         return ordersEvent
 
     def parseSecondaryDrawingOrder(self, orderData):
-        stream = StringIO(orderData)
+        stream = BytesIO(orderData)
         controlFlags = Uint8.unpack(stream.read(1))
         orderLength = Uint16LE.unpack(stream.read(2))
         extraFlags = Uint16LE.unpack(stream.read(2))
@@ -422,13 +423,13 @@ class RDPOutputEventParser:
         if isinstance(event, FastPathEventRaw):
             return event.data
 
-        stream = StringIO()
+        stream = BytesIO()
         Uint8.pack(event.header, stream)
 
         if event.compressionFlags is not None:
             Uint8.pack(event.compressionFlags if event.compressionFlags else 0, stream)
 
-        updateStream = StringIO()
+        updateStream = BytesIO()
 
         if isinstance(event, FastPathBitmapEvent):
             self.writeBitmapEvent(updateStream, event)

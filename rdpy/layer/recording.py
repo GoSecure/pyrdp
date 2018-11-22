@@ -1,5 +1,5 @@
 import time
-from StringIO import StringIO
+from io import BytesIO
 
 from rdpy.enum.rdp import RDPPlayerMessageType
 
@@ -35,7 +35,7 @@ class RDPPlayerMessageTypeLayer(Layer):
         """
         timestamp = int(round(time.time() * 1000))
 
-        stream = StringIO()
+        stream = BytesIO()
         Uint8.pack(messageType, stream)
         Uint64LE.pack(timestamp, stream)
         stream.write(data)

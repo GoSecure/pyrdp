@@ -1,4 +1,4 @@
-from StringIO import StringIO
+from io import BytesIO
 
 from rdpy.core.packing import Uint32LE, Uint16LE
 from rdpy.enum.rdp import ClientInfoFlags
@@ -18,7 +18,7 @@ class RDPClientInfoParser:
         :type data: str
         :return: RDPClientInfoPDU
         """
-        stream = StringIO(data)
+        stream = BytesIO(data)
         codePage = Uint32LE.unpack(stream)
         flags = Uint32LE.unpack(stream)
 
@@ -46,7 +46,7 @@ class RDPClientInfoParser:
             alternateShell = alternateShell.decode("utf-16le")
             workingDir = workingDir.decode("utf-16le")
 
-        removeTrailingNullByte = lambda s: s[: -1] if s.endswith(b"\x00") else s
+        removeTrailingNullByte = lambda s: s[: -1] if s.endswith("\x00") else s
         domain = removeTrailingNullByte(domain)
         username = removeTrailingNullByte(username)
         password = removeTrailingNullByte(password)
@@ -64,7 +64,7 @@ class RDPClientInfoParser:
         :type pdu: RDPClientInfoPDU
         :return: str
         """
-        stream = StringIO()
+        stream = BytesIO()
         stream.write(Uint32LE.pack(pdu.codePage))
         stream.write(Uint32LE.pack(pdu.flags))
 
@@ -73,11 +73,11 @@ class RDPClientInfoParser:
         nullByteCount = 1 if hasNullBytes else 0
         unicodeMultiplier = 2 if isUnicode else 0
 
-        domain = pdu.domain + b"\x00" * nullByteCount
-        username = pdu.username + b"\x00" * nullByteCount
-        password = pdu.password + b"\x00" * nullByteCount
-        alternateShell = pdu.alternateShell + b"\x00" * nullByteCount
-        workingDir = pdu.workingDir + b"\x00" * nullByteCount
+        domain = pdu.domain + "\x00" * nullByteCount
+        username = pdu.username + "\x00" * nullByteCount
+        password = pdu.password + "\x00" * nullByteCount
+        alternateShell = pdu.alternateShell + "\x00" * nullByteCount
+        workingDir = pdu.workingDir + "\x00" * nullByteCount
 
         if isUnicode:
             domain = domain.encode("utf-16le")

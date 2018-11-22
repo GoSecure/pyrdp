@@ -1,3 +1,5 @@
+from binascii import hexlify
+
 from rdpy.core import log
 from rdpy.crypto.crypto import RC4Crypter
 from rdpy.core.layer import Layer, LayerObserver
@@ -72,9 +74,9 @@ class RDPSecurityLayer(Layer):
             raise
         except Exception:
             if isinstance(pdu, RDPSecurityExchangePDU):
-                log.error("Exception occurred when receiving Security Exchange. Data: %s" % data.encode("hex"))
+                log.error("Exception occurred when receiving Security Exchange. Data: %s" % hexlify(data))
             else:
-                log.error("Exception occurred when receiving: %s" % pdu.payload.encode("hex"))
+                log.error("Exception occurred when receiving: %s" % hexlify(pdu.payload))
             raise
 
     def dispatchPDU(self, pdu):

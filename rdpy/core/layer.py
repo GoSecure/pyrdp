@@ -1,6 +1,6 @@
-from observer import Observer
+from rdpy.core.observer import Observer
+from rdpy.core.subject import Subject, ObservedBy
 from rdpy.exceptions import UnknownPDUTypeError
-from subject import Subject, ObservedBy
 
 class LayerObserver(Observer):
     """
