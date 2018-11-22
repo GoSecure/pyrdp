@@ -3,8 +3,8 @@ from Crypto.PublicKey import RSA
 from Crypto.Util.number import bytes_to_long, long_to_bytes
 from io import BytesIO
 
-from rdpy.core.stream import StrictStream
 from rdpy.core.packing import Uint16LE, Uint32LE, Uint8
+from rdpy.core.stream import StrictStream
 from rdpy.enum.rdp import RDPConnectionDataType, ServerCertificateType, RDPVersion, ColorDepth, KeyboardType, \
     HighColorDepth, ConnectionType, DesktopOrientation, EncryptionLevel, EncryptionMethod
 from rdpy.exceptions import ParsingError, UnknownPDUTypeError

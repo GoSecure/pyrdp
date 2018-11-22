@@ -1,8 +1,6 @@
 from rdpy.enum.rdp import RDPPlayerMessageType
-
-from rdpy.recording.recorder import Recorder
-
 from rdpy.layer.rdp.data import RDPFastPathDataLayerObserver
+from rdpy.recording.recorder import Recorder
 
 
 class RecordingFastPathObserver(RDPFastPathDataLayerObserver):

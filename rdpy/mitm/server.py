@@ -54,6 +54,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.targetPort = targetPort
         self.certificateFileName = certificateFileName
         self.privateKeyFileName = privateKeyFileName
+        self.clipboardObserver = None
         self.useTLS = False
         self.client = None
         self.clientConnector = None
@@ -360,7 +361,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         # Create and link the MITM Observer for the server side to the clipboard layer.
         # Also link both MITM Observers (client and server) so they can send traffic the other way.
         peer = self.client.getChannelObserver(channelID)
-        observer = MITMServerClipboardChannelObserver(clipboardLayer, self.recorder)
+        observer = MITMServerClipboardChannelObserver(clipboardLayer, self.recorder,
+                                                      self.client.clipboardObserver)
         observer.setPeer(peer)
         clipboardLayer.addObserver(observer)
 
@@ -426,7 +428,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         """
         pdu = RDPClientInfoParser().parse(data)
 
-        self.log.debug("Client Info received")
+        self.log.debug("Client Info received: {}".format(pdu))
         self.connectionsLog.info("CLIENT INFO RECEIVED")
         self.connectionsLog.info("USER: {}".format(pdu.username))
         self.connectionsLog.info("PASSWORD: {}".format(pdu.password))

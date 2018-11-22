@@ -1,10 +1,9 @@
 import time
 from io import BytesIO
 
-from rdpy.enum.rdp import RDPPlayerMessageType
-
 from rdpy.core.layer import Layer
 from rdpy.core.packing import Uint8, Uint64LE
+from rdpy.enum.rdp import RDPPlayerMessageType
 from rdpy.pdu.rdp.recording import RDPPlayerMessagePDU
 
 

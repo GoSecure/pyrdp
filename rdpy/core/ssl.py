@@ -17,8 +17,8 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from twisted.internet import ssl
 from OpenSSL import SSL
+from twisted.internet import ssl
 
 
 class ClientTLSContext(ssl.ClientContextFactory):

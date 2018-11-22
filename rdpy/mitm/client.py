@@ -45,6 +45,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.channelMap = {}
         self.channelDefinitions = []
         self.channelObservers = {}
+        self.clipboardObserver = None
         self.useTLS = False
         self.user = None
         self.fastPathObserver = None
@@ -262,10 +263,10 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         virtualChannelLayer.setNext(clipboardLayer)
 
         # Create and link the MITM Observer for the client side to the clipboard layer.
-        observer = MITMClientClipboardChannelObserver(clipboardLayer,  self.recorder)
-        clipboardLayer.addObserver(observer)
+        self.clipboardObserver = MITMClientClipboardChannelObserver(clipboardLayer, self.recorder)
+        clipboardLayer.addObserver(self.clipboardObserver)
 
-        self.channelObservers[channelID] = observer
+        self.channelObservers[channelID] = self.clipboardObserver
 
         return channel
 
@@ -302,7 +303,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.server.onChannelJoinRefused(user, result, channelID)
 
     def onClientInfoPDUReceived(self, pdu):
-        self.log.debug("Sending Client Info")
+        self.log.debug("Sending Client Info: {}".format(pdu))
 
         self.securityLayer.sendClientInfo(pdu)
 

@@ -6,6 +6,7 @@ from rdpy.core.subject import ObservedBy
 from rdpy.enum.segmentation import SegmentationPDUType
 from rdpy.layer.buffered import BufferedLayer
 
+
 class SegmentationObserver(LayerObserver):
     def onUnknownHeader(self, header):
         pass
