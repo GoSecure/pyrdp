@@ -428,7 +428,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         """
         pdu = RDPClientInfoParser().parse(data)
 
-        self.log.debug("Client Info received")
+        self.log.debug("Client Info received: {}".format(pdu))
         self.connectionsLog.info("CLIENT INFO RECEIVED")
         self.connectionsLog.info("USER: {}".format(pdu.username))
         self.connectionsLog.info("PASSWORD: {}".format(pdu.password))
