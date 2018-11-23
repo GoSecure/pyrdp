@@ -407,6 +407,10 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderSupport = b"\x00" * 32
 
         pdu.parsedCapabilitySets[CapabilityType.CAPSETTYPE_MULTIFRAGMENTUPDATE] = MultifragmentUpdateCapability(0)
+
+        # Disable virtual channel compression
+        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].flags = 0
+
         self.recorder.record(pdu, RDPPlayerMessageType.CONFIRM_ACTIVE)
 
     # Security Exchange

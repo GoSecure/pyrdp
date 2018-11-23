@@ -7,7 +7,7 @@ from rdpy.parser.parser import Parser
 from rdpy.parser.rdp.input import RDPInputParser
 from rdpy.parser.rdp.pointer import PointerEventParser
 from rdpy.pdu.rdp.capability import Capability, BitmapCapability, OrderCapability, GeneralCapability, \
-    GlyphCacheCapability, OffscreenBitmapCacheCapability, MultifragmentUpdateCapability
+    GlyphCacheCapability, OffscreenBitmapCacheCapability, MultifragmentUpdateCapability, VirtualChannelCapability
 from rdpy.pdu.rdp.data import RDPShareControlHeader, RDPShareDataHeader, RDPDemandActivePDU, RDPConfirmActivePDU, \
     RDPSetErrorInfoPDU, RDPSynchronizePDU, RDPControlPDU, RDPInputPDU, RDPPlaySoundPDU, RDPPointerPDU, \
     RDPSuppressOutputPDU
@@ -181,13 +181,16 @@ class RDPDataParser(Parser):
         capabilitySets[CapabilityType.CAPSTYPE_GENERAL] = \
             self.parseGeneralCapability(capabilitySets[CapabilityType.CAPSTYPE_GENERAL].rawData)
 
+        # Fully parse the Glyph cache capability set
         capabilitySets[CapabilityType.CAPSTYPE_GLYPHCACHE] = \
             self.parseGlyphCacheCapability(capabilitySets[CapabilityType.CAPSTYPE_GLYPHCACHE].rawData)
 
+        # If present, fully parse the offscreen cache capability set
         if CapabilityType.CAPSTYPE_OFFSCREENCACHE in capabilitySets:
             capabilitySets[CapabilityType.CAPSTYPE_OFFSCREENCACHE] = \
                 self.parseOffscreenCacheCapability(capabilitySets[CapabilityType.CAPSTYPE_OFFSCREENCACHE].rawData)
 
+        # Override the bitmap cache capability set with null values.
         capabilitySets[CapabilityType.CAPSTYPE_BITMAPCACHE] = Capability(CapabilityType.CAPSTYPE_BITMAPCACHE, b"\x00" * 36)
 
         # Fully parse the Bitmap capability set
@@ -197,6 +200,11 @@ class RDPDataParser(Parser):
         # Fully parse the Order capability set
         capabilitySets[CapabilityType.CAPSTYPE_ORDER] = self.parseOrderCapability(
             capabilitySets[CapabilityType.CAPSTYPE_ORDER].rawData)
+
+        # Fully parse the VirtualChannel capability set
+        capabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL] = self.parseVirtualChannelCapability(
+            capabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].rawData)
+
         return capabilitySets
 
     def parseGeneralCapability(self, data):
@@ -258,12 +266,10 @@ class RDPDataParser(Parser):
         capability.rawData = data
         return capability
 
-    def parseBitmapCapability(self, data):
+    def parseBitmapCapability(self, data: bytes) -> BitmapCapability:
         """
         https://msdn.microsoft.com/en-us/library/cc240554.aspx
-        :type data: bytes
         :param data: Raw data starting after lengthCapability
-        :return: BitmapCapability
         """
         stream = BytesIO(data)
         preferredBitsPerPixel = Uint16LE.unpack(stream.read(2))
@@ -348,7 +354,9 @@ class RDPDataParser(Parser):
                 self.writeBitmapCapability(capability, substream)
             elif capability.type == CapabilityType.CAPSTYPE_OFFSCREENCACHE:
                 self.writeOffscreenCacheCapability(capability, substream)
-            elif capability.type == CapabilityType.CAPSETTYPE_MULTIFRAGMENTUPDATE\
+            elif capability.type == CapabilityType.CAPSTYPE_VIRTUALCHANNEL:
+                self.writeVirtualChannelCapability(capability, substream)
+            elif capability.type == CapabilityType.CAPSETTYPE_MULTIFRAGMENTUPDATE \
                     and isinstance(capability, MultifragmentUpdateCapability):
                 self.writeMultiFragmentUpdateCapability(capability, substream)
             # Every other capability is parsed minimally.
@@ -435,7 +443,6 @@ class RDPDataParser(Parser):
         Uint16LE.pack(pdu.top, stream)
         Uint16LE.pack(pdu.right, stream)
         Uint16LE.pack(pdu.bottom, stream)
-
 
     def writeGeneralCapability(self, capability, stream):
         """
@@ -537,6 +544,29 @@ class RDPDataParser(Parser):
         Uint16LE.pack(capability.type, stream)
 
         Uint32LE.pack(capability.maxRequestSize, substream)
+
+        Uint16LE.pack(len(substream.getvalue()) + 4, stream)
+        stream.write(substream.getvalue())
+
+    def parseVirtualChannelCapability(self, data: bytes) -> VirtualChannelCapability:
+        """
+        https://msdn.microsoft.com/en-us/library/cc240551.aspx
+        :param data: Raw data starting after lengthCapability
+        """
+        stream = BytesIO(data)
+        flags = Uint32LE.unpack(stream)
+        VCChunkSize = Uint32LE.unpack(stream) if stream.tell() != len(stream.getvalue()) else None
+
+        return VirtualChannelCapability(flags, VCChunkSize)
+
+    def writeVirtualChannelCapability(self, capability: VirtualChannelCapability, stream: BytesIO):
+        substream = BytesIO()
+        Uint16LE.pack(capability.type, stream)
+
+        Uint32LE.pack(capability.flags, substream)
+
+        if capability.vcChunkSize is not None:
+            Uint32LE.pack(capability.vcChunkSize, substream)
 
         Uint16LE.pack(len(substream.getvalue()) + 4, stream)
         stream.write(substream.getvalue())
