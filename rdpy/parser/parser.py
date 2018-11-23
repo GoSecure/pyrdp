@@ -7,7 +7,7 @@ class Parser:
         """
         Decode a PDU from bytes.
         :param data: PDU data.
-        :type data: str
+        :type data: bytes
         :return: an instance of a PDU class.
         """
         raise NotImplementedError("Parse is not implemented")

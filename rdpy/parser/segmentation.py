@@ -6,7 +6,7 @@ class SegmentationParser(Parser):
         """
         Check if a stream of data contains a complete PDU.
         :param data: the data.
-        :type data: str
+        :type data: bytes
         :return: True if the data contains a complete PDU.
         """
         raise NotImplementedError("isCompletePDU must be overridden")
@@ -15,7 +15,7 @@ class SegmentationParser(Parser):
         """
         Get the length of data required for the PDU contained in a stream of data.
         :param data: the data.
-        :type data: str
+        :type data: bytes
         :return: length required.
         """
         raise NotImplementedError("getPDULength must be overridden")

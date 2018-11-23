@@ -14,7 +14,7 @@ class TPKTParser(SegmentationParser):
         """
         Check if the PDU is fully contained in data.
         :param data: the data.
-        :type data: str
+        :type data: bytes
         :return: bool
         """
         if len(data) < 4:
@@ -27,7 +27,7 @@ class TPKTParser(SegmentationParser):
         """
         Check if the PDU in data is a TPKT PDU.
         :param data: the data.
-        :type data: str
+        :type data: bytes
         :return: bool
         """
         return Uint8.unpack(data[0]) == 3
@@ -36,7 +36,7 @@ class TPKTParser(SegmentationParser):
         """
         Get the length of the PDU contained in data.
         :param data: the PDU data.
-        :type data: str
+        :type data: bytes
         :return: int
         """
         return Uint16BE.unpack(data[2 : 4])
@@ -52,7 +52,7 @@ class TPKTParser(SegmentationParser):
     def parse(self, data):
         """
         Read the byte stream and return a TPKTPDU
-        :type data: str
+        :type data: bytes
         :return: TPKTPDU
         """
 

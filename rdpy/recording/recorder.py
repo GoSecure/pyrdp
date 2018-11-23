@@ -78,7 +78,7 @@ class FileLayer(Layer):
     def send(self, data):
         """
         Save data to the file.
-        :type data: str
+        :type data: bytes
         """
         log.debug("writing {} to {}".format(data, self.file_descriptor))
         self.file_descriptor.write(data)
@@ -100,7 +100,7 @@ class SocketLayer(Layer):
     def send(self, data):
         """
         Send data through the socket
-        :type data: str
+        :type data: bytes
         """
         if self.isConnected:
             try:

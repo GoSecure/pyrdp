@@ -2,8 +2,8 @@ import datetime
 import logging
 import random
 import socket
-from Crypto.PublicKey import RSA
 
+from Crypto.PublicKey import RSA
 from twisted.internet import reactor
 from twisted.internet.protocol import ClientFactory
 
@@ -424,7 +424,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         """
         Called when client info data is received.
         Record the PDU and send it to the MITMClient.
-        :type data: str
+        :type data: bytes
         """
         pdu = RDPClientInfoParser().parse(data)
 

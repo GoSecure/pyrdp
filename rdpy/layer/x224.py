@@ -68,7 +68,7 @@ class X224Layer(Layer):
         Receive a X.224 message, decode its header, notify the observer and forward to the next layer
         if its a data PDU.
         :param data: The X.224 raw data (with header and payload)
-        :type data: str
+        :type data: bytes
         """
         pdu = self.parser.parse(data)
         self.pduReceived(pdu, pdu.header == X224PDUType.X224_TPDU_DATA)
@@ -76,7 +76,7 @@ class X224Layer(Layer):
     def send(self, payload, roa=False, eot=True):
         """
         Encapsulate the payload in a X.224 Data PDU and send it to the transport (previous) layer.
-        :type payload: str
+        :type payload: bytes
         :param eot: End of transmission.
         :param roa: Request of acknowledgement
         """
@@ -88,7 +88,7 @@ class X224Layer(Layer):
         """
         :param factory: The PDU class to use to create the connection PDU
         :type factory: Class
-        :type payload: str
+        :type payload: bytes
         """
         credit = kwargs.pop("credit", 0)
         destination = kwargs.pop("destination", 0)
@@ -101,14 +101,14 @@ class X224Layer(Layer):
     def sendConnectionRequest(self, payload, **kwargs):
         """
         :param payload: the connection request payload.
-        :type payload: str
+        :type payload: bytes
         """
         self.sendConnectionPDU(X224ConnectionRequestPDU, payload, **kwargs)
 
     def sendConnectionConfirm(self, payload, **kwargs):
         """
         :param payload: the connection confirm payload.
-        :type payload: str
+        :type payload: bytes
         """
         self.sendConnectionPDU(X224ConnectionConfirmPDU, payload, **kwargs)
 

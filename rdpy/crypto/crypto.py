@@ -1,6 +1,6 @@
-import Crypto.Random
-
 from enum import IntEnum
+
+import Crypto.Random
 
 from rdpy.core.observer import Observer
 from rdpy.core.subject import Subject, ObservedBy
@@ -103,7 +103,7 @@ class SecuritySettings(Subject):
         """
         Set the serverRandom attribute.
         :param random: server random data.
-        :type random: str
+        :type random: bytes
         """
         self.serverRandom = random
 
@@ -114,7 +114,7 @@ class SecuritySettings(Subject):
         """
         Set the clientRandom attribute.
         :param random: client random data.
-        :type random: str
+        :type random: bytes
         """
         self.clientRandom = random
 
@@ -143,9 +143,9 @@ class RC4:
         :param encryptionMethod: the encryption method
         :type encryptionMethod: EncryptionMethod
         :param macKey: the key used for salted signatures.
-        :type macKey: str
+        :type macKey: bytes
         :param key: the initial encryption key.
-        :type key: str
+        :type key: bytes
         """
         self.encryptionMethod = encryptionMethod
         self.macKey = macKey
@@ -158,7 +158,7 @@ class RC4:
         """
         Encrypt data.
         :param data: plaintext data to encrypt.
-        :type data: str
+        :type data: bytes
         :return: str
         """
         return rc4.crypt(self.key, data)
@@ -167,7 +167,7 @@ class RC4:
         """
         Decrypt data.
         :param data: ciphertext to decrypt.
-        :type data: str
+        :type data: bytes
         :return: str
         """
         return self.encrypt(data)
@@ -176,7 +176,7 @@ class RC4:
         """
         Generate a signature for a message.
         :param data: plaintext data to sign.
-        :type data: str
+        :type data: bytes
         :param salted: True if the signature should be salted.
         :type salted: bool
         :return: str
@@ -190,9 +190,9 @@ class RC4:
         """
         Verify a signature.
         :param data: plaintext data to verify.
-        :type data: str
+        :type data: bytes
         :param signature: the signature to verify.
-        :type signature: str
+        :type signature: bytes
         :param salted: True if the signature is salted.
         :type salted: bool
         :return: bool
@@ -220,11 +220,11 @@ class RC4Crypter:
         :param encryptionMethod: the encryption method.
         :type encryptionMethod: EncryptionMethod
         :param macKey: the signing key.
-        :type macKey: str
+        :type macKey: bytes
         :param encryptKey: the encryption key.
-        :type encryptKey: str
+        :type encryptKey: bytes
         :param decryptKey: the decryption key.
-        :type decryptKey: str
+        :type decryptKey: bytes
         """
         self.encryptionMethod = encryptionMethod
         self.macKey = macKey
@@ -236,9 +236,9 @@ class RC4Crypter:
         """
         Generate an RC4Crypter instance for RDP clients.
         :param clientRandom: the client random data.
-        :type clientRandom: str
+        :type clientRandom: bytes
         :param serverRandom: the server random data.
-        :type serverRandom: str
+        :type serverRandom: bytes
         :param encryptionMethod: the encryption method.
         :type encryptionMethod: EncryptionMethod
         :return: RC4Crypter
@@ -251,9 +251,9 @@ class RC4Crypter:
         """
         Generate an RC4Crypter instance for RDP servers.
         :param clientRandom: the client random data.
-        :type clientRandom: str
+        :type clientRandom: bytes
         :param serverRandom: the server random data.
-        :type serverRandom: str
+        :type serverRandom: bytes
         :param encryptionMethod: the encryption method.
         :type encryptionMethod: EncryptionMethod
         :return: RC4Crypter
@@ -265,7 +265,7 @@ class RC4Crypter:
         """
         Encrypt data. The addEncryption method should be called before the next encryption.
         :param data: plaintext to encrypt.
-        :type data: str
+        :type data: bytes
         :return: str
         """
         return self.encryptKey.encrypt(data)
@@ -274,7 +274,7 @@ class RC4Crypter:
         """
         Decrypt data. The addDecryption method should be called before the next decryption.
         :param data: plaintext to decrypt.
-        :type data: str
+        :type data: bytes
         :return: str
         """
         return self.decryptKey.decrypt(data)
@@ -283,7 +283,7 @@ class RC4Crypter:
         """
         Generate a signature for a message.
         :param data: plaintext to sign.
-        :type data: str
+        :type data: bytes
         :param salted: True if the signature should be salted.
         :type salted: bool
         :return: str
@@ -294,9 +294,9 @@ class RC4Crypter:
         """
         Verify a signature for a message.
         :param data: plaintext that was signed.
-        :type data: str
+        :type data: bytes
         :param signature: signature to verify.
-        :type signature: str
+        :type signature: bytes
         :param salted: True if the signature is salted.
         :type salted: bool
         :return: bool

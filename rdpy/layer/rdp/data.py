@@ -34,7 +34,7 @@ class RDPBaseDataLayerObserver:
     def onUnparsedData(self, data):
         """
         Called when data that could not be parsed was received.
-        :type data: str
+        :type data: bytes
         """
         if self.unparsedDataHandler is not None:
             self.unparsedDataHandler(data)

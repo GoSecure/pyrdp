@@ -11,7 +11,7 @@ class MCSPDU(PDU):
     def __init__(self, pduType, payload):
         """
         :type pduType: MCSPDUType
-        :type payload: str
+        :type payload: bytes
         """
 
         PDU.__init__(self, payload)

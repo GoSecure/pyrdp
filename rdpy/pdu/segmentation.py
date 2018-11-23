@@ -4,7 +4,7 @@ from rdpy.pdu.base_pdu import PDU
 class SegmentationPDU(PDU):
     def __init__(self, payload):
         """
-        :type payload: str
+        :type payload: bytes
         """
         PDU.__init__(self, payload)
 

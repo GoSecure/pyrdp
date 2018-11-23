@@ -32,6 +32,6 @@ class MITMVirtualChannelObserver(Observer):
         """
         Send data through the layer.
         :param data: data to send.
-        :type data: str
+        :type data: bytes
         """
         self.layer.send(data)

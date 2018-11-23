@@ -30,13 +30,13 @@ def saltedHash(inputData, salt, salt1, salt2):
     Signature = MD5(Salt + SHA1(Input + Salt + Salt1 + Salt2))
     See: http://msdn.microsoft.com/en-us/library/cc241992.aspx
     :param inputData: strange input (see doc)
-    :type inputData: str
+    :type inputData: bytes
     :param salt: salt for context call
-    :type salt: str
+    :type salt: bytes
     :param salt1: another salt (ex : client random)
-    :type salt1: str
+    :type salt1: bytes
     :param salt2: another salt (ex: server random)
-    :type salt2: str
+    :type salt2: bytes
     :return: str
     """
     sha1Digest = hashlib.sha1()
@@ -58,11 +58,11 @@ def finalHash(key, random1, random2):
     """
     Hash = MD5(in0[:16] + in1[:32] + in2[:32])
     :param key: 16 byte string
-    :type key: str
+    :type key: bytes
     :param random1: 32 byte random string
-    :type random1: str
+    :type random1: bytes
     :param random2: 32 byte random string
-    :type random2: str
+    :type random2: bytes
     :return: MD5(in0[:16] + in1[:32] + in2[:32])
     """
     md5Digest = hashlib.md5()
@@ -77,11 +77,11 @@ def generateMasterSecret(preMasterSecret, clientRandom, serverRandom):
     Generate master secret.
     See: http://msdn.microsoft.com/en-us/library/cc241992.aspx
     :param preMasterSecret: secret
-    :type preMasterSecret: str
+    :type preMasterSecret: bytes
     :param clientRandom: client random
-    :type clientRandom: str
+    :type clientRandom: bytes
     :param serverRandom: server random
-    :type serverRandom: str
+    :type serverRandom: bytes
     """
     return saltedHash(b"A", preMasterSecret, clientRandom, serverRandom) + saltedHash(b"BB", preMasterSecret, clientRandom, serverRandom) + saltedHash(b"CCC", preMasterSecret, clientRandom, serverRandom)
 
@@ -90,11 +90,11 @@ def generateSessionKeyBlob(masterSecret, clientRandom, serverRandom):
     """
     Generate session key blob.
     :param masterSecret: secret
-    :type masterSecret: str
+    :type masterSecret: bytes
     :param clientRandom: client random
-    :type clientRandom: str
+    :type clientRandom: bytes
     :param serverRandom: server random
-    :type serverRandom: str
+    :type serverRandom: bytes
     """
     return saltedHash(b"X", masterSecret, clientRandom, serverRandom) + saltedHash(b"YY", masterSecret, clientRandom, serverRandom) + saltedHash(b"ZZZ", masterSecret, clientRandom, serverRandom)
 
@@ -104,9 +104,9 @@ def macData(macKey, data):
     Generate an unsalted signature.
     See: http://msdn.microsoft.com/en-us/library/cc241995.aspx
     :param macKey: signing key.
-    :type macKey: str
+    :type macKey: bytes
     :param data: data to sign.
-    :type data: str
+    :type data: bytes
     :return: str
     """
     sha1Digest = hashlib.sha1()
@@ -134,9 +134,9 @@ def macSaltedData(macKey, data, encryptionCount):
     Generate a salted signature.
     See: https://msdn.microsoft.com/en-us/library/cc240789.aspx
     :param macKey: signing key.
-    :type macKey: str
+    :type macKey: bytes
     :param data: data to sign.
-    :type data: str
+    :type data: bytes
     :param encryptionCount: the number of encrypted packets so far.
     :type encryptionCount: int
     :return: str
@@ -194,7 +194,7 @@ def gen40bits(data):
     Generate 40 bits of data from 128 bits of data for key computation.
     See: http://msdn.microsoft.com/en-us/library/cc240785.aspx
     :param data: 128 bits string
-    :type data: str
+    :type data: bytes
     :return: dict
     """
     return b"\xd1\x26\x9e" + data[:8][-5:]
@@ -205,7 +205,7 @@ def gen56bits(data):
     Generate 56 bits of data from 128 bits of data for key computation.
     See: http://msdn.microsoft.com/en-us/library/cc240785.aspx
     :param data: 128 bits string
-    :type data: str
+    :type data: bytes
     :return: str
     """
     return b"\xd1" + data[:8][-7:]
@@ -219,9 +219,9 @@ def generateKeys(clientRandom, serverRandom, method):
     :param method: the EncryptionMethod value.
     :type method: EncryptionMethod
     :param clientRandom: the client random.
-    :type clientRandom: str
+    :type clientRandom: bytes
     :param serverRandom: the server random.
-    :type serverRandom: str
+    :type serverRandom: bytes
     :return: str, str, str
     """
     preMasterHash = clientRandom[:24] + serverRandom[:24]
@@ -246,9 +246,9 @@ def updateKey(initialKey, currentKey, method):
     Update a key.
     See: http://msdn.microsoft.com/en-us/library/cc240792.aspx
     :param initialKey: initial key.
-    :type initialKey: str
+    :type initialKey: bytes
     :param currentKey: current key.
-    :type currentKey: str
+    :type currentKey: bytes
     :param method: encryption method.
     :type method: EncryptionMethod
     :return: str

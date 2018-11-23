@@ -34,8 +34,8 @@ class FastPathEventScanCode(RDPFastPathEvent):
 
     def __init__(self, rawHeaderByte, scancode, isReleased):
         """
-        :type rawHeaderByte: str
-        :type scancode: str
+        :type rawHeaderByte: bytes
+        :type scancode: bytes
         :type isReleased: bool
         """
         RDPFastPathEvent.__init__(self)
@@ -73,7 +73,7 @@ class FastPathBitmapEvent(FastPathOutputEvent):
         :type header: int
         :type compressionFlags: int
         :type bitmapUpdateData: list[BitmapUpdateData]
-        :type rawBitmapUpdateData: str
+        :type rawBitmapUpdateData: bytes
         """
         self.header = header
         self.compressionFlags = compressionFlags

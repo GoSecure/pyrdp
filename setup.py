@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding=utf-8
 
 from distutils.core import setup, Extension
@@ -39,7 +39,7 @@ setup(name='rdpy',
     ],
     ext_modules=[Extension('rle', ['ext/rle.c'])],
     scripts=[
-            'bin/rdpy-rdpmitm.py',
+            'bin/rdpy-rdpymitm.py',
             'bin/rdpy-player.py'
     ],
     install_requires=[
@@ -50,7 +50,7 @@ setup(name='rdpy',
             'rsa',
             'pyasn1',
             'notify2',
-            'Crypto',
+            'pycrypto',
             'appdirs'
     ],
 )

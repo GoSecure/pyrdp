@@ -15,7 +15,7 @@ class VirtualChannelParser(Parser):
 
     def parse(self, data):
         """
-        :type data: str
+        :type data: bytes
         :return: VirtualChannelPDU
         """
         stream = BytesIO(data)

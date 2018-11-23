@@ -7,7 +7,7 @@ class Integer:
     def unpack(cls, data):
         """
         :param data: data to unpack from.
-        :type data: str | file | io.BytesIO
+        :type data: bytes | file | io.BytesIO
         :return: int
         """
         try:

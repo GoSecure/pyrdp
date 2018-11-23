@@ -14,7 +14,7 @@ class RDPNegotiationRequestParser(Parser):
         """
         Parse a negotiation request.
         :param data: the request data.
-        :type data: str
+        :type data: bytes
         :return: RDPNegotiationRequestPDU
         """
 
@@ -83,7 +83,7 @@ class RDPNegotiationResponseParser(Parser):
         """
         Parse a negotiation response.
         :param data: the response data.
-        :type data: str
+        :type data: bytes
         :return: RDPNegotiationResponsePDU
         """
         stream = BytesIO(data)

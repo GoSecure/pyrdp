@@ -19,7 +19,7 @@ class RDPPlayerMessageTypeLayer(Layer):
     def recv(self, data):
         """
         Parses data to make a RDPPlayerMessagePDU and calls the observer with it.
-        :type data: str
+        :type data: bytes
         """
         type = Uint8.unpack(data[0])
         timestamp = Uint64LE.unpack(data[1 : 9])
@@ -29,7 +29,7 @@ class RDPPlayerMessageTypeLayer(Layer):
 
     def sendMessage(self, data, messageType):
         """
-        :type data: str
+        :type data: bytes
         :type messageType: RDPPlayerMessageType
         """
         timestamp = int(round(time.time() * 1000))

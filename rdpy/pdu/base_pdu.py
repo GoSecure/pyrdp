@@ -10,7 +10,7 @@ class PDU:
     def __init__(self, payload=None):
         """
         :param payload: The PDU's payload data
-        :type payload: str
+        :type payload: bytes
         """
 
         self.payload = payload

@@ -18,7 +18,7 @@ class MCSLayer(Layer):
         """
         Receive MCS data
         :param data: raw MCS layer bytes
-        :type data: str
+        :type data: bytes
         """
         pdu = self.parser.parse(data)
         self.pduReceived(pdu, False)

@@ -10,7 +10,7 @@ class RDPPlayerMessagePDU(PDU):
     def __init__(self, type, timestamp, payload):
         """
         :type type: rdpy.enum.rdp.RDPPlayerMessageType
-        :type payload: str
+        :type payload: bytes
         """
 
         self.type = type  # Uint8

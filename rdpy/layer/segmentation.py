@@ -44,7 +44,7 @@ class SegmentationLayer(Layer):
     def recv(self, data):
         """
         Forward data to the proper layer depending on the PDU type.qq
-        :type data: str
+        :type data: bytes
         """
 
         while len(data) > 0:

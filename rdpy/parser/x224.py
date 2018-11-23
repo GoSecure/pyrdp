@@ -33,7 +33,7 @@ class X224Parser(Parser):
     def parse(self, data):
         """
         Read the byte stream and return a corresponding X224PDU
-        :type data: str
+        :type data: bytes
         :return: rdpy.pdu.x224.X224PDU
         """
         length = Uint8.unpack(data[0])
@@ -56,7 +56,7 @@ class X224Parser(Parser):
         """
         Parse the provided data to extract common information contained in Connection Request,
         Connection Confirm and Disconnect Request PDUs.
-        :type data: str
+        :type data: bytes
         :param length: Length of the Connection PDU
         :param name: For debugging purposes: the name of the connection PDU (like "Connection Request")
         :return: A tuple of the information we find in both connection PDUs:
@@ -79,7 +79,7 @@ class X224Parser(Parser):
     def parseConnectionRequest(self, data, length):
         """
         Parse a ConnectionRequest PDU from the raw bytes
-        :type data: str
+        :type data: bytes
         :param length: The length in bytes of the Connection Request PDU.
         :return: X224ConnectionRequestPDU
         """
@@ -90,7 +90,7 @@ class X224Parser(Parser):
     def parseConnectionConfirm(self, data, length):
         """
         Parse a ConnectionConfirm PDU from the raw bytes
-        :type data: str
+        :type data: bytes
         :param length: The length in bytes of the Connection Confirm PDU.
         :return: X224ConnectionConfirmPDU
         """
@@ -101,7 +101,7 @@ class X224Parser(Parser):
     def parseDisconnectRequest(self, data, length):
         """
         Parse a DisconnectRequest PDU from the raw bytes
-        :type data: str
+        :type data: bytes
         :param length: The length in bytes of the Disconnect Request PDU.
         :return: X224DisconnectRequestPDU
         """
@@ -111,7 +111,7 @@ class X224Parser(Parser):
     def parseData(self, data, length):
         """
         Parse a Data PDU from the raw bytes
-        :type data: str
+        :type data: bytes
         :param length: The length in bytes of the Data PDU.
         :return: X224DataPDU
         """
@@ -128,7 +128,7 @@ class X224Parser(Parser):
     def parseError(self, data, length):
         """
         Parse a Error PDU from the raw bytes
-        :type data: str
+        :type data: bytes
         :param length: The length in bytes of the Error PDU.
         :return: X224ErrorPDU
         """

@@ -10,7 +10,7 @@ class GCCPDU(PDU):
         """
         :param header:
         :param payload: GCC's payload (so probably some RDP connection data).
-        :type payload: str
+        :type payload: bytes
         """
 
         PDU.__init__(self, payload)

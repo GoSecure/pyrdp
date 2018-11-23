@@ -10,7 +10,7 @@ class GCCClientConnectionLayer(Layer):
     def __init__(self, conferenceName):
         """
         :param conferenceName: the conference name
-        :type conferenceName: str
+        :type conferenceName: bytes
         """
         Layer.__init__(self)
         self.conferenceName = conferenceName

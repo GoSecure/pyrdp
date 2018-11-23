@@ -1,7 +1,8 @@
 import struct
+from io import BytesIO
+
 from Crypto.PublicKey import RSA
 from Crypto.Util.number import bytes_to_long, long_to_bytes
-from io import BytesIO
 
 from rdpy.core.packing import Uint16LE, Uint32LE, Uint8
 from rdpy.core.stream import StrictStream
@@ -38,7 +39,7 @@ class RDPClientConnectionParser(Parser):
         """
         Decode a Client Data PDU from bytes.
         :param data: Client Data PDU data.
-        :type data: str
+        :type data: bytes
         :return: RDPClientDataPDU
         """
         core = None
@@ -260,7 +261,7 @@ class RDPServerConnectionParser(Parser):
         """
         Parse a Server Data PDU from bytes.
         :param data: Server Data PDU data.
-        :type data: str
+        :type data: bytes
         :return: RDPServerDataPDU
         """
         core = None

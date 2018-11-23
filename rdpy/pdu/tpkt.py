@@ -7,7 +7,7 @@ class TPKTPDU(SegmentationPDU):
 
     def __init__(self, payload):
         """
-        :type payload: str
+        :type payload: bytes
         """
         PDU.__init__(self, payload)
         self.header = 3

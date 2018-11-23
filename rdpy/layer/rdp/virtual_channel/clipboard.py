@@ -14,7 +14,7 @@ class ClipboardLayer(Layer):
 
     def recv(self, data):
         """
-        :type data: str
+        :type data: bytes
         """
         clipboardPDU = self.clipboardParser.parse(data)
         self.pduReceived(clipboardPDU, False)

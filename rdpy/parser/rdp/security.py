@@ -17,7 +17,7 @@ class RDPBasicSecurityParser(Parser):
     def parse(self, data):
         """
         Decode a security PDU from bytes.
-        :type data: str
+        :type data: bytes
         :return: RDPSecurityPDU
         """
         stream = BytesIO(data)

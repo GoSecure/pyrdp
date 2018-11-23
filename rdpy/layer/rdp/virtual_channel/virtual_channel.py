@@ -17,7 +17,7 @@ class VirtualChannelLayer(Layer):
 
     def recv(self, data):
         """
-        :type data: str
+        :type data: bytes
         """
         virtualChannelPDU = self.virtualChannelParser.parse(data)
 
@@ -35,7 +35,7 @@ class VirtualChannelLayer(Layer):
     def send(self, payload):
         """
         Send payload on the upper layer by encapsulating it in a VirtualChannelPDU.
-        :type payload: str
+        :type payload: bytes
         """
         flags = ChannelFlag.CHANNEL_FLAG_FIRST | ChannelFlag.CHANNEL_FLAG_LAST | ChannelFlag.CHANNEL_FLAG_SHOW_PROTOCOL
         virtualChannelPDU = VirtualChannelPDU(len(payload), flags, payload)

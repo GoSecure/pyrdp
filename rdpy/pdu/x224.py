@@ -11,7 +11,7 @@ class X224PDU(PDU):
         """
         :type length: int
         :param header: The PDU type
-        :type payload: str
+        :type payload: bytes
         """
 
         PDU.__init__(self, payload)

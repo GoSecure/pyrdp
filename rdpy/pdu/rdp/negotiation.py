@@ -1,6 +1,6 @@
+from rdpy.enum.negotiation import NegotiationType
 from rdpy.enum.rdp import NegotiationProtocols
 from rdpy.pdu.base_pdu import PDU
-from rdpy.enum.negotiation import NegotiationType
 
 
 class RDPNegotiationRequestPDU(PDU):
@@ -10,7 +10,7 @@ class RDPNegotiationRequestPDU(PDU):
     def __init__(self, cookie, flags, requestedProtocols, correlationFlags, correlationID, reserved):
         """
         :param cookie: mstshash identifier or routing token.
-        :type cookie: str | None
+        :type cookie: bytes | None
         :param flags: request flags.
         :type flags: int | None
         :param requestedProtocols: transport protocols supported by the client.
@@ -18,9 +18,9 @@ class RDPNegotiationRequestPDU(PDU):
         :param correlationFlags: correlation info flags.
         :type correlationFlags: int | None
         :param correlationID: correlation info id.
-        :type correlationID: str | None
+        :type correlationID: bytes | None
         :param reserved: correlation info reserved data.
-        :type reserved: str | None
+        :type reserved: bytes | None
         """
         PDU.__init__(self)
         self.cookie = cookie

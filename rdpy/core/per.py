@@ -210,7 +210,7 @@ def writeNumericString(string, minValue):
     """
     Pack a PER numeric string
     :param string: numeric string
-    :type string: str
+    :type string: bytes
     :param minValue: minimum string length
     :type minValue: int
     :return: str
@@ -251,7 +251,7 @@ def writeOctetStream(bytes, minValue = 0):
     """
     Pack a PER octet stream
     :param bytes: octet stream
-    :type bytes: str
+    :type bytes: bytes
     :param minValue: minimum string length
     :type minValue: int
     :return: str

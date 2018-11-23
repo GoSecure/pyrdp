@@ -15,7 +15,7 @@ class RDPClientInfoParser:
         """
         Decode a Client Info PDU from bytes.
         :param data: the Client Info PDU bytes.
-        :type data: str
+        :type data: bytes
         :return: RDPClientInfoPDU
         """
         stream = BytesIO(data)

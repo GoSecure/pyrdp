@@ -19,7 +19,7 @@ class RDPLicensingParser:
     def parse(self, data):
         """
         Read the provided byte stream and return the corresponding RDPLicensingPDU.
-        :type data: str
+        :type data: bytes
         :return: RDPLicensingPDU
         """
 

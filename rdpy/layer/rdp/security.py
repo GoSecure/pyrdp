@@ -23,14 +23,14 @@ class RDPSecurityObserver(LayerObserver):
     def onClientInfoReceived(self, data):
         """
         Called when client info data is received.
-        :type data: str
+        :type data: bytes
         """
         pass
 
     def onLicensingDataReceived(self, data):
         """
         Called when licensing data is received.
-        :type data: str
+        :type data: bytes
         """
         pass
 
@@ -107,7 +107,7 @@ class RDPSecurityLayer(Layer):
         """
         Send a security exchange PDU through the layer.
         :param clientRandom: the client random data.
-        :type clientRandom: str
+        :type clientRandom: bytes
         """
         pdu = RDPSecurityExchangePDU(RDPSecurityFlags.SEC_EXCHANGE_PKT, clientRandom + b"\x00" * 8)
         data = self.securityParser.writeSecurityExchange(pdu)
@@ -126,7 +126,7 @@ class RDPSecurityLayer(Layer):
     def sendLicensing(self, data):
         """
         Send raw licensing data.
-        :type data: str
+        :type data: bytes
         """
         pdu = RDPSecurityPDU(RDPSecurityFlags.SEC_LICENSE_PKT, data)
         self.previous.send(self.securityParser.write(pdu))

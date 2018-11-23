@@ -33,7 +33,7 @@ class GCCParser(Parser):
         """
         Parses the raw data bytes into a GCCPDU
         :param data: PDU data.
-        :type data: str
+        :type data: bytes
         :return: GCCPDU
         """
         stream = BytesIO(data)

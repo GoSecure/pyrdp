@@ -5,7 +5,7 @@ class Capability:
     def __init__(self, type, rawData=b""):
         """
         :type type: int
-        :type rawData: str
+        :type rawData: bytes
         """
         self.type = type
         self.rawData = rawData

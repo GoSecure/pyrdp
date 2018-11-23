@@ -45,7 +45,7 @@ class RDPDataParser(Parser):
         """
         Decode a data PDU from bytes.
         :param data: the PDU data.
-        :type data: str
+        :type data: bytes
         :return: an instance of an RDP Data PDU class.
         """
         stream = BytesIO(data)
@@ -202,7 +202,7 @@ class RDPDataParser(Parser):
     def parseGeneralCapability(self, data):
         """
         https://msdn.microsoft.com/en-us/library/cc240549.aspx
-        :type data: str
+        :type data: bytes
         :param data: Raw data starting after lengthCapability
         :return: GeneralCapability
         """
@@ -228,7 +228,7 @@ class RDPDataParser(Parser):
     def parseOffscreenCacheCapability(self, data):
         """
         https://msdn.microsoft.com/en-us/library/cc240550.aspx
-        :type data: str
+        :type data: bytes
         :param data: Raw data starting after lengthCapability
         :return: GeneralCapability
         """
@@ -244,7 +244,7 @@ class RDPDataParser(Parser):
     def parseGlyphCacheCapability(self, data):
         """
         https://msdn.microsoft.com/en-us/library/cc240565.aspx
-        :type data: str
+        :type data: bytes
         :param data: Raw data starting after lengthCapability
         :return: GlyphCacheCapability
         """
@@ -261,7 +261,7 @@ class RDPDataParser(Parser):
     def parseBitmapCapability(self, data):
         """
         https://msdn.microsoft.com/en-us/library/cc240554.aspx
-        :type data: str
+        :type data: bytes
         :param data: Raw data starting after lengthCapability
         :return: BitmapCapability
         """
@@ -289,7 +289,7 @@ class RDPDataParser(Parser):
     def parseOrderCapability(self, data):
         """
         https://msdn.microsoft.com/en-us/library/cc240556.aspx
-        :type data: str
+        :type data: bytes
         :param data: Raw data starting after lengthCapability
         :return: OrderCapability
         """

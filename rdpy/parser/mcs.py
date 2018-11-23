@@ -1,5 +1,5 @@
-from io import BytesIO
 from collections import defaultdict
+from io import BytesIO
 
 from rdpy.core import ber, per
 from rdpy.core.packing import Uint8, Uint16BE
@@ -52,7 +52,7 @@ class MCSParser(Parser):
         """
         Parse raw data bytes into a MCSPDU
         :param data: raw bytes to parse
-        :type data: str
+        :type data: bytes
         :return: MCSPDU
         """
 

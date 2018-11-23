@@ -67,7 +67,7 @@ class TCPLayer(Protocol, Layer):
         """
         When a PSH TCP packet is received, call the next layer to receive the data.
         :param data: The byte stream (without the TCP header)
-        :type data: str
+        :type data: bytes
         """
         try:
             if self.logSSLRequired:
@@ -85,7 +85,7 @@ class TCPLayer(Protocol, Layer):
         """
         Send a TCP packet (or more than one if needed)
         :param data: The data to send
-        :type data: str
+        :type data: bytes
         """
         self.transport.write(data)
 

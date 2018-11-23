@@ -236,7 +236,7 @@ def readOctetString(s):
 def writeOctetString(value):
     """
     Pack a BER octet string
-    :type value: str
+    :type value: bytes
     :return: str
     """
     return writeUniversalTag(Tag.BER_TAG_OCTET_STRING, False) + writeLength(len(value)) + value
