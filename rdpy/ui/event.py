@@ -26,18 +26,18 @@ class RSSEventHandler:
         For each event in the provided message, handle it, if it can be handled.
         :type message: rdpy.pdu.rdp.recording.RDPPlayerMessagePDU
         """
-        if message.type == RDPPlayerMessageType.INPUT:
+        if message.header == RDPPlayerMessageType.INPUT:
             self.handle_input_event(message.payload)
-        elif message.type == RDPPlayerMessageType.OUTPUT:
+        elif message.header == RDPPlayerMessageType.OUTPUT:
             self.handle_output_event(message.payload)
-        elif message.type == RDPPlayerMessageType.CLIENT_INFO:
+        elif message.header == RDPPlayerMessageType.CLIENT_INFO:
             self.handle_client_info(message.payload)
-        elif message.type == RDPPlayerMessageType.CONFIRM_ACTIVE:
+        elif message.header == RDPPlayerMessageType.CONFIRM_ACTIVE:
             self.handle_resize(message.payload)
-        elif message.type == RDPPlayerMessageType.CLIPBOARD_DATA:
+        elif message.header == RDPPlayerMessageType.CLIPBOARD_DATA:
             self.handle_clipboard_data(message.payload)
         else:
-            log.error("Received wrong player message type: {}".format(message.type))
+            log.error("Received wrong player message type: {}".format(message.header))
 
     def handle_output_event(self, payload):
         for event in payload.events:

@@ -7,7 +7,7 @@ from rdpy.enum.rdp import RDPPlayerMessageType
 from rdpy.pdu.rdp.recording import RDPPlayerMessagePDU
 
 
-class RDPPlayerMessageTypeLayer(Layer):
+class RDPPlayerMessageLayer(Layer):
     """
     Layer to manage the encapsulation of Player metadata such as event timestamp and
     event type/origin (input, output).

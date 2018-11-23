@@ -7,12 +7,12 @@ class RDPPlayerMessagePDU(PDU):
     Also contains a timestamp.
     """
 
-    def __init__(self, type, timestamp, payload):
+    def __init__(self, header, timestamp, payload):
         """
-        :type type: rdpy.enum.rdp.RDPPlayerMessageType
+        :type header: rdpy.enum.rdp.RDPPlayerMessageType
         :type payload: bytes
         """
 
-        self.type = type  # Uint8
+        self.header = header  # Uint8
         self.timestamp = timestamp  # Uint64LE
         PDU.__init__(self, payload)

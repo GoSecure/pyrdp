@@ -30,7 +30,7 @@ from rdpy.core.observer import Observer
 from rdpy.core.stream import ByteStream
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import RDPPlayerMessageType
-from rdpy.layer.recording import RDPPlayerMessageTypeLayer
+from rdpy.layer.recording import RDPPlayerMessageLayer
 from rdpy.layer.tpkt import TPKTLayer
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.data import RDPDataParser
@@ -46,7 +46,7 @@ class Reader(Observer):
     def __init__(self, **kwargs):
         Observer.__init__(self, **kwargs)
         self.tpkt_layer = TPKTLayer()
-        self.rdp_player_event_type_layer = RDPPlayerMessageTypeLayer()
+        self.rdp_player_event_type_layer = RDPPlayerMessageLayer()
         self.tpkt_layer.setNext(self.rdp_player_event_type_layer)
         self.rdp_player_event_type_layer.addObserver(self)
         self._events_queue = Queue()
@@ -62,20 +62,20 @@ class Reader(Observer):
         :type pdu: rdpy.pdu.rdp.recording.RDPPlayerMessagePDU
         """
         try:
-            if pdu.type == RDPPlayerMessageType.INPUT:
+            if pdu.header == RDPPlayerMessageType.INPUT:
                 rdpPdu = self.rdp_server_fastpath_parser.parse(pdu.payload)
-            elif pdu.type == RDPPlayerMessageType.OUTPUT:
+            elif pdu.header == RDPPlayerMessageType.OUTPUT:
                 rdpPdu = self.rdp_client_fastpath_parser.parse(pdu.payload)
-            elif pdu.type == RDPPlayerMessageType.CLIENT_INFO:
+            elif pdu.header == RDPPlayerMessageType.CLIENT_INFO:
                 rdpPdu = self.rdp_client_info_parser.parse(pdu.payload)
-            elif pdu.type == RDPPlayerMessageType.CONFIRM_ACTIVE:
+            elif pdu.header == RDPPlayerMessageType.CONFIRM_ACTIVE:
                 rdpPdu = self.rdp_data_parser.parse(pdu.payload)
-            elif pdu.type == RDPPlayerMessageType.CONNECTION_CLOSE:
+            elif pdu.header == RDPPlayerMessageType.CONNECTION_CLOSE:
                 rdpPdu = None
-            elif pdu.type == RDPPlayerMessageType.CLIPBOARD_DATA:
+            elif pdu.header == RDPPlayerMessageType.CLIPBOARD_DATA:
                 rdpPdu = self.clipboardParser.parse(pdu.payload)
             else:
-                raise ValueError("Incorrect RDPPlayerMessageType received: {}".format(pdu.type))
+                raise ValueError("Incorrect RDPPlayerMessageType received: {}".format(pdu.header))
             pdu.payload = rdpPdu
             self._events_queue.put(pdu)
             pass
