@@ -2,9 +2,8 @@ from rdpy.enum.rdp import CapabilityType
 
 
 class Capability:
-    def __init__(self, type, rawData=b""):
+    def __init__(self, type: int, rawData=b""):
         """
-        :type type: int
         :type rawData: bytes
         """
         self.type = type

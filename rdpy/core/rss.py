@@ -80,7 +80,7 @@ class Reader(Observer):
             self._events_queue.put(pdu)
             pass
         except Exception as e:
-            log.error("Error occured when parsing RDP event: {}".format(e.message))
+            log.error("Error occurred when parsing RDP event: {}".format(e))
 
 
 class FileReader(Reader):
