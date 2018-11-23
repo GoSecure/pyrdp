@@ -22,7 +22,7 @@ from rdpy.layer.rdp.security import TLSSecurityLayer, RDPSecurityLayer
 from rdpy.layer.rdp.virtual_channel.clipboard import ClipboardLayer
 from rdpy.layer.rdp.virtual_channel.virtual_channel import VirtualChannelLayer
 from rdpy.layer.segmentation import SegmentationLayer
-from rdpy.layer.tcp import TCPLayer
+from rdpy.layer.tcp import TwistedTCPLayer
 from rdpy.layer.tpkt import TPKTLayer
 from rdpy.layer.x224 import X224Layer
 from rdpy.mcs.channel import MCSChannelFactory, MCSServerChannel
@@ -72,7 +72,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.connectionsLog = logging.getLogger("mitm.connections.%s" % friendlyName)
         self.friendlyName = friendlyName
 
-        self.tcp = TCPLayer()
+        self.tcp = TwistedTCPLayer()
         self.tcp.createObserver(onConnection=self.onConnection, onDisconnection=self.onDisconnection)
 
         self.segmentation = SegmentationLayer()
