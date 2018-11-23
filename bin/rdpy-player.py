@@ -312,7 +312,7 @@ class ReplayTab(RDPConnectionTab):
             self.last_timestamp = event.timestamp
             self.loop(event, speed_multiplier=self.speed_multiplier)
         else:
-            mlog.debug("RSS file ended, replay done.")
+            self.onClose()
 
     def stop(self):
         """
@@ -341,7 +341,11 @@ class ReplayTab(RDPConnectionTab):
                 QTimer.singleShot(time_difference / speed_multiplier,
                                   lambda: self.loop(e, speed_multiplier=self.speed_multiplier))
             else:
-                mlog.debug("RSS file ended, replay done.")
+                self.onClose()
+
+    def onClose(self):
+        self._text.append("<Connection closed>")
+        mlog.debug("RSS file ended, replay done.")
 
     def set_speed_multiplier(self, value):
         self.speed_multiplier = value
