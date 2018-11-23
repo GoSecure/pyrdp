@@ -39,7 +39,7 @@ setup(name='rdpy',
     ],
     ext_modules=[Extension('rle', ['ext/rle.c'])],
     scripts=[
-            'bin/rdpy-rdpymitm.py',
+            'bin/rdpy-rdpmitm.py',
             'bin/rdpy-player.py'
     ],
     install_requires=[
