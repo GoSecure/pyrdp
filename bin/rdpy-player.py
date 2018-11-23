@@ -345,7 +345,7 @@ class ReplayTab(RDPConnectionTab):
 
     def onClose(self):
         self._text.append("<Connection closed>")
-        mlog.debug("RSS file ended, replay done.")
+        mlog.debug("Replay file ended, replay done.")
 
     def set_speed_multiplier(self, value):
         self.speed_multiplier = value
@@ -401,22 +401,20 @@ class ReplaysWindow(BasePlayerWindow):
 
     def __init__(self, files_to_read):
         BasePlayerWindow.__init__(self)
-        self.files_to_read = files_to_read
-        i = 0
-        for file_name in files_to_read:
-            outer_tab = ReplayTabHolder(None)
-            inner_tab = ReplayTab(rss.createFileReader(file_name), file_name)
-            outer_tab.set_replay_tab(inner_tab)
-            self.addTab(outer_tab, file_name)
-            mlog.debug("Loading .rss file {} / {}".format(i, len(files_to_read)))
-            i += 1
+
+    def openFile(self, fileName):
+        outer_tab = ReplayTabHolder(None)
+        inner_tab = ReplayTab(rss.createFileReader(fileName), fileName)
+        outer_tab.set_replay_tab(inner_tab)
+        self.addTab(outer_tab, fileName)
+        mlog.debug("Loading replay file {}".format(fileName))
 
     def on_play_clicked(self):
-        mlog.debug("Start .rss file")
+        mlog.debug("Start replay file")
         self.currentWidget().replay_tab.start()
 
     def on_stop_clicked(self):
-        mlog.debug("Stop .rss file")
+        mlog.debug("Stop replay file")
         self.currentWidget().replay_tab.stop()
 
     def on_rewind_clicked(self):
@@ -462,19 +460,38 @@ class LiveConnectionsWindow(BasePlayerWindow):
         self._server.stop()
 
 
-class MainWindow(QWidget):
+class MainWindow(QMainWindow):
     """
     Main window that contains every other QWidgets.
     """
 
-    def __init__(self, bind_address, port, files_to_read, *args, **kwargs):
+    def __init__(self, bind_address, port, filesToRead, *args, **kwargs):
+        QMainWindow.__init__(self, None, *args, **kwargs)
+        mainWidget = QWidget()
+        controlBar = ControlBar()
+        self.tabManager = PlayerTypeTabManager(controlBar, bind_address, port, filesToRead)
 
-        QWidget.__init__(self, None, *args, **kwargs)
         layout = QVBoxLayout()
-        control_bar = ControlBar()
-        layout.addWidget(PlayerTypeTabManager(control_bar, bind_address, port, files_to_read), 500)
-        layout.addWidget(control_bar, 5, alignment=Qt.AlignBottom)
-        self.setLayout(layout)
+        layout.addWidget(self.tabManager, 500)
+        layout.addWidget(controlBar, 5, alignment=Qt.AlignBottom)
+        mainWidget.setLayout(layout)
+        self.setCentralWidget(mainWidget)
+
+        openAction = QAction("Open...", self)
+        openAction.setShortcut("Ctrl+O")
+        openAction.setStatusTip("Open a replay file")
+        openAction.triggered.connect(self.onOpenFile)
+
+        menuBar = self.menuBar()
+        fileMenu = menuBar.addMenu("File")
+        fileMenu.addAction(openAction)
+
+        for fileName in filesToRead:
+            self.tabManager.openFile(fileName)
+
+    def onOpenFile(self):
+        fileName = QFileDialog.getOpenFileName(self, "Open File")
+        self.tabManager.openFile(fileName)
 
 
 class PlayerTypeTabManager(QTabWidget):
@@ -492,12 +509,15 @@ class PlayerTypeTabManager(QTabWidget):
         QTabWidget.__init__(self)
         self.live_player_subwindow = LiveConnectionsWindow(bind_address, port)
         self.recorded_player_subwindow = ReplaysWindow(files_to_read)
-        self.addTab(self.recorded_player_subwindow, "RSS files")
+        self.addTab(self.recorded_player_subwindow, "Replay files")
         self.addTab(self.live_player_subwindow, "Live connections")
         control_bar.set_play_action(self.on_play_clicked)
         control_bar.set_stop_action(self.on_stop_clicked)
         control_bar.set_rewind_action(self.on_rewind_clicked)
         control_bar.set_slider_change_action(self.on_slider_change)
+
+    def openFile(self, fileName):
+        self.recorded_player_subwindow.openFile(fileName)
 
     def on_play_clicked(self):
         self.currentWidget().on_play_clicked()
@@ -565,8 +585,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-b", "--bind", help="Bind address (default: 127.0.0.1)", default="127.0.0.1")
     parser.add_argument("-p", "--port", help="Bind port (default: 3000)", default=3000)
-    parser.add_argument("-d", "--directory", help="Directory that contains .rss files to replay.")
-    parser.add_argument("-f", "--file", help=".rss file to replay.")
+    parser.add_argument("-d", "--directory", help="Directory that contains replay files to open.")
+    parser.add_argument("-f", "--file", help="replay file to open.")
 
     arguments = parser.parse_args()
 
