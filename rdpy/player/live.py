@@ -3,7 +3,7 @@ from queue import Queue
 from PyQt4.QtCore import pyqtSignal
 from PyQt4.QtGui import qApp
 
-from rdpy.core.rss import RssAdaptor
+from rdpy.ui.rss import RSSAdaptor
 from rdpy.layer.recording import RDPPlayerMessageLayer
 from rdpy.layer.tcp import AsyncIOTCPLayer
 from rdpy.layer.tpkt import TPKTLayer
@@ -58,7 +58,7 @@ class LivePlayerTab(RDPConnectionTab):
     connectionClosed = pyqtSignal(object, name="Close")
 
     def __init__(self):
-        RDPConnectionTab.__init__(self, QRemoteDesktop(1024, 768, RssAdaptor()))
+        RDPConnectionTab.__init__(self, QRemoteDesktop(1024, 768, RSSAdaptor()))
         self.tcp = AsyncIOTCPLayer()
         self.tpkt = TPKTLayer()
         self.message = RDPPlayerMessageLayer()

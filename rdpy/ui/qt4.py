@@ -77,7 +77,9 @@ def RDPBitmapToQtImage(width, height, bitsPerPixel, isCompress, data):
         log.error("Receive image in bad format")
         image = QtGui.QImage(width, height, QtGui.QImage.Format_RGB32)
     return image
-        
+
+
+
 class QRemoteDesktop(QtGui.QWidget):
     """
     @summary: Qt display widget

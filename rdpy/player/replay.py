@@ -3,7 +3,7 @@ import logging
 from PyQt4.QtCore import QTimer
 
 from rdpy.core.observer import Observer
-from rdpy.core.rss import RssAdaptor
+from rdpy.ui.rss import RSSAdaptor
 from rdpy.core.subject import Subject, ObservedBy
 from rdpy.layer.recording import RDPPlayerMessageLayer
 from rdpy.layer.tpkt import TPKTLayer
@@ -107,7 +107,7 @@ class ReplayTab(RDPConnectionTab):
         :param fileName: name of the file to read
         :type fileName: str
         """
-        self.viewer = QRemoteDesktop(800, 600, RssAdaptor())
+        self.viewer = QRemoteDesktop(800, 600, RSSAdaptor())
         RDPConnectionTab.__init__(self, self.viewer)
         self.fileName = fileName
         self.file = open(self.fileName, "rb")

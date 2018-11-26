@@ -17,13 +17,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""
-Remote Session Scenario File format
-Private protocol format to save events
-"""
-
-
-class RssAdaptor:
+class RSSAdaptor:
     def sendMouseEvent(self, e, isPressed):
         """ Not Handled """
     def sendKeyEvent(self, e, isPressed):
