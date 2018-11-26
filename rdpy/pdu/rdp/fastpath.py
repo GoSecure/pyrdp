@@ -72,30 +72,13 @@ class FastPathBitmapEvent(FastPathOutputEvent):
         """
         :type header: int
         :type compressionFlags: int
-        :type bitmapUpdateData: list[BitmapUpdateData]
+        :type bitmapUpdateData: list[rdpy.pdu.rdp.common.BitmapUpdateData]
         :type rawBitmapUpdateData: bytes
         """
         self.header = header
         self.compressionFlags = compressionFlags
         self.rawBitmapUpdateData = rawBitmapUpdateData
         self.bitmapUpdateData = bitmapUpdateData
-
-
-class BitmapUpdateData:
-    """
-    https://msdn.microsoft.com/en-us/library/cc240612.aspx
-    """
-
-    def __init__(self, destLeft, destTop, destRight, destBottom, width, heigth, bitsPerPixel, flags, bitmapStream):
-        self.destLeft = destLeft
-        self.destTop = destTop
-        self.destRight = destRight
-        self.destBottom = destBottom
-        self.width = width
-        self.heigth = heigth
-        self.bitsPerPixel = bitsPerPixel
-        self.flags = flags
-        self.bitmapStream = bitmapStream
 
 
 class FastPathOrdersEvent(FastPathOutputEvent):

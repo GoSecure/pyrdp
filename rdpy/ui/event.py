@@ -4,13 +4,15 @@ from PyQt4.QtGui import QTextCursor
 from rdpy.core import log
 from rdpy.core.scancode import scancodeToChar
 from rdpy.enum.core import ParserMode
-from rdpy.enum.rdp import CapabilityType
+from rdpy.enum.rdp import CapabilityType, RDPDataPDUSubtype, SlowPathUpdateType
 from rdpy.layer.recording import RDPPlayerMessageObserver
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
+from rdpy.parser.rdp.common import RDPCommonParser
 from rdpy.parser.rdp.data import RDPDataParser
 from rdpy.parser.rdp.fastpath import RDPOutputEventParser, RDPBasicFastPathParser
 from rdpy.parser.rdp.virtual_channel.clipboard import ClipboardParser
-from rdpy.pdu.rdp.data import RDPConfirmActivePDU
+from rdpy.pdu.rdp.common import BitmapUpdateData
+from rdpy.pdu.rdp.data import RDPConfirmActivePDU, RDPUpdatePDU
 from rdpy.pdu.rdp.fastpath import FastPathEventScanCode, FastPathEventMouse, FastPathOrdersEvent, FastPathBitmapEvent
 from rdpy.ui.qt4 import RDPBitmapToQtImage
 
@@ -87,12 +89,13 @@ class RSSEventHandler(RDPPlayerMessageObserver):
         """
         parsedEvent = self.outputEventParser.parseBitmapEvent(event)
         for bitmapData in parsedEvent.bitmapUpdateData:
-            image = RDPBitmapToQtImage(bitmapData.width, bitmapData.heigth, bitmapData.bitsPerPixel,
-                                       True, bitmapData.bitmapStream)
-            self.viewer.notifyImage(bitmapData.destLeft, bitmapData.destTop, image,
-                                    bitmapData.destRight - bitmapData.destLeft + 1,
-                                    bitmapData.destBottom - bitmapData.destTop + 1)
-        pass
+            self.handleBitmap(bitmapData)
+
+    def handleBitmap(self, bitmapData: BitmapUpdateData):
+        image = RDPBitmapToQtImage(bitmapData.width, bitmapData.heigth, bitmapData.bitsPerPixel, True, bitmapData.bitmapData)
+        self.viewer.notifyImage(bitmapData.destLeft, bitmapData.destTop, image,
+                                bitmapData.destRight - bitmapData.destLeft + 1,
+                                bitmapData.destBottom - bitmapData.destTop + 1)
 
     def onClientInfo(self, pdu):
         """
@@ -115,6 +118,10 @@ class RSSEventHandler(RDPPlayerMessageObserver):
         if isinstance(pdu, RDPConfirmActivePDU):
             self.viewer.resize(pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP].desktopWidth,
                                pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP].desktopHeight)
+        elif isinstance(pdu, RDPUpdatePDU) and pdu.updateType == SlowPathUpdateType.FASTPATH_UPDATETYPE_BITMAP:
+            updates = RDPCommonParser().parseBitmapUpdateData(pdu.updateData)
+            for bitmap in updates:
+                self.handleBitmap(bitmap)
 
     def onClipboardData(self, pdu):
         """

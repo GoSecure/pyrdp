@@ -1,9 +1,6 @@
-import logging
-
 from PyQt4.QtCore import QTimer
 
 from rdpy.core.observer import Observer
-from rdpy.ui.rss import RSSAdaptor
 from rdpy.core.subject import Subject, ObservedBy
 from rdpy.layer.recording import RDPPlayerMessageLayer
 from rdpy.layer.tpkt import TPKTLayer
@@ -11,6 +8,7 @@ from rdpy.player.BasePlayerWindow import BasePlayerWindow
 from rdpy.player.RDPConnectionTab import RDPConnectionTab
 from rdpy.ui.event import RSSEventHandler
 from rdpy.ui.qt4 import QRemoteDesktop
+from rdpy.ui.rss import RSSAdaptor
 
 
 class ReplayWindow(BasePlayerWindow):

@@ -1,4 +1,6 @@
+from rdpy.enum.rdp import SlowPathUpdateType
 from rdpy.pdu.base_pdu import PDU
+from rdpy.pdu.rdp.common import BitmapUpdateData
 
 
 class RDPShareControlHeader(PDU):
@@ -101,7 +103,7 @@ class RDPSuppressOutputPDU(PDU):
         self.bottom = bottom
 
 class RDPUpdatePDU(PDU):
-    def __init__(self, header, updateType, updateData):
+    def __init__(self, header: RDPShareDataHeader, updateType: SlowPathUpdateType, updateData: bytes):
         PDU.__init__(self)
         self.header = header
         self.updateType = updateType

@@ -8,9 +8,11 @@ from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import RDPFastPathInputEventType, \
     RDPFastPathSecurityFlags, FIPSVersion, FastPathOutputCompressionType, RDPFastPathOutputEventType, \
     DrawingOrderControlFlags, EncryptionMethod
+from rdpy.parser.rdp.common import RDPCommonParser
 from rdpy.parser.rdp.security import RDPBasicSecurityParser
 from rdpy.pdu.rdp.fastpath import FastPathEventRaw, RDPFastPathPDU, FastPathEventScanCode, FastPathBitmapEvent, \
-    FastPathOrdersEvent, FastPathEventMouse, SecondaryDrawingOrder, BitmapUpdateData
+    FastPathOrdersEvent, FastPathEventMouse, SecondaryDrawingOrder
+from rdpy.pdu.rdp.common import BitmapUpdateData
 
 
 class RDPBasicFastPathParser(RDPBasicSecurityParser):
@@ -370,23 +372,9 @@ class RDPOutputEventParser:
         :return: a FastPathBitmapEvent with bitmapUpdateData
         """
         rawBitmapUpdateData = fastPathBitmapEvent.rawBitmapUpdateData
-        stream2 = BytesIO(rawBitmapUpdateData)
-        updateType = Uint16LE.unpack(stream2.read(2))
-        numberRectangles = Uint16LE.unpack(stream2.read(2))
-        bitmapData = []
-        for i in range(numberRectangles):
-            destLeft = Uint16LE.unpack(stream2.read(2))
-            destTop = Uint16LE.unpack(stream2.read(2))
-            destRight = Uint16LE.unpack(stream2.read(2))
-            destBottom = Uint16LE.unpack(stream2.read(2))
-            width = Uint16LE.unpack(stream2.read(2))
-            height = Uint16LE.unpack(stream2.read(2))
-            bitsPerPixel = Uint16LE.unpack(stream2.read(2))
-            flags = Uint16LE.unpack(stream2.read(2))
-            bitmapLength = Uint16LE.unpack(stream2.read(2))
-            bitmapStream = stream2.read(bitmapLength)
-            bitmapData.append(BitmapUpdateData(destLeft, destTop, destRight, destBottom, width, height, bitsPerPixel,
-                                               flags, bitmapStream))
+        stream = BytesIO(rawBitmapUpdateData)
+        updateType = Uint16LE.unpack(stream.read(2))
+        bitmapData = RDPCommonParser().parseBitmapUpdateData(stream.read())
 
         return FastPathBitmapEvent(fastPathBitmapEvent.header, fastPathBitmapEvent.compressionFlags,
                                    bitmapData, rawBitmapUpdateData)

@@ -74,6 +74,12 @@ class RDPFastPathOutputEventType(IntEnum):
 class FastPathOutputCompressionType(IntEnum):
     FASTPATH_OUTPUT_COMPRESSION_USED = 0x2
 
+class SlowPathUpdateType(IntEnum):
+    FASTPATH_UPDATETYPE_ORDERS = 0
+    FASTPATH_UPDATETYPE_BITMAP = 1
+    FASTPATH_UPDATETYPE_PALETTE = 2
+    FASTPATH_UPDATETYPE_SYNCHRONIZE = 3
+
 class RDPSecurityHeaderType(IntEnum):
     NONE = 0
     BASIC = 1

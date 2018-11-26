@@ -452,7 +452,7 @@ class RDPDataParser(Parser):
 
     def parseUpdate(self, stream, header):
         updateType = Uint16LE.unpack(stream)
-        updateData = stream.read()
+        updateData = stream.read(header.uncompressedLength - 18)
         return RDPUpdatePDU(header, updateType, updateData)
 
     def writeUpdate(self, stream, pdu: RDPUpdatePDU):
