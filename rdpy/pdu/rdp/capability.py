@@ -1,11 +1,13 @@
 from rdpy.enum.rdp import CapabilityType
+from rdpy.pdu.base_pdu import PDU
 
 
-class Capability:
+class Capability(PDU):
     def __init__(self, type: int, rawData=b""):
         """
         :type rawData: bytes
         """
+        super().__init__()
         self.type = type
         self.rawData = rawData
 

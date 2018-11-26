@@ -1,8 +1,9 @@
 from rdpy.pdu.base_pdu import PDU
 
 
-class RDPShareControlHeader:
+class RDPShareControlHeader(PDU):
     def __init__(self, type, version, source):
+        super().__init__()
         self.type = type
         self.version = version
         self.source = source
@@ -20,7 +21,7 @@ class RDPShareDataHeader(RDPShareControlHeader):
 
 
 class RDPDemandActivePDU(PDU):
-    def __init__(self, header, shareID, sourceDescriptor, numberCapabilities, capabilitySets, sessionID):
+    def __init__(self, header, shareID, sourceDescriptor, numberCapabilities, capabilitySets, sessionID, parsedCapabilitySets=None):
         PDU.__init__(self)
         self.header = header
         self.shareID = shareID
@@ -28,6 +29,7 @@ class RDPDemandActivePDU(PDU):
         self.numberCapabilities = numberCapabilities
         self.capabilitySets = capabilitySets
         self.sessionID = sessionID
+        self.parsedCapabilitySets = parsedCapabilitySets
 
 
 class RDPConfirmActivePDU(PDU):

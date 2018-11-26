@@ -139,8 +139,9 @@ class RDPDataParser(Parser):
         pad2Octets = stream.read(2)
         capabilitySets = stream.read(lengthCombinedCapabilities - 4)
         sessionID = Uint32LE.unpack(stream)
+        parsedCapabilitySets = self.parseCapabilitySets(capabilitySets, numberCapabilities)
 
-        return RDPDemandActivePDU(header, shareID, sourceDescriptor, numberCapabilities, capabilitySets, sessionID)
+        return RDPDemandActivePDU(header, shareID, sourceDescriptor, numberCapabilities, capabilitySets, sessionID, parsedCapabilitySets)
 
     def writeDemandActive(self, stream, pdu):
         Uint32LE.pack(pdu.shareID, stream)
@@ -175,15 +176,16 @@ class RDPDataParser(Parser):
             lengthCapability = Uint16LE.unpack(stream.read(2))
             capabilityData = stream.read(lengthCapability - 4)
             capability = Capability(capabilitySetType, capabilityData)
-            capabilitySets[capabilitySetType] = capability
+            capabilitySets[CapabilityType(capabilitySetType)] = capability
 
         # Fully parse the General capability set
         capabilitySets[CapabilityType.CAPSTYPE_GENERAL] = \
             self.parseGeneralCapability(capabilitySets[CapabilityType.CAPSTYPE_GENERAL].rawData)
 
         # Fully parse the Glyph cache capability set
-        capabilitySets[CapabilityType.CAPSTYPE_GLYPHCACHE] = \
-            self.parseGlyphCacheCapability(capabilitySets[CapabilityType.CAPSTYPE_GLYPHCACHE].rawData)
+        if CapabilityType.CAPSTYPE_GLYPHCACHE in capabilitySets:
+            capabilitySets[CapabilityType.CAPSTYPE_GLYPHCACHE] = \
+                self.parseGlyphCacheCapability(capabilitySets[CapabilityType.CAPSTYPE_GLYPHCACHE].rawData)
 
         # If present, fully parse the offscreen cache capability set
         if CapabilityType.CAPSTYPE_OFFSCREENCACHE in capabilitySets:
