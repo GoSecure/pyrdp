@@ -100,3 +100,9 @@ class RDPSuppressOutputPDU(PDU):
         self.right = right
         self.bottom = bottom
 
+class RDPUpdatePDU(PDU):
+    def __init__(self, header, updateType, updateData):
+        PDU.__init__(self)
+        self.header = header
+        self.updateType = updateType
+        self.updateData = updateData

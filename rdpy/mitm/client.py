@@ -29,7 +29,7 @@ from rdpy.parser.rdp.fastpath import createFastPathParser
 from rdpy.parser.rdp.negotiation import RDPNegotiationResponseParser, RDPNegotiationRequestParser
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.pdu.rdp.client_info import RDPClientInfoPDU
-from rdpy.recording.observer import RecordingFastPathObserver
+from rdpy.recording.observer import RecordingFastPathObserver, RecordingSlowPathObserver
 from rdpy.recording.recorder import Recorder, FileLayer, SocketLayer
 
 
@@ -276,6 +276,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
         slowPathObserver = MITMSlowPathObserver(self.log, self.io)
         self.io.addObserver(slowPathObserver)
+        self.io.addObserver(RecordingSlowPathObserver(self.recorder))
         self.channelObservers[channelID] = slowPathObserver
 
         fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, self.crypter, ParserMode.CLIENT)

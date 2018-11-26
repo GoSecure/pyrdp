@@ -10,7 +10,7 @@ from rdpy.pdu.rdp.capability import Capability, BitmapCapability, OrderCapabilit
     GlyphCacheCapability, OffscreenBitmapCacheCapability, MultifragmentUpdateCapability, VirtualChannelCapability
 from rdpy.pdu.rdp.data import RDPShareControlHeader, RDPShareDataHeader, RDPDemandActivePDU, RDPConfirmActivePDU, \
     RDPSetErrorInfoPDU, RDPSynchronizePDU, RDPControlPDU, RDPInputPDU, RDPPlaySoundPDU, RDPPointerPDU, \
-    RDPSuppressOutputPDU
+    RDPSuppressOutputPDU, RDPUpdatePDU
 
 
 class RDPDataParser(Parser):
@@ -29,6 +29,7 @@ class RDPDataParser(Parser):
             # RDPDataPDUSubtype.PDUTYPE2_POINTER: self.parsePointer,
             RDPDataPDUSubtype.PDUTYPE2_PLAY_SOUND: self.parsePlaySound,
             RDPDataPDUSubtype.PDUTYPE2_SUPPRESS_OUTPUT: self.parseSuppressOutput,
+            RDPDataPDUSubtype.PDUTYPE2_UPDATE: self.parseUpdate,
         }
 
         self.dataWriters = {
@@ -39,6 +40,7 @@ class RDPDataParser(Parser):
             # RDPDataPDUSubtype.PDUTYPE2_POINTER: self.writePointer,
             RDPDataPDUSubtype.PDUTYPE2_PLAY_SOUND: self.writePlaySound,
             RDPDataPDUSubtype.PDUTYPE2_SUPPRESS_OUTPUT: self.writeSuppressOutput,
+            RDPDataPDUSubtype.PDUTYPE2_UPDATE: self.writeUpdate,
         }
 
     def parse(self, data):
@@ -447,6 +449,15 @@ class RDPDataParser(Parser):
         Uint16LE.pack(pdu.top, stream)
         Uint16LE.pack(pdu.right, stream)
         Uint16LE.pack(pdu.bottom, stream)
+
+    def parseUpdate(self, stream, header):
+        updateType = Uint16LE.unpack(stream)
+        updateData = stream.read()
+        return RDPUpdatePDU(header, updateType, updateData)
+
+    def writeUpdate(self, stream, pdu: RDPUpdatePDU):
+        Uint16LE.pack(pdu.updateType, stream)
+        stream.write(pdu.updateData)
 
     def writeGeneralCapability(self, capability, stream):
         """

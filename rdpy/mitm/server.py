@@ -42,7 +42,7 @@ from rdpy.pdu.mcs import MCSConnectResponsePDU
 from rdpy.pdu.rdp.capability import MultifragmentUpdateCapability, Capability
 from rdpy.pdu.rdp.connection import ProprietaryCertificate, ServerSecurityData, RDPServerDataPDU
 from rdpy.pdu.rdp.negotiation import RDPNegotiationResponsePDU, RDPNegotiationRequestPDU
-from rdpy.recording.observer import RecordingFastPathObserver
+from rdpy.recording.observer import RecordingFastPathObserver, RecordingSlowPathObserver
 from rdpy.recording.recorder import Recorder, FileLayer, SocketLayer
 
 
@@ -383,6 +383,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         clientObserver = self.client.getChannelObserver(channelID)
         slowPathObserver.setPeer(clientObserver)
         self.io.addObserver(slowPathObserver)
+        self.io.addObserver(RecordingSlowPathObserver(self.recorder))
 
         fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, self.crypter, ParserMode.SERVER)
         self.fastPathLayer = FastPathLayer(fastPathParser)
@@ -415,8 +416,6 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         # Override the bitmap cache capability set with null values.
         pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAPCACHE] =\
             Capability(CapabilityType.CAPSTYPE_BITMAPCACHE, b"\x00" * 36)
-
-        self.recorder.record(pdu, RDPPlayerMessageType.SLOW_PATH_PDU)
 
     # Security Exchange
     def onSecurityExchangeReceived(self, pdu):
