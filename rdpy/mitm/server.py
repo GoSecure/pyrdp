@@ -39,7 +39,7 @@ from rdpy.parser.rdp.fastpath import createFastPathParser
 from rdpy.parser.rdp.negotiation import RDPNegotiationRequestParser, RDPNegotiationResponseParser
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
 from rdpy.pdu.mcs import MCSConnectResponsePDU
-from rdpy.pdu.rdp.capability import MultifragmentUpdateCapability
+from rdpy.pdu.rdp.capability import MultifragmentUpdateCapability, Capability
 from rdpy.pdu.rdp.connection import ProprietaryCertificate, ServerSecurityData, RDPServerDataPDU
 from rdpy.pdu.rdp.negotiation import RDPNegotiationResponsePDU, RDPNegotiationRequestPDU
 from rdpy.recording.observer import RecordingFastPathObserver
@@ -411,6 +411,10 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
         # Disable virtual channel compression
         pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].flags = 0
+
+        # Override the bitmap cache capability set with null values.
+        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAPCACHE] =\
+            Capability(CapabilityType.CAPSTYPE_BITMAPCACHE, b"\x00" * 36)
 
         self.recorder.record(pdu, RDPPlayerMessageType.CONFIRM_ACTIVE)
 

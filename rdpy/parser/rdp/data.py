@@ -197,9 +197,6 @@ class RDPDataParser(Parser):
             capabilitySets[CapabilityType.CAPSTYPE_OFFSCREENCACHE] = \
                 self.parseOffscreenCacheCapability(capabilitySets[CapabilityType.CAPSTYPE_OFFSCREENCACHE].rawData)
 
-        # Override the bitmap cache capability set with null values.
-        capabilitySets[CapabilityType.CAPSTYPE_BITMAPCACHE] = Capability(CapabilityType.CAPSTYPE_BITMAPCACHE, b"\x00" * 36)
-
         # Fully parse the Bitmap capability set
         capabilitySets[CapabilityType.CAPSTYPE_BITMAP] = \
             self.parseBitmapCapability(capabilitySets[CapabilityType.CAPSTYPE_BITMAP].rawData)
