@@ -143,14 +143,19 @@ class RDPDataParser(Parser):
 
         return RDPDemandActivePDU(header, shareID, sourceDescriptor, numberCapabilities, capabilitySets, sessionID, parsedCapabilitySets)
 
-    def writeDemandActive(self, stream, pdu):
+    def writeDemandActive(self, stream: BytesIO, pdu: RDPDemandActivePDU):
         Uint32LE.pack(pdu.shareID, stream)
         Uint16LE.pack(len(pdu.sourceDescriptor), stream)
-        Uint16LE.pack(len(pdu.capabilitySets) + 4, stream)
-        stream.write(pdu.sourceDescriptor)
-        Uint16LE.pack(pdu.numberCapabilities, stream)
-        stream.write(b"\x00" * 2)
-        stream.write(pdu.capabilitySets)
+
+        substream = BytesIO()
+        self.writeCapabilitySets(pdu.parsedCapabilitySets.values(), substream)
+
+        Uint16LE.pack(len(substream.getvalue()) + 4, stream)  # lengthCombinedCapabilities
+
+        stream.write(pdu.sourceDescriptor)  # sourceDescriptor
+        Uint16LE.pack(len(pdu.parsedCapabilitySets.keys()), stream)  # numberCapabilities
+        stream.write(b"\x00" * 2)  # pad2Octets
+        stream.write(substream.getvalue())  # capabilitySets
         Uint32LE.pack(pdu.sessionID, stream)
 
     def parseConfirmActive(self, stream, header):

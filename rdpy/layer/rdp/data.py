@@ -1,7 +1,7 @@
 from rdpy.core import log
 from rdpy.core.layer import Layer, LayerStrictRoutedObserver, LayerObserver
 from rdpy.core.subject import ObservedBy
-from rdpy.enum.rdp import RDPDataPDUType
+from rdpy.enum.rdp import RDPDataPDUType, CapabilityType, VirtualChannelCompressionFlag
 from rdpy.exceptions import UnknownPDUTypeError
 from rdpy.parser.rdp.data import RDPDataParser
 from rdpy.pdu.rdp.data import RDPDemandActivePDU
@@ -105,11 +105,13 @@ class RDPDataLayerObserver(RDPBaseDataLayerObserver, LayerStrictRoutedObserver):
         """
         self.dispatchPDU(pdu)
 
-    def onDemandActive(self, pdu):
+    def onDemandActive(self, pdu: RDPDemandActivePDU):
         """
-        Called when a Demand Active PDU is received
+        Called when a Demand Active PDU is received.
+        Disable Virtual channel compression.
         :type pdu: RDPDemandActivePDU
         """
+        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].flags = VirtualChannelCompressionFlag.VCCAPS_NO_COMPR
         pass
 
     def onConfirmActive(self, pdu):

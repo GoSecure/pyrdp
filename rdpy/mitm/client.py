@@ -3,7 +3,7 @@ import logging
 from rdpy.core.ssl import ClientTLSContext
 from rdpy.crypto.crypto import SecuritySettings, RC4CrypterProxy
 from rdpy.enum.core import ParserMode
-from rdpy.enum.rdp import RDPPlayerMessageType
+from rdpy.enum.rdp import RDPPlayerMessageType, ClientInfoFlags
 from rdpy.enum.segmentation import SegmentationPDUType
 from rdpy.enum.virtual_channel.virtual_channel import VirtualChannel
 from rdpy.layer.gcc import GCCClientConnectionLayer
@@ -28,6 +28,7 @@ from rdpy.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
 from rdpy.parser.rdp.fastpath import createFastPathParser
 from rdpy.parser.rdp.negotiation import RDPNegotiationResponseParser, RDPNegotiationRequestParser
 from rdpy.pdu.gcc import GCCConferenceCreateResponsePDU
+from rdpy.pdu.rdp.client_info import RDPClientInfoPDU
 from rdpy.recording.observer import RecordingFastPathObserver
 from rdpy.recording.recorder import Recorder, FileLayer, SocketLayer
 
@@ -74,7 +75,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
         self.mcsConnect = MCSClientConnectionLayer(self.mcs)
 
-        self.gccConnect = GCCClientConnectionLayer("1")
+        self.gccConnect = GCCClientConnectionLayer(b"1")
         self.gccConnect.createObserver(onPDUReceived=self.onConferenceCreateResponse)
 
         self.rdpConnect = RDPClientConnectionLayer()
@@ -90,8 +91,6 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.x224.setNext(self.mcs)
         self.mcsConnect.setNext(self.gccConnect)
         self.gccConnect.setNext(self.rdpConnect)
-
-
 
         record_layers = [FileLayer(fileHandle)]
 
@@ -302,9 +301,12 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
     def onChannelJoinRefused(self, user, result, channelID):
         self.server.onChannelJoinRefused(user, result, channelID)
 
-    def onClientInfoPDUReceived(self, pdu):
+    def onClientInfoPDUReceived(self, pdu: RDPClientInfoPDU):
         self.log.debug("Sending Client Info: {}".format(pdu))
 
+        # Tell the server we don't want compression (unsure of the effectiveness of these flags)
+        pdu.flags &= ~ClientInfoFlags.INFO_COMPRESSION
+        pdu.flags &= ~ClientInfoFlags.INFO_CompressionTypeMask
         self.securityLayer.sendClientInfo(pdu)
 
     def onLicensingDataReceived(self, data):

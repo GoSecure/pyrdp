@@ -1,5 +1,6 @@
 from enum import IntEnum
 
+
 class ClientInfoFlags:
     """
     Flags for the RDPClientInfoPDU flags field
