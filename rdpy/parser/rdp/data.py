@@ -139,17 +139,23 @@ class RDPDataParser(Parser):
         pad2Octets = stream.read(2)
         capabilitySets = stream.read(lengthCombinedCapabilities - 4)
         sessionID = Uint32LE.unpack(stream)
+        parsedCapabilitySets = self.parseCapabilitySets(capabilitySets, numberCapabilities)
 
-        return RDPDemandActivePDU(header, shareID, sourceDescriptor, numberCapabilities, capabilitySets, sessionID)
+        return RDPDemandActivePDU(header, shareID, sourceDescriptor, numberCapabilities, capabilitySets, sessionID, parsedCapabilitySets)
 
-    def writeDemandActive(self, stream, pdu):
+    def writeDemandActive(self, stream: BytesIO, pdu: RDPDemandActivePDU):
         Uint32LE.pack(pdu.shareID, stream)
         Uint16LE.pack(len(pdu.sourceDescriptor), stream)
-        Uint16LE.pack(len(pdu.capabilitySets) + 4, stream)
-        stream.write(pdu.sourceDescriptor)
-        Uint16LE.pack(pdu.numberCapabilities, stream)
-        stream.write(b"\x00" * 2)
-        stream.write(pdu.capabilitySets)
+
+        substream = BytesIO()
+        self.writeCapabilitySets(pdu.parsedCapabilitySets.values(), substream)
+
+        Uint16LE.pack(len(substream.getvalue()) + 4, stream)  # lengthCombinedCapabilities
+
+        stream.write(pdu.sourceDescriptor)  # sourceDescriptor
+        Uint16LE.pack(len(pdu.parsedCapabilitySets.keys()), stream)  # numberCapabilities
+        stream.write(b"\x00" * 2)  # pad2Octets
+        stream.write(substream.getvalue())  # capabilitySets
         Uint32LE.pack(pdu.sessionID, stream)
 
     def parseConfirmActive(self, stream, header):
@@ -175,23 +181,21 @@ class RDPDataParser(Parser):
             lengthCapability = Uint16LE.unpack(stream.read(2))
             capabilityData = stream.read(lengthCapability - 4)
             capability = Capability(capabilitySetType, capabilityData)
-            capabilitySets[capabilitySetType] = capability
+            capabilitySets[CapabilityType(capabilitySetType)] = capability
 
         # Fully parse the General capability set
         capabilitySets[CapabilityType.CAPSTYPE_GENERAL] = \
             self.parseGeneralCapability(capabilitySets[CapabilityType.CAPSTYPE_GENERAL].rawData)
 
         # Fully parse the Glyph cache capability set
-        capabilitySets[CapabilityType.CAPSTYPE_GLYPHCACHE] = \
-            self.parseGlyphCacheCapability(capabilitySets[CapabilityType.CAPSTYPE_GLYPHCACHE].rawData)
+        if CapabilityType.CAPSTYPE_GLYPHCACHE in capabilitySets:
+            capabilitySets[CapabilityType.CAPSTYPE_GLYPHCACHE] = \
+                self.parseGlyphCacheCapability(capabilitySets[CapabilityType.CAPSTYPE_GLYPHCACHE].rawData)
 
         # If present, fully parse the offscreen cache capability set
         if CapabilityType.CAPSTYPE_OFFSCREENCACHE in capabilitySets:
             capabilitySets[CapabilityType.CAPSTYPE_OFFSCREENCACHE] = \
                 self.parseOffscreenCacheCapability(capabilitySets[CapabilityType.CAPSTYPE_OFFSCREENCACHE].rawData)
-
-        # Override the bitmap cache capability set with null values.
-        capabilitySets[CapabilityType.CAPSTYPE_BITMAPCACHE] = Capability(CapabilityType.CAPSTYPE_BITMAPCACHE, b"\x00" * 36)
 
         # Fully parse the Bitmap capability set
         capabilitySets[CapabilityType.CAPSTYPE_BITMAP] = \

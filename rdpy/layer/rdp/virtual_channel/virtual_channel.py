@@ -1,3 +1,5 @@
+from rdpy.core import log
+
 from rdpy.core.layer import Layer
 from rdpy.enum.virtual_channel.virtual_channel import ChannelFlag
 from rdpy.parser.rdp.virtual_channel.virtual_channel import VirtualChannelParser
@@ -20,6 +22,9 @@ class VirtualChannelLayer(Layer):
         :type data: bytes
         """
         virtualChannelPDU = self.virtualChannelParser.parse(data)
+
+        if virtualChannelPDU.flags & ChannelFlag.CHANNEL_PACKET_COMPRESSED != 0:
+            log.error("Compression flag is set on virtual channel data, it is NOT handled, crash will most likely occur.")
 
         flags = virtualChannelPDU.flags
         if flags & ChannelFlag.CHANNEL_FLAG_FIRST:

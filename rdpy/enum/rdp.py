@@ -1,5 +1,6 @@
 from enum import IntEnum
 
+
 class ClientInfoFlags:
     """
     Flags for the RDPClientInfoPDU flags field
@@ -639,9 +640,35 @@ class RDPPlayerMessageType(IntEnum):
     CLIPBOARD_DATA = 6  # To collect clipboard data
 
 
+class ChannelOption(IntEnum):
+    """
+    https://msdn.microsoft.com/en-us/library/cc240513.aspx
+    """
+
+    CHANNEL_OPTION_INITIALIZED = 0x80000000
+    CHANNEL_OPTION_ENCRYPT_RDP = 0x40000000
+    CHANNEL_OPTION_ENCRYPT_SC = 0x20000000
+    CHANNEL_OPTION_ENCRYPT_CS = 0x10000000
+    CHANNEL_OPTION_PRI_HIGH = 0x08000000
+    CHANNEL_OPTION_PRI_MED = 0x04000000
+    CHANNEL_OPTION_PRI_LOW = 0x02000000
+    CHANNEL_OPTION_COMPRESS_RDP = 0x00800000
+    CHANNEL_OPTION_COMPRESS = 0x00400000
+    CHANNEL_OPTION_SHOW_PROTOCOL = 0x00200000
+    REMOTE_CONTROL_PERSISTENT = 0x00100000
+
+
 class DrawingOrderControlFlags(IntEnum):
     """
     https://msdn.microsoft.com/en-us/library/cc241574.aspx
     """
     TS_STANDARD = 0b00000001
     TS_SECONDARY = 0b00000010
+
+
+class RdpVersion(IntEnum):
+    """
+    https://msdn.microsoft.com/en-us/library/cc240517.aspx
+    """
+    RDP_4_0 = 0x00080001
+    RDP_5_TO_8_1 = 0x00080004

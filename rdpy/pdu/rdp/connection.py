@@ -1,3 +1,5 @@
+from typing import List
+
 from rdpy.enum.rdp import RDPConnectionDataType, ServerCertificateType
 from rdpy.pdu.base_pdu import PDU
 
@@ -69,7 +71,7 @@ class ClientChannelDefinition:
 class ClientNetworkData:
     def __init__(self, channelDefinitions):
         self.header = RDPConnectionDataType.CLIENT_NETWORK
-        self.channelDefinitions = channelDefinitions
+        self.channelDefinitions: List[ClientChannelDefinition] = channelDefinitions
 
 
 class ClientClusterData:
