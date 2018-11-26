@@ -104,7 +104,8 @@ class ReplayTab(RDPConnectionTab):
 
     def __init__(self, fileName):
         """
-        :type reader: rdpy.core.rss.FileReader
+        :param fileName: name of the file to read
+        :type fileName: str
         """
         self.viewer = QRemoteDesktop(800, 600, RssAdaptor())
         RDPConnectionTab.__init__(self, self.viewer)
