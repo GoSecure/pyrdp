@@ -632,10 +632,10 @@ class RDPPlayerMessageType(IntEnum):
     Types of events that we can encounter when replaying a RDP connection.
     """
 
-    INPUT = 1  # Ex: scancode, mouse
-    OUTPUT = 2  # Ex: image
+    FAST_PATH_INPUT = 1  # Ex: scancode, mouse
+    FAST_PATH_OUTPUT = 2  # Ex: image
     CLIENT_INFO = 3  # Creds on connection
-    CONFIRM_ACTIVE = 4  # For desktop width and height
+    SLOW_PATH_PDU = 4  # For slow-path PDUs
     CONNECTION_CLOSE = 5  # To advertise the end of the connection
     CLIPBOARD_DATA = 6  # To collect clipboard data
 

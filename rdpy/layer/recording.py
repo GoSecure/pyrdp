@@ -13,9 +13,9 @@ class RDPPlayerMessageObserver(LayerRoutedObserver):
         LayerRoutedObserver.__init__(self, {
             RDPPlayerMessageType.CONNECTION_CLOSE: "onConnectionClose",
             RDPPlayerMessageType.CLIENT_INFO: "onClientInfo",
-            RDPPlayerMessageType.CONFIRM_ACTIVE: "onConfirmActive",
-            RDPPlayerMessageType.INPUT: "onInput",
-            RDPPlayerMessageType.OUTPUT: "onOutput",
+            RDPPlayerMessageType.SLOW_PATH_PDU: "onSlowPathPDU",
+            RDPPlayerMessageType.FAST_PATH_INPUT: "onInput",
+            RDPPlayerMessageType.FAST_PATH_OUTPUT: "onOutput",
             RDPPlayerMessageType.CLIPBOARD_DATA: "onClipboardData",
         }, **kwargs)
 
@@ -25,7 +25,7 @@ class RDPPlayerMessageObserver(LayerRoutedObserver):
     def onClientInfo(self, pdu):
         pass
 
-    def onConfirmActive(self, pdu):
+    def onSlowPathPDU(self, pdu):
         pass
 
     def onInput(self, pdu):

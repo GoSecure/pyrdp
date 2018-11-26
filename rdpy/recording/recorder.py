@@ -23,10 +23,10 @@ class Recorder:
         :type transportLayers: list
         """
         self.parsers = {
-            RDPPlayerMessageType.INPUT: RDPBasicFastPathParser(ParserMode.CLIENT),
-            RDPPlayerMessageType.OUTPUT: RDPBasicFastPathParser(ParserMode.SERVER),
+            RDPPlayerMessageType.FAST_PATH_INPUT: RDPBasicFastPathParser(ParserMode.CLIENT),
+            RDPPlayerMessageType.FAST_PATH_OUTPUT: RDPBasicFastPathParser(ParserMode.SERVER),
             RDPPlayerMessageType.CLIENT_INFO: RDPClientInfoParser(),
-            RDPPlayerMessageType.CONFIRM_ACTIVE: RDPDataParser(),
+            RDPPlayerMessageType.SLOW_PATH_PDU: RDPDataParser(),
             RDPPlayerMessageType.CLIPBOARD_DATA: ClipboardParser(),
         }
 

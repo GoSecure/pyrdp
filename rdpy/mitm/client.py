@@ -282,7 +282,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.fastPathLayer = FastPathLayer(fastPathParser)
         self.fastPathObserver = MITMFastPathObserver(self.log, self.fastPathLayer)
         self.fastPathLayer.addObserver(self.fastPathObserver)
-        self.fastPathLayer.addObserver(RecordingFastPathObserver(self.recorder, RDPPlayerMessageType.OUTPUT))
+        self.fastPathLayer.addObserver(RecordingFastPathObserver(self.recorder, RDPPlayerMessageType.FAST_PATH_OUTPUT))
 
         channel = MCSClientChannel(mcs, userID, channelID)
         channel.setNext(self.securityLayer)

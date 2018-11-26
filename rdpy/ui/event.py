@@ -10,6 +10,7 @@ from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.data import RDPDataParser
 from rdpy.parser.rdp.fastpath import RDPOutputEventParser, RDPBasicFastPathParser
 from rdpy.parser.rdp.virtual_channel.clipboard import ClipboardParser
+from rdpy.pdu.rdp.data import RDPConfirmActivePDU
 from rdpy.pdu.rdp.fastpath import FastPathEventScanCode, FastPathEventMouse, FastPathOrdersEvent, FastPathBitmapEvent
 from rdpy.ui.qt4 import RDPBitmapToQtImage
 
@@ -105,13 +106,15 @@ class RSSEventHandler(RDPPlayerMessageObserver):
                                   pdu.domain.replace("\0", "")))
         self.text.insertPlainText("--------------------\n")
 
-    def onConfirmActive(self, pdu):
+    def onSlowPathPDU(self, pdu):
         """
         :type pdu: rdpy.pdu.rdp.data.RDPConfirmActivePDU
         """
         pdu = self.dataParser.parse(pdu.payload)
-        self.viewer.resize(pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP].desktopWidth,
-                           pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP].desktopHeight)
+
+        if isinstance(pdu, RDPConfirmActivePDU):
+            self.viewer.resize(pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP].desktopWidth,
+                               pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP].desktopHeight)
 
     def onClipboardData(self, pdu):
         """

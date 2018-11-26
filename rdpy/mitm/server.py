@@ -389,7 +389,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         fastPathObserver = MITMFastPathObserver(self.log, self.fastPathLayer)
         fastPathObserver.setPeer(self.client.getFastPathObserver())
         self.fastPathLayer.addObserver(fastPathObserver)
-        self.fastPathLayer.addObserver(RecordingFastPathObserver(self.recorder, RDPPlayerMessageType.INPUT))
+        self.fastPathLayer.addObserver(RecordingFastPathObserver(self.recorder, RDPPlayerMessageType.FAST_PATH_INPUT))
 
         channel = MCSServerChannel(mcs, userID, channelID)
         channel.setNext(self.securityLayer)
@@ -416,7 +416,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAPCACHE] =\
             Capability(CapabilityType.CAPSTYPE_BITMAPCACHE, b"\x00" * 36)
 
-        self.recorder.record(pdu, RDPPlayerMessageType.CONFIRM_ACTIVE)
+        self.recorder.record(pdu, RDPPlayerMessageType.SLOW_PATH_PDU)
 
     # Security Exchange
     def onSecurityExchangeReceived(self, pdu):
