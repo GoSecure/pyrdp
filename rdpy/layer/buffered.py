@@ -39,11 +39,11 @@ class BufferedLayer(Layer):
             else:
                 pduLength = self.parser.getPDULength(data)
                 pduData = data[: pduLength]
+                data = data[pduLength :]
+                self.buffer = b""
 
                 pdu = self.parser.parse(pduData)
                 self.pduReceived(pdu, True)
-                data = data[pduLength :]
-                self.buffer = b""
 
     def sendPDU(self, pdu):
         data = self.parser.write(pdu)

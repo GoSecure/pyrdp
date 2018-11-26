@@ -98,7 +98,7 @@ class QRemoteDesktop(QtGui.QWidget):
         #buffer image
         self._buffer = QtGui.QImage(width, height, QtGui.QImage.Format_RGB32)
 
-    
+
     def notifyImage(self, x, y, qimage, width, height):
         """
         @summary: Function call from QAdaptor
@@ -178,3 +178,7 @@ class QRemoteDesktop(QtGui.QWidget):
         @param event: QCloseEvent
         """
         self._adaptor.closeEvent(event)
+
+    def clear(self):
+        self._buffer = QtGui.QImage(self._buffer.width(), self._buffer.height(), QtGui.QImage.Format_RGB32)
+        self.repaint()

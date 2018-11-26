@@ -107,5 +107,5 @@ class SocketLayer(Layer):
                 log.debug("sending {} to {}".format(data, self.socket.getpeername()))
                 self.socket.send(data)
             except Exception as e:
-                log.error("Cant send data over the network socket: {}".format(e.message))
+                log.error("Cant send data over the network socket: {}".format(e))
                 self.isConnected = False

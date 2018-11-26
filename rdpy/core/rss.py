@@ -21,16 +21,12 @@
 Remote Session Scenario File format
 Private protocol format to save events
 """
-import socket
 from queue import Queue
 from typing import BinaryIO
 
-from rdpy.core import log
-from rdpy.core.observer import Observer
 from rdpy.core.stream import ByteStream
 from rdpy.enum.core import ParserMode
-from rdpy.enum.rdp import RDPPlayerMessageType
-from rdpy.layer.recording import RDPPlayerMessageLayer
+from rdpy.layer.recording import RDPPlayerMessageLayer, RDPPlayerMessageObserver
 from rdpy.layer.tpkt import TPKTLayer
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.data import RDPDataParser
@@ -38,49 +34,54 @@ from rdpy.parser.rdp.fastpath import RDPBasicFastPathParser
 from rdpy.parser.rdp.virtual_channel.clipboard import ClipboardParser
 
 
-class Reader(Observer):
+class Reader(RDPPlayerMessageObserver):
     """
     Base class to manage parsing of packets to read RDP events for a Player.
     """
 
     def __init__(self, **kwargs):
-        Observer.__init__(self, **kwargs)
-        self.tpkt_layer = TPKTLayer()
-        self.rdp_player_event_type_layer = RDPPlayerMessageLayer()
-        self.tpkt_layer.setNext(self.rdp_player_event_type_layer)
-        self.rdp_player_event_type_layer.addObserver(self)
-        self._events_queue = Queue()
-        self.rdp_server_fastpath_parser = RDPBasicFastPathParser(ParserMode.SERVER)
-        self.rdp_client_fastpath_parser = RDPBasicFastPathParser(ParserMode.CLIENT)
-        self.rdp_client_info_parser = RDPClientInfoParser()
-        self.rdp_data_parser = RDPDataParser()
+        RDPPlayerMessageObserver.__init__(self, **kwargs)
+        self.eventQueue = Queue()
+        self.tpkt = TPKTLayer()
+        self.message = RDPPlayerMessageLayer()
+
+        self.tpkt.setNext(self.message)
+        self.message.addObserver(self)
+
+        self.inputParser = RDPBasicFastPathParser(ParserMode.SERVER)
+        self.outputParser = RDPBasicFastPathParser(ParserMode.CLIENT)
+        self.clientInfoParser = RDPClientInfoParser()
+        self.dataParser = RDPDataParser()
         self.clipboardParser = ClipboardParser()
 
-    def onPDUReceived(self, pdu):
-        """
-        Put the PDU in the events queue after parsing the provided pdu's payload.
-        :type pdu: rdpy.pdu.rdp.recording.RDPPlayerMessagePDU
-        """
-        try:
-            if pdu.header == RDPPlayerMessageType.INPUT:
-                rdpPdu = self.rdp_server_fastpath_parser.parse(pdu.payload)
-            elif pdu.header == RDPPlayerMessageType.OUTPUT:
-                rdpPdu = self.rdp_client_fastpath_parser.parse(pdu.payload)
-            elif pdu.header == RDPPlayerMessageType.CLIENT_INFO:
-                rdpPdu = self.rdp_client_info_parser.parse(pdu.payload)
-            elif pdu.header == RDPPlayerMessageType.CONFIRM_ACTIVE:
-                rdpPdu = self.rdp_data_parser.parse(pdu.payload)
-            elif pdu.header == RDPPlayerMessageType.CONNECTION_CLOSE:
-                rdpPdu = None
-            elif pdu.header == RDPPlayerMessageType.CLIPBOARD_DATA:
-                rdpPdu = self.clipboardParser.parse(pdu.payload)
-            else:
-                raise ValueError("Incorrect RDPPlayerMessageType received: {}".format(pdu.header))
-            pdu.payload = rdpPdu
-            self._events_queue.put(pdu)
-            pass
-        except Exception as e:
-            log.error("Error occurred when parsing RDP event: {}".format(e))
+    def onConnectionClose(self, pdu):
+        timestamp = pdu.timestamp
+        self.eventQueue.put((timestamp, None))
+
+    def onClientInfo(self, pdu):
+        timestamp = pdu.timestamp
+        pdu = self.clientInfoParser.parse(pdu.payload)
+        self.eventQueue.put((timestamp, pdu))
+
+    def onConfirmActive(self, pdu):
+        timestamp = pdu.timestamp
+        pdu = self.dataParser.parse(pdu.payload)
+        self.eventQueue.put((timestamp, pdu))
+
+    def onInput(self, pdu):
+        timestamp = pdu.timestamp
+        pdu = self.inputParser.parse(pdu.payload)
+        self.eventQueue.put((timestamp, pdu))
+
+    def onOutput(self, pdu):
+        timestamp = pdu.timestamp
+        pdu = self.outputParser.parse(pdu.payload)
+        self.eventQueue.put((timestamp, pdu))
+
+    def onClipboardData(self, pdu):
+        timestamp = pdu.timestamp
+        pdu = self.clipboardParser.parse(pdu.payload)
+        self.eventQueue.put((timestamp, pdu))
 
 
 class FileReader(Reader):
@@ -92,18 +93,18 @@ class FileReader(Reader):
         :type f: BinaryIO
         """
         Reader.__init__(self, **kwargs)
-        self._s = ByteStream(f.read())
+        self.file = f
 
     def nextEvent(self):
         """
         :return: The next RDP Event to read.
         """
-        if self._events_queue.empty():
-            self.tpkt_layer.recv(self._s.read())
+        if self.eventQueue.empty():
+            self.tpkt.recv(self._s.read())
 
         # After tpkt_layer.recv, new events should be in the Queue. if not, its over.
-        if not self._events_queue.empty():
-            return self._events_queue.get()
+        if not self.eventQueue.empty():
+            return self.eventQueue.get()
 
     def reset(self):
         """
@@ -112,39 +113,16 @@ class FileReader(Reader):
         self._s.pos = 0
 
 
-class SocketReader(Reader):
-    """
-    Class to read RDP events from a live connection using a network socket.
-    """
 
-    def __init__(self, socket, **kwargs):
-        """
-        :type socket: socket.socket
-        """
-        Reader.__init__(self, **kwargs)
-        self._socket = socket
-
-    def nextEvent(self):
-        """
-        :return: The next RDP Event to read.
-        """
-
-        if self._events_queue.empty():
-            try:
-                self.tpkt_layer.recvWithSocket(self._socket)
-            except Exception as e:
-                log.error("Error while receiving data from the network socket: {}".format(e.message))
-
-        # After tpkt_layer.recv, new events should be in the Queue. if not, its over.
-        if not self._events_queue.empty():
-            event = self._events_queue.get()
-            if event.type == RDPPlayerMessageType.CONNECTION_CLOSE:
-                return None
-            else:
-                return event
-
-    def close(self):
-        self._socket.close()
+class RssAdaptor:
+    def sendMouseEvent(self, e, isPressed):
+        """ Not Handled """
+    def sendKeyEvent(self, e, isPressed):
+        """ Not Handled """
+    def sendWheelEvent(self, e):
+        """ Not Handled """
+    def closeEvent(self, e):
+        """ Not Handled """
 
 
 def createFileReader(path):
@@ -155,4 +133,3 @@ def createFileReader(path):
     """
     with open(path, "rb") as f:
             return FileReader(f)
-

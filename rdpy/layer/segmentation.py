@@ -82,11 +82,3 @@ class SegmentationLayer(Layer):
                 data = data[length :]
                 layer.recv(forwarded)
                 length = layer.getDataLengthRequired()
-
-    def recvWithSocket(self, socket):
-        """
-        Same as recv, but using a socket.
-        :type socket: socket.socket
-        """
-        data = socket.recv(1024)
-        self.recv(data)

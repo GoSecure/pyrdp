@@ -1,116 +1,123 @@
 from PyQt4 import QtGui
-
 from PyQt4.QtGui import QTextCursor
 
 from rdpy.core import log
 from rdpy.core.scancode import scancodeToChar
-from rdpy.enum.rdp import RDPPlayerMessageType, CapabilityType
-from rdpy.parser.rdp.fastpath import RDPOutputEventParser
+from rdpy.enum.core import ParserMode
+from rdpy.enum.rdp import CapabilityType
+from rdpy.layer.recording import RDPPlayerMessageObserver
+from rdpy.parser.rdp.client_info import RDPClientInfoParser
+from rdpy.parser.rdp.data import RDPDataParser
+from rdpy.parser.rdp.fastpath import RDPOutputEventParser, RDPBasicFastPathParser
+from rdpy.parser.rdp.virtual_channel.clipboard import ClipboardParser
 from rdpy.pdu.rdp.fastpath import FastPathEventScanCode, FastPathEventMouse, FastPathOrdersEvent, FastPathBitmapEvent
 from rdpy.ui.qt4 import RDPBitmapToQtImage
 
 
-class RSSEventHandler:
+class RSSEventHandler(RDPPlayerMessageObserver):
     """
     Class to manage the display of the RDP player when reading events.
     """
 
     def __init__(self, viewer, text):
-        self._viewer = viewer
-        self._text = text
-        self._write_in_caps = False
-        self.rdpFastPathOutputEventParser = RDPOutputEventParser()
+        RDPPlayerMessageObserver.__init__(self)
+        self.viewer = viewer
+        self.text = text
+        self.writeInCaps = False
 
-    def on_message_received(self, message):
-        """
-        For each event in the provided message, handle it, if it can be handled.
-        :type message: rdpy.pdu.rdp.recording.RDPPlayerMessagePDU
-        """
-        if message.header == RDPPlayerMessageType.INPUT:
-            self.handle_input_event(message.payload)
-        elif message.header == RDPPlayerMessageType.OUTPUT:
-            self.handle_output_event(message.payload)
-        elif message.header == RDPPlayerMessageType.CLIENT_INFO:
-            self.handle_client_info(message.payload)
-        elif message.header == RDPPlayerMessageType.CONFIRM_ACTIVE:
-            self.handle_resize(message.payload)
-        elif message.header == RDPPlayerMessageType.CLIPBOARD_DATA:
-            self.handle_clipboard_data(message.payload)
-        else:
-            log.error("Received wrong player message type: {}".format(message.header))
+        self.inputParser = RDPBasicFastPathParser(ParserMode.SERVER)
+        self.outputParser = RDPBasicFastPathParser(ParserMode.CLIENT)
+        self.clientInfoParser = RDPClientInfoParser()
+        self.dataParser = RDPDataParser()
+        self.clipboardParser = ClipboardParser()
+        self.outputEventParser = RDPOutputEventParser()
 
-    def handle_output_event(self, payload):
-        for event in payload.events:
+    def onConnectionClose(self, pdu):
+        self.text.moveCursor(QTextCursor.End)
+        self.text.insertPlainText("\n<Connection closed>")
+
+    def onOutput(self, pdu):
+        pdu = self.outputParser.parse(pdu.payload)
+
+        for event in pdu.events:
             if isinstance(event, FastPathOrdersEvent):
                 log.debug("Not handling orders event, not coded :)")
             elif isinstance(event, FastPathBitmapEvent):
                 log.debug("Handling bitmap event {}".format(event))
-                self.handle_image(event)
+                self.onBitmap(event)
             else:
                 log.debug("Cant handle output event: {}".format(event))
 
-    def handle_input_event(self, payload):
-        for event in payload.events:
+    def onInput(self, pdu):
+        pdu = self.inputParser.parse(pdu.payload)
+
+        for event in pdu.events:
             if isinstance(event, FastPathEventScanCode):
                 log.debug("handling {}".format(event))
-                self.handle_scancode(event)
+                self.onScancode(event)
             elif isinstance(event, FastPathEventMouse):
                 log.debug("Not handling Mouse event since it has not yet been coded :)")
             else:
                 log.debug("Cant handle input event: {}".format(event))
 
-    def handle_scancode(self, event):
+    def onScancode(self, event):
+        """
+        :type event: FastPathEventScanCode
+        """
         log.debug("Reading scancode {}".format(event.scancode))
         code = event.scancode
         is_pressed = not event.isReleased
         if code in [0x2A, 0x36]:
-            self._text.moveCursor(QTextCursor.End)
-            self._text.insertPlainText("\n<LSHIFT PRESSED>" if is_pressed else "\n<LSHIFT RELEASED>")
-            self._write_in_caps = not self._write_in_caps
+            self.text.moveCursor(QTextCursor.End)
+            self.text.insertPlainText("\n<LSHIFT PRESSED>" if is_pressed else "\n<LSHIFT RELEASED>")
+            self.writeInCaps = not self.writeInCaps
         elif code == 0x3A and is_pressed:
-            self._text.moveCursor(QTextCursor.End)
-            self._text.insertPlainText("\n<CAPSLOCK>")
-            self._write_in_caps = not self._write_in_caps
+            self.text.moveCursor(QTextCursor.End)
+            self.text.insertPlainText("\n<CAPSLOCK>")
+            self.writeInCaps = not self.writeInCaps
         elif is_pressed:
             char = scancodeToChar(code)
-            self._text.moveCursor(QtGui.QTextCursor.End)
-            self._text.insertPlainText(char if self._write_in_caps else char.lower())
+            self.text.moveCursor(QtGui.QTextCursor.End)
+            self.text.insertPlainText(char if self.writeInCaps else char.lower())
 
-    def handle_image(self, event):
+    def onBitmap(self, event):
         """
         :type event: rdpy.pdu.rdp.fastpath.FastPathBitmapEvent
         """
-        parsedEvent = self.rdpFastPathOutputEventParser.parseBitmapEvent(event)
+        parsedEvent = self.outputEventParser.parseBitmapEvent(event)
         for bitmapData in parsedEvent.bitmapUpdateData:
             image = RDPBitmapToQtImage(bitmapData.width, bitmapData.heigth, bitmapData.bitsPerPixel,
                                        True, bitmapData.bitmapStream)
-            self._viewer.notifyImage(bitmapData.destLeft, bitmapData.destTop, image,
-                                     bitmapData.destRight - bitmapData.destLeft + 1,
-                                     bitmapData.destBottom - bitmapData.destTop + 1)
+            self.viewer.notifyImage(bitmapData.destLeft, bitmapData.destTop, image,
+                                    bitmapData.destRight - bitmapData.destLeft + 1,
+                                    bitmapData.destBottom - bitmapData.destTop + 1)
         pass
 
-    def handle_client_info(self, pdu):
+    def onClientInfo(self, pdu):
         """
         :type pdu: rdpy.pdu.rdp.client_info.RDPClientInfoPDU
         """
-        self._text.insertPlainText("--------------------")
-        self._text.insertPlainText("\nUSERNAME: {}\nPASSWORD: {}\nDOMAIN: {}\n"
-                          .format(pdu.username.replace("\0", ""),
+        pdu = self.clientInfoParser.parse(pdu.payload)
+        self.text.insertPlainText("--------------------")
+        self.text.insertPlainText("\nUSERNAME: {}\nPASSWORD: {}\nDOMAIN: {}\n"
+                                  .format(pdu.username.replace("\0", ""),
                                   pdu.password.replace("\0", ""),
                                   pdu.domain.replace("\0", "")))
-        self._text.insertPlainText("--------------------\n")
+        self.text.insertPlainText("--------------------\n")
 
-    def handle_resize(self, pdu):
+    def onConfirmActive(self, pdu):
         """
         :type pdu: rdpy.pdu.rdp.data.RDPConfirmActivePDU
         """
-        self._viewer.resize(pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP].desktopWidth,
-                            pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP].desktopHeight)
+        pdu = self.dataParser.parse(pdu.payload)
+        self.viewer.resize(pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP].desktopWidth,
+                           pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP].desktopHeight)
 
-    def handle_clipboard_data(self, pdu):
+    def onClipboardData(self, pdu):
         """
         :type pdu: rdpy.pdu.rdp.virtual_channel.clipboard.FormatDataResponsePDU
         """
-        self._text.insertPlainText("\n=============\n")
-        self._text.insertPlainText("CLIPBOARD DATA: {}".format(pdu.requestedFormatData.replace("\x00", "")))
-        self._text.insertPlainText("\n=============\n")
+        pdu = self.clipboardParser.parse(pdu.payload)
+        self.text.insertPlainText("\n=============\n")
+        self.text.insertPlainText("CLIPBOARD DATA: {}".format(pdu.requestedFormatData.replace("\x00", "")))
+        self.text.insertPlainText("\n=============\n")

@@ -9,7 +9,7 @@ from rdpy.enum.rdp import RDPPlayerMessageType
 from rdpy.pdu.rdp.recording import RDPPlayerMessagePDU
 
 class RDPPlayerMessageObserver(LayerRoutedObserver):
-    def __index__(self, **kwargs):
+    def __init__(self, **kwargs):
         LayerRoutedObserver.__init__(self, {
             RDPPlayerMessageType.CONNECTION_CLOSE: "onConnectionClose",
             RDPPlayerMessageType.CLIENT_INFO: "onClientInfo",
