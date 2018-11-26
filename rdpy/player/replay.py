@@ -61,7 +61,6 @@ class RSSTimedEventHandler(RSSEventHandler, Subject):
         self.speedMultiplier = speed
 
     def onPDUReceived(self, pdu):
-        logging.getLogger("liveplayer").debug(pdu.timestamp)
         if self.lastTimestamp is None:
             self.dispatchPDU(pdu)
         else:
