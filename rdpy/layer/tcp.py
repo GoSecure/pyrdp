@@ -39,8 +39,8 @@ class TwistedTCPLayer(Protocol, Layer):
         """
         Log the SSL parameters of the connection in a format suitable for decryption by Wireshark.
         """
-        log.get_ssl_logger().info(self.transport.protocol._tlsConnection.client_random(),
-                                  self.transport.protocol._tlsConnection.master_key())
+        log.get_ssl_logger().info(self.transport.protocol._tlsConnection.client_random().decode(),
+                                  self.transport.protocol._tlsConnection.master_key().decode())
 
     def connectionMade(self):
         """
@@ -115,8 +115,8 @@ class AsyncIOTCPLayer(asyncio.Protocol, Layer):
         """
         Log the SSL parameters of the connection in a format suitable for decryption by Wireshark.
         """
-        log.get_ssl_logger().info(self.transport.protocol._tlsConnection.client_random(),
-                                  self.transport.protocol._tlsConnection.master_key())
+        log.get_ssl_logger().info(self.transport.protocol._tlsConnection.client_random().decode(),
+                                  self.transport.protocol._tlsConnection.master_key().decode())
 
     def connection_made(self, transport):
         """
