@@ -47,7 +47,7 @@ class MainWindow(QMainWindow):
         fileMenu.addAction(openAction)
 
         for fileName in filesToRead:
-            self.tabManager.openFile(fileName)
+            self.replayWindow.openFile(fileName)
 
     def onOpenFile(self):
         fileName = QFileDialog.getOpenFileName(self, "Open File")
