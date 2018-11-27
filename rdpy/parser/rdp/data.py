@@ -208,8 +208,9 @@ class RDPDataParser(Parser):
             capabilitySets[CapabilityType.CAPSTYPE_ORDER].rawData)
 
         # Fully parse the VirtualChannel capability set
-        capabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL] = self.parseVirtualChannelCapability(
-            capabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].rawData)
+        if CapabilityType.CAPSTYPE_OFFSCREENCACHE in capabilitySets:
+            capabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL] = self.parseVirtualChannelCapability(
+                capabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].rawData)
 
         return capabilitySets
 
