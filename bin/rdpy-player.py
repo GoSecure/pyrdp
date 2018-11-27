@@ -8,8 +8,8 @@ import notify2
 from PyQt4.QtGui import QApplication
 
 from rdpy.core import log
-
 from rdpy.player.player import MainWindow
+
 
 class NotifyHandler(logging.StreamHandler):
     """
@@ -77,7 +77,7 @@ def main():
     if arguments.directory is not None:
         if not arguments.directory.endswith("/"):
             arguments.directory += "/"
-        files = filter(lambda file_name: file_name.endswith(".rss"), os.listdir(arguments.directory))
+        files = filter(lambda file_name: file_name.endswith(".rdpy"), os.listdir(arguments.directory))
         files = map(lambda file_name: arguments.directory + file_name, files)
         files_to_read += files
 
