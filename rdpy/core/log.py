@@ -11,8 +11,8 @@ class SSLSecretFormatter(logging.Formatter):
         super(SSLSecretFormatter, self).__init__("format")
 
     def format(self, record):
-        return "CLIENT_RANDOM {} {}".format(binascii.hexlify(record.msg),
-                                            binascii.hexlify(record.args[0]))
+        return "CLIENT_RANDOM {} {}".format(binascii.hexlify(record.msg).decode(),
+                                            binascii.hexlify(record.args[0]).decode())
 
 
 def get_formatter():
