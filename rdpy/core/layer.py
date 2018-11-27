@@ -1,6 +1,8 @@
 from rdpy.core.observer import Observer
 from rdpy.core.subject import Subject, ObservedBy
 from rdpy.exceptions import UnknownPDUTypeError
+from rdpy.pdu.base_pdu import PDU
+
 
 class LayerObserver(Observer):
     """
@@ -81,7 +83,7 @@ class Layer(Subject):
         self.next = layer
         layer.previous = self
     
-    def pduReceived(self, pdu, forward):
+    def pduReceived(self, pdu: PDU, forward: bool):
         """
         Called when a PDU is received.
         Notifies the attached observer and optionally forwards the payload to the next layer.

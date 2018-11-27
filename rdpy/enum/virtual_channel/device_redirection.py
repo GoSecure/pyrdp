@@ -1,0 +1,54 @@
+from enum import IntEnum
+
+
+class DeviceRedirectionComponent(IntEnum):
+    """
+    https://msdn.microsoft.com/en-us/library/cc241324.aspx
+    """
+    RDPDR_CTYP_CORE = 0x4472
+    RDPDR_CTYP_PRN = 0x5052
+
+
+class DeviceRedirectionPacketId(IntEnum):
+    """
+    https://msdn.microsoft.com/en-us/library/cc241324.aspx
+    """
+    PAKID_CORE_SERVER_ANNOUNCE = 0x496E
+    PAKID_CORE_CLIENTID_CONFIRM = 0x4343
+    PAKID_CORE_CLIENT_NAME = 0x434E
+    PAKID_CORE_DEVICELIST_ANNOUNCE = 0x4441
+    PAKID_CORE_DEVICE_REPLY = 0x6472
+    PAKID_CORE_DEVICE_IOREQUEST = 0x4952
+    PAKID_CORE_DEVICE_IOCOMPLETION = 0x4943
+    PAKID_CORE_SERVER_CAPABILITY = 0x5350
+    PAKID_CORE_CLIENT_CAPABILITY = 0x4350
+    PAKID_CORE_DEVICELIST_REMOVE = 0x444D
+    PAKID_PRN_CACHE_DATA = 0x5043
+    PAKID_CORE_USER_LOGGEDON = 0x554C
+    PAKID_PRN_USING_XPS = 0x5543
+
+
+class MajorFunction(IntEnum):
+    """
+    https://msdn.microsoft.com/en-us/library/cc241327.aspx
+    """
+
+    IRP_MJ_CREATE = 0x00000000
+    IRP_MJ_CLOSE = 0x00000002
+    IRP_MJ_READ = 0x00000003
+    IRP_MJ_WRITE = 0x00000004
+    IRP_MJ_DEVICE_CONTROL = 0x0000000E
+    IRP_MJ_QUERY_VOLUME_INFORMATION = 0x0000000A
+    IRP_MJ_SET_VOLUME_INFORMATION = 0x0000000B
+    IRP_MJ_QUERY_INFORMATION = 0x00000005
+    IRP_MJ_SET_INFORMATION = 0x00000006
+    IRP_MJ_DIRECTORY_CONTROL = 0x0000000C
+    IRP_MJ_LOCK_CONTROL = 0x00000011
+
+
+class MinorFunction(IntEnum):
+    """
+    https://msdn.microsoft.com/en-us/library/cc241327.aspx
+    """
+    IRP_MN_QUERY_DIRECTORY = 0x00000001
+    IRP_MN_NOTIFY_CHANGE_DIRECTORY = 0x00000002
