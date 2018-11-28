@@ -17,10 +17,7 @@ class VirtualChannelLayer(Layer):
         self.virtualChannelParser = VirtualChannelParser()
         self.pduBuffer = b""
 
-    def recv(self, data):
-        """
-        :type data: bytes
-        """
+    def recv(self, data: bytes):
         virtualChannelPDU = self.virtualChannelParser.parse(data)
 
         if virtualChannelPDU.flags & ChannelFlag.CHANNEL_PACKET_COMPRESSED != 0:

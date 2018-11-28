@@ -47,6 +47,18 @@ class DeviceReadResponsePDU(DeviceIOResponsePDU):
     https://msdn.microsoft.com/en-us/library/cc241337.aspx
     """
 
-    def __init__(self, readData: bytes):
-        super().__init__()
+    def __init__(self, deviceId: int, completionId: int, ioStatus: int, readData: bytes):
+        super().__init__(deviceId, completionId, ioStatus)
         self.readData = readData
+
+
+class DeviceReadRequestPDU(DeviceIORequestPDU):
+    """
+    https://msdn.microsoft.com/en-us/library/cc241330.aspx
+    """
+
+    def __init__(self, deviceId: int, fileId: int, completionId: int, majorFunction: int, minorFunction: int,
+                 length: int, offset: int):
+        super().__init__(deviceId, fileId, completionId, majorFunction, minorFunction)
+        self.length = length
+        self.offset = offset
