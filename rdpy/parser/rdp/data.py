@@ -361,7 +361,7 @@ class RDPDataParser(Parser):
                 self.writeBitmapCapability(capability, substream)
             elif capability.type == CapabilityType.CAPSTYPE_OFFSCREENCACHE:
                 self.writeOffscreenCacheCapability(capability, substream)
-            elif capability.type == CapabilityType.CAPSTYPE_VIRTUALCHANNEL:
+            elif isinstance(capability, VirtualChannelCapability):
                 self.writeVirtualChannelCapability(capability, substream)
             elif capability.type == CapabilityType.CAPSETTYPE_MULTIFRAGMENTUPDATE \
                     and isinstance(capability, MultifragmentUpdateCapability):

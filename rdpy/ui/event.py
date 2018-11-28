@@ -4,7 +4,7 @@ from PyQt4.QtGui import QTextCursor
 from rdpy.core import log
 from rdpy.core.scancode import scancodeToChar
 from rdpy.enum.core import ParserMode
-from rdpy.enum.rdp import CapabilityType, RDPDataPDUSubtype, SlowPathUpdateType
+from rdpy.enum.rdp import CapabilityType, SlowPathUpdateType
 from rdpy.layer.recording import RDPPlayerMessageObserver
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.common import RDPCommonParser
@@ -59,7 +59,7 @@ class RSSEventHandler(RDPPlayerMessageObserver):
                 log.debug("handling {}".format(event))
                 self.onScancode(event)
             elif isinstance(event, FastPathEventMouse):
-                log.debug("Not handling Mouse event since it has not yet been coded :)")
+                pass
             else:
                 log.debug("Cant handle input event: {}".format(event))
 
