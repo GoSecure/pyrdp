@@ -85,6 +85,9 @@ def prepare_loggers():
     """
         Sets up the "mitm" and the "mitm.connections" loggers.
     """
+    log.prepare_rdpy_logger()
+    log.prepare_ssl_session_logger()
+
     if not os.path.exists("log"):
         os.makedirs("log")
 

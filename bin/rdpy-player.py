@@ -62,6 +62,8 @@ def main():
     Parse the provided command line arguments and launch the GUI.
     :return: The app exit code (0 for normal exit, non-zero for errors)
     """
+    log.prepare_rdpy_logger()
+    log.prepare_ssl_session_logger()
     log.get_logger().setLevel(logging.DEBUG)
 
     parser = argparse.ArgumentParser()

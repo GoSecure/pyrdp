@@ -83,7 +83,3 @@ def warning(message):
 
 def error(message):
     get_logger().error(message)
-
-
-prepare_rdpy_logger()
-prepare_ssl_session_logger()
