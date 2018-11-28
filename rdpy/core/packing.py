@@ -17,7 +17,7 @@ class Integer:
                 # Indexing bytes in Python 3 gives you an int instead of bytes object of length 1...
                 return data
             else:
-                length = {"b": 1, "h": 2, "i": 4}[cls.FORMAT[1].lower()]
+                length = {"b": 1, "h": 2, "i": 4, "q": 8}[cls.FORMAT[1].lower()]
                 return struct.unpack(cls.FORMAT, data.read(length))[0]
         except struct.error as e:
             raise ValueError(str(e))
