@@ -4,7 +4,7 @@ from PyQt4.QtGui import QTextCursor
 from rdpy.core import log
 from rdpy.core.scancode import scancodeToChar
 from rdpy.enum.core import ParserMode
-from rdpy.enum.rdp import CapabilityType, RDPDataPDUSubtype, SlowPathUpdateType
+from rdpy.enum.rdp import CapabilityType, RDPDataPDUSubtype, SlowPathUpdateType, BitmapFlags
 from rdpy.layer.recording import RDPPlayerMessageObserver
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.common import RDPCommonParser
@@ -46,7 +46,7 @@ class RSSEventHandler(RDPPlayerMessageObserver):
             if isinstance(event, FastPathOrdersEvent):
                 log.debug("Not handling orders event, not coded :)")
             elif isinstance(event, FastPathBitmapEvent):
-                log.debug("Handling bitmap event {}".format(event))
+                log.debug("Handling bitmap event {}".format(vars(event)))
                 self.onBitmap(event)
             else:
                 log.debug("Cant handle output event: {}".format(event))
@@ -92,7 +92,7 @@ class RSSEventHandler(RDPPlayerMessageObserver):
             self.handleBitmap(bitmapData)
 
     def handleBitmap(self, bitmapData: BitmapUpdateData):
-        image = RDPBitmapToQtImage(bitmapData.width, bitmapData.heigth, bitmapData.bitsPerPixel, True, bitmapData.bitmapData)
+        image = RDPBitmapToQtImage(bitmapData.width, bitmapData.heigth, bitmapData.bitsPerPixel, bitmapData.flags & BitmapFlags.BITMAP_COMPRESSION != 0, bitmapData.bitmapData)
         self.viewer.notifyImage(bitmapData.destLeft, bitmapData.destTop, image,
                                 bitmapData.destRight - bitmapData.destLeft + 1,
                                 bitmapData.destBottom - bitmapData.destTop + 1)
@@ -129,5 +129,5 @@ class RSSEventHandler(RDPPlayerMessageObserver):
         """
         pdu = self.clipboardParser.parse(pdu.payload)
         self.text.insertPlainText("\n=============\n")
-        self.text.insertPlainText("CLIPBOARD DATA: {}".format(pdu.requestedFormatData.replace("\x00", "")))
+        self.text.insertPlainText("CLIPBOARD DATA: {}".format(pdu.requestedFormatData.decode("utf-16le")))
         self.text.insertPlainText("\n=============\n")

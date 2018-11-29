@@ -678,3 +678,10 @@ class RdpVersion(IntEnum):
     """
     RDP_4_0 = 0x00080001
     RDP_5_TO_8_1 = 0x00080004
+
+class BitmapFlags(IntEnum):
+    """
+    https://msdn.microsoft.com/en-us/library/cc240612.aspx
+    """
+    BITMAP_COMPRESSION = 0x0001
+    NO_BITMAP_COMPRESSION_HDR = 0x0400
