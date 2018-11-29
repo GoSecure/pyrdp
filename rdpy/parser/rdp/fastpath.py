@@ -286,9 +286,8 @@ class RDPInputEventParser:
         return FastPathEventMouse(eventHeader, pointerFlags, mouseX, mouseY)
 
     def parseScanCode(self, eventFlags, eventHeader, stream):
-        scancode = Uint8.unpack(stream.read(1))
-        return FastPathEventScanCode(eventHeader,
-                                     scancode, eventFlags)  # there is no lord
+        scanCode = Uint8.unpack(stream.read(1))
+        return FastPathEventScanCode(eventHeader, scanCode, eventFlags)
 
     def write(self, event):
         if isinstance(event, FastPathEventRaw):

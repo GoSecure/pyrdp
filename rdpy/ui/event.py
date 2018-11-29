@@ -4,7 +4,7 @@ from PyQt4.QtGui import QTextCursor
 from rdpy.core import log
 from rdpy.core.scancode import scancodeToChar
 from rdpy.enum.core import ParserMode
-from rdpy.enum.rdp import CapabilityType, SlowPathUpdateType, BitmapFlags
+from rdpy.enum.rdp import CapabilityType, SlowPathUpdateType, BitmapFlags, KeyboardFlag
 from rdpy.layer.recording import RDPPlayerMessageObserver
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.common import RDPCommonParser
@@ -12,8 +12,9 @@ from rdpy.parser.rdp.data import RDPDataParser
 from rdpy.parser.rdp.fastpath import RDPOutputEventParser, RDPBasicFastPathParser
 from rdpy.parser.rdp.virtual_channel.clipboard import ClipboardParser
 from rdpy.pdu.rdp.common import BitmapUpdateData
-from rdpy.pdu.rdp.data import RDPConfirmActivePDU, RDPUpdatePDU
+from rdpy.pdu.rdp.data import RDPConfirmActivePDU, RDPUpdatePDU, RDPInputPDU
 from rdpy.pdu.rdp.fastpath import FastPathEventScanCode, FastPathEventMouse, FastPathOrdersEvent, FastPathBitmapEvent
+from rdpy.pdu.rdp.input import KeyboardEvent, MouseEvent
 from rdpy.ui.qt4 import RDPBitmapToQtImage
 
 
@@ -57,31 +58,33 @@ class RSSEventHandler(RDPPlayerMessageObserver):
         for event in pdu.events:
             if isinstance(event, FastPathEventScanCode):
                 log.debug("handling {}".format(event))
-                self.onScancode(event)
+                self.onScanCode(event.scanCode, not event.isReleased)
             elif isinstance(event, FastPathEventMouse):
-                pass
+                self.onMousePosition(event.mouseX, event.mouseY)
             else:
                 log.debug("Can't handle input event: {}".format(event))
 
-    def onScancode(self, event):
+    def onScanCode(self, code: int, isPressed: bool):
         """
-        :type event: FastPathEventScanCode
+        Handle scan code.
         """
-        log.debug("Reading scancode {}".format(event.scancode))
-        code = event.scancode
-        is_pressed = not event.isReleased
+        log.debug("Reading scancode {}".format(code))
+
         if code in [0x2A, 0x36]:
             self.text.moveCursor(QTextCursor.End)
-            self.text.insertPlainText("\n<LSHIFT PRESSED>" if is_pressed else "\n<LSHIFT RELEASED>")
+            self.text.insertPlainText("\n<LSHIFT PRESSED>" if isPressed else "\n<LSHIFT RELEASED>")
             self.writeInCaps = not self.writeInCaps
-        elif code == 0x3A and is_pressed:
+        elif code == 0x3A and isPressed:
             self.text.moveCursor(QTextCursor.End)
             self.text.insertPlainText("\n<CAPSLOCK>")
             self.writeInCaps = not self.writeInCaps
-        elif is_pressed:
+        elif isPressed:
             char = scancodeToChar(code)
             self.text.moveCursor(QtGui.QTextCursor.End)
             self.text.insertPlainText(char if self.writeInCaps else char.lower())
+
+    def onMousePosition(self, x: int, y: int):
+        pass
 
     def onBitmap(self, event):
         """
@@ -122,6 +125,12 @@ class RSSEventHandler(RDPPlayerMessageObserver):
             updates = RDPCommonParser().parseBitmapUpdateData(pdu.updateData)
             for bitmap in updates:
                 self.handleBitmap(bitmap)
+        elif isinstance(pdu, RDPInputPDU):
+            for event in pdu.events:
+                if isinstance(event, MouseEvent):
+                    self.onMousePosition(event.x, event.y)
+                elif isinstance(event, KeyboardEvent):
+                    self.onScanCode(event.keyCode, event.flags & KeyboardFlag.KBDFLAGS_DOWN != 0)
 
     def onClipboardData(self, pdu):
         """
@@ -129,5 +138,5 @@ class RSSEventHandler(RDPPlayerMessageObserver):
         """
         pdu = self.clipboardParser.parse(pdu.payload)
         self.text.insertPlainText("\n=============\n")
-        self.text.insertPlainText("CLIPBOARD DATA: {}".format(pdu.requestedFormatData.decode("utf-16le")))
+        self.text.insertPlainText("CLIPBOARD DATA: {}".format(repr(pdu.requestedFormatData.decode("utf-16le"))))
         self.text.insertPlainText("\n=============\n")

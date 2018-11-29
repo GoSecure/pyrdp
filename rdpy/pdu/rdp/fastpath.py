@@ -32,15 +32,15 @@ class RDPFastPathEvent:
 
 class FastPathEventScanCode(RDPFastPathEvent):
 
-    def __init__(self, rawHeaderByte, scancode, isReleased):
+    def __init__(self, rawHeaderByte, scanCode, isReleased):
         """
         :type rawHeaderByte: bytes
-        :type scancode: bytes
+        :type scanCode: bytes
         :type isReleased: bool
         """
         RDPFastPathEvent.__init__(self)
         self.rawHeaderByte = rawHeaderByte
-        self.scancode = scancode
+        self.scanCode = scanCode
         self.isReleased = isReleased
 
 
