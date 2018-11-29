@@ -51,7 +51,9 @@ class MainWindow(QMainWindow):
 
     def onOpenFile(self):
         fileName = QFileDialog.getOpenFileName(self, "Open File")
-        self.replayWindow.openFile(fileName)
+
+        if fileName:
+            self.replayWindow.openFile(fileName)
 
 
 class ControlBar(QWidget):

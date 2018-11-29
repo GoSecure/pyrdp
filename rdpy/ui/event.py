@@ -49,7 +49,7 @@ class RSSEventHandler(RDPPlayerMessageObserver):
                 log.debug("Handling bitmap event {}".format(vars(event)))
                 self.onBitmap(event)
             else:
-                log.debug("Cant handle output event: {}".format(event))
+                log.debug("Can't handle output event: {}".format(event))
 
     def onInput(self, pdu):
         pdu = self.inputParser.parse(pdu.payload)
@@ -61,7 +61,7 @@ class RSSEventHandler(RDPPlayerMessageObserver):
             elif isinstance(event, FastPathEventMouse):
                 pass
             else:
-                log.debug("Cant handle input event: {}".format(event))
+                log.debug("Can't handle input event: {}".format(event))
 
     def onScancode(self, event):
         """
