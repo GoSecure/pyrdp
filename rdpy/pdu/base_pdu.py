@@ -7,7 +7,7 @@ class PDU:
     If a PDU does not have a payload, simply set it to None.
     """
 
-    def __init__(self, payload=None):
+    def __init__(self, payload=b""):
         """
         :param payload: The PDU's payload data
         :type payload: bytes

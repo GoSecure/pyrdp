@@ -20,10 +20,6 @@ class MITMChannelObserver(Observer):
         self.setDataHandler = self.innerObserver.setDataHandler
         self.setDefaultDataHandler = self.innerObserver.setDefaultDataHandler
 
-    def setPeer(self, peer):
-        self.peer = peer
-        peer.peer = self
-
     def onPDUReceived(self, pdu):
         self.log.debug("Received {}".format(str(self.getEffectiveType(pdu))))
         self.innerObserver.onPDUReceived(pdu)

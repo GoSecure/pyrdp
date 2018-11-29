@@ -71,8 +71,8 @@ class Layer(Subject):
     """
     def __init__(self):
         Subject.__init__(self)
-        self.previous = None
-        self.next = None
+        self.previous: Layer = None
+        self.next: Layer = None
     
     def setNext(self, layer):
         """
@@ -96,3 +96,9 @@ class Layer(Subject):
         
         if forward and self.next is not None:
             self.next.recv(pdu.payload)
+
+    def recv(self, data: bytes):
+        raise NotImplementedError("Receive function not implemented!")
+
+    def send(self, data: bytes):
+        self.previous.send(data)

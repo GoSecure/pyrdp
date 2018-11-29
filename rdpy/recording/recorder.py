@@ -1,3 +1,5 @@
+from typing import BinaryIO
+
 from rdpy.core import log
 from rdpy.core.layer import Layer
 from rdpy.enum.core import ParserMode
@@ -73,7 +75,7 @@ class FileLayer(Layer):
         :type fileHandle: BinaryIO
         """
         Layer.__init__(self)
-        self.file_descriptor = fileHandle
+        self.file_descriptor: BinaryIO = fileHandle
 
     def send(self, data):
         """
@@ -81,7 +83,10 @@ class FileLayer(Layer):
         :type data: bytes
         """
         log.debug("writing {} to {}".format(data, self.file_descriptor))
-        self.file_descriptor.write(data)
+        if not self.file_descriptor.closed:
+            self.file_descriptor.write(data)
+        else:
+            log.error("Recording file handle closed, cannot write message: {}".format(data))
 
 
 class SocketLayer(Layer):

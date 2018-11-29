@@ -11,15 +11,6 @@ class MITMVirtualChannelObserver(Observer):
         self.peer = None
         self.layer = layer
 
-    def setPeer(self, peer):
-        """
-        Set this observer's peer observer.
-        :param peer: other observer.
-        :type peer: MITMVirtualChannelObserver
-        """
-        self.peer = peer
-        peer.peer = self
-
     def onPDUReceived(self, pdu):
         """
         Called when a PDU on the observed layer is received.

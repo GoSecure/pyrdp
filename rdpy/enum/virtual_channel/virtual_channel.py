@@ -19,3 +19,4 @@ class ChannelFlag(IntEnum):
 
 class VirtualChannel:
     CLIPBOARD = "cliprdr"
+    DEVICE_REDIRECTION = "rdpdr"

@@ -28,15 +28,6 @@ class MITMClipboardChannelObserver(Observer):
                                           .format("client" if mode == ParserMode.CLIENT else "server"))
         self.mitm_clipboard_log = logging.getLogger(self.mitm_log.name + ".data")
 
-    def setPeer(self, peer):
-        """
-        Set this observer's peer observer.
-        :param peer: other observer.
-        :type peer: rdpy.mitm.virtual_channel.clipboard.MITMClipboardChannelObserver
-        """
-        self.peer = peer
-        peer.peer = self
-
     def onPDUReceived(self, pdu):
         """
         Called when a PDU on the observed layer is received.
