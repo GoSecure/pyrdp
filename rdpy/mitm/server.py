@@ -20,6 +20,7 @@ from rdpy.layer.rdp.data import RDPDataLayer
 from rdpy.layer.rdp.fastpath import FastPathLayer
 from rdpy.layer.rdp.security import TLSSecurityLayer, RDPSecurityLayer
 from rdpy.layer.rdp.virtual_channel.clipboard import ClipboardLayer
+from rdpy.layer.rdp.virtual_channel.device_redirection import DeviceRedirectionLayer
 from rdpy.layer.rdp.virtual_channel.virtual_channel import VirtualChannelLayer
 from rdpy.layer.segmentation import SegmentationLayer
 from rdpy.layer.tcp import TwistedTCPLayer
@@ -31,6 +32,7 @@ from rdpy.mcs.user import MCSUserObserver
 from rdpy.mitm.client import MITMClient
 from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver
 from rdpy.mitm.virtual_channel.clipboard import MITMServerClipboardChannelObserver
+# from rdpy.mitm.virtual_channel.device_redirection import ServerPassiveDeviceRedirectionObserver
 from rdpy.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
 from rdpy.parser.gcc import GCCParser
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
@@ -56,7 +58,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.privateKeyFileName = privateKeyFileName
         self.clipboardObserver = None
         self.useTLS = False
-        self.client = None
+        self.client: MITMClient = None
         self.clientConnector = None
         self.originalNegotiationPDU = None
         self.targetNegotiationPDU = None
@@ -160,6 +162,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
             self.client.disconnect()
 
         self.disconnectConnector()
+        self.fileHandle.close()
 
     def onDisconnectRequest(self, pdu):
         self.log.debug("X224 Disconnect Request received")

@@ -7,7 +7,8 @@ from rdpy.parser.parser import Parser
 from rdpy.parser.rdp.input import RDPInputParser
 from rdpy.parser.rdp.pointer import PointerEventParser
 from rdpy.pdu.rdp.capability import Capability, BitmapCapability, OrderCapability, GeneralCapability, \
-    GlyphCacheCapability, OffscreenBitmapCacheCapability, MultifragmentUpdateCapability, VirtualChannelCapability
+    GlyphCacheCapability, OffscreenBitmapCacheCapability, MultifragmentUpdateCapability, VirtualChannelCapability, \
+    PointerCapability
 from rdpy.pdu.rdp.data import RDPShareControlHeader, RDPShareDataHeader, RDPDemandActivePDU, RDPConfirmActivePDU, \
     RDPSetErrorInfoPDU, RDPSynchronizePDU, RDPControlPDU, RDPInputPDU, RDPPlaySoundPDU, RDPPointerPDU, \
     RDPSuppressOutputPDU, RDPUpdatePDU
@@ -212,6 +213,11 @@ class RDPDataParser(Parser):
             capabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL] = self.parseVirtualChannelCapability(
                 capabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].rawData)
 
+        # Fully parse the Pointer capability set
+        if CapabilityType.CAPSTYPE_POINTER in capabilitySets:
+            capabilitySets[CapabilityType.CAPSTYPE_POINTER] = self.parsePointerCapability(
+                capabilitySets[CapabilityType.CAPSTYPE_POINTER].rawData)
+
         return capabilitySets
 
     def parseGeneralCapability(self, data):
@@ -350,19 +356,19 @@ class RDPDataParser(Parser):
 
     def writeCapabilitySets(self, capabilitySets, substream):
         for capability in capabilitySets:
-            # Since the general capability is fully parsed, write it back.
+            # Since the general capability is fully parsed, write it back.....
             if capability.type == CapabilityType.CAPSTYPE_GENERAL:
                 self.writeGeneralCapability(capability, substream)
-            # Since the order capability is fully parsed, write it back.
             elif capability.type == CapabilityType.CAPSTYPE_ORDER:
                 self.writeOrderCapability(capability, substream)
-            # Since the bitmap capability is fully parsed, write it back.
             elif capability.type == CapabilityType.CAPSTYPE_BITMAP:
                 self.writeBitmapCapability(capability, substream)
             elif capability.type == CapabilityType.CAPSTYPE_OFFSCREENCACHE:
                 self.writeOffscreenCacheCapability(capability, substream)
-            elif capability.type == CapabilityType.CAPSTYPE_VIRTUALCHANNEL:
+            elif isinstance(capability, VirtualChannelCapability):
                 self.writeVirtualChannelCapability(capability, substream)
+            elif capability.type == CapabilityType.CAPSTYPE_POINTER:
+                self.writePointerCapability(capability, substream)
             elif capability.type == CapabilityType.CAPSETTYPE_MULTIFRAGMENTUPDATE \
                     and isinstance(capability, MultifragmentUpdateCapability):
                 self.writeMultiFragmentUpdateCapability(capability, substream)
@@ -583,6 +589,29 @@ class RDPDataParser(Parser):
 
         if capability.vcChunkSize is not None:
             Uint32LE.pack(capability.vcChunkSize, substream)
+
+        Uint16LE.pack(len(substream.getvalue()) + 4, stream)
+        stream.write(substream.getvalue())
+
+    def parsePointerCapability(self, data: bytes) -> PointerCapability:
+        """
+        https://msdn.microsoft.com/en-us/library/cc240562.aspx
+        :param data: Raw data starting after lengthCapability
+        """
+        stream = BytesIO(data)
+        colorPointerFlag = Uint16LE.unpack(stream)
+        colorPointerCacheSize = Uint16LE.unpack(stream)
+        pointerCacheSize = Uint16LE.unpack(stream)
+
+        return PointerCapability(colorPointerFlag, colorPointerCacheSize, pointerCacheSize)
+
+    def writePointerCapability(self, capability: PointerCapability, stream: BytesIO):
+        substream = BytesIO()
+        Uint16LE.pack(capability.type, stream)
+
+        Uint16LE.pack(capability.colorPointerFlag, substream)
+        Uint16LE.pack(capability.colorPointerCacheSize, substream)
+        Uint16LE.pack(capability.pointerCacheSize, substream)
 
         Uint16LE.pack(len(substream.getvalue()) + 4, stream)
         stream.write(substream.getvalue())
