@@ -26,19 +26,31 @@ class ReplayWindow(BasePlayerWindow):
 
     def onPlay(self):
         self.log.debug("Start replay file")
-        self.currentWidget().start()
+        tab = self.currentWidget()
+
+        if tab:
+            tab.start()
 
     def onStop(self):
         self.log.debug("Stop replay file")
-        self.currentWidget().stop()
+        tab = self.currentWidget()
+
+        if tab:
+            tab.stop()
 
     def onRestart(self):
         self.log.debug("Rewind replay file")
-        self.currentWidget().restart()
+        tab = self.currentWidget()
+
+        if tab:
+            tab.restart()
 
     def onSpeedChanged(self, newSpeed):
         self.log.debug("Change replay speed to {}".format(newSpeed))
-        self.currentWidget().setSpeedMultiplier(newSpeed)
+        tab = self.currentWidget()
+
+        if tab:
+            tab.setSpeedMultiplier(newSpeed)
 
 
 
