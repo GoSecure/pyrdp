@@ -1,3 +1,5 @@
+import time
+
 from rdpy.core import log
 from rdpy.core.layer import Layer
 from rdpy.enum.core import ParserMode
@@ -59,8 +61,13 @@ class Recorder:
         else:
             data = b""
 
+        timeStamp = int(round(self.getCurrentTimeStamp() * 1000))
+
         for layer in self.topLayers:
-            layer.sendMessage(data, messageType)
+            layer.sendMessage(data, messageType, timeStamp)
+
+    def getCurrentTimeStamp(self) -> float:
+        return time.time()
 
 
 class FileLayer(Layer):
