@@ -8,6 +8,7 @@ import sys
 from itertools import cycle
 
 import appdirs
+import names
 from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
 
@@ -32,35 +33,8 @@ class MITMServerFactory(ServerFactory):
         self.destination_ip = destination_ip
         self.destination_port = destination_port
 
-        names = [
-            "Anthony",
-            "Kenneth",
-            "Jeffrey",
-            "Juliano",
-            "Matthew",
-            "Michael",
-            "Richard",
-            "Timothy",
-            "Vincent",
-            "William",
-
-            "Barbara",
-            "Carolyn",
-            "Deborah",
-            "Dorothy",
-            "Jessica",
-            "Heather",
-            "Madison",
-            "Melissa",
-            "Shirley",
-            "Theresa",
-        ]
-
-        random.shuffle(names)
-        self.names = cycle(names)
-
     def buildProtocol(self, addr):
-        server = MITMServer(next(self.names), self.targetHost, self.targetPort, self.certificateFileName,
+        server = MITMServer(names.get_first_name(), self.targetHost, self.targetPort, self.certificateFileName,
                             self.privateKeyFileName, self.destination_ip, self.destination_port)
         return server.getProtocol()
 

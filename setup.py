@@ -52,6 +52,7 @@ setup(name='rdpy',
             'pyasn1',
             'notify2',
             'pycrypto',
-            'appdirs'
+            'appdirs',
+            'names'
     ],
 )
