@@ -163,7 +163,7 @@ class RDPBaseDataLayer(Layer):
         try:
             pdu = self.dataParser.parse(data)
         except UnknownPDUTypeError as e:
-            log.error(str(e))
+            log.debug(str(e))
             if self.observer:
                 self.observer.onUnparsedData(data)
         else:
