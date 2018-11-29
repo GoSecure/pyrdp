@@ -12,8 +12,12 @@ class VirtualChannelLayer(Layer):
     https://msdn.microsoft.com/en-us/library/cc240548.aspx
     """
 
-    def __init__(self):
+    def __init__(self, activateShowProtocolFlag=True):
+        """
+        :param activateShowProtocolFlag: True if the channelFlagShowProtocol must be set (depends on virtual channels)
+        """
         Layer.__init__(self)
+        self.activateShowProtocolFlag = activateShowProtocolFlag
         self.virtualChannelParser = VirtualChannelParser()
         self.pduBuffer = b""
 
@@ -39,7 +43,9 @@ class VirtualChannelLayer(Layer):
         Send payload on the upper layer by encapsulating it in a VirtualChannelPDU.
         :type payload: bytes
         """
-        flags = ChannelFlag.CHANNEL_FLAG_FIRST | ChannelFlag.CHANNEL_FLAG_LAST | ChannelFlag.CHANNEL_FLAG_SHOW_PROTOCOL
+        flags = ChannelFlag.CHANNEL_FLAG_FIRST | ChannelFlag.CHANNEL_FLAG_LAST
+        if self.activateShowProtocolFlag:
+            flags |= ChannelFlag.CHANNEL_FLAG_SHOW_PROTOCOL
         virtualChannelPDU = VirtualChannelPDU(len(payload), flags, payload)
         rawVirtualChannelPDUsList = self.virtualChannelParser.write(virtualChannelPDU)
         # Since a virtualChannelPDU may need to be sent using several packets

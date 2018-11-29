@@ -8,10 +8,10 @@ class DeviceRedirectionPDU(PDU):
     Also called Shared Header: https://msdn.microsoft.com/en-us/library/cc241324.aspx
     """
 
-    def __init__(self, component: int, packetId: int):
-        super().__init__()
+    def __init__(self, component: int, packetId: int, payload=b""):
+        super().__init__(payload)
         self.component = component
-        self.packetId = packetId
+        self.packetId: DeviceRedirectionPacketId = DeviceRedirectionPacketId(packetId)
 
 
 class DeviceIOResponsePDU(DeviceRedirectionPDU):

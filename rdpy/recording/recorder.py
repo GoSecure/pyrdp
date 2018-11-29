@@ -1,4 +1,5 @@
 import time
+from typing import BinaryIO
 
 from rdpy.core import log
 from rdpy.core.layer import Layer
@@ -80,7 +81,7 @@ class FileLayer(Layer):
         :type fileHandle: BinaryIO
         """
         Layer.__init__(self)
-        self.file_descriptor = fileHandle
+        self.file_descriptor: BinaryIO = fileHandle
 
     def send(self, data):
         """
@@ -88,6 +89,11 @@ class FileLayer(Layer):
         :type data: bytes
         """
         self.file_descriptor.write(data)
+
+        if not self.file_descriptor.closed:
+            self.file_descriptor.write(data)
+        else:
+            log.error("Recording file handle closed, cannot write message: {}".format(data))
 
 
 class SocketLayer(Layer):
