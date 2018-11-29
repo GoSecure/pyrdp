@@ -32,7 +32,7 @@ from rdpy.mcs.user import MCSUserObserver
 from rdpy.mitm.client import MITMClient
 from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver
 from rdpy.mitm.virtual_channel.clipboard import MITMServerClipboardChannelObserver
-from rdpy.mitm.virtual_channel.device_redirection import ServerPassiveDeviceRedirectionObserver
+# from rdpy.mitm.virtual_channel.device_redirection import ServerPassiveDeviceRedirectionObserver
 from rdpy.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
 from rdpy.parser.gcc import GCCParser
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
