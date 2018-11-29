@@ -22,19 +22,19 @@ def get_formatter():
     return logging.Formatter("[%(asctime)s] - %(name)s - %(levelname)s - %(message)s")
 
 
-def prepare_rdpy_logger():
+def prepare_rdpy_logger(logLevel = logging.INFO):
     """
     Prepare the RDPY logger to be used by the library.
     """
     logger = logging.getLogger("rdpy")
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logLevel)
 
     stream_handler = logging.StreamHandler()
 
     formatter = get_formatter()
 
     stream_handler.setFormatter(formatter)
-    stream_handler.setLevel(logging.INFO)
+    stream_handler.setLevel(logLevel)
 
     logger.addHandler(stream_handler)
 

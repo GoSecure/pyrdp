@@ -87,7 +87,6 @@ class FileLayer(Layer):
         Save data to the file.
         :type data: bytes
         """
-        log.debug("writing {} to {}".format(data, self.file_descriptor))
         self.file_descriptor.write(data)
 
 

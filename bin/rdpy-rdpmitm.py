@@ -81,21 +81,21 @@ def generateCertificate(keyPath, certificatePath):
     return result == 0
 
 
-def prepare_loggers():
+def prepare_loggers(logLevel):
     """
         Sets up the "mitm" and the "mitm.connections" loggers.
     """
-    log.prepare_rdpy_logger()
+    log.prepare_rdpy_logger(logLevel)
     log.prepare_ssl_session_logger()
 
     if not os.path.exists("log"):
         os.makedirs("log")
 
     mitm_logger = logging.getLogger("mitm")
-    mitm_logger.setLevel(logging.DEBUG)
+    mitm_logger.setLevel(logLevel)
 
     mitm_connections_logger = logging.getLogger("mitm.connections")
-    mitm_connections_logger.setLevel(logging.INFO)
+    mitm_connections_logger.setLevel(logLevel)
 
     formatter = logging.Formatter("[%(asctime)s] - %(name)s - %(levelname)s - %(message)s")
 
@@ -116,9 +116,6 @@ def prepare_loggers():
 
 
 def main():
-    prepare_loggers()
-    mitm_log = logging.getLogger("mitm")
-
     parser = argparse.ArgumentParser()
     parser.add_argument("target", help="IP:port of the target RDP machine (ex: 129.168.0.2:3390)")
     parser.add_argument("-l", "--listen", help="Port number to listen to. Default 3389", default=3389)
@@ -138,7 +135,15 @@ def main():
                                                  "the client sent)")
     parser.add_argument("-p", "--password", help="Password to use to connect to the target VM (instead of the password "
                                                  "the client sent)")
+    parser.add_argument("-L", "--log-level", help="Log level", default="INFO", choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"], nargs="?")
+
     args = parser.parse_args()
+
+    logLevel = getattr(logging, args.log_level)
+
+    prepare_loggers(logLevel)
+    mitm_log = logging.getLogger("mitm")
+
     target = args.target
     if ":" in target:
         targetHost = target[: target.index(":")]

@@ -30,18 +30,21 @@ class NotifyHandler(logging.StreamHandler):
         notification.show()
 
 
-def prepare_loggers():
+def prepare_loggers(logLevel):
     """
     Sets up the "liveplayer" and "liveplayer.ui" loggers to print messages and send notifications on connect.
     """
+    log.prepare_rdpy_logger(logLevel)
+    log.prepare_ssl_session_logger()
+
     if not os.path.exists("log"):
         os.makedirs("log")
 
     liveplayer_logger = logging.getLogger("liveplayer")
-    liveplayer_logger.setLevel(logging.DEBUG)
+    liveplayer_logger.setLevel(logLevel)
 
     liveplayer_ui_logger = logging.getLogger("liveplayer.ui")
-    liveplayer_ui_logger.setLevel(logging.INFO)
+    liveplayer_ui_logger.setLevel(logLevel)
 
     formatter = logging.Formatter("[%(asctime)s] - %(name)s - %(levelname)s - %(message)s")
 
@@ -62,17 +65,18 @@ def main():
     Parse the provided command line arguments and launch the GUI.
     :return: The app exit code (0 for normal exit, non-zero for errors)
     """
-    log.prepare_rdpy_logger()
-    log.prepare_ssl_session_logger()
-    log.get_logger().setLevel(logging.DEBUG)
-
     parser = argparse.ArgumentParser()
     parser.add_argument("-b", "--bind", help="Bind address (default: 127.0.0.1)", default="127.0.0.1")
     parser.add_argument("-p", "--port", help="Bind port (default: 3000)", default=3000)
     parser.add_argument("-d", "--directory", help="Directory that contains replay files to open.")
     parser.add_argument("-f", "--file", help="replay file to open.")
+    parser.add_argument("-L", "--log-level", help="Log level", default="INFO", choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"], nargs="?")
 
     arguments = parser.parse_args()
+
+    logLevel = getattr(logging, arguments.log_level)
+
+    prepare_loggers(logLevel)
 
     files_to_read = []
     if arguments.file is not None:
@@ -93,7 +97,6 @@ def main():
 
 
 if __name__ == '__main__':
-    prepare_loggers()
     mlog = logging.getLogger("liveplayer")
     ulog = logging.getLogger("liveplayer.ui")
     sys.exit(main())
