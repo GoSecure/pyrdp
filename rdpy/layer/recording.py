@@ -63,11 +63,17 @@ class RDPPlayerMessageLayer(Layer):
         :type data: bytes
         :type messageType: RDPPlayerMessageType
         """
-        timestamp = int(round(time.time() * 1000))
+        timestamp = self.getCurrentTimeStamp()
 
         stream = BytesIO()
         Uint8.pack(messageType, stream)
         Uint64LE.pack(timestamp, stream)
         stream.write(data)
         self.previous.send(stream.getvalue())
+
+    def getCurrentTimeStamp(self) -> int:
+        """
+        Returns the current timestamp when writing a PDU.
+        """
+        return int(round(time.time() * 1000))
 
