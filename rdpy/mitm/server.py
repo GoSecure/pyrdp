@@ -173,6 +173,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.log.debug("Disconnecting")
         self.tcp.disconnect()
         self.disconnectConnector()
+        self.fileHandle.close()
 
     def disconnectConnector(self):
         if self.clientConnector:
