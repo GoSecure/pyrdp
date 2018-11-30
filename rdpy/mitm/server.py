@@ -31,7 +31,7 @@ from rdpy.mcs.server import MCSServerRouter
 from rdpy.mcs.user import MCSUserObserver
 from rdpy.mitm.client import MITMClient
 from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver
-from rdpy.mitm.virtual_channel.clipboard import MITMServerClipboardChannelObserver
+from rdpy.mitm.virtual_channel.clipboard import PassiveClipboardChannelObserver
 from rdpy.mitm.virtual_channel.device_redirection import ServerPassiveDeviceRedirectionObserver
 from rdpy.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
 from rdpy.parser.gcc import GCCParser
@@ -365,10 +365,10 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         # Create and link the MITM Observer for the server side to the clipboard layer.
         # Also link both MITM Observers (client and server) so they can send traffic the other way.
         peer = self.client.getChannelObserver(channelID)
-        observer = MITMServerClipboardChannelObserver(clipboardLayer, self.recorder,
-                                                      self.client.clipboardObserver)
-        observer.setPeer(peer)
-        clipboardLayer.addObserver(observer)
+        passiveClipboardObserver = PassiveClipboardChannelObserver(clipboardLayer, self.recorder, ParserMode.SERVER)
+        peer.passiveClipboardObserver = passiveClipboardObserver
+        passiveClipboardObserver.setPeer(peer)
+        clipboardLayer.addObserver(passiveClipboardObserver)
 
         return channel
 
