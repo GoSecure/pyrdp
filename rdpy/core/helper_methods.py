@@ -9,4 +9,4 @@ def decodeUTF16LE(data: bytes) -> str:
     :param data: The data to decode as utf-16.
     :return: The python string
     """
-    return data.decode("utf-16le", errors="replace").strip("\x00")
+    return data.decode("utf-16le", errors="surrogateescape").strip("\x00")

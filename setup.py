@@ -18,6 +18,7 @@ setup(name='rdpy',
     packages=[
         'rdpy',
         'rdpy.core',
+        'rdpy.core.logging',
         'rdpy.crypto',
         'rdpy.ui',
 
