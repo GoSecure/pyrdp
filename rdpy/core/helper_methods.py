@@ -10,3 +10,12 @@ def decodeUTF16LE(data: bytes) -> str:
     :return: The python string
     """
     return data.decode("utf-16le", errors="surrogatepass").strip("\x00")
+
+
+def encodeUTF16LE(string: str) -> bytes:
+    """
+    Encode the provided string in UTF-16 in a way that does not crash when invalid input is provided.
+    :param string: The python string to encode to bytes
+    :return: The raw bytes
+    """
+    return string.encode("utf16-le", errors="surrogatepass")
