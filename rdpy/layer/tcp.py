@@ -110,13 +110,6 @@ class AsyncIOTCPLayer(asyncio.Protocol, Layer):
         Layer.__init__(self)
         self.logSSLRequired = False
 
-    def logSSLParameters(self):
-        """
-        Log the SSL parameters of the connection in a format suitable for decryption by Wireshark.
-        """
-        log.get_ssl_logger().info(self.transport.protocol._tlsConnection.client_random(),
-                                  self.transport.protocol._tlsConnection.master_key())
-
     def connection_made(self, transport):
         """
         When the TCP handshake is completed, notify the observer.
