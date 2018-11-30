@@ -58,7 +58,7 @@ class RSSEventHandler(RDPPlayerMessageObserver):
         for event in pdu.events:
             if isinstance(event, FastPathEventScanCode):
                 log.debug("handling {}".format(event))
-                self.onScanCode(event.scanCode, not event.isReleased)
+                self.onScanCode(event.scancode, not event.isReleased)
             elif isinstance(event, FastPathEventMouse):
                 self.onMousePosition(event.mouseX, event.mouseY)
             else:

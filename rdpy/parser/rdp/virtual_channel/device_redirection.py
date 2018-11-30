@@ -2,13 +2,13 @@ from io import BytesIO
 from typing import Dict
 
 from rdpy.core import log
-from rdpy.core.packing import Uint16LE, Uint32LE, Uint64LE, Uint8
+from rdpy.core.packing import Uint16LE, Uint32LE, Uint64LE
 from rdpy.enum.virtual_channel.device_redirection import DeviceRedirectionComponent, DeviceRedirectionPacketId, \
-    MajorFunction
+    MajorFunction, DeviceType
 from rdpy.parser.parser import Parser
 from rdpy.pdu.rdp.virtual_channel.device_redirection import DeviceRedirectionPDU, DeviceIOResponsePDU, \
     DeviceIORequestPDU, DeviceReadResponsePDU, DeviceReadRequestPDU, DeviceCreateResponsePDU, DeviceCreateRequestPDU, \
-    DeviceCloseRequestPDU, DeviceCloseResponsePDU
+    DeviceCloseRequestPDU, DeviceCloseResponsePDU, DeviceListAnnounceRequest, DeviceAnnounce
 
 
 class DeviceRedirectionParser(Parser):
@@ -20,11 +20,13 @@ class DeviceRedirectionParser(Parser):
         super().__init__()
         self.parsers: Dict[DeviceRedirectionPacketId, callable] = {
             DeviceRedirectionPacketId.PAKID_CORE_DEVICE_IOCOMPLETION: self.parseDeviceIOResponse,
-            DeviceRedirectionPacketId.PAKID_CORE_DEVICE_IOREQUEST: self.parseDeviceIORequest
+            DeviceRedirectionPacketId.PAKID_CORE_DEVICE_IOREQUEST: self.parseDeviceIORequest,
+            DeviceRedirectionPacketId.PAKID_CORE_DEVICELIST_ANNOUNCE: self.parseDeviceListAnnounce
         }
         self.writers: Dict[DeviceRedirectionPacketId, callable] = {
             DeviceRedirectionPacketId.PAKID_CORE_DEVICE_IOREQUEST: self.writeDeviceIORequest,
-            DeviceRedirectionPacketId.PAKID_CORE_DEVICE_IOCOMPLETION: self.writeDeviceIOResponse
+            DeviceRedirectionPacketId.PAKID_CORE_DEVICE_IOCOMPLETION: self.writeDeviceIOResponse,
+            DeviceRedirectionPacketId.PAKID_CORE_DEVICELIST_ANNOUNCE: self.writeDeviceListAnnounce
         }
 
         self.ioRequestParsers: Dict[MajorFunction, callable] = {
@@ -32,10 +34,10 @@ class DeviceRedirectionParser(Parser):
             MajorFunction.IRP_MJ_CREATE: self.parseDeviceCreateRequest,
             MajorFunction.IRP_MJ_CLOSE: self.parseDeviceCloseRequest
         }
-        self.ioRequestWriters: Dict[type, callable] = {
-            DeviceCreateRequestPDU: self.writeCreateRequest,
-            DeviceCloseRequestPDU: self.writeCloseRequest,
-            DeviceReadRequestPDU: self.writeReadRequest
+        self.ioRequestWriters: Dict[MajorFunction, callable] = {
+            MajorFunction.IRP_MJ_CREATE: self.writeCreateRequest,
+            MajorFunction.IRP_MJ_CLOSE: self.writeCloseRequest,
+            MajorFunction.IRP_MJ_READ: self.writeReadRequest
         }
 
         self.ioResponseWriters: Dict[type, callable] = {
@@ -71,7 +73,19 @@ class DeviceRedirectionParser(Parser):
             return self.ioRequestParsers[majorFunction](deviceId, fileId, completionId,
                                                         minorFunction, stream)
         else:
-            return DeviceIORequestPDU(deviceId, fileId, completionId, majorFunction, minorFunction)
+            return DeviceIORequestPDU(deviceId, fileId, completionId, majorFunction, minorFunction, payload=stream.read())
+
+    def parseDeviceListAnnounce(self, stream: BytesIO) -> DeviceListAnnounceRequest:
+        deviceCount = Uint32LE.unpack(stream)
+        deviceList = []
+        for i in range(deviceCount):
+            deviceList.append(self.parseSingleDeviceAnnounce(stream))
+        return DeviceListAnnounceRequest(deviceList)
+
+    def writeDeviceListAnnounce(self, pdu: DeviceListAnnounceRequest, stream: BytesIO):
+        Uint32LE.pack(len(pdu.deviceList), stream)
+        for device in pdu.deviceList:
+            self.writeSingleDeviceAnnounce(device, stream)
 
     def parseDeviceReadRequest(self, deviceId: int, fileId: int, completionId: int,
                                minorFunction: int, stream: BytesIO) -> DeviceReadRequestPDU:
@@ -111,7 +125,8 @@ class DeviceRedirectionParser(Parser):
         """
         stream = BytesIO(pdu.payload)
         fileId = Uint32LE.unpack(stream)
-        return DeviceCreateResponsePDU(pdu.deviceId, pdu.completionId, pdu.ioStatus, fileId)
+        information = stream.read()
+        return DeviceCreateResponsePDU(pdu.deviceId, pdu.completionId, pdu.ioStatus, fileId, information)
 
     def parseDeviceIOResponse(self, stream: BytesIO) -> DeviceIOResponsePDU:
         """
@@ -133,7 +148,7 @@ class DeviceRedirectionParser(Parser):
         readData = stream.read(length)
         return DeviceReadResponsePDU(pdu.deviceId, pdu.completionId, pdu.ioStatus, readData)
 
-    def write(self, pdu: DeviceRedirectionPDU):
+    def write(self, pdu: DeviceRedirectionPDU) -> bytes:
         stream = BytesIO()
         Uint16LE.pack(pdu.component, stream)
         Uint16LE.pack(pdu.packetId, stream)
@@ -149,8 +164,8 @@ class DeviceRedirectionParser(Parser):
         Uint32LE.pack(pdu.completionId, stream)
         Uint32LE.pack(pdu.majorFunction, stream)
         Uint32LE.pack(pdu.minorFunction, stream)
-        if type(pdu) in self.ioRequestWriters.keys():
-            self.ioRequestWriters[type(pdu)](pdu, stream)
+        if pdu.majorFunction in self.ioRequestWriters.keys():
+            self.ioRequestWriters[pdu.majorFunction](pdu, stream)
         else:
             stream.write(pdu.payload)
 
@@ -158,7 +173,7 @@ class DeviceRedirectionParser(Parser):
         Uint32LE.pack(pdu.deviceId, stream)
         Uint32LE.pack(pdu.completionId, stream)
         Uint32LE.pack(pdu.ioStatus, stream)
-        if type(pdu) in self.ioRequestWriters.keys():
+        if type(pdu) in self.ioResponseWriters.keys():
             self.ioResponseWriters[type(pdu)](pdu, stream)
         else:
             stream.write(pdu.payload)
@@ -182,13 +197,27 @@ class DeviceRedirectionParser(Parser):
         stream.write(b"\x00" * 20)  # Padding
 
     def writeCreateResponse(self, pdu: DeviceCreateResponsePDU, stream: BytesIO):
-        Uint32LE.pack(pdu.fileId)
-        if pdu.information is not None:
-            Uint8.pack(pdu.information)
+        Uint32LE.pack(pdu.fileId, stream)
+        stream.write(pdu.information)
 
     def writeCloseResponse(self, pdu: DeviceCloseResponsePDU, stream: BytesIO):
         stream.write(b"\x00" * 4)  # Padding
 
     def writeReadResponse(self, pdu: DeviceReadResponsePDU, stream: BytesIO):
-        Uint32LE.pack(len(pdu.readData))
+        Uint32LE.pack(len(pdu.readData), stream)
         stream.write(pdu.readData)
+
+    def parseSingleDeviceAnnounce(self, stream: BytesIO):
+        deviceType = DeviceType(Uint32LE.unpack(stream))
+        deviceId = Uint32LE.unpack(stream)
+        preferredDosName = stream.read(8)
+        deviceDataLength = Uint32LE.unpack(stream)
+        deviceData = stream.read(deviceDataLength)
+        return DeviceAnnounce(deviceType, deviceId, preferredDosName, deviceData)
+
+    def writeSingleDeviceAnnounce(self, pdu: DeviceAnnounce, stream: BytesIO):
+        Uint32LE.pack(pdu.deviceType, stream)
+        Uint32LE.pack(pdu.deviceId, stream)
+        stream.write(pdu.preferredDosName)
+        Uint32LE.pack(len(pdu.deviceData), stream)
+        stream.write(pdu.deviceData)

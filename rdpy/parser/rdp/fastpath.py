@@ -12,7 +12,6 @@ from rdpy.parser.rdp.common import RDPCommonParser
 from rdpy.parser.rdp.security import RDPBasicSecurityParser
 from rdpy.pdu.rdp.fastpath import FastPathEventRaw, RDPFastPathPDU, FastPathEventScanCode, FastPathBitmapEvent, \
     FastPathOrdersEvent, FastPathEventMouse, SecondaryDrawingOrder
-from rdpy.pdu.rdp.common import BitmapUpdateData
 
 
 class RDPBasicFastPathParser(RDPBasicSecurityParser):
@@ -286,8 +285,8 @@ class RDPInputEventParser:
         return FastPathEventMouse(eventHeader, pointerFlags, mouseX, mouseY)
 
     def parseScanCode(self, eventFlags, eventHeader, stream):
-        scanCode = Uint8.unpack(stream.read(1))
-        return FastPathEventScanCode(eventHeader, scanCode, eventFlags)
+        scancode = Uint8.unpack(stream.read(1))
+        return FastPathEventScanCode(eventHeader, scancode, eventFlags)
 
     def write(self, event):
         if isinstance(event, FastPathEventRaw):

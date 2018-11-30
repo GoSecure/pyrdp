@@ -1,5 +1,7 @@
+from typing import List
+
 from rdpy.enum.virtual_channel.device_redirection import DeviceRedirectionComponent, DeviceRedirectionPacketId, \
-    MajorFunction
+    MajorFunction, DeviceType
 from rdpy.pdu.base_pdu import PDU
 
 
@@ -33,9 +35,9 @@ class DeviceIORequestPDU(DeviceRedirectionPDU):
     https://msdn.microsoft.com/en-us/library/cc241327.aspx
     """
 
-    def __init__(self, deviceId: int, fileId: int, completionId: int, majorFunction: int, minorFunction: int):
+    def __init__(self, deviceId: int, fileId: int, completionId: int, majorFunction: int, minorFunction: int, payload=b""):
         super().__init__(DeviceRedirectionComponent.RDPDR_CTYP_CORE,
-                         DeviceRedirectionPacketId.PAKID_CORE_DEVICE_IOREQUEST)
+                         DeviceRedirectionPacketId.PAKID_CORE_DEVICE_IOREQUEST, payload)
         self.deviceId = deviceId
         self.fileId = fileId
         self.completionId = completionId
@@ -88,7 +90,7 @@ class DeviceCreateResponsePDU(DeviceIOResponsePDU):
     https://msdn.microsoft.com/en-us/library/cc241335.aspx
     """
 
-    def __init__(self, deviceId: int, completionId: int, ioStatus: int, fileId: int, information: bytes=0):
+    def __init__(self, deviceId: int, completionId: int, ioStatus: int, fileId: int, information: bytes=b""):
         super().__init__(deviceId, completionId, ioStatus)
         self.fileId = fileId
         self.information = information
@@ -110,3 +112,26 @@ class DeviceCloseResponsePDU(DeviceIOResponsePDU):
 
     def __init__(self, deviceId: int, completionId: int, ioStatus: int):
         super().__init__(deviceId, completionId, ioStatus)
+
+
+class DeviceAnnounce(PDU):
+    """
+    https://msdn.microsoft.com/en-us/library/cc241326.aspx
+    """
+
+    def __init__(self, deviceType: DeviceType, deviceId: int, preferredDosName: bytes, deviceData: bytes):
+        super().__init__()
+        self.deviceId = deviceId
+        self.deviceType = deviceType
+        self.preferredDosName = preferredDosName
+        self.deviceData = deviceData
+
+
+class DeviceListAnnounceRequest(DeviceRedirectionPDU):
+    """
+    https://msdn.microsoft.com/en-us/library/cc241355.aspx
+    """
+
+    def __init__(self, deviceList: List[DeviceAnnounce]):
+        super().__init__(DeviceRedirectionComponent.RDPDR_CTYP_CORE, DeviceRedirectionPacketId.PAKID_CORE_DEVICELIST_ANNOUNCE)
+        self.deviceList = deviceList
