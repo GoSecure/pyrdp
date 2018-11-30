@@ -1,4 +1,4 @@
-from rdpy.core.layer import Layer
+from rdpy.layer.layer import Layer
 from rdpy.parser.mcs import MCSParser
 from rdpy.pdu.mcs import MCSConnectInitialPDU, MCSDomainParams
 
@@ -11,8 +11,7 @@ class MCSLayer(Layer):
     """
 
     def __init__(self):
-        Layer.__init__(self)
-        self.parser = MCSParser()
+        Layer.__init__(self, MCSParser(), hasNext=False)
 
     def recv(self, data):
         """
@@ -20,8 +19,8 @@ class MCSLayer(Layer):
         :param data: raw MCS layer bytes
         :type data: bytes
         """
-        pdu = self.parser.parse(data)
-        self.pduReceived(pdu, False)
+        pdu = self.mainParser.parse(data)
+        self.pduReceived(pdu, self.hasNext)
 
     def send(self, pdu):
         """
@@ -29,7 +28,7 @@ class MCSLayer(Layer):
         :param pdu: PDU to send
         :type pdu: rdpy.pdu.mcs.MCSPDU
         """
-        self.previous.send(self.parser.write(pdu))
+        self.previous.send(self.mainParser.write(pdu))
 
 
 class MCSClientConnectionLayer(Layer):

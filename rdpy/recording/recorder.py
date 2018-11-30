@@ -2,9 +2,9 @@ import time
 from typing import BinaryIO
 
 from rdpy.core import log
-from rdpy.core.layer import Layer
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import RDPPlayerMessageType
+from rdpy.layer.layer import Layer
 from rdpy.layer.recording import RDPPlayerMessageLayer
 from rdpy.layer.tpkt import TPKTLayer
 from rdpy.parser.parser import Parser

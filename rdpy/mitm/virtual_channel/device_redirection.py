@@ -4,11 +4,11 @@ from io import BytesIO
 from typing import Dict
 
 from rdpy.core.helper_methods import decodeUTF16LE
-from rdpy.core.layer import Layer
 from rdpy.core.observer import Observer
 from rdpy.enum.core import ParserMode
 from rdpy.enum.virtual_channel.device_redirection import FileAccess, CreateOption, MajorFunction, \
     IOOperationSeverity
+from rdpy.layer.layer import Layer
 from rdpy.parser.rdp.virtual_channel.device_redirection import DeviceRedirectionParser
 from rdpy.pdu.rdp.virtual_channel.device_redirection import DeviceIOResponsePDU, DeviceCreateRequestPDU, \
     DeviceCloseRequestPDU, DeviceReadRequestPDU, DeviceIORequestPDU, DeviceRedirectionPDU, \

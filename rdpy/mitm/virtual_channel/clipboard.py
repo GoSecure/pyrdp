@@ -5,7 +5,8 @@ from rdpy.core.observer import Observer
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import RDPPlayerMessageType
 from rdpy.enum.virtual_channel.clipboard import ClipboardMessageType, ClipboardFormat
-from rdpy.pdu.rdp.virtual_channel.clipboard import FormatDataResponsePDU, FormatDataRequestPDU
+from rdpy.parser.rdp.virtual_channel.clipboard import ClipboardParser
+from rdpy.pdu.rdp.virtual_channel.clipboard import FormatDataResponsePDU, FormatDataRequestPDU, ClipboardPDU
 
 
 class MITMClipboardChannelObserver(Observer):
@@ -21,6 +22,7 @@ class MITMClipboardChannelObserver(Observer):
         """
         Observer.__init__(self, **kwargs)
 
+        self.clipboardParser = ClipboardParser()
         self.peer = None
         self.layer = layer
         self.recorder = recorder
@@ -40,12 +42,12 @@ class MITMClipboardChannelObserver(Observer):
         if self.peer:
             self.peer.sendPDU(pdu)
 
-    def sendPDU(self, pdu):
+    def sendPDU(self, pdu: ClipboardPDU):
         """
         Send a clipboard PDU through the layer.
-        :type pdu: rdpy.pdu.rdp.virtual_channel.clipboard.ClipboardPDU
         """
-        self.layer.send(pdu)
+
+        self.layer.send(self.clipboardParser.write(pdu))
 
 
 class MITMClientClipboardChannelObserver(MITMClipboardChannelObserver):

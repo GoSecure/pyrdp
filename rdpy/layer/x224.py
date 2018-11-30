@@ -1,8 +1,9 @@
-from rdpy.core.layer import Layer, LayerStrictRoutedObserver
 from rdpy.core.subject import ObservedBy
 from rdpy.enum.x224 import X224PDUType
+from rdpy.layer.layer import Layer, LayerStrictRoutedObserver
 from rdpy.parser.x224 import X224Parser
-from rdpy.pdu.x224 import X224DataPDU, X224ConnectionRequestPDU, X224ConnectionConfirmPDU, X224DisconnectRequestPDU, X224ErrorPDU
+from rdpy.pdu.x224 import X224DataPDU, X224ConnectionRequestPDU, X224ConnectionConfirmPDU, X224DisconnectRequestPDU, \
+    X224ErrorPDU
 
 
 class X224Observer(LayerStrictRoutedObserver):
@@ -59,8 +60,7 @@ class X224Layer(Layer):
     """
 
     def __init__(self):
-        Layer.__init__(self)
-        self.parser = X224Parser()
+        Layer.__init__(self, X224Parser(), hasNext=True)
         self.handlers = {}
 
     def recv(self, data):
@@ -70,7 +70,7 @@ class X224Layer(Layer):
         :param data: The X.224 raw data (with header and payload)
         :type data: bytes
         """
-        pdu = self.parser.parse(data)
+        pdu = self.mainParser.parse(data)
         self.pduReceived(pdu, pdu.header == X224PDUType.X224_TPDU_DATA)
 
     def send(self, payload, roa=False, eot=True):
@@ -82,7 +82,7 @@ class X224Layer(Layer):
         """
 
         pdu = X224DataPDU(roa, eot, payload)
-        self.previous.send(self.parser.write(pdu))
+        self.previous.send(self.mainParser.write(pdu))
 
     def sendConnectionPDU(self, factory, payload, **kwargs):
         """
@@ -96,7 +96,7 @@ class X224Layer(Layer):
         options = kwargs.pop("options", 0)
 
         pdu = factory(credit, destination, source, options, payload)
-        self.previous.send(self.parser.write(pdu))
+        self.previous.send(self.mainParser.write(pdu))
 
     def sendConnectionRequest(self, payload, **kwargs):
         """
@@ -122,7 +122,7 @@ class X224Layer(Layer):
         payload = kwargs.pop("payload", "")
 
         pdu = X224DisconnectRequestPDU(destination, source, reason, payload)
-        self.previous.send(self.parser.write(pdu))
+        self.previous.send(self.mainParser.write(pdu))
 
     def sendError(self, cause, **kwargs):
         """
@@ -132,4 +132,4 @@ class X224Layer(Layer):
         destination = kwargs.pop("destination", 0)
 
         pdu = X224ErrorPDU(destination, cause)
-        self.previous.send(self.parser.write(pdu))
+        self.previous.send(self.mainParser.write(pdu))

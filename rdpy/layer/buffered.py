@@ -1,14 +1,18 @@
-from rdpy.core.layer import Layer
+from rdpy.layer.layer import Layer
+from rdpy.parser.parser import Parser
 from rdpy.parser.segmentation import SegmentationParser
 
 
 class BufferedLayer(Layer):
-    def __init__(self, parser):
+    """
+    Abstract class for layers which might need reassembly.
+    """
+
+    def __init__(self, parser: Parser):
         """
         :type parser: SegmentationParser
         """
-        Layer.__init__(self)
-        self.parser = parser
+        Layer.__init__(self, parser, hasNext=True)
         self.buffer = b""
 
     def getDataLengthRequired(self):
@@ -23,7 +27,7 @@ class BufferedLayer(Layer):
             return 0
 
         try:
-            pduLength = self.parser.getPDULength(self.buffer)
+            pduLength = self.mainParser.getPDULength(self.buffer)
         except ValueError:
             return 1
 
@@ -33,20 +37,20 @@ class BufferedLayer(Layer):
         data = self.buffer + data
 
         while len(data) > 0:
-            if not self.parser.isCompletePDU(data):
+            if not self.mainParser.isCompletePDU(data):
                 self.buffer = data
                 data = b""
             else:
-                pduLength = self.parser.getPDULength(data)
+                pduLength = self.mainParser.getPDULength(data)
                 pduData = data[: pduLength]
                 data = data[pduLength :]
                 self.buffer = b""
 
-                pdu = self.parser.parse(pduData)
-                self.pduReceived(pdu, True)
+                pdu = self.mainParser.parse(pduData)
+                self.pduReceived(pdu, self.hasNext)
 
     def sendPDU(self, pdu):
-        data = self.parser.write(pdu)
+        data = self.mainParser.write(pdu)
         self.previous.send(data)
 
     def sendData(self, data):

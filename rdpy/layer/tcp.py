@@ -4,8 +4,8 @@ import logging
 from twisted.internet.protocol import Protocol, connectionDone
 
 from rdpy.core import log
-from rdpy.core.layer import Layer, LayerObserver
 from rdpy.core.subject import ObservedBy
+from rdpy.layer.layer import Layer, LayerObserver
 
 
 class TCPObserver(LayerObserver):
@@ -32,7 +32,7 @@ class TwistedTCPLayer(Protocol, Layer):
     TCP observers are notified when a connection is made.
     """
     def __init__(self):
-        Layer.__init__(self)
+        Layer.__init__(self, None)
         self.logSSLRequired = False
 
     def logSSLParameters(self):
@@ -47,7 +47,6 @@ class TwistedTCPLayer(Protocol, Layer):
         When the TCP handshake is completed, notify the observer.
         """
         self.observer.onConnection()
-
 
     def connectionLost(self, reason=connectionDone):
         """
