@@ -113,3 +113,15 @@ class CreateOption(IntEnum):
     FILE_OPEN_REPARSE_POINT = 0x00200000
     FILE_OPEN_NO_RECALL = 0x00400000
     FILE_OPEN_FOR_FREE_SPACE_QUERY = 0x00800000
+
+
+class DeviceType(IntEnum):
+    """
+    https://msdn.microsoft.com/en-us/library/cc241326.aspx
+    """
+
+    RDPDR_DTYP_SERIAL = 0x00000001
+    RDPDR_DTYP_PARALLEL = 0x00000002
+    RDPDR_DTYP_PRINT = 0x00000004
+    RDPDR_DTYP_FILESYSTEM = 0x00000008
+    RDPDR_DTYP_SMARTCARD = 0x00000020

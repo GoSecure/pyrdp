@@ -32,7 +32,7 @@ from rdpy.mcs.user import MCSUserObserver
 from rdpy.mitm.client import MITMClient
 from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver
 from rdpy.mitm.virtual_channel.clipboard import MITMServerClipboardChannelObserver
-# from rdpy.mitm.virtual_channel.device_redirection import ServerPassiveDeviceRedirectionObserver
+from rdpy.mitm.virtual_channel.device_redirection import ServerPassiveDeviceRedirectionObserver
 from rdpy.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
 from rdpy.parser.gcc import GCCParser
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
@@ -109,8 +109,6 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.segmentation.attachLayer(SegmentationPDUType.TPKT, self.tpkt)
         self.tpkt.setNext(self.x224)
         self.x224.setNext(self.mcs)
-
-
 
         if recordHost is not None and recordPort is not None:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -318,6 +316,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
             return self.buildIOChannel(mcs, userID, channelID)
         elif channelID in channelMap.keys() and channelMap[channelID] == VirtualChannel.CLIPBOARD:
             return self.buildClipboardChannel(mcs, userID, channelID)
+        elif channelID in channelMap.keys() and channelMap[channelID] == VirtualChannel.DEVICE_REDIRECTION:
+            return self.buildDeviceRedirectionChannel(mcs, userID, channelID)
         else:
             return self.buildVirtualChannel(mcs, userID, channelID)
 
@@ -329,7 +329,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         else:
             return RDPSecurityLayer.create(encryptionMethod, self.crypter)
 
-    def buildVirtualChannel(self, mcs, userID, channelID):
+    def buildVirtualChannel(self, mcs: MCSLayer, userID: int, channelID: int) -> MCSServerChannel:
         channel = MCSServerChannel(mcs, userID, channelID)
         securityLayer = self.createSecurityLayer()
         rawLayer = RawLayer()
@@ -344,7 +344,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
         return channel
 
-    def buildClipboardChannel(self, mcs, userID, channelID):
+    def buildClipboardChannel(self, mcs: MCSLayer, userID: int, channelID: int) -> MCSServerChannel:
         """
         :type mcs: MCSLayer
         :param userID: The mcs user that builds the channel
@@ -372,7 +372,35 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
         return channel
 
-    def buildIOChannel(self, mcs, userID, channelID):
+    def buildDeviceRedirectionChannel(self, mcs: MCSLayer, userID: int, channelID: int) -> MCSServerChannel:
+        """
+        :type mcs: MCSLayer
+        :param userID: The mcs user that builds the channel
+        :param channelID: The channel ID to use to communicate in that channel
+        :return: MCSServerChannel that handles the device redirection virtual channel traffic from the client to the MITM.
+        """
+        # Create all necessary layers
+        channel = MCSServerChannel(mcs, userID, channelID)
+        securityLayer = self.createSecurityLayer()
+        virtualChannelLayer = VirtualChannelLayer(activateShowProtocolFlag=False)
+        deviceRedirection = DeviceRedirectionLayer()
+
+        # Link layers together in the good order: MCS --> Security --> VirtualChannel --> Device redirection
+        channel.setNext(securityLayer)
+        securityLayer.setNext(virtualChannelLayer)
+        virtualChannelLayer.setNext(deviceRedirection)
+
+        # Create and link the MITM Observer for the server side to the device redirection layer.
+        # Also link both MITM Observers (client and server) so they can send traffic the other way.
+        peer = self.client.getChannelObserver(channelID)
+        observer = ServerPassiveDeviceRedirectionObserver(deviceRedirection, self.recorder,
+                                                          self.client.deviceRedirectionObserver)
+        observer.setPeer(peer)
+        deviceRedirection.addObserver(observer)
+
+        return channel
+
+    def buildIOChannel(self, mcs: MCSLayer, userID: int, channelID: int) -> MCSServerChannel:
         encryptionMethod = self.serverData.security.encryptionMethod
         self.securityLayer = self.createSecurityLayer()
         self.securityLayer.createObserver(
