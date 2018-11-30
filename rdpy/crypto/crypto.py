@@ -2,10 +2,10 @@ from enum import IntEnum
 
 import Crypto.Random
 
-from rdpy.core.observer import Observer
 from rdpy.core.subject import Subject, ObservedBy
 from rdpy.crypto import rc4
 from rdpy.crypto.key import macData, macSaltedData, generateKeys, updateKey
+from rdpy.crypto.observer import SecuritySettingsObserver
 from rdpy.enum.rdp import EncryptionMethod
 from rdpy.exceptions import StateError, CrypterUnavailableError
 from rdpy.pdu.rdp.connection import ServerSecurityData
@@ -14,19 +14,6 @@ from rdpy.pdu.rdp.connection import ServerSecurityData
 Cryptographic utility functions
 """
 
-
-class SecuritySettingsObserver(Observer):
-    """
-    Observer class for SecuritySettings.
-    """
-
-    def onCrypterGenerated(self, settings):
-        """
-        Called when the SecuritySettings crypter has been generated.
-        :param settings: the security settings object.
-        :type settings: SecuritySettings
-        """
-        pass
 
 @ObservedBy(SecuritySettingsObserver)
 class SecuritySettings(Subject):

@@ -3,6 +3,7 @@ from typing import Dict
 
 from rdpy.core.ssl import ClientTLSContext
 from rdpy.crypto.crypto import SecuritySettings, RC4CrypterProxy
+from rdpy.crypto.observer import RC4LoggingObserver
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import RDPPlayerMessageType, ClientInfoFlags
 from rdpy.enum.segmentation import SegmentationPDUType
@@ -56,9 +57,13 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.conferenceCreateResponse = None
         self.serverData = None
         self.crypter = RC4CrypterProxy()
+        self.log = logging.getLogger("mitm.client.%s" % server.getFriendlyName())
+
+        rc4Log = logging.getLogger("mitm.client.%s.rc4" % server.getFriendlyName())
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.CLIENT)
         self.securitySettings.addObserver(self.crypter)
-        self.log = logging.getLogger("mitm.client.%s" % server.getFriendlyName())
+        self.securitySettings.addObserver(RC4LoggingObserver(rc4Log))
+
 
         self.tcp = TwistedTCPLayer()
         self.tcp.createObserver(onConnection=self.startConnection, onDisconnection=self.onDisconnection)

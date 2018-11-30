@@ -10,6 +10,7 @@ from twisted.internet.protocol import ClientFactory
 from rdpy.core.helper_methods import decodeUTF16LE
 from rdpy.core.ssl import ServerTLSContext
 from rdpy.crypto.crypto import SecuritySettings, RC4CrypterProxy
+from rdpy.crypto.observer import RC4LoggingObserver
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, EncryptionMethod, EncryptionLevel, \
     RDPPlayerMessageType, CapabilityType, OrderFlag
@@ -66,14 +67,19 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.serverData = None
         self.rc4RSAKey = RSA.generate(2048)
         self.crypter = RC4CrypterProxy()
-        self.securitySettings = SecuritySettings(SecuritySettings.Mode.SERVER)
-        self.securitySettings.addObserver(self.crypter)
         self.supportedChannels = []
         self.socket = None
         self.fileHandle = open("out/rdp_replay_{}_{}.rdpy".format(datetime.datetime.now().strftime('%Y%m%d_%H_%M%S'), random.randint(0, 1000)), "wb")
         self.log = logging.getLogger("mitm.server.%s" % friendlyName)
         self.connectionsLog = logging.getLogger("mitm.connections.%s" % friendlyName)
         self.friendlyName = friendlyName
+
+
+        rc4Log = logging.getLogger("mitm.server.%s.rc4" % friendlyName)
+        self.securitySettings = SecuritySettings(SecuritySettings.Mode.SERVER)
+        self.securitySettings.addObserver(self.crypter)
+        self.securitySettings.addObserver(RC4LoggingObserver(rc4Log))
+
 
         self.tcp = TwistedTCPLayer()
         self.tcp.createObserver(onConnection=self.onConnection, onDisconnection=self.onDisconnection)
