@@ -47,12 +47,11 @@ class RDPClientInfoParser:
             alternateShell = decodeUTF16LE(alternateShell)
             workingDir = decodeUTF16LE(workingDir)
 
-        removeTrailingNullByte = lambda s: s[: -1] if s.endswith("\x00") else s
-        domain = removeTrailingNullByte(domain)
-        username = removeTrailingNullByte(username)
-        password = removeTrailingNullByte(password)
-        alternateShell = removeTrailingNullByte(alternateShell)
-        workingDir = removeTrailingNullByte(workingDir)
+        domain = domain
+        username = username
+        password = password
+        alternateShell = alternateShell
+        workingDir = workingDir
 
         extraInfo = stream.read()
 
