@@ -1,4 +1,4 @@
-from rdpy.core import log
+from rdpy.core.logging import log
 from rdpy.core.subject import ObservedBy
 from rdpy.enum.rdp import RDPDataPDUType, CapabilityType, VirtualChannelCompressionFlag
 from rdpy.exceptions import UnknownPDUTypeError

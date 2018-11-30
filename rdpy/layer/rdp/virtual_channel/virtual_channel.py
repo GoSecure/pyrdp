@@ -1,4 +1,4 @@
-from rdpy.core import log
+from rdpy.core.logging import log
 from rdpy.enum.virtual_channel.virtual_channel import ChannelFlag
 from rdpy.layer.layer import Layer
 from rdpy.parser.rdp.virtual_channel.virtual_channel import VirtualChannelParser

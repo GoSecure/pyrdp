@@ -1,7 +1,7 @@
 import time
 from typing import BinaryIO
 
-from rdpy.core import log
+from rdpy.core.logging import log
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import RDPPlayerMessageType
 from rdpy.layer.layer import Layer

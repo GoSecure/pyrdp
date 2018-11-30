@@ -1,8 +1,8 @@
 from PyQt4 import QtGui
 from PyQt4.QtGui import QTextCursor
 
-from rdpy.core import log
 from rdpy.core.helper_methods import decodeUTF16LE
+from rdpy.core.logging import log
 from rdpy.core.scancode import scancodeToChar
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import CapabilityType, SlowPathUpdateType, BitmapFlags, KeyboardFlag

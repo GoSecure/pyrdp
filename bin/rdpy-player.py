@@ -8,7 +8,7 @@ import sys
 import notify2
 from PyQt4.QtGui import QApplication
 
-from rdpy.core import log
+from rdpy.core.logging import log
 from rdpy.player.player import MainWindow
 
 
