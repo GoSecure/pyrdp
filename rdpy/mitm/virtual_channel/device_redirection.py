@@ -3,6 +3,7 @@ import os
 from io import BytesIO
 from typing import Dict
 
+from rdpy.core.helper_methods import decodeUTF16LE
 from rdpy.core.layer import Layer
 from rdpy.core.observer import Observer
 from rdpy.enum.core import ParserMode
@@ -145,7 +146,7 @@ class PassiveDeviceRedirectionObserver(Observer):
         """
         Converts a windows-encoded path to a beautiful, python-ready path.
         """
-        return pathAsBytes.decode("utf-16le", errors="ignore").replace("\00", "")
+        return decodeUTF16LE(pathAsBytes)
 
 
 class ClientPassiveDeviceRedirectionObserver(PassiveDeviceRedirectionObserver):

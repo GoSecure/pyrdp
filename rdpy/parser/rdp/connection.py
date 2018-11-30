@@ -4,6 +4,7 @@ from io import BytesIO
 from Crypto.PublicKey import RSA
 from Crypto.Util.number import bytes_to_long, long_to_bytes
 
+from rdpy.core.helper_methods import decodeUTF16LE
 from rdpy.core.packing import Uint16LE, Uint32LE, Uint8
 from rdpy.core.stream import StrictStream
 from rdpy.enum.rdp import RDPConnectionDataType, ServerCertificateType, RDPVersion, ColorDepth, KeyboardType, \
@@ -80,7 +81,6 @@ class RDPClientConnectionParser(Parser):
 
         return self.parsers[header](substream)
 
-
     def parseClientCoreData(self, stream):
         stream = StrictStream(stream)
 
@@ -92,11 +92,11 @@ class RDPClientConnectionParser(Parser):
         sasSequence = Uint16LE.unpack(stream)
         keyboardLayout = Uint32LE.unpack(stream)
         clientBuild = Uint32LE.unpack(stream)
-        clientName = stream.read(32).decode("utf-16le").strip("\x00")
+        clientName = decodeUTF16LE(stream.read(32))
         keyboardType = KeyboardType(Uint32LE.unpack(stream))
         keyboardSubType = Uint32LE.unpack(stream)
         keyboardFunctionKey = Uint32LE.unpack(stream)
-        imeFileName = stream.read(64).decode("utf-16le").strip("\x00")
+        imeFileName = stream.read(64)
 
         core = ClientCoreData(version, desktopWidth, desktopHeight, colorDepth, sasSequence, keyboardLayout, clientBuild, clientName, keyboardType, keyboardSubType, keyboardFunctionKey, imeFileName)
 
@@ -109,7 +109,7 @@ class RDPClientConnectionParser(Parser):
             core.highColorDepth = HighColorDepth(Uint16LE.unpack(stream))
             core.supportedColorDepths = Uint16LE.unpack(stream)
             core.earlyCapabilityFlags = Uint16LE.unpack(stream)
-            core.clientDigProductId = stream.read(64).decode("utf-16le").strip("\x00")
+            core.clientDigProductId = decodeUTF16LE(stream.read(64))
             core.connectionType = ConnectionType(Uint8.unpack(stream))
             core.pad1octet = stream.read(1)
             core.serverSelectedProtocol = Uint32LE.unpack(stream)
@@ -198,7 +198,7 @@ class RDPClientConnectionParser(Parser):
         stream.write(Uint32LE.pack(core.keyboardType))
         stream.write(Uint32LE.pack(core.keyboardSubType))
         stream.write(Uint32LE.pack(core.keyboardFunctionKey))
-        stream.write(core.imeFileName.encode("utf-16le").ljust(64, b"\x00")[: 64])
+        stream.write(core.imeFileName)
 
         try:
             stream.write(Uint16LE.pack(core.postBeta2ColorDepth))

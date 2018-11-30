@@ -1,5 +1,6 @@
 from io import BytesIO
 
+from rdpy.core.helper_methods import decodeUTF16LE
 from rdpy.core.packing import Uint32LE, Uint16LE
 from rdpy.enum.rdp import ClientInfoFlags
 from rdpy.pdu.rdp.client_info import RDPClientInfoPDU
@@ -40,11 +41,11 @@ class RDPClientInfoParser:
         workingDir = stream.read(workingDirLength)
 
         if isUnicode:
-            domain = domain.decode("utf-16le")
-            username = username.decode("utf-16le")
-            password = password.decode("utf-16le")
-            alternateShell = alternateShell.decode("utf-16le")
-            workingDir = workingDir.decode("utf-16le")
+            domain = decodeUTF16LE(domain)
+            username = decodeUTF16LE(username)
+            password = decodeUTF16LE(password)
+            alternateShell = decodeUTF16LE(alternateShell)
+            workingDir = decodeUTF16LE(workingDir)
 
         removeTrailingNullByte = lambda s: s[: -1] if s.endswith("\x00") else s
         domain = removeTrailingNullByte(domain)
