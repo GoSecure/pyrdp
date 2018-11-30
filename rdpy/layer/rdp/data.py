@@ -1,9 +1,10 @@
-from rdpy.core import log
-from rdpy.core.layer import Layer, LayerStrictRoutedObserver, LayerObserver
+from rdpy.core.logging import log
 from rdpy.core.subject import ObservedBy
 from rdpy.enum.rdp import RDPDataPDUType, CapabilityType, VirtualChannelCompressionFlag
 from rdpy.exceptions import UnknownPDUTypeError
+from rdpy.layer.layer import Layer, LayerStrictRoutedObserver, LayerObserver
 from rdpy.parser.rdp.data import RDPDataParser
+from rdpy.pdu.base_pdu import PDU
 from rdpy.pdu.rdp.data import RDPDemandActivePDU
 
 
@@ -19,7 +20,7 @@ class RDPBaseDataLayerObserver:
         self.defaultDataHandler = None
         self.unparsedDataHandler = None
 
-    def dispatchPDU(self, pdu):
+    def dispatchPDU(self, pdu: PDU):
         """
         Call the proper handler depending on the PDU's type.
         :param pdu: the PDU that was received.
@@ -31,7 +32,7 @@ class RDPBaseDataLayerObserver:
         elif self.defaultDataHandler:
             self.defaultDataHandler(pdu)
 
-    def onUnparsedData(self, data):
+    def onUnparsedData(self, data: bytes):
         """
         Called when data that could not be parsed was received.
         :type data: bytes
@@ -62,13 +63,12 @@ class RDPBaseDataLayerObserver:
         """
         self.unparsedDataHandler = handler
 
-    def getPDUType(self, pdu):
+    def getPDUType(self, pdu: PDU):
         """
         Get the PDU type for a given PDU.
         :param pdu: the PDU.
         """
         raise NotImplementedError("getPDUType must be overridden")
-
 
 
 class RDPDataLayerObserver(RDPBaseDataLayerObserver, LayerStrictRoutedObserver):
@@ -156,25 +156,25 @@ class RDPBaseDataLayer(Layer):
     """
 
     def __init__(self, dataParser):
-        Layer.__init__(self)
-        self.dataParser = dataParser
+        Layer.__init__(self, dataParser, hasNext=False)
 
     def recv(self, data):
         try:
-            pdu = self.dataParser.parse(data)
+            pdu = self.mainParser.parse(data)
         except UnknownPDUTypeError as e:
             log.debug(str(e))
             if self.observer:
                 self.observer.onUnparsedData(data)
         else:
-            self.pduReceived(pdu, False)
+            self.pduReceived(pdu, self.hasNext)
 
     def sendPDU(self, pdu):
-        data = self.dataParser.write(pdu)
+        data = self.mainParser.write(pdu)
         self.previous.send(data)
 
     def sendData(self, data):
         self.previous.send(data)
+
 
 @ObservedBy(RDPDataLayerObserver)
 class RDPDataLayer(RDPBaseDataLayer):

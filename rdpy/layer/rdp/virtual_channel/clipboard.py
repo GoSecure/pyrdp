@@ -1,4 +1,4 @@
-from rdpy.core.layer import Layer
+from rdpy.layer.layer import Layer
 from rdpy.parser.rdp.virtual_channel.clipboard import ClipboardParser
 
 
@@ -9,18 +9,4 @@ class ClipboardLayer(Layer):
     """
 
     def __init__(self):
-        Layer.__init__(self)
-        self.clipboardParser = ClipboardParser()
-
-    def recv(self, data):
-        """
-        :type data: bytes
-        """
-        clipboardPDU = self.clipboardParser.parse(data)
-        self.pduReceived(clipboardPDU, False)
-
-    def send(self, pdu):
-        """
-        :type pdu: rdpy.pdu.rdp.virtual_channel.clipboard.ClipboardPDU
-        """
-        self.previous.send(self.clipboardParser.write(pdu))
+        Layer.__init__(self, ClipboardParser(), hasNext=False)

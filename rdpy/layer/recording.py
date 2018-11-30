@@ -1,12 +1,11 @@
-import time
 from io import BytesIO
 
-from rdpy.core.layer import Layer, LayerRoutedObserver
-from rdpy.core.observer import Observer
 from rdpy.core.packing import Uint8, Uint64LE
 from rdpy.core.subject import ObservedBy
 from rdpy.enum.rdp import RDPPlayerMessageType
+from rdpy.layer.layer import Layer, LayerRoutedObserver
 from rdpy.pdu.rdp.recording import RDPPlayerMessagePDU
+
 
 class RDPPlayerMessageObserver(LayerRoutedObserver):
     def __init__(self, **kwargs):

@@ -1,10 +1,11 @@
 from binascii import hexlify
 
-from rdpy.core import log
-from rdpy.core.layer import Layer, LayerObserver
+from rdpy.core.logging import log
 from rdpy.core.subject import ObservedBy
 from rdpy.crypto.crypto import RC4Crypter
 from rdpy.enum.rdp import RDPSecurityFlags, EncryptionMethod
+from rdpy.layer.layer import Layer, LayerObserver
+from rdpy.parser.parser import Parser
 from rdpy.parser.rdp.client_info import RDPClientInfoParser
 from rdpy.parser.rdp.security import RDPBasicSecurityParser, RDPSignedSecurityParser, RDPFIPSSecurityParser
 from rdpy.pdu.rdp.client_info import RDPClientInfoPDU
@@ -35,20 +36,19 @@ class RDPSecurityObserver(LayerObserver):
         pass
 
 
-
 @ObservedBy(RDPSecurityObserver)
 class RDPSecurityLayer(Layer):
     """
     Layer for security related traffic.
     """
 
-    def __init__(self, parser):
+    def __init__(self, parser: RDPBasicSecurityParser):
         """
         :param parser: the parser to use for security traffic.
         :type parser: Parser
         """
-        Layer.__init__(self)
-        self.securityParser = parser
+        Layer.__init__(self, parser, hasNext=True)
+        self.mainParser = parser
         self.clientInfoParser = RDPClientInfoParser()
 
     @staticmethod
@@ -67,7 +67,7 @@ class RDPSecurityLayer(Layer):
             return RDPSecurityLayer(parser)
 
     def recv(self, data):
-        pdu = self.securityParser.parse(data)
+        pdu = self.mainParser.parse(data)
         try:
             self.dispatchPDU(pdu)
         except KeyboardInterrupt:
@@ -95,12 +95,11 @@ class RDPSecurityLayer(Layer):
             if self.observer:
                 self.observer.onLicensingDataReceived(pdu.payload)
         else:
-            self.pduReceived(pdu, True)
+            self.pduReceived(pdu, self.hasNext)
 
-
-    def send(self, data, header = 0):
+    def send(self, data: bytes, header=0):
         pdu = RDPSecurityPDU(header, data)
-        data = self.securityParser.write(pdu)
+        data = self.mainParser.write(pdu)
         self.previous.send(data)
 
     def sendSecurityExchange(self, clientRandom):
@@ -110,7 +109,7 @@ class RDPSecurityLayer(Layer):
         :type clientRandom: bytes
         """
         pdu = RDPSecurityExchangePDU(RDPSecurityFlags.SEC_EXCHANGE_PKT, clientRandom + b"\x00" * 8)
-        data = self.securityParser.writeSecurityExchange(pdu)
+        data = self.mainParser.writeSecurityExchange(pdu)
         self.previous.send(data)
 
     def sendClientInfo(self, pdu):
@@ -120,7 +119,7 @@ class RDPSecurityLayer(Layer):
         """
         data = self.clientInfoParser.write(pdu)
         pdu = RDPSecurityPDU(RDPSecurityFlags.SEC_INFO_PKT, data)
-        data = self.securityParser.write(pdu)
+        data = self.mainParser.write(pdu)
         self.previous.send(data)
 
     def sendLicensing(self, data):
@@ -129,8 +128,7 @@ class RDPSecurityLayer(Layer):
         :type data: bytes
         """
         pdu = RDPSecurityPDU(RDPSecurityFlags.SEC_LICENSE_PKT, data)
-        self.previous.send(self.securityParser.write(pdu))
-
+        self.previous.send(self.mainParser.write(pdu))
 
 
 class TLSSecurityLayer(RDPSecurityLayer):
@@ -155,4 +153,3 @@ class TLSSecurityLayer(RDPSecurityLayer):
             self.previous.send(data)
         else:
             RDPSecurityLayer.send(self, data, header)
-

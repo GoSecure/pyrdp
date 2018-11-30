@@ -1,6 +1,9 @@
+from typing import Optional
+
 from rdpy.core.observer import Observer
 from rdpy.core.subject import Subject, ObservedBy
 from rdpy.exceptions import UnknownPDUTypeError
+from rdpy.parser.parser import Parser
 from rdpy.pdu.base_pdu import PDU
 
 
@@ -16,6 +19,7 @@ class LayerObserver(Observer):
         Method called when a PDU is received
         """
         pass
+
 
 class LayerRoutedObserver(LayerObserver):
     """
@@ -45,6 +49,7 @@ class LayerRoutedObserver(LayerObserver):
         """
         pass
 
+
 class LayerStrictRoutedObserver(LayerRoutedObserver):
     """
     Layer observer that throws an exception when an unknown header is received.
@@ -60,7 +65,7 @@ class LayerStrictRoutedObserver(LayerRoutedObserver):
         """
         Method called when a PDU with an unknown header is received
         """
-        raise UnknownPDUTypeError("Unknown PDU header received: 0x%2lx" % pdu.header)
+        raise UnknownPDUTypeError("Unknown PDU header received: 0x%2lx" % pdu.header, type(pdu))
 
 
 @ObservedBy(LayerObserver)
@@ -69,16 +74,17 @@ class Layer(Subject):
     A doubly-linked list of network layers. An observer can be attached to capture incoming PDUs.
     ObservedBy: LayerObserver
     """
-    def __init__(self):
+    def __init__(self, mainParser: Optional[Parser]=None, hasNext=True):
         Subject.__init__(self)
+        self.hasNext = hasNext
+        self.mainParser = mainParser
         self.previous: Layer = None
         self.next: Layer = None
     
-    def setNext(self, layer):
+    def setNext(self, layer: 'Layer'):
         """
         Set the next layer in the protocol hierarchy (ex: IP's next layer would be TCP/UDP).
         :param layer: The next layer.
-        :type layer: Layer
         """
         self.next = layer
         layer.previous = self
@@ -98,7 +104,8 @@ class Layer(Subject):
             self.next.recv(pdu.payload)
 
     def recv(self, data: bytes):
-        raise NotImplementedError("Receive function not implemented!")
+        pdu = self.mainParser.parse(data)
+        self.pduReceived(pdu, self.hasNext)
 
     def send(self, data: bytes):
         self.previous.send(data)

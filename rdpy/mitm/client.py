@@ -25,7 +25,7 @@ from rdpy.mcs.channel import MCSChannelFactory, MCSClientChannel
 from rdpy.mcs.client import MCSClientRouter
 from rdpy.mcs.user import MCSUserObserver
 from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver
-from rdpy.mitm.virtual_channel.clipboard import MITMClientClipboardChannelObserver
+from rdpy.mitm.virtual_channel.clipboard import ActiveClipboardChannelObserver
 from rdpy.mitm.virtual_channel.device_redirection import ClientPassiveDeviceRedirectionObserver
 from rdpy.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
 from rdpy.parser.rdp.fastpath import createFastPathParser
@@ -49,7 +49,6 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.channelMap: Dict[int, str] = {}
         self.channelDefinitions = []
         self.channelObservers = {}
-        self.clipboardObserver = None
         self.deviceRedirectionObserver = None
         self.useTLS = False
         self.user = None
@@ -267,10 +266,10 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         virtualChannelLayer.setNext(clipboardLayer)
 
         # Create and link the MITM Observer for the client side to the clipboard layer.
-        self.clipboardObserver = MITMClientClipboardChannelObserver(clipboardLayer, self.recorder)
-        clipboardLayer.addObserver(self.clipboardObserver)
+        activeClipboardObserver = ActiveClipboardChannelObserver(clipboardLayer, self.recorder, ParserMode.CLIENT)
+        clipboardLayer.addObserver(activeClipboardObserver)
 
-        self.channelObservers[channelID] = self.clipboardObserver
+        self.channelObservers[channelID] = activeClipboardObserver
 
         return channel
 

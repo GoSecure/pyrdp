@@ -2,11 +2,12 @@ from io import BytesIO
 
 from rdpy.core.packing import Uint16LE, Uint32LE
 from rdpy.enum.virtual_channel.clipboard import ClipboardMessageType, ClipboardMessageFlags
+from rdpy.parser.parser import Parser
 from rdpy.pdu.rdp.virtual_channel.clipboard import ClipboardPDU, FormatDataResponsePDU, FormatListPDU, \
     FormatDataRequestPDU, LongFormatName
 
 
-class ClipboardParser:
+class ClipboardParser(Parser):
     """
     Parser class for clipboard PDUs
     """

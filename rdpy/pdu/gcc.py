@@ -1,6 +1,7 @@
 from rdpy.enum.gcc import GCCPDUType
 from rdpy.pdu.base_pdu import PDU
 
+
 class GCCPDU(PDU):
     """
     Base PDU class for GCC (T.124) PDUs. Every GCC PDU has a header and a payload.

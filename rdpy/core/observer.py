@@ -15,7 +15,7 @@ class Observer:
             else:
                 raise TypeError("Unexpected keyword argument '%s'" % name)
 
-    def setPeer(self, peer):
+    def setPeer(self, peer: 'Observer'):
         self.peer = peer
         peer.peer = self
 

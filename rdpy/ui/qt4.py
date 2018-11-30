@@ -23,14 +23,13 @@ Qt specific code
 QRemoteDesktop is a widget use for render in rdpy
 """
 
-from PyQt4 import QtGui, Qt, QtCore
-
 import rle
 
+from PyQt4 import QtGui
 from PyQt4.QtCore import QPoint
 from PyQt4.QtGui import QColor
 
-import rdpy.core.log as log
+import rdpy.core.logging.log as log
 
 
 def RDPBitmapToQtImage(width, height, bitsPerPixel, isCompress, data):

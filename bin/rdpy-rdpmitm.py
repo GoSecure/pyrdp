@@ -3,16 +3,14 @@ import argparse
 import logging
 import logging.handlers
 import os
-import random
 import sys
-from itertools import cycle
 
 import appdirs
 import names
 from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
 
-from rdpy.core import log
+from rdpy.core.logging import log
 from rdpy.mitm.server import MITMServer
 
 

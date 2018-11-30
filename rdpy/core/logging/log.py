@@ -22,7 +22,7 @@ def get_formatter():
     return logging.Formatter("[%(asctime)s] - %(name)s - %(levelname)s - %(message)s")
 
 
-def prepare_rdpy_logger(logLevel = logging.INFO):
+def prepare_rdpy_logger(logLevel=logging.INFO):
     """
     Prepare the RDPY logger to be used by the library.
     """
@@ -37,7 +37,6 @@ def prepare_rdpy_logger(logLevel = logging.INFO):
     stream_handler.setLevel(logLevel)
 
     logger.addHandler(stream_handler)
-
 
 
 def prepare_ssl_session_logger():

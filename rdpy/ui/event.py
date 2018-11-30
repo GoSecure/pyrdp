@@ -1,7 +1,8 @@
 from PyQt4 import QtGui
 from PyQt4.QtGui import QTextCursor
 
-from rdpy.core import log
+from rdpy.core.helper_methods import decodeUTF16LE
+from rdpy.core.logging import log
 from rdpy.core.scancode import scancodeToChar
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import CapabilityType, SlowPathUpdateType, BitmapFlags, KeyboardFlag
@@ -138,5 +139,5 @@ class RSSEventHandler(RDPPlayerMessageObserver):
         """
         pdu = self.clipboardParser.parse(pdu.payload)
         self.text.insertPlainText("\n=============\n")
-        self.text.insertPlainText("CLIPBOARD DATA: {}".format(repr(pdu.requestedFormatData.decode("utf-16le"))))
+        self.text.insertPlainText("CLIPBOARD DATA: {}".format(decodeUTF16LE(pdu.requestedFormatData)))
         self.text.insertPlainText("\n=============\n")

@@ -3,10 +3,11 @@ from io import BytesIO
 from rdpy.core.packing import Uint8, Uint16LE, Uint32LE
 from rdpy.enum.rdp import RDPLicensingPDUType, RDPLicenseBinaryBlobType, RDPLicenseErrorCode, RDPStateTransition
 from rdpy.exceptions import UnknownPDUTypeError
+from rdpy.parser.parser import Parser
 from rdpy.pdu.rdp.licensing import RDPLicenseBinaryBlob, RDPLicenseErrorAlertPDU
 
 
-class RDPLicensingParser:
+class RDPLicensingParser(Parser):
     """
     Parse the RDP Licensing part of the RDP connection sequence
     """

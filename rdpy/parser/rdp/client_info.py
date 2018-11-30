@@ -1,12 +1,14 @@
 from io import BytesIO
 
+from rdpy.core.helper_methods import decodeUTF16LE
 from rdpy.core.packing import Uint32LE, Uint16LE
 from rdpy.core.stream import StrictStream
 from rdpy.enum.rdp import ClientInfoFlags
+from rdpy.parser.parser import Parser
 from rdpy.pdu.rdp.client_info import RDPClientInfoPDU, ClientExtraInfo
 
 
-class RDPClientInfoParser:
+class RDPClientInfoParser(Parser):
     """
     Read and write the RDP ClientInfo PDU which contains very useful information.
     See https://msdn.microsoft.com/en-us/library/cc240475.aspx
@@ -41,18 +43,17 @@ class RDPClientInfoParser:
         workingDir = stream.read(workingDirLength)
 
         if isUnicode:
-            domain = domain.decode("utf-16le")
-            username = username.decode("utf-16le")
-            password = password.decode("utf-16le")
-            alternateShell = alternateShell.decode("utf-16le")
-            workingDir = workingDir.decode("utf-16le")
+            domain = decodeUTF16LE(domain)
+            username = decodeUTF16LE(username)
+            password = decodeUTF16LE(password)
+            alternateShell = decodeUTF16LE(alternateShell)
+            workingDir = decodeUTF16LE(workingDir)
 
-        removeTrailingNullByte = lambda s: s[: -1] if s.endswith("\x00") else s
-        domain = removeTrailingNullByte(domain)
-        username = removeTrailingNullByte(username)
-        password = removeTrailingNullByte(password)
-        alternateShell = removeTrailingNullByte(alternateShell)
-        workingDir = removeTrailingNullByte(workingDir)
+        domain = domain
+        username = username
+        password = password
+        alternateShell = alternateShell
+        workingDir = workingDir
 
         extraInfoBytes = stream.read()
 

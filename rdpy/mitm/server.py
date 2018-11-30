@@ -7,6 +7,7 @@ from Crypto.PublicKey import RSA
 from twisted.internet import reactor
 from twisted.internet.protocol import ClientFactory
 
+from rdpy.core.helper_methods import decodeUTF16LE
 from rdpy.core.ssl import ServerTLSContext
 from rdpy.crypto.crypto import SecuritySettings, RC4CrypterProxy
 from rdpy.enum.core import ParserMode
@@ -31,7 +32,7 @@ from rdpy.mcs.server import MCSServerRouter
 from rdpy.mcs.user import MCSUserObserver
 from rdpy.mitm.client import MITMClient
 from rdpy.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver
-from rdpy.mitm.virtual_channel.clipboard import MITMServerClipboardChannelObserver
+from rdpy.mitm.virtual_channel.clipboard import PassiveClipboardChannelObserver
 from rdpy.mitm.virtual_channel.device_redirection import ServerPassiveDeviceRedirectionObserver
 from rdpy.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
 from rdpy.parser.gcc import GCCParser
@@ -365,10 +366,10 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         # Create and link the MITM Observer for the server side to the clipboard layer.
         # Also link both MITM Observers (client and server) so they can send traffic the other way.
         peer = self.client.getChannelObserver(channelID)
-        observer = MITMServerClipboardChannelObserver(clipboardLayer, self.recorder,
-                                                      self.client.clipboardObserver)
-        observer.setPeer(peer)
-        clipboardLayer.addObserver(observer)
+        passiveClipboardObserver = PassiveClipboardChannelObserver(clipboardLayer, self.recorder, ParserMode.SERVER)
+        peer.passiveClipboardObserver = passiveClipboardObserver
+        passiveClipboardObserver.setPeer(peer)
+        clipboardLayer.addObserver(passiveClipboardObserver)
 
         return channel
 
@@ -466,7 +467,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         :type data: bytes
         """
         pdu = RDPClientInfoParser().parse(data)
-        self.log.info("Client address: {}".format(pdu.extraInfo.clientAddress.decode("utf-16le", errors="replace").strip("\x00")))
+        self.log.info("Client address: {}".format(decodeUTF16LE(pdu.extraInfo.clientAddress).strip("\x00")))
 
         self.log.debug("Client Info received: {}".format(pdu))
         self.connectionsLog.info("CLIENT INFO RECEIVED")

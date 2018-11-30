@@ -1,7 +1,7 @@
 from io import BytesIO
 from typing import Dict
 
-from rdpy.core import log
+from rdpy.core.logging import log
 from rdpy.core.packing import Uint16LE, Uint32LE, Uint64LE
 from rdpy.enum.virtual_channel.device_redirection import DeviceRedirectionComponent, DeviceRedirectionPacketId, \
     MajorFunction, DeviceType

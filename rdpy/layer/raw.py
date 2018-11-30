@@ -1,4 +1,4 @@
-from rdpy.core.layer import Layer
+from rdpy.layer.layer import Layer
 from rdpy.pdu.base_pdu import PDU
 
 

@@ -94,8 +94,10 @@ class MCSSendDataIndicationPDU(MCSPDU):
         self.priority = priority
 
 
-class MCSDomainParams:
-    def __init__(self, maxChannelIDs, maxUserIDs, maxTokenIDs, numPriorities, minThroughput, maxHeight, maxMCSPDUSize, protocolVersion):
+class MCSDomainParams(PDU):
+    def __init__(self, maxChannelIDs, maxUserIDs, maxTokenIDs, numPriorities, minThroughput, maxHeight, maxMCSPDUSize,
+                 protocolVersion):
+        super().__init__()
         self.maxChannelIDs = maxChannelIDs
         self.maxUserIDs = maxUserIDs
         self.maxTokenIDs = maxTokenIDs

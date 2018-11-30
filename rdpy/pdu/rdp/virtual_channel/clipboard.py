@@ -71,8 +71,9 @@ class FormatListResponsePDU(ClipboardPDU):
         ClipboardPDU.__init__(self, ClipboardMessageType.CB_FORMAT_LIST_RESPONSE, flags)
 
 
-class FormatName:
+class FormatName(PDU):
     def __init__(self, formatId, formatName):
+        super().__init__()
         self.formatId = formatId
         self.formatName = formatName
 
