@@ -14,3 +14,4 @@ log/
 .vscode
 *.log
 test.bin
+saved_files/
