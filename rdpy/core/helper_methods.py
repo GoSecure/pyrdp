@@ -18,4 +18,4 @@ def encodeUTF16LE(string: str) -> bytes:
     :param string: The python string to encode to bytes
     :return: The raw bytes
     """
-    return string.encode("utf16-le", errors="surrogatepass")
+    return string.encode("utf-16le", errors="surrogatepass")
