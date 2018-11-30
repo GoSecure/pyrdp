@@ -466,6 +466,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         :type data: bytes
         """
         pdu = RDPClientInfoParser().parse(data)
+        self.log.info("Client address: {}".format(pdu.extraInfo.clientAddress.decode("utf-16le", errors="replace").strip("\x00")))
 
         self.log.debug("Client Info received: {}".format(pdu))
         self.connectionsLog.info("CLIENT INFO RECEIVED")
