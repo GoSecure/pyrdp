@@ -1,8 +1,10 @@
 from rdpy.enum.rdp import InputEventType
+from rdpy.pdu.base_pdu import PDU
 
 
-class SlowPathInput:
+class SlowPathInput(PDU):
     def __init__(self, eventTime, messageType):
+        super().__init__()
         self.eventTime = eventTime
         self.messageType = messageType
 
@@ -30,7 +32,6 @@ class UnicodeKeyboardEvent(SlowPathInput):
         SlowPathInput.__init__(self, eventTime, InputEventType.INPUT_EVENT_UNICODE)
         self.flags = flags
         self.keyCode = keyCode
-
 
 
 class MouseEvent(SlowPathInput):

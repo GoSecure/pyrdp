@@ -15,19 +15,21 @@ class RDPFastPathPDU(SegmentationPDU):
     def __repr__(self):
         return str([str(e.__class__) for e in self.events])
 
-class FastPathEventRaw:
+
+class FastPathEventRaw(PDU):
     def __init__(self, data):
+        super().__init__()
         self.data = data
 
 
-class RDPFastPathEvent:
+class RDPFastPathEvent(PDU):
     """
     Base class for RDP fast path event (not PDU, a PDU contains multiple events)
     such as a scancode event, a mouse event or a bitmap event.
     """
 
     def __init__(self):
-        pass
+        super().__init__()
 
 
 class FastPathEventScanCode(RDPFastPathEvent):
@@ -63,8 +65,9 @@ class FastPathEventMouse(RDPFastPathEvent):
         self.pointerFlags = pointerFlags
 
 
-class FastPathOutputEvent:
-    pass
+class FastPathOutputEvent(PDU):
+    def __init__(self):
+        super().__init__()
 
 
 class FastPathBitmapEvent(FastPathOutputEvent):
@@ -75,6 +78,7 @@ class FastPathBitmapEvent(FastPathOutputEvent):
         :type bitmapUpdateData: list[rdpy.pdu.rdp.common.BitmapUpdateData]
         :type rawBitmapUpdateData: bytes
         """
+        super().__init__()
         self.header = header
         self.compressionFlags = compressionFlags
         self.rawBitmapUpdateData = rawBitmapUpdateData
@@ -86,6 +90,7 @@ class FastPathOrdersEvent(FastPathOutputEvent):
     https://msdn.microsoft.com/en-us/library/cc241573.aspx
     """
     def __init__(self, header, compressionFlags, orderCount, orderData):
+        super().__init__()
         self.header = header
         self.compressionFlags = compressionFlags
         self.orderCount = orderCount
@@ -93,11 +98,12 @@ class FastPathOrdersEvent(FastPathOutputEvent):
         self.secondaryDrawingOrders = None
 
 
-class SecondaryDrawingOrder:
+class SecondaryDrawingOrder(PDU):
     """
     https://msdn.microsoft.com/en-us/library/cc241611.aspx
     """
     def __init__(self, controlFlags, orderLength, extraFlags, orderType, payload):
+        super().__init__(payload)
         self.controlFlags = controlFlags
         self.orderLength = orderLength
         self.extraFlags = extraFlags

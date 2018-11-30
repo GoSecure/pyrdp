@@ -122,7 +122,7 @@ class ShareCapability(Capability):
         self.nodeID = nodeID
 
 
-class ColorCacheCapabilty(Capability):
+class ColorCacheCapability(Capability):
     def __init__(self, colorTableCacheSize):
         Capability.__init__(self, CapabilityType.CAPSTYPE_COLORCACHE)
         self.colorTableCacheSize = colorTableCacheSize

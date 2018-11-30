@@ -17,8 +17,9 @@ class RDPLicenseErrorAlertPDU(RDPLicensingPDU):
         self.blob = blob
 
 
-class RDPLicenseBinaryBlob:
+class RDPLicenseBinaryBlob(PDU):
     def __init__(self, type, data):
+        super().__init__()
         self.type = type
         self.data = data
 

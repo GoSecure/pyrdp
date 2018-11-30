@@ -1,4 +1,5 @@
 from rdpy.enum.rdp import PointerEventType
+from rdpy.pdu.base_pdu import PDU
 
 
 class Point:
@@ -7,8 +8,9 @@ class Point:
         self.y = y
 
 
-class PointerEvent:
+class PointerEvent(PDU):
     def __init__(self, messageType):
+        super().__init__()
         self.messageType = messageType
 
 

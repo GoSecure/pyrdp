@@ -7,7 +7,8 @@ class RDPSecurityPDU(PDU):
         self.header = header
 
 
-class RDPSecurityExchangePDU:
+class RDPSecurityExchangePDU(PDU):
     def __init__(self, header, clientRandom):
+        super().__init__()
         self.header = header
         self.clientRandom = clientRandom
