@@ -8,6 +8,7 @@ from rdpy.enum.core import ParserMode
 from rdpy.enum.rdp import RDPFastPathInputEventType, \
     RDPFastPathSecurityFlags, FIPSVersion, FastPathOutputCompressionType, RDPFastPathOutputEventType, \
     DrawingOrderControlFlags, EncryptionMethod
+from rdpy.parser.parser import Parser
 from rdpy.parser.rdp.common import RDPCommonParser
 from rdpy.parser.rdp.security import RDPBasicSecurityParser
 from rdpy.pdu.rdp.fastpath import FastPathEventRaw, RDPFastPathPDU, FastPathEventScanCode, FastPathBitmapEvent, \
@@ -243,8 +244,7 @@ class RDPFIPSFastPathParser(RDPSignedFastPathParser):
         return RDPSignedFastPathParser.calculatePDULength(self, pdu) + 4
 
 
-
-class RDPInputEventParser:
+class RDPInputEventParser(Parser):
     INPUT_EVENT_LENGTHS = {
         RDPFastPathInputEventType.FASTPATH_INPUT_EVENT_SCANCODE: 2,
         RDPFastPathInputEventType.FASTPATH_INPUT_EVENT_MOUSE: 7,
@@ -312,7 +312,7 @@ class RDPInputEventParser:
         return rawData.getvalue()
 
 
-class RDPOutputEventParser:
+class RDPOutputEventParser(Parser):
     def getEventLength(self, data):
         if isinstance(data, FastPathEventRaw):
             return len(data.data)

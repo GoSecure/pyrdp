@@ -3,10 +3,11 @@ from io import BytesIO
 from rdpy.core.helper_methods import decodeUTF16LE
 from rdpy.core.packing import Uint32LE, Uint16LE
 from rdpy.enum.rdp import ClientInfoFlags
+from rdpy.parser.parser import Parser
 from rdpy.pdu.rdp.client_info import RDPClientInfoPDU
 
 
-class RDPClientInfoParser:
+class RDPClientInfoParser(Parser):
     """
     Read and write the RDP ClientInfo PDU which contains very useful information.
     See https://msdn.microsoft.com/en-us/library/cc240475.aspx
