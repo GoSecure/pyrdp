@@ -4,7 +4,7 @@ from io import BytesIO
 from Crypto.PublicKey import RSA
 from Crypto.Util.number import bytes_to_long, long_to_bytes
 
-from rdpy.core.helper_methods import decodeUTF16LE
+from rdpy.core.helper_methods import decodeUTF16LE, encodeUTF16LE
 from rdpy.core.packing import Uint16LE, Uint32LE, Uint8
 from rdpy.core.stream import StrictStream
 from rdpy.enum.rdp import RDPConnectionDataType, ServerCertificateType, RDPVersion, ColorDepth, KeyboardType, \
@@ -194,7 +194,7 @@ class RDPClientConnectionParser(Parser):
         stream.write(Uint16LE.pack(core.sasSequence))
         stream.write(Uint32LE.pack(core.keyboardLayout))
         stream.write(Uint32LE.pack(core.clientBuild))
-        stream.write(core.clientName.encode("utf-16le").ljust(32, b"\x00")[: 32])
+        stream.write(encodeUTF16LE(core.clientName).ljust(32, b"\x00")[: 32])
         stream.write(Uint32LE.pack(core.keyboardType))
         stream.write(Uint32LE.pack(core.keyboardSubType))
         stream.write(Uint32LE.pack(core.keyboardFunctionKey))
@@ -207,7 +207,7 @@ class RDPClientConnectionParser(Parser):
             stream.write(Uint16LE.pack(core.highColorDepth))
             stream.write(Uint16LE.pack(core.supportedColorDepths))
             stream.write(Uint16LE.pack(core.earlyCapabilityFlags))
-            stream.write(core.clientDigProductId.encode("utf-16le").ljust(64, b"\x00")[: 64])
+            stream.write(encodeUTF16LE(core.clientDigProductId).ljust(64, b"\x00")[: 64])
             stream.write(Uint8.pack(core.connectionType))
             stream.write(b"\x00")
             stream.write(Uint32LE.pack(core.serverSelectedProtocol))
