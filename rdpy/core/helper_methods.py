@@ -9,7 +9,7 @@ def decodeUTF16LE(data: bytes) -> str:
     :param data: The data to decode as utf-16.
     :return: The python string
     """
-    return data.decode("utf-16le", errors="surrogatepass").strip("\x00")
+    return data.decode("utf-16le", errors="backslashreplace").strip("\x00")
 
 
 def encodeUTF16LE(string: str) -> bytes:
@@ -18,4 +18,4 @@ def encodeUTF16LE(string: str) -> bytes:
     :param string: The python string to encode to bytes
     :return: The raw bytes
     """
-    return string.encode("utf-16le", errors="surrogatepass")
+    return string.encode("utf-16le", errors="backslashreplace")
