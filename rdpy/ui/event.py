@@ -84,7 +84,7 @@ class RSSEventHandler(RDPPlayerMessageObserver):
             self.text.insertPlainText(char if self.writeInCaps else char.lower())
 
     def onMousePosition(self, x: int, y: int):
-        pass
+        self.viewer.setMousePosition(x, y)
 
     def onBitmap(self, event):
         """

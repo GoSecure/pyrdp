@@ -23,9 +23,12 @@ Qt specific code
 QRemoteDesktop is a widget use for render in rdpy
 """
 
-from PyQt4 import QtGui
+from PyQt4 import QtGui, Qt, QtCore
 
 import rle
+
+from PyQt4.QtCore import QPoint
+from PyQt4.QtGui import QColor
 
 import rdpy.core.log as log
 
@@ -99,6 +102,8 @@ class QRemoteDesktop(QtGui.QWidget):
         self.setMouseTracking(True)
         #buffer image
         self._buffer = QtGui.QImage(width, height, QtGui.QImage.Format_RGB32)
+        self.mouseX = width / 2
+        self.mouseY = height / 2
 
 
     def notifyImage(self, x, y, qimage, width, height):
@@ -112,6 +117,11 @@ class QRemoteDesktop(QtGui.QWidget):
         with QtGui.QPainter(self._buffer) as qp:
             qp.drawImage(x, y, qimage, 0, 0, width, height)
         #force update
+        self.update()
+
+    def setMousePosition(self, x, y):
+        self.mouseX = x
+        self.mouseY = y
         self.update()
 
     def resize(self, width, height):
@@ -131,6 +141,8 @@ class QRemoteDesktop(QtGui.QWidget):
         #draw in widget
         with QtGui.QPainter(self) as qp:
             qp.drawImage(0, 0, self._buffer)
+            qp.setBrush(QColor.fromRgb(255, 255, 0, 180))
+            qp.drawEllipse(QPoint(self.mouseX, self.mouseY), 5, 5)
         
     def mouseMoveEvent(self, event):
         """
