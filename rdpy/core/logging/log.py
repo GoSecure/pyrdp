@@ -7,7 +7,7 @@ def get_formatter():
     """
     Get the log formatter used for the RDPY library.
     """
-    return logging.Formatter("[%(asctime)s] - %(name)-35s - %(levelname)-10s - %(message)s")
+    return logging.Formatter("[{asctime}] - {name:<35} - {levelname:<10} - {message}", style="{")
 
 
 def prepare_rdpy_logger(logLevel=logging.INFO):
@@ -56,17 +56,17 @@ def get_ssl_logger():
     return logging.getLogger("ssl")
 
 
-def info(message):
-    get_logger().info(message)
+def info(message, args=None):
+    get_logger().info(message, args)
 
 
-def debug(message):
-    get_logger().debug(message)
+def debug(message, args=None):
+    get_logger().debug(message, args)
 
 
-def warning(message):
-    get_logger().warning(message)
+def warning(message, args=None):
+    get_logger().warning(message, args)
 
 
-def error(message):
-    get_logger().error(message)
+def error(message, args=None):
+    get_logger().error(message, args)

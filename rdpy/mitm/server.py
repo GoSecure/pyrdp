@@ -122,7 +122,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
             try:
                 self.socket.connect((recordHost, recordPort))
             except socket.error as e:
-                self.log.error("Could not connect to liveplayer: {}".format(e))
+                self.log.error("Could not connect to liveplayer: %(error)s", {"error": e})
                 self.socket = None
 
         recordingLayers = [FileLayer(self.fileHandle)]
@@ -188,7 +188,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
             self.clientConnector = None
 
     def onUnknownTPKTHeader(self, header):
-        self.log.error("Closing the connection because an unknown TPKT header was received. Header: 0x%02lx" % header)
+        self.log.error("Closing the connection because an unknown TPKT header was received. Header: 0x%(header)02lx",
+                       {"header": header})
         self.disconnect()
 
     def onConnectionRequest(self, pdu):
@@ -200,9 +201,9 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.originalNegotiationPDU = parser.parse(pdu.payload)
 
         if self.originalNegotiationPDU.cookie:
-            self.log.info(self.originalNegotiationPDU.cookie.decode())
+            self.log.info("%(cookie)s", {"cookie": self.originalNegotiationPDU.cookie.decode()})
         else:
-            self.log.info("No cookie for this connection")
+            self.log.info("No cookie for this connection %(cookie)s", {"cookie": ""})
 
         self.targetNegotiationPDU = RDPNegotiationRequestPDU(
             self.originalNegotiationPDU.cookie,
@@ -474,16 +475,16 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         """
         pdu = RDPClientInfoParser().parse(data)
 
+        clientAddress = None
         if pdu.extraInfo:
-            self.log.info("Client address: {}".format(decodeUTF16LE(pdu.extraInfo.clientAddress)))
-        else:
-            self.log.info("Client address: None")
+            clientAddress = decodeUTF16LE(pdu.extraInfo.clientAddress)
+        self.log.info("Client address: %(clientAddress)s", {"clientAddress": clientAddress})
 
-        self.log.debug("Client Info received: {}".format(pdu))
+        self.log.debug("Client Info received: %(clientInfoPDU)s", {"clientInfoPDU": pdu})
         self.connectionsLog.info("CLIENT INFO RECEIVED")
-        self.connectionsLog.info("USER: {}".format(pdu.username))
-        self.connectionsLog.info("PASSWORD: {}".format(pdu.password))
-        self.connectionsLog.info("DOMAIN: {}".format(pdu.domain))
+        self.connectionsLog.info("USER: %(username)s", {"username": pdu.username})
+        self.connectionsLog.info("PASSWORD: %(password)s", {"password": pdu.password})
+        self.connectionsLog.info("DOMAIN: %(domain)s", {"domain": pdu.domain})
 
         self.recorder.record(pdu, RDPPlayerMessageType.CLIENT_INFO)
         self.client.onClientInfoPDUReceived(pdu)

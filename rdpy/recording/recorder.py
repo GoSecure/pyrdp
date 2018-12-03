@@ -93,7 +93,7 @@ class FileLayer(Layer):
         if not self.file_descriptor.closed:
             self.file_descriptor.write(data)
         else:
-            log.error("Recording file handle closed, cannot write message: {}".format(data))
+            log.error("Recording file handle closed, cannot write message: %(message)s", {"message": data})
 
 
 class SocketLayer(Layer):
@@ -119,5 +119,5 @@ class SocketLayer(Layer):
                 log.debug("sending {} to {}".format(data, self.socket.getpeername()))
                 self.socket.send(data)
             except Exception as e:
-                log.error("Cant send data over the network socket: {}".format(e))
+                log.error("Cant send data over the network socket: %(data)s", {"data": e})
                 self.isConnected = False

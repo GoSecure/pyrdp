@@ -139,21 +139,21 @@ def main():
         key, certificate = getSSLPaths()
 
         if os.path.exists(key) and os.path.exists(certificate):
-            mitm_log.info("Using existing private key: %s" % key)
-            mitm_log.info("Using existing certificate: %s" % certificate)
+            mitm_log.info("Using existing private key: %(privateKey)s", {"privateKey": key})
+            mitm_log.info("Using existing certificate: %(certificate)s", {"certificate": certificate})
         else:
             mitm_log.info("Generating a private key and certificate for SSL connections")
 
             if generateCertificate(key, certificate):
-                mitm_log.info("Private key path: %s" % key)
-                mitm_log.info("Certificate path: %s" % certificate)
+                mitm_log.info("Private key path: %(privateKeyPath)s", {"privateKeyPath": key})
+                mitm_log.info("Certificate path: %(certificatePath)s", {"certificatePath": certificate})
             else:
                 mitm_log.error("Generation failed. Please provide the private key and certificate with -k and -c")
     else:
         key, certificate = args.private_key, args.certificate
     listenPort = int(args.listen)
     reactor.listenTCP(listenPort, MITMServerFactory(targetHost, targetPort, key, certificate, args.destination_ip, int(args.destination_port)))
-    mitm_log.info("MITM Server listening on port %d" % listenPort)
+    mitm_log.info("MITM Server listening on port %(port)d", {"port": listenPort})
     reactor.run()
 
 

@@ -28,7 +28,7 @@ class ServerThread(QThread):
         server = self.loop.create_server(self.protocolFactory, host=self.host, port=self.port)
         server = self.loop.run_until_complete(server)
 
-        logging.info("Listening on %s:%d" % (self.host, self.port))
+        logging.info("Listening on %(listenHost)s:%(listenPort)d", {"listenHost": self.host, "listenPort": self.port})
         self.loop.run_forever()
 
     def stop(self):

@@ -9,6 +9,8 @@ import logging
 class JSONFormatter(logging.Formatter):
     """
     Formatter that returns a single JSON line of the provided data.
+    Example usage: logger.info("MITM Server listening on port %(port)d", {"port": listenPort})
+    Will output: {"message": "MITM Server listening on port %(port)d", "loggerName": "mitm", "timestamp": "2018-12-03T10:51:S.f-0500", "level": "INFO", "port": 3388}
     """
 
     def __init__(self):

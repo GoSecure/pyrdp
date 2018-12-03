@@ -74,9 +74,10 @@ class RDPSecurityLayer(Layer):
             raise
         except Exception:
             if isinstance(pdu, RDPSecurityExchangePDU):
-                log.error("Exception occurred when receiving Security Exchange. Data: %s" % hexlify(data))
+                log.error("Exception occurred when receiving Security Exchange. Data: %(securityExchangeData)s",
+                          {"securityExchangeData": hexlify(data)})
             else:
-                log.error("Exception occurred when receiving: %s" % hexlify(pdu.payload))
+                log.error("Exception occurred when receiving: %(data)s", {"data": hexlify(pdu.payload)})
             raise
 
     def dispatchPDU(self, pdu):

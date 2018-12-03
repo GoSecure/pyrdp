@@ -47,7 +47,10 @@ class PassiveDeviceRedirectionObserver(Observer):
         elif isinstance(pdu, DeviceIOResponsePDU):
             self.dealWithResponse(pdu)
         elif isinstance(pdu, DeviceListAnnounceRequest):
-            [self.mitm_log.info(f"{device.deviceType.name} mapped with ID {device.deviceId}: {device.deviceData}") for device in pdu.deviceList]
+            [self.mitm_log.info("%(deviceName)s mapped with ID %(deviceId)d: %(deviceData)s",
+                                {"deviceName": device.deviceType.name, "deviceId": device.deviceId,
+                                 "deviceData": device.deviceData.decode(errors="backslashreplace")})
+             for device in pdu.deviceList]
         else:
             self.mitm_log.debug(f"Received unparsed PDU: {pdu.packetId.name}")
 
@@ -75,8 +78,8 @@ class PassiveDeviceRedirectionObserver(Observer):
         if pdu.completionId in self.completionIdInProgress.keys():
             requestPDU = self.completionIdInProgress[pdu.completionId]
             if pdu.ioStatus >> 30 == IOOperationSeverity.STATUS_SEVERITY_ERROR:
-                self.mitm_log.warning(f"Received an IO Response with an error IO status: {pdu}\n"
-                                      f"For request {requestPDU}")
+                self.mitm_log.warning("Received an IO Response with an error IO status: %(responsePdu)s "
+                                      "For request %(requestPdu)s", {"responsePdu": pdu.__repr__(), "requestPdu": requestPDU.__repr__()})
             if isinstance(requestPDU, DeviceReadRequestPDU):
                 self.mitm_log.debug(f"Read response received.")
                 self.dealWithReadResponse(pdu, requestPDU)
@@ -112,7 +115,8 @@ class PassiveDeviceRedirectionObserver(Observer):
         self.pduToSend = createResponse
         if requestPDU.desiredAccess & (FileAccess.GENERIC_READ | FileAccess.FILE_READ_DATA) and \
            requestPDU.createOptions & CreateOption.FILE_NON_DIRECTORY_FILE != 0:
-            self.mitm_log.info(f"Opening file {requestPDU.path.decode('utf-16')} as number {createResponse.fileId}")
+            self.mitm_log.info("Opening file %(path)s as number %(number)d",
+                               {"path": decodeUTF16LE(requestPDU.path), "number": createResponse.fileId})
             self.openedFiles[createResponse.fileId] = requestPDU.path
 
     def dealWithCloseResponse(self, pdu: DeviceIOResponsePDU, requestPDU: DeviceCloseRequestPDU):
@@ -120,9 +124,10 @@ class PassiveDeviceRedirectionObserver(Observer):
         Clean everything and write the file to disk.
         """
         if requestPDU.fileId in self.openedFiles.keys():
-            self.mitm_log.info(f"Closing file {requestPDU.fileId}.")
+            self.mitm_log.info("Closing file: %(fileId)s.", {"fileId": requestPDU.fileId})
             path = self.bytesToPath(self.openedFiles[requestPDU.fileId])
-            self.writeToDisk(path, self.finalFiles[path])
+            if path in self.finalFiles:
+                self.writeToDisk(path, self.finalFiles[path])
             self.openedFiles.pop(requestPDU.fileId)
 
     def sendPDU(self, pdu: DeviceRedirectionPDU):
@@ -138,7 +143,7 @@ class PassiveDeviceRedirectionObserver(Observer):
         """
         goodPath = "./saved_files/" + path.replace("\\", "/").replace("..", "")
         os.makedirs(os.path.dirname(goodPath), exist_ok=True)
-        self.mitm_log.info(f"Writing {goodPath} to disk.")
+        self.mitm_log.info("Writing %(path)s to disk.", {"path": goodPath})
         with open(goodPath, "wb") as file:
             file.write(stream.getvalue())
 
@@ -146,7 +151,7 @@ class PassiveDeviceRedirectionObserver(Observer):
         """
         Converts a windows-encoded path to a beautiful, python-ready path.
         """
-        return decodeUTF16LE(pathAsBytes)
+        return decodeUTF16LE(pathAsBytes).strip("\00")
 
 
 class ClientPassiveDeviceRedirectionObserver(PassiveDeviceRedirectionObserver):

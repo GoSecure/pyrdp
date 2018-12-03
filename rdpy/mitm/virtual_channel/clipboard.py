@@ -58,7 +58,7 @@ class PassiveClipboardChannelObserver(Observer):
             if self.forwardNextDataResponse:
                 self.layer.send(self.clipboardParser.write(pdu))
             if isinstance(pdu, FormatDataResponsePDU):
-                self.mitm_clipboard_log.info(hexlify(pdu.requestedFormatData).decode())
+                self.mitm_clipboard_log.info("%(clipboardData)s", {"clipboardData": hexlify(pdu.requestedFormatData).decode()})
                 self.recorder.record(pdu, RDPPlayerMessageType.CLIPBOARD_DATA)
                 self.forwardNextDataResponse = True
 

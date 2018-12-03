@@ -132,7 +132,8 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.tcp.disconnect()
 
     def onUnknownTPKTHeader(self, header):
-        self.log.error("Closing the connection because an unknown TPKT header was received. Header: 0x%02lx" % header)
+        self.log.error("Closing the connection because an unknown TPKT header was received. Header: 0x%(header)02lx",
+                       {"header": header})
         self.disconnect()
 
     def onConnectionConfirm(self, pdu):

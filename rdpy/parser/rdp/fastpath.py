@@ -106,7 +106,7 @@ class RDPBasicFastPathParser(RDPBasicSecurityParser):
             except KeyboardInterrupt:
                 raise
             except Exception:
-                log.error("Exception occurred when receiving: %s" % hexlify(eventData.encode))
+                log.error("Exception occurred when receiving: %(data)s", {"data": hexlify(eventData.encode)})
                 raise
 
             events.append(event)
