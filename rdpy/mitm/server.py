@@ -200,7 +200,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.originalNegotiationPDU = parser.parse(pdu.payload)
 
         if self.originalNegotiationPDU.cookie:
-            self.log.info(self.originalNegotiationPDU.cookie)
+            self.log.info(self.originalNegotiationPDU.cookie.decode())
         else:
             self.log.info("No cookie for this connection")
 

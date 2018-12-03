@@ -36,24 +36,11 @@ class RDPClientInfoParser(Parser):
         alternateShellLength = Uint16LE.unpack(stream) + nullByteCount * unicodeMultiplier
         workingDirLength = Uint16LE.unpack(stream) + nullByteCount * unicodeMultiplier
 
-        domain = stream.read(domainLength)
-        username = stream.read(usernameLength)
-        password = stream.read(passwordLength)
-        alternateShell = stream.read(alternateShellLength)
-        workingDir = stream.read(workingDirLength)
-
-        if isUnicode:
-            domain = decodeUTF16LE(domain)
-            username = decodeUTF16LE(username)
-            password = decodeUTF16LE(password)
-            alternateShell = decodeUTF16LE(alternateShell)
-            workingDir = decodeUTF16LE(workingDir)
-
-        domain = domain
-        username = username
-        password = password
-        alternateShell = alternateShell
-        workingDir = workingDir
+        domain = decodeUTF16LE(stream.read(domainLength))
+        username = decodeUTF16LE(stream.read(usernameLength))
+        password = decodeUTF16LE(stream.read(passwordLength))
+        alternateShell = decodeUTF16LE(stream.read(alternateShellLength))
+        workingDir = decodeUTF16LE(stream.read(workingDirLength))
 
         extraInfoBytes = stream.read()
 

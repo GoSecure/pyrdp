@@ -10,12 +10,10 @@ class RDPNegotiationRequestParser(Parser):
     """
     Parser for RDP negotiaton requests (Connection Request payloads).
     """
-    def parse(self, data):
+    def parse(self, data: bytes) -> RDPNegotiationRequestPDU:
         """
         Parse a negotiation request.
         :param data: the request data.
-        :type data: bytes
-        :return: RDPNegotiationRequestPDU
         """
 
         cookie = None
