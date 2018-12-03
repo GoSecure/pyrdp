@@ -57,16 +57,16 @@ def get_ssl_logger():
 
 
 def info(message, args={}):
-    get_logger().info(message, *args)
+    get_logger().info(message, args)
 
 
 def debug(message, args={}):
-    get_logger().debug(message, *args)
+    get_logger().debug(message, args)
 
 
 def warning(message, args={}):
-    get_logger().warning(message, *args)
+    get_logger().warning(message, args)
 
 
 def error(message, args={}):
-    get_logger().error(message, *args)
+    get_logger().error(message, args)
