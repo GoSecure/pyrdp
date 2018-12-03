@@ -194,4 +194,5 @@ class QRemoteDesktop(QtGui.QWidget):
 
     def clear(self):
         self._buffer = QtGui.QImage(self._buffer.width(), self._buffer.height(), QtGui.QImage.Format_RGB32)
+        self.setMousePosition(self._buffer.width() // 2, self._buffer.height() // 2)
         self.repaint()
