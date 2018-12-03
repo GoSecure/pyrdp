@@ -450,11 +450,13 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         pdu.parsedCapabilitySets[CapabilityType.CAPSETTYPE_MULTIFRAGMENTUPDATE] = MultifragmentUpdateCapability(0)
 
         # Disable virtual channel compression
-        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].flags = 0
+        if CapabilityType.CAPSTYPE_VIRTUALCHANNEL in pdu.parsedCapabilitySets.keys():
+            pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].flags = 0
 
         # Override the bitmap cache capability set with null values.
-        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAPCACHE] =\
-            Capability(CapabilityType.CAPSTYPE_BITMAPCACHE, b"\x00" * 36)
+        if CapabilityType.CAPSTYPE_BITMAPCACHE in pdu.parsedCapabilitySets.keys():
+            pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAPCACHE] =\
+                Capability(CapabilityType.CAPSTYPE_BITMAPCACHE, b"\x00" * 36)
 
     # Security Exchange
     def onSecurityExchangeReceived(self, pdu):
