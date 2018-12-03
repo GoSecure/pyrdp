@@ -24,7 +24,7 @@ class JSONFormatter(logging.Formatter):
             "level": record.levelname,
         }
         data.update(record.args)
-        return json.dumps(data)
+        return json.dumps(data, ensure_ascii=False, default=lambda item: item.__repr__())
 
 
 class SSLSecretFormatter(logging.Formatter):
