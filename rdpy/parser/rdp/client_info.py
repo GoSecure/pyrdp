@@ -89,11 +89,11 @@ class RDPClientInfoParser(Parser):
         stream.write(Uint16LE.pack(passwordLength))
         stream.write(Uint16LE.pack(alternateShellLength))
         stream.write(Uint16LE.pack(workingDirLength))
-        stream.write(encodeUTF16LE(domain))
-        stream.write(encodeUTF16LE(username))
-        stream.write(encodeUTF16LE(password))
-        stream.write(encodeUTF16LE(alternateShell))
-        stream.write(encodeUTF16LE(workingDir))
+        stream.write(domain)
+        stream.write(username)
+        stream.write(password)
+        stream.write(alternateShell)
+        stream.write(workingDir)
 
         if pdu.extraInfo is not None:
             extraInfoBytes = self.writeExtraInfo(pdu.extraInfo)
