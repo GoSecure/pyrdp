@@ -7,7 +7,7 @@ def get_formatter():
     """
     Get the log formatter used for the RDPY library.
     """
-    return logging.Formatter("[%(asctime)s] - %(name)s - %(levelname)s - %(message)s")
+    return logging.Formatter("[%(asctime)s] - %(name)-35s - %(levelname)-10s - %(message)s")
 
 
 def prepare_rdpy_logger(logLevel=logging.INFO):

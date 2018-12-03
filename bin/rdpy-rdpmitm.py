@@ -11,6 +11,7 @@ from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
 
 from rdpy.core.logging import log
+from rdpy.core.logging.formatters import JSONFormatter
 from rdpy.mitm.server import MITMServer
 
 
@@ -69,7 +70,7 @@ def prepare_loggers(logLevel):
     mitm_connections_logger = logging.getLogger("mitm.connections")
     mitm_connections_logger.setLevel(logLevel)
 
-    formatter = logging.Formatter("[%(asctime)s] - %(name)s - %(levelname)s - %(message)s")
+    formatter = log.get_formatter()
 
     stream_handler = logging.StreamHandler()
     file_handler = logging.handlers.TimedRotatingFileHandler("log/mitm.log", when="D")
