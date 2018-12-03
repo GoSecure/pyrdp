@@ -1,11 +1,15 @@
-from PyQt4.QtCore import QTimer
+import logging
 
-from rdpy.core.observer import Observer
-from rdpy.core.subject import Subject, ObservedBy
+from PyQt4.QtCore import pyqtSignal, Qt
+from PyQt4.QtGui import QWidget, QLabel, QSlider, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QIcon
+
 from rdpy.layer.recording import RDPPlayerMessageLayer
 from rdpy.layer.tpkt import TPKTLayer
 from rdpy.player.BasePlayerWindow import BasePlayerWindow
+from rdpy.player.ClickableProgressBar import ClickableProgressBar
 from rdpy.player.RDPConnectionTab import RDPConnectionTab
+from rdpy.player.ReplayThread import ReplayThread
+from rdpy.ui.PlayPauseButton import PlayPauseButton
 from rdpy.ui.event import RSSEventHandler
 from rdpy.ui.qt4 import QRemoteDesktop
 from rdpy.ui.rss import RSSAdaptor
@@ -19,91 +23,14 @@ class ReplayWindow(BasePlayerWindow):
     def __init__(self):
         BasePlayerWindow.__init__(self)
 
-    def openFile(self, fileName):
+    def openFile(self, fileName: str):
+        """
+        Open a replay file and open a new tab.
+        :param fileName: replay path.
+        """
         tab = ReplayTab(fileName)
         self.addTab(tab, fileName)
         self.log.debug("Loading replay file {}".format(fileName))
-
-    def onPlay(self):
-        self.log.debug("Start replay file")
-        tab = self.currentWidget()
-
-        if tab:
-            tab.start()
-
-    def onStop(self):
-        self.log.debug("Stop replay file")
-        tab = self.currentWidget()
-
-        if tab:
-            tab.stop()
-
-    def onRestart(self):
-        self.log.debug("Rewind replay file")
-        tab = self.currentWidget()
-
-        if tab:
-            tab.restart()
-
-    def onSpeedChanged(self, newSpeed):
-        self.log.debug("Change replay speed to {}".format(newSpeed))
-        tab = self.currentWidget()
-
-        if tab:
-            tab.setSpeedMultiplier(newSpeed)
-
-
-
-class RSSTimedEventHandlerObserver(Observer):
-    def onEventHandled(self):
-        pass
-
-@ObservedBy(RSSTimedEventHandlerObserver)
-class RSSTimedEventHandler(RSSEventHandler, Subject):
-    def __init__(self, viewer, text):
-        RSSEventHandler.__init__(self, viewer, text)
-        Subject.__init__(self)
-        self.lastTimestamp = None
-        self.speedMultiplier = 1
-        self.timer = None
-
-    def setSpeedMultiplier(self, speed):
-        self.speedMultiplier = speed
-
-    def onPDUReceived(self, pdu):
-        if self.lastTimestamp is None:
-            self.dispatchPDU(pdu)
-        else:
-            interval = (pdu.timestamp - self.lastTimestamp) / self.speedMultiplier
-
-            self.timer = QTimer()
-            self.timer.timeout.connect(lambda: self.dispatchPDU(pdu))
-            self.timer.setSingleShot(True)
-            self.timer.start(interval)
-
-    def dispatchPDU(self, pdu):
-        self.timer = None
-        self.lastTimestamp = pdu.timestamp
-        RSSEventHandler.onPDUReceived(self, pdu)
-        self.observer.onEventHandled()
-
-    def start(self):
-        if self.timer and not self.timer.isActive():
-            self.timer.start()
-
-    def stop(self):
-        if self.timer:
-            self.timer.stop()
-
-    def restart(self):
-        if self.timer:
-            self.timer.stop()
-            self.timer = None
-            self.lastTimestamp = None
-
-    def hasQueuedEvent(self):
-        return self.timer is not None
-
 
 
 class ReplayTab(RDPConnectionTab):
@@ -111,17 +38,29 @@ class ReplayTab(RDPConnectionTab):
     Tab that displays a RDP Connection that is being replayed from a file.
     """
 
-    def __init__(self, fileName):
+    def __init__(self, fileName: str):
         """
-        :param fileName: name of the file to read
-        :type fileName: str
+        :param fileName: name of the file to read.
         """
         self.viewer = QRemoteDesktop(800, 600, RSSAdaptor())
         RDPConnectionTab.__init__(self, self.viewer)
+
         self.fileName = fileName
         self.file = open(self.fileName, "rb")
-        self.eventHandler = RSSTimedEventHandler(self.widget, self.text)
-        self.eventHandler.createObserver(onEventHandled=self.readEvent)
+        self.eventHandler = RSSEventHandler(self.widget, self.text)
+        self.thread = ReplayThread(self.file)
+        self.thread.eventReached.connect(self.readEvent)
+        self.thread.timeUpdated.connect(self.onTimeUpdated)
+        self.thread.clearNeeded.connect(self.clear)
+        self.thread.start()
+
+        self.controlBar = ControlBar(self.thread.getDuration())
+        self.controlBar.play.connect(self.thread.play)
+        self.controlBar.pause.connect(self.thread.pause)
+        self.controlBar.seek.connect(self.thread.seek)
+        self.controlBar.speedChanged.connect(self.thread.setSpeed)
+
+        self.layout().insertWidget(0, self.controlBar)
 
         self.tpkt = TPKTLayer()
         self.message = RDPPlayerMessageLayer()
@@ -129,7 +68,13 @@ class ReplayTab(RDPConnectionTab):
         self.tpkt.setNext(self.message)
         self.message.addObserver(self.eventHandler)
 
-    def readEvent(self):
+    def readEvent(self, position: int):
+        """
+        Read an event from the file at the given position.
+        :param position: the position of the event in the file.
+        """
+        self.file.seek(position)
+
         data = self.file.read(4)
         self.tpkt.recv(data)
 
@@ -137,37 +82,89 @@ class ReplayTab(RDPConnectionTab):
         data = self.file.read(length)
         self.tpkt.recv(data)
 
-    def start(self):
+    def onTimeUpdated(self, currentTime: float):
         """
-        Start the RDP Connection replay
+        Called everytime the thread ticks.
+        :param currentTime: the current time.
         """
-        if self.eventHandler.hasQueuedEvent():
-            self.eventHandler.start()
-        else:
-            self.readEvent()
+        self.controlBar.timeSlider.blockSignals(True)
+        self.controlBar.timeSlider.setValue(int(currentTime * 1000))
+        self.controlBar.timeSlider.blockSignals(False)
 
-    def stop(self):
+    def clear(self):
         """
-        Sets a flag to stop the replay on the next event.
+        Clear the UI.
         """
-        self.eventHandler.stop()
-
-    def restart(self):
-        """
-        Resets the replay to start it over.
-        """
-        self.log.debug("Resetting current replay {}".format(self))
-        self.eventHandler.restart()
         self.viewer.clear()
         self.text.setText("")
-        self.file.seek(0)
-
-    def onConnectionClosed(self):
-        self.text.append("<Connection closed>")
-        self.log.debug("Replay file ended, replay done.")
-
-    def setSpeedMultiplier(self, speed):
-        self.eventHandler.setSpeedMultiplier(speed)
 
     def onClose(self):
-        pass
+        self.thread.close()
+
+
+class ControlBar(QWidget):
+    """
+    Widget that contains the play/pause button, the progress bar and the speed slider.
+    """
+    play = pyqtSignal(name="Play")
+    pause = pyqtSignal(name="Pause")
+    seek = pyqtSignal(float, name="Time changed")
+    speedChanged = pyqtSignal(int, name="Speed changed")
+
+    def __init__(self, duration: float, parent: QWidget = None):
+        QWidget.__init__(self, parent)
+
+        self.log = logging.getLogger("liveplayer")
+
+        self.button = PlayPauseButton()
+        self.button.setMaximumWidth(100)
+        self.button.clicked.connect(self.onButtonClicked)
+        self.button.setIcon(QIcon.fromTheme("media-playback-start"))
+
+        self.timeSlider = ClickableProgressBar()
+        self.timeSlider.setMinimum(0)
+        self.timeSlider.setMaximum(int(duration * 1000))
+        self.timeSlider.valueChanged.connect(self.onSeek)
+
+        self.speedLabel = QLabel("Speed: 1x")
+
+        self.speedSlider = QSlider(Qt.Horizontal)
+        self.speedSlider.setMaximumWidth(300)
+        self.speedSlider.setMinimum(1)
+        self.speedSlider.setMaximum(10)
+        self.speedSlider.valueChanged.connect(self.onSpeedChanged)
+
+        vertical = QVBoxLayout()
+
+        horizontal = QHBoxLayout()
+        horizontal.addWidget(self.speedLabel)
+        horizontal.addWidget(self.speedSlider)
+        horizontal.addItem(QSpacerItem(20, 40, QSizePolicy.Expanding, QSizePolicy.Expanding))
+        vertical.addLayout(horizontal)
+
+        horizontal = QHBoxLayout()
+        horizontal.addWidget(self.button)
+        horizontal.addWidget(self.timeSlider)
+        vertical.addLayout(horizontal)
+
+        self.setLayout(vertical)
+        self.setGeometry(0, 0, 80, 60)
+
+    def onButtonClicked(self):
+        if self.button.playing:
+            self.log.debug("Play clicked")
+            self.play.emit()
+        else:
+            self.log.debug("Pause clicked")
+            self.pause.emit()
+
+    def onSeek(self):
+        time = self.timeSlider.value() / 1000.0
+        self.log.debug("Seek to {} seconds".format(time))
+        self.seek.emit(time)
+
+    def onSpeedChanged(self):
+        speed = self.speedSlider.value()
+        self.log.debug("Slider changed value: {}".format(speed))
+        self.speedLabel.setText("Speed: {}x".format(speed))
+        self.speedChanged.emit(speed)
