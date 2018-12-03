@@ -4,6 +4,9 @@ Contains custom logging handlers for the library.
 import binascii
 import json
 import logging
+from datetime import datetime
+
+from pytz import reference
 
 
 class JSONFormatter(logging.Formatter):
@@ -20,7 +23,7 @@ class JSONFormatter(logging.Formatter):
         data = {
             "message": record.msg,
             "loggerName": record.name,
-            "timestamp": self.formatTime(record, datefmt="%Y-%m-%dT%l:%M:%S%z"),
+            "timestamp": datetime.strftime(datetime.fromtimestamp(record.created, reference.LocalTimezone()), "%Y-%m-%dT%l:%M:%S.%f%z"),
             "level": record.levelname,
         }
         data.update(record.args)
