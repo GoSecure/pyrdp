@@ -133,7 +133,7 @@ class ReplayThread(QThread):
                     currentIndex += 1
 
             time.sleep(step)
-Duration
+
     def play(self):
         self.queue.put(ReplayThreadEvent.PLAY)
 
