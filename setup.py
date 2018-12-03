@@ -54,6 +54,7 @@ setup(name='rdpy',
             'notify2',
             'pycrypto',
             'appdirs',
-            'names'
+            'names',
+            'pytz'
     ],
 )
