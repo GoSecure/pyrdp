@@ -14,12 +14,10 @@ class RDPClientInfoParser(Parser):
     See https://msdn.microsoft.com/en-us/library/cc240475.aspx
     """
 
-    def parse(self, data):
+    def parse(self, data: bytes) -> RDPClientInfoPDU:
         """
         Decode a Client Info PDU from bytes.
         :param data: the Client Info PDU bytes.
-        :type data: bytes
-        :return: RDPClientInfoPDU
         """
         stream = BytesIO(data)
         codePage = Uint32LE.unpack(stream)
@@ -86,17 +84,16 @@ class RDPClientInfoParser(Parser):
         alternateShellLength = len(alternateShell) - nullByteCount * unicodeMultiplier
         workingDirLength = len(workingDir) - nullByteCount * unicodeMultiplier
 
-
         stream.write(Uint16LE.pack(domainLength))
         stream.write(Uint16LE.pack(usernameLength))
         stream.write(Uint16LE.pack(passwordLength))
         stream.write(Uint16LE.pack(alternateShellLength))
         stream.write(Uint16LE.pack(workingDirLength))
-        stream.write(domain)
-        stream.write(username)
-        stream.write(password)
-        stream.write(alternateShell)
-        stream.write(workingDir)
+        stream.write(encodeUTF16LE(domain))
+        stream.write(encodeUTF16LE(username))
+        stream.write(encodeUTF16LE(password))
+        stream.write(encodeUTF16LE(alternateShell))
+        stream.write(encodeUTF16LE(workingDir))
 
         if pdu.extraInfo is not None:
             extraInfoBytes = self.writeExtraInfo(pdu.extraInfo)
