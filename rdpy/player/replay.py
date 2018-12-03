@@ -119,7 +119,6 @@ class ControlBar(QWidget):
         self.button = PlayPauseButton()
         self.button.setMaximumWidth(100)
         self.button.clicked.connect(self.onButtonClicked)
-        self.button.setIcon(QIcon.fromTheme("media-playback-start"))
 
         self.timeSlider = ClickableProgressBar()
         self.timeSlider.setMinimum(0)

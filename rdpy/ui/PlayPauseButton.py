@@ -12,14 +12,17 @@ class PlayPauseButton(QPushButton):
         self.playText = playText
         self.pauseText = pauseText
         self.playing = False
-        self.setText(self.playText)
+        self.setPlaying(self.playing)
 
     def onClick(self):
-        self.playing = not self.playing
+        self.setPlaying(not self.playing)
+
+    def setPlaying(self, playing):
+        self.playing = playing
 
         if self.playing:
             self.setText(self.pauseText)
             self.setIcon(QIcon.fromTheme("media-playback-pause"))
         else:
             self.setText(self.playText)
-            self.setIcon(QIcon.fromTheme("media-playback-play"))
+            self.setIcon(QIcon.fromTheme("media-playback-start"))
