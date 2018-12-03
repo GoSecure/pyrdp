@@ -20,7 +20,7 @@ class JSONFormatter(logging.Formatter):
         data = {
             "message": record.msg,
             "loggerName": record.name,
-            "timestamp": self.formatTime(record, datefmt="%Y-%m-%dT%H:%M:S.f%z"),
+            "timestamp": self.formatTime(record, datefmt="%Y-%m-%dT%l:%M:%S%z"),
             "level": record.levelname,
         }
         data.update(record.args)
