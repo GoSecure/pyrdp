@@ -87,6 +87,14 @@ def prepare_loggers(logLevel):
     exceptions_logger.propagate = False
     exceptions_logger.addHandler(file_handler)
 
+    jsonFormatter = JSONFormatter()
+    jsonFileHandler = logging.FileHandler("log/mitm.json")
+
+    jsonFileHandler.setFormatter(jsonFormatter)
+    jsonFileHandler.setLevel(logging.INFO)
+
+    mitm_logger.addHandler(jsonFileHandler)
+
 
 def main():
     parser = argparse.ArgumentParser()
