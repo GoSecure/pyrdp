@@ -10,9 +10,10 @@ import names
 from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
 
-from rdpy.core.logging import log
-from rdpy.core.logging.formatters import JSONFormatter
-from rdpy.mitm.server import MITMServer
+from pyrdp.core.logging import log
+from pyrdp.core.logging.formatters import JSONFormatter
+from pyrdp.core.logging.log import LOGGER_NAMES
+from pyrdp.mitm.server import MITMServer
 
 
 class MITMServerFactory(ServerFactory):
@@ -39,7 +40,7 @@ class MITMServerFactory(ServerFactory):
 
 
 def getSSLPaths():
-    config = appdirs.user_config_dir("rdpy", "rdpy")
+    config = appdirs.user_config_dir("pyrdp", "pyrdp")
 
     if not os.path.exists(config):
         os.makedirs(config)
@@ -50,7 +51,7 @@ def getSSLPaths():
 
 
 def generateCertificate(keyPath, certificatePath):
-    result = os.system("openssl req -newkey rsa:2048 -nodes -keyout %s -x509 -days 365 -out %s -subj '/CN=www.example.com/O=RDPY/C=US' 2>/dev/null" % (keyPath, certificatePath))
+    result = os.system("openssl req -newkey rsa:2048 -nodes -keyout %s -x509 -days 365 -out %s -subj '/CN=www.example.com/O=PYRDP/C=US' 2>/dev/null" % (keyPath, certificatePath))
     return result == 0
 
 
@@ -58,7 +59,7 @@ def prepare_loggers(logLevel):
     """
         Sets up the "mitm" and the "mitm.connections" loggers.
     """
-    log.prepare_rdpy_logger(logLevel)
+    log.prepare_pyrdp_logger(logLevel)
     log.prepare_ssl_session_logger()
 
     if not os.path.exists("log"):
@@ -80,10 +81,10 @@ def prepare_loggers(logLevel):
     mitm_logger.addHandler(file_handler)
 
     # Make sure that the library writes to the file as well
-    rdpy_logger = log.get_logger()
-    rdpy_logger.addHandler(file_handler)
+    pyrdp_logger = log.get_logger()
+    pyrdp_logger.addHandler(file_handler)
 
-    exceptions_logger = logging.getLogger("rdpy.exceptions")
+    exceptions_logger = logging.getLogger(LOGGER_NAMES.PYRDP_EXCEPTIONS)
     exceptions_logger.propagate = False
     exceptions_logger.addHandler(file_handler)
 

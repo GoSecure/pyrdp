@@ -8,6 +8,8 @@ README.md~
 dist/
 build/
 rdpy.egg-info/
+pyrdp.egg-info/
+*.log
 out/
 log/
 .idea/

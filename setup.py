@@ -3,46 +3,43 @@
 
 from distutils.core import setup, Extension
 
-setup(name='rdpy',
-    version='1.3.2',
-    description='Remote Desktop Protocol in Python',
+setup(name='pyrdp',
+    version='1.0.0',
+    description='Remote Desktop Protocol Man-in-the-Middle and library for Python3',
     long_description="""
-    This is a Python implementation of the RDP protocol. This started as a fork of https://github.com/citronneur/rdpy,
-    but ended up being a major reimplementation as we started changing the type / parsing systems. Still, part of the
-    code comes from the original rdpy implementation, especially the packages related to encoding, Qt and
-    cryptography.
+    to do.
     """,
     author='Émilio Gonzalez, Francis Labelle',
-    author_email='egonzalez@gosecure.ca, flabelle@gosecure.ca',
+    author_email='egg997@gmail.com, flabelle@gosecure.ca',
     url='https://github.com/GoSecure/rdpy',
     packages=[
-        'rdpy',
-        'rdpy.core',
-        'rdpy.core.logging',
-        'rdpy.crypto',
-        'rdpy.ui',
+        'pyrdp',
+        'pyrdp.core',
+        'pyrdp.core.logging',
+        'pyrdp.crypto',
+        'pyrdp.ui',
 
-        'rdpy.enum',
-        'rdpy.enum.virtual_channel',
-        'rdpy.layer',
-        'rdpy.layer.rdp',
-        'rdpy.layer.rdp.virtual_channel',
-        'rdpy.mcs',
-        'rdpy.mitm',
-        'rdpy.mitm.virtual_channel',
-        'rdpy.parser',
-        'rdpy.parser.rdp',
-        'rdpy.parser.rdp.virtual_channel',
-        'rdpy.pdu',
-        'rdpy.pdu.rdp',
-        'rdpy.pdu.rdp.virtual_channel',
-        'rdpy.player',
-        'rdpy.recording',
+        'pyrdp.enum',
+        'pyrdp.enum.virtual_channel',
+        'pyrdp.layer',
+        'pyrdp.layer.rdp',
+        'pyrdp.layer.rdp.virtual_channel',
+        'pyrdp.mcs',
+        'pyrdp.mitm',
+        'pyrdp.mitm.virtual_channel',
+        'pyrdp.parser',
+        'pyrdp.parser.rdp',
+        'pyrdp.parser.rdp.virtual_channel',
+        'pyrdp.pdu',
+        'pyrdp.pdu.rdp',
+        'pyrdp.pdu.rdp.virtual_channel',
+        'pyrdp.player',
+        'pyrdp.recording',
     ],
     ext_modules=[Extension('rle', ['ext/rle.c'])],
     scripts=[
-            'bin/rdpy-rdpmitm.py',
-            'bin/rdpy-player.py'
+            'bin/pyrdp-rdpmitm.py',
+            'bin/pyrdp-player.py'
     ],
     install_requires=[
             'twisted',

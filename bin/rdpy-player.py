@@ -8,8 +8,8 @@ import sys
 import notify2
 from PyQt4.QtGui import QApplication
 
-from rdpy.core.logging import log
-from rdpy.player.player import MainWindow
+from pyrdp.core.logging import log
+from pyrdp.player.player import MainWindow
 
 
 class NotifyHandler(logging.StreamHandler):
@@ -18,7 +18,7 @@ class NotifyHandler(logging.StreamHandler):
     """
 
     def __init__(self):
-        notify2.init("rdpy-player")
+        notify2.init("pyrdp-player")
         super(NotifyHandler, self).__init__()
 
     def emit(self, record):
@@ -34,7 +34,7 @@ def prepare_loggers(logLevel):
     """
     Sets up the "liveplayer" and "liveplayer.ui" loggers to print messages and send notifications on connect.
     """
-    log.prepare_rdpy_logger(logLevel)
+    log.prepare_pyrdp_logger(logLevel)
     log.prepare_ssl_session_logger()
 
     if not os.path.exists("log"):
@@ -84,7 +84,7 @@ def main():
     if arguments.directory is not None:
         if not arguments.directory.endswith("/"):
             arguments.directory += "/"
-        files = filter(lambda file_name: file_name.endswith(".rdpy"), os.listdir(arguments.directory))
+        files = filter(lambda file_name: file_name.endswith(".pyrdp"), os.listdir(arguments.directory))
         files = map(lambda file_name: arguments.directory + file_name, files)
         files_to_read += files
 
