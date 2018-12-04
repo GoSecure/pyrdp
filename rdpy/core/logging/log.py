@@ -1,4 +1,5 @@
 import logging
+import os
 
 from rdpy.core.logging.formatters import SSLSecretFormatter
 
@@ -33,6 +34,7 @@ def prepare_ssl_session_logger():
     """
     ssl_logger = logging.getLogger("ssl")
     ssl_logger.setLevel(logging.INFO)
+    os.makedirs("log", exist_ok=True)
     handler = logging.FileHandler("log/ssl_master_secret.log")
     formatter = SSLSecretFormatter()
     handler.setFormatter(formatter)

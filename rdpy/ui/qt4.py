@@ -32,20 +32,20 @@ from PyQt4.QtGui import QColor
 import rdpy.core.logging.log as log
 
 
-def RDPBitmapToQtImage(width, height, bitsPerPixel, isCompress, data):
+def RDPBitmapToQtImage(width, height, bitsPerPixel, isCompressed, data):
     """
     @summary: Bitmap transformation to Qt object
     @param width: width of bitmap
     @param height: height of bitmap
     @param bitsPerPixel: number of bit per pixel
-    @param isCompress: use RLE compression
+    @param isCompressed: use RLE compression
     @param data: bitmap data
     """
     image = None
     #allocate
     
     if bitsPerPixel == 15:
-        if isCompress:
+        if isCompressed:
             buf = bytearray(width * height * 2)
             rle.bitmap_decompress(buf, width, height, data, 2)
             image = QtGui.QImage(buf, width, height, QtGui.QImage.Format_RGB555)
@@ -53,7 +53,7 @@ def RDPBitmapToQtImage(width, height, bitsPerPixel, isCompress, data):
             image = QtGui.QImage(data, width, height, QtGui.QImage.Format_RGB555).transformed(QtGui.QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
     
     elif bitsPerPixel == 16:
-        if isCompress:
+        if isCompressed:
             buf = bytearray(width * height * 2)
             rle.bitmap_decompress(buf, width, height, data, 2)
             image = QtGui.QImage(buf, width, height, QtGui.QImage.Format_RGB16)
@@ -61,7 +61,7 @@ def RDPBitmapToQtImage(width, height, bitsPerPixel, isCompress, data):
             image = QtGui.QImage(data, width, height, QtGui.QImage.Format_RGB16).transformed(QtGui.QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
     
     elif bitsPerPixel == 24:
-        if isCompress:
+        if isCompressed:
             buf = bytearray(width * height * 3)
             rle.bitmap_decompress(buf, width, height, data, 3)
             image = QtGui.QImage(buf, width, height, QtGui.QImage.Format_RGB888)
@@ -69,17 +69,44 @@ def RDPBitmapToQtImage(width, height, bitsPerPixel, isCompress, data):
             image = QtGui.QImage(data, width, height, QtGui.QImage.Format_RGB888).transformed(QtGui.QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
             
     elif bitsPerPixel == 32:
-        if isCompress:
+        if isCompressed:
             buf = bytearray(width * height * 4)
             rle.bitmap_decompress(buf, width, height, data, 4)
             image = QtGui.QImage(buf, width, height, QtGui.QImage.Format_RGB32)
         else:
             image = QtGui.QImage(data, width, height, QtGui.QImage.Format_RGB32).transformed(QtGui.QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
+    elif bitsPerPixel == 8:
+        if isCompressed:
+            buf = bytearray(width * height * 1)
+            rle.bitmap_decompress(buf, width, height, data, 1)
+            buf2 = convert8bppTo16bpp(buf)
+            image = QtGui.QImage(buf2, width, height, QtGui.QImage.Format_RGB16)
+        else:
+            buf2 = convert8bppTo16bpp(data)
+            image = QtGui.QImage(buf2, width, height, QtGui.QImage.Format_RGB16).transformed(QtGui.QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
     else:
         log.error("Receive image in bad format")
         image = QtGui.QImage(width, height, QtGui.QImage.Format_RGB32)
     return image
 
+
+def convert8bppTo16bpp(buf):
+    """
+    WARNING: The actual 8bpp images work by using a color palette, which this method does not use.
+    This method instead tries to transform indices into colors. This results in a weird looking image,
+    but it can still be useful to see whats happening ¯\_(ツ)_/¯
+    """
+    buf2 = bytearray(len(buf) * 2)
+    i = 0
+    for pixel in buf:
+        r = (pixel & 0b11000000) >> 6
+        g = (pixel & 0b00111000) >> 3
+        b = (pixel & 0b00000111) >> 0
+        buf2[i] = (b << 3)
+        buf2[i + 1] = (g << 0) | (r << 5)
+        i += 2
+
+    return buf2
 
 
 class QRemoteDesktop(QtGui.QWidget):
