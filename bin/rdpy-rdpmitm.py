@@ -4,6 +4,7 @@ import logging
 import logging.handlers
 import os
 import sys
+from typing import Optional
 
 import appdirs
 import names
@@ -17,7 +18,8 @@ from pyrdp.mitm.server import MITMServer
 
 
 class MITMServerFactory(ServerFactory):
-    def __init__(self, targetHost, targetPort, privateKeyFileName, certificateFileName, destination_ip, destination_port):
+    def __init__(self, targetHost: str, targetPort: int, privateKeyFileName: str, certificateFileName: str,
+                 destination_ip: str, destination_port: int, username: Optional[str], password: Optional[str]):
         """
         :param targetHost: The IP that points to the RDP server
         :param targetPort: The port that points to the RDP server
@@ -25,7 +27,11 @@ class MITMServerFactory(ServerFactory):
         :param certificateFileName: The certificate to use for SSL
         :param destination_ip: The IP to which send RDP traffic (for live player).
         :param destination_port: The port to which send RDP traffic (for live player).
+        :param username: The replacement username to use to connect users instead of the one they provided.
+        :param password: The replacement password to use to connect users instead of the one they provided.
         """
+        self.password = password
+        self.username = username
         self.targetHost = targetHost
         self.targetPort = targetPort
         self.privateKeyFileName = privateKeyFileName
@@ -35,7 +41,8 @@ class MITMServerFactory(ServerFactory):
 
     def buildProtocol(self, addr):
         server = MITMServer(names.get_first_name(), self.targetHost, self.targetPort, self.certificateFileName,
-                            self.privateKeyFileName, self.destination_ip, self.destination_port)
+                            self.privateKeyFileName, self.destination_ip, self.destination_port,
+                            self.username, self.password)
         return server.getProtocol()
 
 
@@ -114,9 +121,9 @@ def main():
     parser.add_argument("-n", "--nla", help="For NLA client authentication (need to provide credentials)",
                         action="store_true")
     parser.add_argument("-u", "--username", help="Username to use to connect to the target VM (instead of the username "
-                                                 "the client sent)")
+                                                 "the client sent)", default=None)
     parser.add_argument("-p", "--password", help="Password to use to connect to the target VM (instead of the password "
-                                                 "the client sent)")
+                                                 "the client sent)", default=None)
     parser.add_argument("-L", "--log-level", help="Log level", default="INFO", choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"], nargs="?")
 
     args = parser.parse_args()
@@ -153,7 +160,8 @@ def main():
     else:
         key, certificate = args.private_key, args.certificate
     listenPort = int(args.listen)
-    reactor.listenTCP(listenPort, MITMServerFactory(targetHost, targetPort, key, certificate, args.destination_ip, int(args.destination_port)))
+    reactor.listenTCP(listenPort, MITMServerFactory(targetHost, targetPort, key, certificate, args.destination_ip, int(args.destination_port),
+                                                    args.username, args.password))
     mitm_log.info("MITM Server listening on port %(port)d", {"port": listenPort})
     reactor.run()
 

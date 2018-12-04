@@ -51,9 +51,13 @@ from pyrdp.recording.recorder import Recorder, FileLayer, SocketLayer
 
 
 class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
-    def __init__(self, friendlyName, targetHost, targetPort, certificateFileName, privateKeyFileName, recordHost, recordPort):
+    def __init__(self, friendlyName: str, targetHost: str, targetPort: int, certificateFileName: str,
+                 privateKeyFileName: str, recordHost: str, recordPort: int, replacementUsername: str,
+                 replacementPassword: str):
         MCSUserObserver.__init__(self)
 
+        self.replacementPassword = replacementPassword
+        self.replacementUsername = replacementUsername
         self.targetHost = targetHost
         self.targetPort = targetPort
         self.certificateFileName = certificateFileName
@@ -74,12 +78,10 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.connectionsLog = logging.getLogger("mitm.connections.%s" % friendlyName)
         self.friendlyName = friendlyName
 
-
         rc4Log = logging.getLogger("mitm.server.%s.rc4" % friendlyName)
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.SERVER)
         self.securitySettings.addObserver(self.crypter)
         self.securitySettings.addObserver(RC4LoggingObserver(rc4Log))
-
 
         self.tcp = TwistedTCPLayer()
         self.tcp.createObserver(onConnection=self.onConnection, onDisconnection=self.onDisconnection)
@@ -144,7 +146,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
     def buildProtocol(self, addr):
         # Build protocol for the client side of the connection
-        self.client = MITMClient(self, self.fileHandle, self.socket)
+        self.client = MITMClient(self, self.fileHandle, self.socket,
+                                 self.replacementUsername, self.replacementPassword)
         return self.client.getProtocol()
 
     def connectClient(self):

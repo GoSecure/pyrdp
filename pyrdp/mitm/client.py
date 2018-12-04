@@ -1,4 +1,5 @@
 import logging
+from socket import socket
 from typing import Dict, BinaryIO
 
 from pyrdp.core.ssl import ClientTLSContext
@@ -26,7 +27,6 @@ from pyrdp.mcs.channel import MCSChannelFactory, MCSClientChannel
 from pyrdp.mcs.client import MCSClientRouter
 from pyrdp.mcs.user import MCSUserObserver
 from pyrdp.mitm.observer import MITMSlowPathObserver, MITMFastPathObserver
-from pyrdp.mitm.server import MITMServer
 from pyrdp.mitm.virtual_channel.clipboard import ActiveClipboardChannelObserver
 from pyrdp.mitm.virtual_channel.device_redirection import ClientPassiveDeviceRedirectionObserver
 from pyrdp.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
@@ -39,8 +39,12 @@ from pyrdp.recording.recorder import Recorder, FileLayer, SocketLayer
 
 
 class MITMClient(MCSChannelFactory, MCSUserObserver):
-    def __init__(self, server: MITMServer, fileHandle: BinaryIO, livePlayerSocket: livePlayerSocket):
+    def __init__(self, server, fileHandle: BinaryIO, livePlayerSocket: socket,
+                 replacementUsername=None, replacementPassword=None):
         MCSChannelFactory.__init__(self)
+
+        self.replacementUsername = replacementUsername
+        self.replacementPassword = replacementPassword
 
         self.server = server
         self.channelMap: Dict[int, str] = {}
@@ -59,7 +63,6 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.CLIENT)
         self.securitySettings.addObserver(self.crypter)
         self.securitySettings.addObserver(RC4LoggingObserver(rc4Log))
-
 
         self.tcp = TwistedTCPLayer()
         self.tcp.createObserver(onConnection=self.startConnection, onDisconnection=self.onDisconnection)
@@ -334,11 +337,18 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.server.onChannelJoinRefused(user, result, channelID)
 
     def onClientInfoPDUReceived(self, pdu: RDPClientInfoPDU):
-        self.log.debug("Sending Client Info: {}".format(pdu))
+
+        # If set, replace the provided username and password to connect the user regardless of
+        # the credentials they entered.
+        if self.replacementUsername is not None:
+            pdu.username = self.replacementUsername
+        if self.replacementPassword is not None:
+            pdu.password = self.replacementPassword
 
         # Tell the server we don't want compression (unsure of the effectiveness of these flags)
         pdu.flags &= ~ClientInfoFlags.INFO_COMPRESSION
         pdu.flags &= ~ClientInfoFlags.INFO_CompressionTypeMask
+        self.log.debug("Sending Client Info: {}".format(pdu))
         self.securityLayer.sendClientInfo(pdu)
 
     def onLicensingDataReceived(self, data):
