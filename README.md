@@ -14,7 +14,9 @@ except the bitmap decompression algorithm which is implemented in C for performa
 
 ### Dependencies
 
-PyQt4 is needed for the liveplayer/replayer
+PyQt4 is needed for the liveplayer/replayer.
+PyRDP has been tested to work on Python 3.6 on linux (Ubuntu). 
+We have not tested it on OSX nor on Windows.
 
 #### Linux
 
