@@ -13,11 +13,11 @@ from pyrdp.parser.rdp.data import RDPDataParser
 from pyrdp.parser.rdp.fastpath import RDPOutputEventParser, RDPBasicFastPathParser
 from pyrdp.parser.rdp.virtual_channel.clipboard import ClipboardParser
 from pyrdp.pdu.base_pdu import PDU
-from pyrdp.pdu.rdp.client_info import RDPClientInfoPDU
 from pyrdp.pdu.rdp.common import BitmapUpdateData
 from pyrdp.pdu.rdp.data import RDPConfirmActivePDU, RDPUpdatePDU, RDPInputPDU
 from pyrdp.pdu.rdp.fastpath import FastPathEventScanCode, FastPathEventMouse, FastPathOrdersEvent, FastPathBitmapEvent
 from pyrdp.pdu.rdp.input import KeyboardEvent, MouseEvent
+from pyrdp.pdu.rdp.recording import RDPPlayerMessagePDU
 from pyrdp.pdu.rdp.virtual_channel.clipboard import FormatDataResponsePDU
 from pyrdp.ui.qt4 import RDPBitmapToQtImage
 
@@ -101,13 +101,13 @@ class RSSEventHandler(RDPPlayerMessageObserver):
                                 bitmapData.destRight - bitmapData.destLeft + 1,
                                 bitmapData.destBottom - bitmapData.destTop + 1)
 
-    def onClientInfo(self, pdu: RDPClientInfoPDU):
-        pdu = self.clientInfoParser.parse(pdu.payload)
+    def onClientInfo(self, pdu: RDPPlayerMessagePDU):
+        clientInfoPDU = self.clientInfoParser.parse(pdu.payload)
         self.text.insertPlainText("--------------------")
         self.text.insertPlainText("\nUSERNAME: {}\nPASSWORD: {}\nDOMAIN: {}\n"
-                                  .format(pdu.username.replace("\0", ""),
-                                  pdu.password.replace("\0", ""),
-                                  pdu.domain.replace("\0", "")))
+                                  .format(clientInfoPDU.username.replace("\0", ""),
+                                          clientInfoPDU.password.replace("\0", ""),
+                                          clientInfoPDU.domain.replace("\0", "")))
         self.text.insertPlainText("--------------------\n")
 
     def onSlowPathPDU(self, pdu: PDU):

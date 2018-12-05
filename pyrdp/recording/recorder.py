@@ -1,5 +1,5 @@
 import time
-from typing import BinaryIO, Optional
+from typing import BinaryIO, Optional, List
 
 from pyrdp.core.logging import log
 from pyrdp.enum.core import ParserMode
@@ -22,10 +22,7 @@ class Recorder:
     receive binary data and handle them as they wish. They perform the actual recording.
     """
 
-    def __init__(self, transportLayers):
-        """
-        :type transportLayers: list
-        """
+    def __init__(self, transportLayers: List[Layer]):
         self.parsers = {
             RDPPlayerMessageType.FAST_PATH_INPUT: RDPBasicFastPathParser(ParserMode.CLIENT),
             RDPPlayerMessageType.FAST_PATH_OUTPUT: RDPBasicFastPathParser(ParserMode.SERVER),
@@ -80,12 +77,10 @@ class FileLayer(Layer):
         Layer.__init__(self)
         self.file_descriptor: BinaryIO = fileHandle
 
-    def send(self, data):
+    def send(self, data: bytes):
         """
         Save data to the file.
-        :type data: bytes
         """
-        self.file_descriptor.write(data)
 
         if not self.file_descriptor.closed:
             self.file_descriptor.write(data)

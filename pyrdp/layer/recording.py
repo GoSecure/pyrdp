@@ -46,16 +46,16 @@ class RDPPlayerMessageLayer(Layer):
     def __init__(self):
         Layer.__init__(self)
 
-    def recv(self, data):
+    def recv(self, data: bytes):
         """
         Parses data to make a RDPPlayerMessagePDU and calls the observer with it.
-        :type data: bytes
         """
-        type = Uint8.unpack(data[0])
-        timestamp = Uint64LE.unpack(data[1 : 9])
-        payload = data[9 :]
+        stream = BytesIO(data)
+        type = RDPPlayerMessageType(Uint8.unpack(stream))
+        timestamp = Uint64LE.unpack(stream)
+        payload = stream.read()
         pdu = RDPPlayerMessagePDU(type, timestamp, payload)
-        self.pduReceived(pdu, False)
+        self.pduReceived(pdu, forward=False)
 
     def sendMessage(self, data: bytes, messageType: RDPPlayerMessageType, timeStamp: int):
         stream = BytesIO()
