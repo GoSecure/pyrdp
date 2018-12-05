@@ -13,18 +13,19 @@ class SensorFilter(Filter):
         super().__init__()
 
     def filter(self, record: LogRecord) -> bool:
-        record.args.update({"sensorId": Config.arguments.sensor_id})
+        record.args.update({"sensor": Config.arguments.sensor_id})
         return True
 
 
 class ConnectionMetadataFilter(Filter):
     """
     Filter that adds arguments to the record regarding the
-    active session (such as source IP and port)
+    active session (such as source IP, port and sessionId)
     """
 
     def __init__(self, sessionId: str):
         self.info = ActiveSessions.get(sessionId)
+        self.sessionId = sessionId
         super().__init__()
 
     def filter(self, record: LogRecord) -> bool:
@@ -32,7 +33,8 @@ class ConnectionMetadataFilter(Filter):
             record.args = {}
         clientInfo = self.info.tcp.transport.client
         record.args.update({
-            "source_ip": clientInfo[0],
-            "source_port": clientInfo[1]
+            "src_ip": clientInfo[0],
+            "src_port": clientInfo[1],
+            "session": self.sessionId
         })
         return True
