@@ -4,6 +4,7 @@ from io import BytesIO
 from typing import Dict
 
 from pyrdp.core.helper_methods import decodeUTF16LE
+from pyrdp.core.logging.log import LOGGER_NAMES
 from pyrdp.core.observer import Observer
 from pyrdp.enum.core import ParserMode
 from pyrdp.enum.virtual_channel.device_redirection import FileAccess, CreateOption, MajorFunction, \
@@ -28,8 +29,7 @@ class PassiveDeviceRedirectionObserver(Observer):
         self.peer: PassiveDeviceRedirectionObserver = None
         self.layer = layer
         self.recorder = recorder
-        self.mitm_log = logging.getLogger("mitm.deviceRedirection.{}"
-                                          .format("client" if mode == ParserMode.CLIENT else "server"))
+        self.mitm_log = logging.getLogger(f"{LOGGER_NAMES.MITM_DEVICE_CLIENT if mode == ParserMode.CLIENT else LOGGER_NAMES.MITM_DEVICE_SERVER}")
         self.deviceRedirectionParser = DeviceRedirectionParser()
         self.completionIdInProgress: Dict[MajorFunction, DeviceIORequestPDU] = {}
         self.reconstructedFilesTemp: Dict[int, BytesIO] = {}

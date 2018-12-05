@@ -2,6 +2,7 @@ import logging
 from socket import socket
 from typing import Dict, BinaryIO
 
+from pyrdp.core.logging.log import LOGGER_NAMES
 from pyrdp.core.ssl import ClientTLSContext
 from pyrdp.crypto.crypto import SecuritySettings, RC4CrypterProxy
 from pyrdp.crypto.observer import RC4LoggingObserver
@@ -57,9 +58,9 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.conferenceCreateResponse = None
         self.serverData = None
         self.crypter = RC4CrypterProxy()
-        self.log = logging.getLogger("mitm.client.%s" % server.getFriendlyName())
+        self.log = logging.getLogger(f"{LOGGER_NAMES.MITM_CLIENT}.{server.getFriendlyName()}")
 
-        rc4Log = logging.getLogger("mitm.client.%s.rc4" % server.getFriendlyName())
+        rc4Log = logging.getLogger(f"{self.log.name}.rc4")
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.CLIENT)
         self.securitySettings.addObserver(self.crypter)
         self.securitySettings.addObserver(RC4LoggingObserver(rc4Log))

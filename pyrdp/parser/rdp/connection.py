@@ -36,12 +36,10 @@ class RDPClientConnectionParser(Parser):
 
         }
 
-    def parse(self, data):
+    def parse(self, data: bytes) -> RDPClientDataPDU:
         """
         Decode a Client Data PDU from bytes.
         :param data: Client Data PDU data.
-        :type data: bytes
-        :return: RDPClientDataPDU
         """
         core = None
         security = None

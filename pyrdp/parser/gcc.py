@@ -5,7 +5,7 @@ from pyrdp.core.packing import Uint16BE
 from pyrdp.enum.gcc import GCCPDUType
 from pyrdp.exceptions import ParsingError, UnknownPDUTypeError
 from pyrdp.parser.parser import Parser
-from pyrdp.pdu.gcc import GCCConferenceCreateRequestPDU, GCCConferenceCreateResponsePDU
+from pyrdp.pdu.gcc import GCCConferenceCreateRequestPDU, GCCConferenceCreateResponsePDU, GCCPDU
 
 
 class GCCParser(Parser):
@@ -29,12 +29,10 @@ class GCCParser(Parser):
             GCCPDUType.CREATE_CONFERENCE_RESPONSE: self.writeConferenceCreateResponse,
         }
 
-    def parse(self, data):
+    def parse(self, data: bytes) -> GCCPDU:
         """
         Parses the raw data bytes into a GCCPDU
         :param data: PDU data.
-        :type data: bytes
-        :return: GCCPDU
         """
         stream = BytesIO(data)
 

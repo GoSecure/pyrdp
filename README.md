@@ -37,5 +37,7 @@ They are located in the bin/ folder of the project. Use `--help` to see how to u
 
 1. Open an issue before starting your work;
 2. Use Python3 type hinting whenever possible to remove ambiguity;
+
+    2.1. If you come across restructuredText type hinting (such us `:type param1: str`), please change it to Python 3 type hinting `def function1(param1: str)`
 3. Document your methods and classes with docstrings using the reStructuredText syntax;
 4. Respect PEP8 (except for the naming convention, use camelCase).

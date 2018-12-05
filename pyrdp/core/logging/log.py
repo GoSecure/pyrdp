@@ -7,6 +7,14 @@ from pyrdp.core.logging.formatters import SSLSecretFormatter
 class LOGGER_NAMES:
     PYRDP = "pyrdp"
     PYRDP_EXCEPTIONS = "pyrdp.exceptions"
+    MITM = "mitm"
+    MITM_CONNECTIONS = "mitm.connections"
+    MITM_CLIENT = "mitm.connections.client"
+    MITM_SERVER = "mitm.connections.server"
+    MITM_CLIPBOARD_CLIENT = "mitm.clipboard.client"
+    MITM_CLIPBOARD_SERVER = "mitm.clipboard.server"
+    MITM_DEVICE_CLIENT = "mitm.deviceRedirection.client"
+    MITM_DEVICE_SERVER = "mitm.deviceRedirection.server"
 
 
 def get_formatter():

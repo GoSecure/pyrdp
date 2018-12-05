@@ -11,6 +11,7 @@ import names
 from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
 
+from pyrdp.core.Config import Config
 from pyrdp.core.logging import log
 from pyrdp.core.logging.formatters import JSONFormatter
 from pyrdp.core.logging.log import LOGGER_NAMES
@@ -72,10 +73,10 @@ def prepare_loggers(logLevel):
     if not os.path.exists("log"):
         os.makedirs("log")
 
-    mitm_logger = logging.getLogger("mitm")
+    mitm_logger = logging.getLogger(LOGGER_NAMES.MITM)
     mitm_logger.setLevel(logLevel)
 
-    mitm_connections_logger = logging.getLogger("mitm.connections")
+    mitm_connections_logger = logging.getLogger(LOGGER_NAMES.MITM_CONNECTIONS)
     mitm_connections_logger.setLevel(logLevel)
 
     formatter = log.get_formatter()
@@ -127,11 +128,12 @@ def main():
     parser.add_argument("-L", "--log-level", help="Log level", default="INFO", choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"], nargs="?")
 
     args = parser.parse_args()
+    Config.arguments = args
 
     logLevel = getattr(logging, args.log_level)
 
     prepare_loggers(logLevel)
-    mitm_log = logging.getLogger("mitm")
+    mitm_log = logging.getLogger(LOGGER_NAMES.MITM)
 
     target = args.target
     if ":" in target:
@@ -145,18 +147,7 @@ def main():
         sys.exit(1)
     elif args.private_key is None:
         key, certificate = getSSLPaths()
-
-        if os.path.exists(key) and os.path.exists(certificate):
-            mitm_log.info("Using existing private key: %(privateKey)s", {"privateKey": key})
-            mitm_log.info("Using existing certificate: %(certificate)s", {"certificate": certificate})
-        else:
-            mitm_log.info("Generating a private key and certificate for SSL connections")
-
-            if generateCertificate(key, certificate):
-                mitm_log.info("Private key path: %(privateKeyPath)s", {"privateKeyPath": key})
-                mitm_log.info("Certificate path: %(certificatePath)s", {"certificatePath": certificate})
-            else:
-                mitm_log.error("Generation failed. Please provide the private key and certificate with -k and -c")
+        handleKeyAndCertificates(certificate, key, mitm_log)
     else:
         key, certificate = args.private_key, args.certificate
     listenPort = int(args.listen)
@@ -164,6 +155,20 @@ def main():
                                                     args.username, args.password))
     mitm_log.info("MITM Server listening on port %(port)d", {"port": listenPort})
     reactor.run()
+
+
+def handleKeyAndCertificates(certificate, key, mitm_log):
+    if os.path.exists(key) and os.path.exists(certificate):
+        mitm_log.info("Using existing private key: %(privateKey)s", {"privateKey": key})
+        mitm_log.info("Using existing certificate: %(certificate)s", {"certificate": certificate})
+    else:
+        mitm_log.info("Generating a private key and certificate for SSL connections")
+
+        if generateCertificate(key, certificate):
+            mitm_log.info("Private key path: %(privateKeyPath)s", {"privateKeyPath": key})
+            mitm_log.info("Certificate path: %(certificatePath)s", {"certificatePath": certificate})
+        else:
+            mitm_log.error("Generation failed. Please provide the private key and certificate with -k and -c")
 
 
 if __name__ == "__main__":

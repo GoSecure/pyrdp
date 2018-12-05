@@ -1,6 +1,7 @@
 import logging
 from binascii import hexlify
 
+from pyrdp.core.logging.log import LOGGER_NAMES
 from pyrdp.core.observer import Observer
 from pyrdp.enum.core import ParserMode
 from pyrdp.enum.rdp import RDPPlayerMessageType
@@ -25,9 +26,9 @@ class PassiveClipboardChannelObserver(Observer):
         self.layer = layer
         self.recorder = recorder
         self.forwardNextDataResponse = True
-        self.mitm_log = logging.getLogger("mitm.clipboard.{}"
-                                          .format("client" if mode == ParserMode.CLIENT else "server"))
-        self.mitm_clipboard_log = logging.getLogger(self.mitm_log.name + ".data")
+        self.mitm_log = logging.getLogger(LOGGER_NAMES.MITM_CLIPBOARD_CLIENT if mode == ParserMode.CLIENT
+                                          else LOGGER_NAMES.MITM_CLIPBOARD_SERVER)
+        self.mitm_clipboard_log = logging.getLogger(f"{self.mitm_log.name}.data")
 
     def onPDUReceived(self, pdu: ClipboardPDU):
         """
