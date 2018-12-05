@@ -17,7 +17,7 @@ def get_formatter():
     """
     Get the log formatter used for the PyRDP library.
     """
-    return logging.Formatter("[{asctime}] - {name:<32} - {levelname:<8} - {message}", style="{")
+    return logging.Formatter("[{asctime}] - {name:<50} - {levelname:<8} - {message}", style="{")
 
 
 def prepare_pyrdp_logger(logLevel=logging.INFO):
