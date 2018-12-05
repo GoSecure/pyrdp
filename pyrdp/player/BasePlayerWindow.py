@@ -1,6 +1,7 @@
-import logging
-
 from PyQt4.QtGui import QTabWidget, QShortcut, QKeySequence
+
+from pyrdp.core.helper_methods import getLoggerPassFilters
+from pyrdp.core.logging.log import LOGGER_NAMES
 
 
 class BasePlayerWindow(QTabWidget):
@@ -15,7 +16,7 @@ class BasePlayerWindow(QTabWidget):
         self.maxTabCount = maxTabCount
         self.setTabsClosable(True)
         self.tabCloseRequested.connect(self.onTabClosed)
-        self.log = logging.getLogger("liveplayer")
+        self.log = getLoggerPassFilters(LOGGER_NAMES.LIVEPLAYER)
 
     def closeCurrentTab(self):
         if self.count() > 0:

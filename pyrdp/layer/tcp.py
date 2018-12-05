@@ -1,8 +1,8 @@
 import asyncio
-import logging
 
 from twisted.internet.protocol import Protocol, connectionDone
 
+from pyrdp.core.helper_methods import getLoggerPassFilters
 from pyrdp.core.logging import log
 from pyrdp.core.logging.log import LOGGER_NAMES
 from pyrdp.core.subject import ObservedBy
@@ -76,7 +76,7 @@ class TwistedTCPLayer(Protocol, Layer):
         except KeyboardInterrupt:
             raise
         except Exception as e:
-            logging.getLogger(LOGGER_NAMES.PYRDP_EXCEPTIONS).exception(e)
+            getLoggerPassFilters(LOGGER_NAMES.PYRDP_EXCEPTIONS).exception(e)
             raise
 
     def send(self, data):
@@ -146,7 +146,7 @@ class AsyncIOTCPLayer(asyncio.Protocol, Layer):
         except KeyboardInterrupt:
             raise
         except Exception as e:
-            logging.getLogger(LOGGER_NAMES.PYRDP_EXCEPTIONS).exception(e)
+            getLoggerPassFilters(LOGGER_NAMES.PYRDP_EXCEPTIONS).exception(e)
             raise
 
     def send(self, data):

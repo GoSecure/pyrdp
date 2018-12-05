@@ -8,7 +8,9 @@ import sys
 import notify2
 from PyQt4.QtGui import QApplication
 
+from pyrdp.core.helper_methods import getLoggerPassFilters
 from pyrdp.core.logging import log
+from pyrdp.core.logging.log import LOGGER_NAMES
 from pyrdp.player.player import MainWindow
 
 
@@ -40,10 +42,10 @@ def prepare_loggers(logLevel):
     if not os.path.exists("log"):
         os.makedirs("log")
 
-    liveplayer_logger = logging.getLogger("liveplayer")
+    liveplayer_logger = getLoggerPassFilters(LOGGER_NAMES.LIVEPLAYER)
     liveplayer_logger.setLevel(logLevel)
 
-    liveplayer_ui_logger = logging.getLogger("liveplayer.ui")
+    liveplayer_ui_logger = getLoggerPassFilters(f"{LOGGER_NAMES.LIVEPLAYER}.ui")
     liveplayer_ui_logger.setLevel(logLevel)
 
     formatter = log.get_formatter()
@@ -97,6 +99,6 @@ def main():
 
 
 if __name__ == '__main__':
-    mlog = logging.getLogger("liveplayer")
-    ulog = logging.getLogger("liveplayer.ui")
+    mlog = getLoggerPassFilters(LOGGER_NAMES.LIVEPLAYER)
+    ulog = getLoggerPassFilters(f"{LOGGER_NAMES.LIVEPLAYER}.ui")
     sys.exit(main())

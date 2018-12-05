@@ -1,5 +1,4 @@
 import datetime
-import logging
 import random
 import socket
 
@@ -7,7 +6,9 @@ from Crypto.PublicKey import RSA
 from twisted.internet import reactor
 from twisted.internet.protocol import ClientFactory
 
-from pyrdp.core.helper_methods import decodeUTF16LE
+from pyrdp.core.helper_methods import decodeUTF16LE, getLoggerPassFilters
+from pyrdp.core.logging.ActiveSessions import ActiveSessions
+from pyrdp.core.logging.filters import ConnectionMetadataFilter
 from pyrdp.core.logging.log import LOGGER_NAMES
 from pyrdp.core.ssl import ServerTLSContext
 from pyrdp.crypto.crypto import SecuritySettings, RC4CrypterProxy
@@ -52,10 +53,17 @@ from pyrdp.recording.recorder import Recorder, FileLayer, SocketLayer
 
 
 class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
+
     def __init__(self, friendlyName: str, targetHost: str, targetPort: int, certificateFileName: str,
                  privateKeyFileName: str, recordHost: str, recordPort: int, replacementUsername: str,
                  replacementPassword: str):
         MCSUserObserver.__init__(self)
+
+        self.sessionId = f"{friendlyName}_{random.randrange(100000,999999)}"
+        ActiveSessions.add(self.sessionId, self)
+        self.log = getLoggerPassFilters(f"{LOGGER_NAMES.MITM_CONNECTIONS}.{self.sessionId}")
+        self.metadataFilter = ConnectionMetadataFilter(self.sessionId)
+        self.log.addFilter(self.metadataFilter)
 
         self.replacementPassword = replacementPassword
         self.replacementUsername = replacementUsername
@@ -75,10 +83,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.socket = None
         self.fileHandle = open("out/rdp_replay_{}_{}.pyrdp".format(datetime.datetime.now().strftime('%Y%m%d_%H-%M-%S'),
                                                                    random.randint(0, 1000)), "wb")
-        self.log = logging.getLogger(f"{LOGGER_NAMES.MITM_SERVER}.{friendlyName}")
-        self.friendlyName = friendlyName
 
-        rc4Log = logging.getLogger(f"{self.log.name}.rc4")
+        rc4Log = getLoggerPassFilters(f"{self.log.name}.rc4")
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.SERVER)
         self.securitySettings.addObserver(self.crypter)
         self.securitySettings.addObserver(RC4LoggingObserver(rc4Log))
@@ -136,8 +142,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         # We need to write back the packets as if they came from the client.
         self.recorder = Recorder(recordingLayers)
 
-    def getFriendlyName(self):
-        return self.friendlyName
+    def getSessionId(self):
+        return self.sessionId
 
     def getProtocol(self):
         return self.tcp
@@ -180,8 +186,10 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
     def disconnect(self):
         self.log.debug("Disconnecting")
-        self.tcp.disconnect()
         self.disconnectConnector()
+        self.tcp.disconnect()
+        self.log.removeFilter(self.metadataFilter)
+        ActiveSessions.remove(self.sessionId)
 
     def disconnectConnector(self):
         if self.clientConnector:
@@ -376,7 +384,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         # Create and link the MITM Observer for the server side to the clipboard layer.
         # Also link both MITM Observers (client and server) so they can send traffic the other way.
         peer = self.client.getChannelObserver(channelID)
-        passiveClipboardObserver = PassiveClipboardChannelObserver(clipboardLayer, self.recorder, ParserMode.SERVER)
+        passiveClipboardObserver = PassiveClipboardChannelObserver(clipboardLayer, self.recorder, self.log)
         peer.passiveClipboardObserver = passiveClipboardObserver
         passiveClipboardObserver.setPeer(peer)
         clipboardLayer.addObserver(passiveClipboardObserver)
@@ -406,7 +414,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         # Also link both MITM Observers (client and server) so they can send traffic the other way.
         peer = self.client.getChannelObserver(channelID)
         observer = ServerPassiveDeviceRedirectionObserver(deviceRedirection, self.recorder,
-                                                          self.client.deviceRedirectionObserver)
+                                                          self.client.deviceRedirectionObserver, self.log)
         observer.setPeer(peer)
         deviceRedirection.addObserver(observer)
 

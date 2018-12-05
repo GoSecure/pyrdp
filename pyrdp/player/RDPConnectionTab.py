@@ -1,7 +1,8 @@
-import logging
-
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QWidget, QTextEdit, QScrollArea, QVBoxLayout
+
+from pyrdp.core.helper_methods import getLoggerPassFilters
+from pyrdp.core.logging.log import LOGGER_NAMES
 
 
 class RDPConnectionTab(QWidget):
@@ -21,7 +22,7 @@ class RDPConnectionTab(QWidget):
         self.text = QTextEdit()
         self.text.setReadOnly(True)
         self.text.setMinimumHeight(150)
-        self.log = logging.getLogger("liveplayer")
+        self.log = getLoggerPassFilters(LOGGER_NAMES.LIVEPLAYER)
 
         scrollViewer = QScrollArea()
         scrollViewer.setWidget(self.widget)

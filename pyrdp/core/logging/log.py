@@ -1,6 +1,7 @@
 import logging
 import os
 
+from pyrdp.core.helper_methods import getLoggerPassFilters
 from pyrdp.core.logging.formatters import SSLSecretFormatter
 
 
@@ -9,12 +10,7 @@ class LOGGER_NAMES:
     PYRDP_EXCEPTIONS = "pyrdp.exceptions"
     MITM = "mitm"
     MITM_CONNECTIONS = "mitm.connections"
-    MITM_CLIENT = "mitm.connections.client"
-    MITM_SERVER = "mitm.connections.server"
-    MITM_CLIPBOARD_CLIENT = "mitm.connections.clipboard.client"
-    MITM_CLIPBOARD_SERVER = "mitm.connections.clipboard.server"
-    MITM_DEVICE_CLIENT = "mitm.connections.deviceRedirection.client"
-    MITM_DEVICE_SERVER = "mitm.connections.deviceRedirection.server"
+    LIVEPLAYER = "liveplayer"
 
 
 def get_formatter():
@@ -28,7 +24,7 @@ def prepare_pyrdp_logger(logLevel=logging.INFO):
     """
     Prepare the PyRDP logger to be used by the library.
     """
-    logger = logging.getLogger(LOGGER_NAMES.PYRDP)
+    logger = getLoggerPassFilters(LOGGER_NAMES.PYRDP)
     logger.setLevel(logLevel)
 
     stream_handler = logging.StreamHandler()
@@ -45,7 +41,7 @@ def prepare_ssl_session_logger():
     """
     Prepares the SSL master secret logger. Used to log TLS session secrets to decrypt traffic later.
     """
-    ssl_logger = logging.getLogger("ssl")
+    ssl_logger = getLoggerPassFilters("ssl")
     ssl_logger.setLevel(logging.INFO)
     os.makedirs("log", exist_ok=True)
     handler = logging.FileHandler("log/ssl_master_secret.log")
@@ -61,14 +57,14 @@ def get_logger():
     """
     Get the main logger.
     """
-    return logging.getLogger(LOGGER_NAMES.PYRDP)
+    return getLoggerPassFilters(LOGGER_NAMES.PYRDP)
 
 
 def get_ssl_logger():
     """
     Get the SSL logger.
     """
-    return logging.getLogger("ssl")
+    return getLoggerPassFilters("ssl")
 
 
 def info(message, *args):

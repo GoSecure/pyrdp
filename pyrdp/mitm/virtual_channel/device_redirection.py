@@ -1,12 +1,11 @@
 import logging
 import os
 from io import BytesIO
+from logging import Logger
 from typing import Dict
 
-from pyrdp.core.helper_methods import decodeUTF16LE
-from pyrdp.core.logging.log import LOGGER_NAMES
+from pyrdp.core.helper_methods import decodeUTF16LE, getLoggerPassFilters
 from pyrdp.core.observer import Observer
-from pyrdp.enum.core import ParserMode
 from pyrdp.enum.virtual_channel.device_redirection import FileAccess, CreateOption, MajorFunction, \
     IOOperationSeverity
 from pyrdp.layer.layer import Layer
@@ -24,12 +23,12 @@ class PassiveDeviceRedirectionObserver(Observer):
     as soon as it's done being transferred.
     """
 
-    def __init__(self, layer: Layer, recorder: Recorder, mode: ParserMode, **kwargs):
+    def __init__(self, layer: Layer, recorder: Recorder, logger: logging.Logger, **kwargs):
         super().__init__(**kwargs)
         self.peer: PassiveDeviceRedirectionObserver = None
         self.layer = layer
         self.recorder = recorder
-        self.mitm_log = logging.getLogger(f"{LOGGER_NAMES.MITM_DEVICE_CLIENT if mode == ParserMode.CLIENT else LOGGER_NAMES.MITM_DEVICE_SERVER}")
+        self.mitm_log = getLoggerPassFilters(f"{logger.name}.deviceRedirection")
         self.deviceRedirectionParser = DeviceRedirectionParser()
         self.completionIdInProgress: Dict[MajorFunction, DeviceIORequestPDU] = {}
         self.reconstructedFilesTemp: Dict[int, BytesIO] = {}
@@ -156,14 +155,15 @@ class PassiveDeviceRedirectionObserver(Observer):
 
 class ClientPassiveDeviceRedirectionObserver(PassiveDeviceRedirectionObserver):
 
-    def __init__(self, layer: Layer, recorder: Recorder, **kwargs):
-        super().__init__(layer, recorder, ParserMode.CLIENT, **kwargs)
+    def __init__(self, layer: Layer, recorder: Recorder, logger: Logger, **kwargs):
+        super().__init__(layer, recorder, logger, **kwargs)
 
 
 class ServerPassiveDeviceRedirectionObserver(PassiveDeviceRedirectionObserver):
 
-    def __init__(self, layer: Layer, recorder: Recorder, clientObserver: ClientPassiveDeviceRedirectionObserver, **kwargs):
-        super().__init__(layer, recorder, ParserMode.SERVER, **kwargs)
+    def __init__(self, layer: Layer, recorder: Recorder, clientObserver: ClientPassiveDeviceRedirectionObserver,
+                 logger: Logger, **kwargs):
+        super().__init__(layer, recorder, logger, **kwargs)
         self.clientObserver = clientObserver
 
     def sendPDU(self, pdu: DeviceRedirectionPDU):

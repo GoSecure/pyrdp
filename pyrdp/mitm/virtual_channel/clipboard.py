@@ -1,9 +1,8 @@
-import logging
 from binascii import hexlify
+from logging import Logger
 
-from pyrdp.core.logging.log import LOGGER_NAMES
+from pyrdp.core.helper_methods import getLoggerPassFilters
 from pyrdp.core.observer import Observer
-from pyrdp.enum.core import ParserMode
 from pyrdp.enum.rdp import RDPPlayerMessageType
 from pyrdp.enum.virtual_channel.clipboard import ClipboardMessageType, ClipboardFormat
 from pyrdp.layer.layer import Layer
@@ -18,7 +17,7 @@ class PassiveClipboardChannelObserver(Observer):
     get transferred.
     """
 
-    def __init__(self, layer: Layer, recorder: Recorder, mode: ParserMode, **kwargs):
+    def __init__(self, layer: Layer, recorder: Recorder, logger: Logger, **kwargs):
         Observer.__init__(self, **kwargs)
 
         self.clipboardParser = ClipboardParser()
@@ -26,9 +25,8 @@ class PassiveClipboardChannelObserver(Observer):
         self.layer = layer
         self.recorder = recorder
         self.forwardNextDataResponse = True
-        self.mitm_log = logging.getLogger(LOGGER_NAMES.MITM_CLIPBOARD_CLIENT if mode == ParserMode.CLIENT
-                                          else LOGGER_NAMES.MITM_CLIPBOARD_SERVER)
-        self.mitm_clipboard_log = logging.getLogger(f"{self.mitm_log.name}.data")
+        self.mitm_log = getLoggerPassFilters(f"{logger.name}.clipboard")
+        self.clipboard_log = getLoggerPassFilters(f"{self.mitm_log.name}.data")
 
     def onPDUReceived(self, pdu: ClipboardPDU):
         """
@@ -53,7 +51,7 @@ class PassiveClipboardChannelObserver(Observer):
             if self.forwardNextDataResponse:
                 self.layer.send(self.clipboardParser.write(pdu))
             if isinstance(pdu, FormatDataResponsePDU):
-                self.mitm_clipboard_log.info("%(clipboardData)s", {"clipboardData": hexlify(pdu.requestedFormatData).decode()})
+                self.clipboard_log.info("%(clipboardData)s", {"clipboardData": hexlify(pdu.requestedFormatData).decode()})
                 self.recorder.record(pdu, RDPPlayerMessageType.CLIPBOARD_DATA)
                 self.forwardNextDataResponse = True
 
@@ -64,8 +62,8 @@ class ActiveClipboardChannelObserver(PassiveClipboardChannelObserver):
     packet.
     """
 
-    def __init__(self, layer, recorder, mode: ParserMode, **kwargs):
-        PassiveClipboardChannelObserver.__init__(self, layer, recorder, mode, **kwargs)
+    def __init__(self, layer, recorder, logger: Logger, **kwargs):
+        PassiveClipboardChannelObserver.__init__(self, layer, recorder, logger, **kwargs)
 
     def onPDUReceived(self, pdu: ClipboardPDU):
         """

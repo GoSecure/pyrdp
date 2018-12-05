@@ -1,7 +1,7 @@
-import logging
 from socket import socket
 from typing import Dict, BinaryIO
 
+from pyrdp.core.helper_methods import getLoggerPassFilters
 from pyrdp.core.logging.log import LOGGER_NAMES
 from pyrdp.core.ssl import ClientTLSContext
 from pyrdp.crypto.crypto import SecuritySettings, RC4CrypterProxy
@@ -43,6 +43,8 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
     def __init__(self, server, fileHandle: BinaryIO, livePlayerSocket: socket,
                  replacementUsername=None, replacementPassword=None):
         MCSChannelFactory.__init__(self)
+        self.log = getLoggerPassFilters(f"{LOGGER_NAMES.MITM_CONNECTIONS}.{server.getSessionId()}.client")
+        self.log.addFilter(server.metadataFilter)
 
         self.replacementUsername = replacementUsername
         self.replacementPassword = replacementPassword
@@ -58,9 +60,8 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.conferenceCreateResponse = None
         self.serverData = None
         self.crypter = RC4CrypterProxy()
-        self.log = logging.getLogger(f"{LOGGER_NAMES.MITM_CLIENT}.{server.getFriendlyName()}")
 
-        rc4Log = logging.getLogger(f"{self.log.name}.rc4")
+        rc4Log = getLoggerPassFilters(f"{self.log.name}.rc4")
         self.securitySettings = SecuritySettings(SecuritySettings.Mode.CLIENT)
         self.securitySettings.addObserver(self.crypter)
         self.securitySettings.addObserver(RC4LoggingObserver(rc4Log))
@@ -120,8 +121,9 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.x224.sendConnectionRequest(parser.write(negotiation))
 
     def onDisconnection(self, reason):
-        self.log.debug("Connection closed")
+        self.log.debug(f"Connection closed: {reason}")
         self.server.disconnect()
+        self.log.removeFilter(self.server.metadataFilter)
 
     def onDisconnectRequest(self, pdu):
         self.log.debug("X224 Disconnect Request received")
@@ -272,7 +274,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         virtualChannelLayer.setNext(clipboardLayer)
 
         # Create and link the MITM Observer for the client side to the clipboard layer.
-        activeClipboardObserver = ActiveClipboardChannelObserver(clipboardLayer, self.recorder, ParserMode.CLIENT)
+        activeClipboardObserver = ActiveClipboardChannelObserver(clipboardLayer, self.recorder, self.log)
         clipboardLayer.addObserver(activeClipboardObserver)
 
         self.channelObservers[channelID] = activeClipboardObserver
@@ -297,7 +299,8 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         virtualChannelLayer.setNext(deviceRedirectionLayer)
 
         # Create and link the MITM Observer for the client side to the device redirection layer.
-        self.deviceRedirectionObserver = ClientPassiveDeviceRedirectionObserver(deviceRedirectionLayer, self.recorder)
+        self.deviceRedirectionObserver = ClientPassiveDeviceRedirectionObserver(deviceRedirectionLayer, self.recorder,
+                                                                                self.log)
         deviceRedirectionLayer.addObserver(self.deviceRedirectionObserver)
 
         self.channelObservers[channelID] = self.deviceRedirectionObserver

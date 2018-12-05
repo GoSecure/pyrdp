@@ -1,8 +1,8 @@
-import logging
-
 from PyQt4.QtCore import pyqtSignal, Qt
 from PyQt4.QtGui import QWidget, QLabel, QSlider, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
 
+from pyrdp.core.helper_methods import getLoggerPassFilters
+from pyrdp.core.logging.log import LOGGER_NAMES
 from pyrdp.layer.recording import RDPPlayerMessageLayer
 from pyrdp.layer.tpkt import TPKTLayer
 from pyrdp.player.BasePlayerWindow import BasePlayerWindow
@@ -114,7 +114,7 @@ class ControlBar(QWidget):
     def __init__(self, duration: float, parent: QWidget = None):
         QWidget.__init__(self, parent)
 
-        self.log = logging.getLogger("liveplayer")
+        self.log = getLoggerPassFilters(LOGGER_NAMES.LIVEPLAYER)
 
         self.button = PlayPauseButton()
         self.button.setMaximumWidth(100)

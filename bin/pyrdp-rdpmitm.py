@@ -12,6 +12,7 @@ from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
 
 from pyrdp.core.Config import Config
+from pyrdp.core.helper_methods import getLoggerPassFilters
 from pyrdp.core.logging import log
 from pyrdp.core.logging.filters import SensorFilter
 from pyrdp.core.logging.formatters import JSONFormatter
@@ -74,10 +75,10 @@ def prepare_loggers(logLevel):
     if not os.path.exists("log"):
         os.makedirs("log")
 
-    mitm_logger = logging.getLogger(LOGGER_NAMES.MITM)
+    mitm_logger = getLoggerPassFilters(LOGGER_NAMES.MITM)
     mitm_logger.setLevel(logLevel)
 
-    mitm_connections_logger = logging.getLogger(LOGGER_NAMES.MITM_CONNECTIONS)
+    mitm_connections_logger = getLoggerPassFilters(LOGGER_NAMES.MITM_CONNECTIONS)
     mitm_connections_logger.setLevel(logLevel)
 
     formatter = log.get_formatter()
@@ -93,7 +94,7 @@ def prepare_loggers(logLevel):
     pyrdp_logger = log.get_logger()
     pyrdp_logger.addHandler(file_handler)
 
-    exceptions_logger = logging.getLogger(LOGGER_NAMES.PYRDP_EXCEPTIONS)
+    exceptions_logger = getLoggerPassFilters(LOGGER_NAMES.PYRDP_EXCEPTIONS)
     exceptions_logger.propagate = False
     exceptions_logger.addHandler(file_handler)
 
@@ -138,7 +139,7 @@ def main():
     logLevel = getattr(logging, args.log_level)
 
     prepare_loggers(logLevel)
-    mitm_log = logging.getLogger(LOGGER_NAMES.MITM)
+    mitm_log = getLoggerPassFilters(LOGGER_NAMES.MITM)
 
     target = args.target
     if ":" in target:
