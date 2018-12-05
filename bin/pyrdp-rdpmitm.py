@@ -13,6 +13,7 @@ from twisted.internet.protocol import ServerFactory
 
 from pyrdp.core.Config import Config
 from pyrdp.core.logging import log
+from pyrdp.core.logging.filters import SensorFilter
 from pyrdp.core.logging.formatters import JSONFormatter
 from pyrdp.core.logging.log import LOGGER_NAMES
 from pyrdp.mitm.server import MITMServer
@@ -98,9 +99,11 @@ def prepare_loggers(logLevel):
 
     jsonFormatter = JSONFormatter()
     jsonFileHandler = logging.FileHandler("log/mitm.json")
+    sensorFilter = SensorFilter()
 
     jsonFileHandler.setFormatter(jsonFormatter)
     jsonFileHandler.setLevel(logging.INFO)
+    jsonFileHandler.addFilter(sensorFilter)
 
     mitm_logger.addHandler(jsonFileHandler)
 
@@ -126,6 +129,8 @@ def main():
     parser.add_argument("-p", "--password", help="Password to use to connect to the target VM (instead of the password "
                                                  "the client sent)", default=None)
     parser.add_argument("-L", "--log-level", help="Log level", default="INFO", choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"], nargs="?")
+    parser.add_argument("-s", "--sensor-id", help="Sensor ID (to differentiate multiple instances of the MITM where logs "
+                                                  "are aggregated at one place)", default="0")
 
     args = parser.parse_args()
     Config.arguments = args

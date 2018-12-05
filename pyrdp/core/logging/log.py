@@ -11,10 +11,10 @@ class LOGGER_NAMES:
     MITM_CONNECTIONS = "mitm.connections"
     MITM_CLIENT = "mitm.connections.client"
     MITM_SERVER = "mitm.connections.server"
-    MITM_CLIPBOARD_CLIENT = "mitm.clipboard.client"
-    MITM_CLIPBOARD_SERVER = "mitm.clipboard.server"
-    MITM_DEVICE_CLIENT = "mitm.deviceRedirection.client"
-    MITM_DEVICE_SERVER = "mitm.deviceRedirection.server"
+    MITM_CLIPBOARD_CLIENT = "mitm.connections.clipboard.client"
+    MITM_CLIPBOARD_SERVER = "mitm.connections.clipboard.server"
+    MITM_DEVICE_CLIENT = "mitm.connections.deviceRedirection.client"
+    MITM_DEVICE_SERVER = "mitm.connections.deviceRedirection.server"
 
 
 def get_formatter():
