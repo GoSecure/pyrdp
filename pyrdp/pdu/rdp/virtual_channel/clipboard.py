@@ -1,4 +1,4 @@
-from pyrdp.enum.virtual_channel.clipboard import ClipboardMessageType, ClipboardMessageFlags, ClipboardFormat
+from pyrdp.enum.virtual_channel.clipboard import ClipboardMessageType, ClipboardMessageFlags, ClipboardFormatNumber
 from pyrdp.pdu.base_pdu import PDU
 
 
@@ -19,7 +19,7 @@ class FormatDataRequestPDU(ClipboardPDU):
     https://msdn.microsoft.com/en-us/library/cc241122.aspx
     """
 
-    def __init__(self, requestedFormatId: ClipboardFormat):
+    def __init__(self, requestedFormatId: ClipboardFormatNumber):
         ClipboardPDU.__init__(self, ClipboardMessageType.CB_FORMAT_DATA_REQUEST, 0x0000)
         self.requestedFormatId = requestedFormatId
 

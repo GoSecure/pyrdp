@@ -29,7 +29,7 @@ class ClipboardMessageFlags(IntEnum):
     CB_ASCII_NAMES = 0x0004
 
 
-class ClipboardFormat(IntEnum):
+class ClipboardFormatNumber(IntEnum):
     """
     https://msdn.microsoft.com/en-us/library/cc241079.aspx
     """
@@ -38,7 +38,7 @@ class ClipboardFormat(IntEnum):
     METAFILE = 3
 
 
-class ClipboardFormatText(Enum):
+class ClipboardFormatName(Enum):
     """
     https://msdn.microsoft.com/en-us/library/cc241079.aspx
     """

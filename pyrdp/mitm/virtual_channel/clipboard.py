@@ -4,7 +4,7 @@ from logging import Logger
 from pyrdp.core.helper_methods import getLoggerPassFilters
 from pyrdp.core.observer import Observer
 from pyrdp.enum.rdp import PlayerMessageType
-from pyrdp.enum.virtual_channel.clipboard import ClipboardMessageType, ClipboardFormat
+from pyrdp.enum.virtual_channel.clipboard import ClipboardMessageType, ClipboardFormatNumber
 from pyrdp.layer.layer import Layer
 from pyrdp.parser.rdp.virtual_channel.clipboard import ClipboardParser
 from pyrdp.pdu.rdp.virtual_channel.clipboard import FormatDataResponsePDU, FormatDataRequestPDU, ClipboardPDU
@@ -82,6 +82,6 @@ class ActiveClipboardChannelObserver(PassiveClipboardChannelObserver):
         Sets a flag is the MITMServerClipboardObserver to make sure that this request
         is not transferred to the actual server.
         """
-        formatDataRequestPDU = FormatDataRequestPDU(ClipboardFormat.GENERIC)
+        formatDataRequestPDU = FormatDataRequestPDU(ClipboardFormatNumber.GENERIC)
         self.peer.sendPDU(formatDataRequestPDU)
         self.forwardNextDataResponse = False
