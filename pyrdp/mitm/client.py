@@ -15,6 +15,8 @@ from pyrdp.mitm.virtual_channel.device_redirection import ClientPassiveDeviceRed
 from pyrdp.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
 from pyrdp.parser import createFastPathParser, RDPNegotiationRequestParser, RDPNegotiationResponseParser
 from pyrdp.pdu import GCCConferenceCreateResponsePDU, RDPClientInfoPDU
+from pyrdp.pdu.gcc import GCCConferenceCreateRequestPDU
+from pyrdp.pdu.rdp.connection import RDPClientDataPDU
 from pyrdp.recording import FileLayer, Recorder, RecordingFastPathObserver, RecordingSlowPathObserver, SocketLayer
 from pyrdp.security import RC4CrypterProxy, SecuritySettings
 
@@ -133,13 +135,16 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
         self.server.onConnectionConfirm(pdu)
 
-    def onConnectInitial(self, gccConferenceCreateRequest, clientData):
+    def onConnectInitial(self, gccConferenceCreateRequest: GCCConferenceCreateRequestPDU, clientData: RDPClientDataPDU):
         """
         Called when a Connect Initial PDU is received.
         :param gccConferenceCreateRequest: the conference create request.
         :param clientData: the RDPClientDataPDU.
         """
-        self.log.debug("Sending Connect Initial")
+        self.log.info("Client Data received with client name "
+                      "%(clientName)s, resolution %(desktopWidth)dx%(desktopHeight)d",
+                      {"clientName": clientData.coreData.clientName, "desktopWidth": clientData.coreData.desktopWidth,
+                       "desktopHeight": clientData.coreData.desktopHeight})
 
         if clientData.networkData:
             self.channelDefinitions = clientData.networkData.channelDefinitions

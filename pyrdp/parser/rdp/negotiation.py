@@ -77,12 +77,10 @@ class RDPNegotiationResponseParser(Parser):
     """
     Parser for RDP negotiation responses (Connection Confirm payloads).
     """
-    def parse(self, data):
+    def parse(self, data: bytes) -> RDPNegotiationResponsePDU:
         """
         Parse a negotiation response.
         :param data: the response data.
-        :type data: bytes
-        :return: RDPNegotiationResponsePDU
         """
         stream = BytesIO(data)
 
