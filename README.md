@@ -41,3 +41,4 @@ They are located in the bin/ folder of the project. Use `--help` to see how to u
     2.1. If you come across restructuredText type hinting (such us `:type param1: str`), please change it to Python 3 type hinting `def function1(param1: str)`
 3. Document your methods and classes with docstrings using the reStructuredText syntax;
 4. Respect PEP8 (except for the naming convention, use camelCase).
+5. Whenever possible, use format strings (`f"My variable: {myVariable}"`) instead of %-style formating or `str.format()`
