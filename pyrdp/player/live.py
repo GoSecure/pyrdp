@@ -8,7 +8,7 @@ from pyrdp.player.BasePlayerWindow import BasePlayerWindow
 from pyrdp.player.event import PlayerMessageHandler
 from pyrdp.player.RDPConnectionTab import RDPConnectionTab
 from pyrdp.player.ServerThread import ServerThread
-from pyrdp.ui import QRemoteDesktop, RSSAdaptor
+from pyrdp.ui import QRemoteDesktop
 
 
 class LivePlayerWindow(BasePlayerWindow):
@@ -55,7 +55,7 @@ class LivePlayerTab(RDPConnectionTab):
     connectionClosed = pyqtSignal(object, name="Close")
 
     def __init__(self):
-        RDPConnectionTab.__init__(self, QRemoteDesktop(1024, 768, RSSAdaptor()))
+        RDPConnectionTab.__init__(self, QRemoteDesktop(1024, 768))
         self.tcp = AsyncIOTCPLayer()
         self.tpkt = TPKTLayer()
         self.message = PlayerMessageLayer()

@@ -113,15 +113,12 @@ class QRemoteDesktop(QtGui.QWidget):
     """
     @summary: Qt display widget
     """
-    def __init__(self, width, height, adaptor):
+    def __init__(self, width, height):
         """
-        @param adaptor: {QAdaptor}
         @param width: {int} width of widget
         @param height: {int} height of widget
         """
         super(QRemoteDesktop, self).__init__()
-        #adaptor use to send
-        self._adaptor = adaptor
         #set correct size
         self.resize(width, height)
         #bind mouse event
@@ -134,7 +131,7 @@ class QRemoteDesktop(QtGui.QWidget):
 
     def notifyImage(self, x, y, qimage, width, height):
         """
-        @summary: Function call from QAdaptor
+        @summary: Draw an image on the buffer.
         @param x: x position of new image
         @param y: y position of new image
         @param qimage: new QImage
@@ -169,55 +166,6 @@ class QRemoteDesktop(QtGui.QWidget):
             qp.drawImage(0, 0, self._buffer)
             qp.setBrush(QColor.fromRgb(255, 255, 0, 180))
             qp.drawEllipse(QPoint(self.mouseX, self.mouseY), 5, 5)
-        
-    def mouseMoveEvent(self, event):
-        """
-        @summary: Call when mouse move
-        @param event: QMouseEvent
-        """
-        self._adaptor.sendMouseEvent(event, False)
-        
-    def mousePressEvent(self, event):
-        """
-        @summary: Call when button mouse is pressed
-        @param event: QMouseEvent
-        """
-        self._adaptor.sendMouseEvent(event, True)
-        
-    def mouseReleaseEvent(self, event):
-        """
-        @summary: Call when button mouse is released
-        @param event: QMouseEvent
-        """
-        self._adaptor.sendMouseEvent(event, False)
-        
-    def keyPressEvent(self, event):
-        """
-        @summary: Call when button key is pressed
-        @param event: QKeyEvent
-        """
-        self._adaptor.sendKeyEvent(event, True)
-        
-    def keyReleaseEvent(self, event):
-        """
-        @summary: Call when button key is released
-        @param event: QKeyEvent
-        """
-        self._adaptor.sendKeyEvent(event, False)
-        
-    def wheelEvent(self, event):
-        """
-        @summary: Call on wheel event
-        @param event:    QWheelEvent
-        """
-        self._adaptor.sendWheelEvent(event)
-        
-    def closeEvent(self, event):
-        """
-        @summary: Call when widget is closed
-        @param event: QCloseEvent
-        """
-        self._adaptor.closeEvent(event)
 
     def clear(self):
         self._buffer = QtGui.QImage(self._buffer.width(), self._buffer.height(), QtGui.QImage.Format_RGB32)

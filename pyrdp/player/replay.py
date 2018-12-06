@@ -9,7 +9,7 @@ from pyrdp.player.ClickableProgressBar import ClickableProgressBar
 from pyrdp.player.event import PlayerMessageHandler
 from pyrdp.player.RDPConnectionTab import RDPConnectionTab
 from pyrdp.player.ReplayThread import ReplayThread
-from pyrdp.ui import PlayPauseButton, QRemoteDesktop, RSSAdaptor
+from pyrdp.ui import PlayPauseButton, QRemoteDesktop
 
 
 class ReplayWindow(BasePlayerWindow):
@@ -39,7 +39,7 @@ class ReplayTab(RDPConnectionTab):
         """
         :param fileName: name of the file to read.
         """
-        self.viewer = QRemoteDesktop(800, 600, RSSAdaptor())
+        self.viewer = QRemoteDesktop(800, 600)
         RDPConnectionTab.__init__(self, self.viewer)
 
         self.fileName = fileName
