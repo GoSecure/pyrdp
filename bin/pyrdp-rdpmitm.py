@@ -106,7 +106,7 @@ def prepare_loggers(logLevel):
     jsonFileHandler.setLevel(logging.INFO)
     jsonFileHandler.addFilter(sensorFilter)
 
-    mitm_logger.addHandler(jsonFileHandler)
+    getLoggerPassFilters(LOGGER_NAMES.MITM_CONNECTIONS).addHandler(jsonFileHandler)
 
 
 def main():
