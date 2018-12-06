@@ -3,9 +3,7 @@ from queue import Queue
 from PyQt4.QtCore import pyqtSignal
 from PyQt4.QtGui import qApp
 
-from pyrdp.layer.recording import RDPPlayerMessageLayer
-from pyrdp.layer.tcp import AsyncIOTCPLayer
-from pyrdp.layer.tpkt import TPKTLayer
+from pyrdp.layer import AsyncIOTCPLayer, PlayerMessageLayer, TPKTLayer
 from pyrdp.player.BasePlayerWindow import BasePlayerWindow
 from pyrdp.player.RDPConnectionTab import RDPConnectionTab
 from pyrdp.player.ServerThread import ServerThread
@@ -61,7 +59,7 @@ class LivePlayerTab(RDPConnectionTab):
         RDPConnectionTab.__init__(self, QRemoteDesktop(1024, 768, RSSAdaptor()))
         self.tcp = AsyncIOTCPLayer()
         self.tpkt = TPKTLayer()
-        self.message = RDPPlayerMessageLayer()
+        self.message = PlayerMessageLayer()
         self.eventHandler = RSSEventHandler(self.widget, self.text)
 
         self.tcp.setNext(self.tpkt)

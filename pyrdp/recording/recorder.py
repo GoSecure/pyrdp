@@ -1,11 +1,9 @@
 import time
-from typing import BinaryIO, Optional, List
+from typing import BinaryIO, List, Optional
 
-from pyrdp.logging import log
 from pyrdp.enum import ParserMode, PlayerMessageType
-from pyrdp.layer.layer import Layer
-from pyrdp.layer.recording import RDPPlayerMessageLayer
-from pyrdp.layer.tpkt import TPKTLayer
+from pyrdp.layer import Layer, PlayerMessageLayer, TPKTLayer
+from pyrdp.logging import log
 from pyrdp.parser.parser import Parser
 from pyrdp.parser.rdp.client_info import RDPClientInfoParser
 from pyrdp.parser.rdp.data import RDPDataParser
@@ -34,7 +32,7 @@ class Recorder:
 
         for transportLayer in transportLayers:
             tpktLayer = TPKTLayer()
-            messageLayer = RDPPlayerMessageLayer()
+            messageLayer = PlayerMessageLayer()
 
             transportLayer.setNext(tpktLayer)
             tpktLayer.setNext(messageLayer)

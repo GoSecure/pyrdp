@@ -2,8 +2,7 @@ from binascii import hexlify
 from logging import Logger
 
 from pyrdp.core.observer import Observer
-from pyrdp.layer.layer import Layer
-from pyrdp.layer.rdp.data import RDPDataLayerObserver, RDPFastPathDataLayerObserver, RDPBaseDataLayerObserver
+from pyrdp.layer import Layer, RDPBaseDataLayerObserver, RDPDataLayerObserver, RDPFastPathDataLayerObserver
 
 
 class MITMChannelObserver(Observer):

@@ -1,16 +1,15 @@
 from PyQt4.QtCore import pyqtSignal, Qt
-from PyQt4.QtGui import QWidget, QLabel, QSlider, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
+from PyQt4.QtGui import QHBoxLayout, QLabel, QSizePolicy, QSlider, QSpacerItem, QVBoxLayout, QWidget
 
 from pyrdp.core.helper_methods import getLoggerPassFilters
+from pyrdp.layer import PlayerMessageLayer, TPKTLayer
 from pyrdp.logging.log import LOGGER_NAMES
-from pyrdp.layer.recording import RDPPlayerMessageLayer
-from pyrdp.layer.tpkt import TPKTLayer
 from pyrdp.player.BasePlayerWindow import BasePlayerWindow
 from pyrdp.player.ClickableProgressBar import ClickableProgressBar
 from pyrdp.player.RDPConnectionTab import RDPConnectionTab
 from pyrdp.player.ReplayThread import ReplayThread
-from pyrdp.ui.PlayPauseButton import PlayPauseButton
 from pyrdp.ui.event import RSSEventHandler
+from pyrdp.ui.PlayPauseButton import PlayPauseButton
 from pyrdp.ui.qt4 import QRemoteDesktop
 from pyrdp.ui.rss import RSSAdaptor
 
@@ -63,7 +62,7 @@ class ReplayTab(RDPConnectionTab):
         self.layout().insertWidget(0, self.controlBar)
 
         self.tpkt = TPKTLayer()
-        self.message = RDPPlayerMessageLayer()
+        self.message = PlayerMessageLayer()
 
         self.tpkt.setNext(self.message)
         self.message.addObserver(self.eventHandler)

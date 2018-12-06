@@ -6,11 +6,10 @@ from enum import IntEnum
 from multiprocessing import Queue
 from typing import BinaryIO
 
-from PyQt4.QtCore import QThread, pyqtSignal
+from PyQt4.QtCore import pyqtSignal, QThread
 
 from pyrdp.core.timer import Timer
-from pyrdp.layer.recording import RDPPlayerMessageLayer
-from pyrdp.layer.tpkt import TPKTLayer
+from pyrdp.layer import PlayerMessageLayer, TPKTLayer
 from pyrdp.pdu.rdp.recording import RDPPlayerMessagePDU
 
 
@@ -52,7 +51,7 @@ class ReplayThread(QThread):
         currentMessagePosition = 0
 
         tpkt = TPKTLayer()
-        player = RDPPlayerMessageLayer()
+        player = PlayerMessageLayer()
         tpkt.setNext(player)
 
         def registerEvent(pdu: RDPPlayerMessagePDU):

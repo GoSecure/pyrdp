@@ -1,5 +1,5 @@
 from pyrdp.enum import MCSPDUType
-from pyrdp.layer.layer import LayerStrictRoutedObserver
+from pyrdp.layer import LayerStrictRoutedObserver
 
 
 class MCSRouter(LayerStrictRoutedObserver):

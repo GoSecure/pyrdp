@@ -7,7 +7,7 @@ from typing import Dict
 from pyrdp.core.helper_methods import decodeUTF16LE, getLoggerPassFilters
 from pyrdp.core.observer import Observer
 from pyrdp.enum import FileAccess, CreateOption, MajorFunction, IOOperationSeverity
-from pyrdp.layer.layer import Layer
+from pyrdp.layer import Layer
 from pyrdp.parser.rdp.virtual_channel.device_redirection import DeviceRedirectionParser
 from pyrdp.pdu.rdp.virtual_channel.device_redirection import DeviceIOResponsePDU, DeviceCreateRequestPDU, \
     DeviceCloseRequestPDU, DeviceReadRequestPDU, DeviceIORequestPDU, DeviceRedirectionPDU, \

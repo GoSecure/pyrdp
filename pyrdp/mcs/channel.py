@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
-from pyrdp.layer.layer import Layer
+from pyrdp.layer import Layer
 from pyrdp.pdu.mcs import MCSSendDataRequestPDU, MCSSendDataIndicationPDU
 
 

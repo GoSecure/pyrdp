@@ -3,31 +3,31 @@ from PyQt4.QtGui import QTextCursor
 
 from pyrdp.core.helper_methods import decodeUTF16LE
 from pyrdp.core.scancode import scancodeToChar
-from pyrdp.enum import ParserMode, CapabilityType, SlowPathUpdateType, BitmapFlags, KeyboardFlag
-from pyrdp.layer.recording import RDPPlayerMessageObserver
+from pyrdp.enum import BitmapFlags, CapabilityType, KeyboardFlag, ParserMode, SlowPathUpdateType
+from pyrdp.layer import PlayerMessageObserver
 from pyrdp.logging import log
 from pyrdp.parser.rdp.client_info import RDPClientInfoParser
 from pyrdp.parser.rdp.common import RDPCommonParser
 from pyrdp.parser.rdp.data import RDPDataParser
-from pyrdp.parser.rdp.fastpath import RDPOutputEventParser, RDPBasicFastPathParser
+from pyrdp.parser.rdp.fastpath import RDPBasicFastPathParser, RDPOutputEventParser
 from pyrdp.parser.rdp.virtual_channel.clipboard import ClipboardParser
 from pyrdp.pdu.base_pdu import PDU
 from pyrdp.pdu.rdp.common import BitmapUpdateData
-from pyrdp.pdu.rdp.data import RDPConfirmActivePDU, RDPUpdatePDU, RDPInputPDU
-from pyrdp.pdu.rdp.fastpath import FastPathEventScanCode, FastPathEventMouse, FastPathOrdersEvent, FastPathBitmapEvent
+from pyrdp.pdu.rdp.data import RDPConfirmActivePDU, RDPInputPDU, RDPUpdatePDU
+from pyrdp.pdu.rdp.fastpath import FastPathBitmapEvent, FastPathEventMouse, FastPathEventScanCode, FastPathOrdersEvent
 from pyrdp.pdu.rdp.input import KeyboardEvent, MouseEvent
 from pyrdp.pdu.rdp.recording import RDPPlayerMessagePDU
 from pyrdp.pdu.rdp.virtual_channel.clipboard import FormatDataResponsePDU
 from pyrdp.ui.qt4 import RDPBitmapToQtImage
 
 
-class RSSEventHandler(RDPPlayerMessageObserver):
+class RSSEventHandler(PlayerMessageObserver):
     """
     Class to manage the display of the RDP player when reading events.
     """
 
     def __init__(self, viewer, text):
-        RDPPlayerMessageObserver.__init__(self)
+        PlayerMessageObserver.__init__(self)
         self.viewer = viewer
         self.text = text
         self.writeInCaps = False

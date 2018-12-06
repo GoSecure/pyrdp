@@ -7,7 +7,7 @@ from pyrdp.layer.layer import Layer, LayerRoutedObserver
 from pyrdp.pdu.rdp.recording import RDPPlayerMessagePDU
 
 
-class RDPPlayerMessageObserver(LayerRoutedObserver):
+class PlayerMessageObserver(LayerRoutedObserver):
     def __init__(self, **kwargs):
         LayerRoutedObserver.__init__(self, {
             PlayerMessageType.CONNECTION_CLOSE: "onConnectionClose",
@@ -36,8 +36,8 @@ class RDPPlayerMessageObserver(LayerRoutedObserver):
     def onClipboardData(self, pdu):
         pass
 
-@ObservedBy(RDPPlayerMessageObserver)
-class RDPPlayerMessageLayer(Layer):
+@ObservedBy(PlayerMessageObserver)
+class PlayerMessageLayer(Layer):
     """
     Layer to manage the encapsulation of Player metadata such as event timestamp and
     event type/origin (input, output).
