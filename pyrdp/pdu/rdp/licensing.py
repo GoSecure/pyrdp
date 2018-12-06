@@ -1,4 +1,4 @@
-from pyrdp.enum.rdp import LicensingPDUType
+from pyrdp.enum import LicensingPDUType
 from pyrdp.pdu.base_pdu import PDU
 
 

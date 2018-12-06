@@ -1,4 +1,4 @@
-from pyrdp.enum.rdp import CapabilityType
+from pyrdp.enum import CapabilityType
 from pyrdp.pdu.base_pdu import PDU
 
 

@@ -1,4 +1,4 @@
-from pyrdp.enum.rdp import InputEventType
+from pyrdp.enum import InputEventType
 from pyrdp.pdu.base_pdu import PDU
 
 

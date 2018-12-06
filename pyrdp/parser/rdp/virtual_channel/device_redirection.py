@@ -3,8 +3,7 @@ from typing import Dict
 
 from pyrdp.logging import log
 from pyrdp.core.packing import Uint16LE, Uint32LE, Uint64LE
-from pyrdp.enum.virtual_channel.device_redirection import DeviceRedirectionComponent, DeviceRedirectionPacketId, \
-    MajorFunction, DeviceType
+from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketId, MajorFunction, DeviceType
 from pyrdp.parser.parser import Parser
 from pyrdp.pdu.rdp.virtual_channel.device_redirection import DeviceRedirectionPDU, DeviceIOResponsePDU, \
     DeviceIORequestPDU, DeviceReadResponsePDU, DeviceReadRequestPDU, DeviceCreateResponsePDU, DeviceCreateRequestPDU, \

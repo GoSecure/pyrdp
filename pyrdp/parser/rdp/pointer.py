@@ -1,7 +1,7 @@
 from io import BytesIO
 
 from pyrdp.core.packing import Uint16LE, Uint32LE
-from pyrdp.enum.rdp import PointerEventType
+from pyrdp.enum import PointerEventType
 from pyrdp.exceptions import ParsingError
 from pyrdp.parser.parser import Parser
 from pyrdp.pdu.rdp.pointer import PointerSystemEvent, Point, PointerPositionEvent, PointerColorEvent, PointerCacheEvent, \

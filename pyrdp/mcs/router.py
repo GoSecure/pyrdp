@@ -1,4 +1,4 @@
-from pyrdp.enum.mcs import MCSPDUType
+from pyrdp.enum import MCSPDUType
 from pyrdp.layer.layer import LayerStrictRoutedObserver
 
 

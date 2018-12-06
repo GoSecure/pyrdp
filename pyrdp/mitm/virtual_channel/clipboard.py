@@ -3,8 +3,7 @@ from logging import Logger
 
 from pyrdp.core.helper_methods import getLoggerPassFilters
 from pyrdp.core.observer import Observer
-from pyrdp.enum.rdp import PlayerMessageType
-from pyrdp.enum.virtual_channel.clipboard import ClipboardMessageType, ClipboardFormatNumber
+from pyrdp.enum import ClipboardMessageType, ClipboardFormatNumber, PlayerMessageType
 from pyrdp.layer.layer import Layer
 from pyrdp.parser.rdp.virtual_channel.clipboard import ClipboardParser
 from pyrdp.pdu.rdp.virtual_channel.clipboard import FormatDataResponsePDU, FormatDataRequestPDU, ClipboardPDU

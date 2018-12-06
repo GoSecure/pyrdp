@@ -1,4 +1,4 @@
-from pyrdp.enum.rdp import PointerEventType
+from pyrdp.enum import PointerEventType
 from pyrdp.pdu.base_pdu import PDU
 
 

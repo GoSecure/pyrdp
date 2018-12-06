@@ -1,4 +1,4 @@
-from pyrdp.enum.rdp import SlowPathUpdateType
+from pyrdp.enum import SlowPathUpdateType
 from pyrdp.pdu.base_pdu import PDU
 
 

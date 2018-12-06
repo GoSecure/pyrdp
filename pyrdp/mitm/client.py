@@ -3,10 +3,7 @@ from typing import Dict, BinaryIO
 
 from pyrdp.core.helper_methods import getLoggerPassFilters
 from pyrdp.core.ssl import ClientTLSContext
-from pyrdp.enum.core import ParserMode
-from pyrdp.enum.rdp import PlayerMessageType, ClientInfoFlags
-from pyrdp.enum.segmentation import SegmentationPDUType
-from pyrdp.enum.virtual_channel.virtual_channel import VirtualChannelName
+from pyrdp.enum import ParserMode, PlayerMessageType, ClientInfoFlags, SegmentationPDUType, VirtualChannelName
 from pyrdp.layer.gcc import GCCClientConnectionLayer
 from pyrdp.layer.mcs import MCSLayer, MCSClientConnectionLayer
 from pyrdp.layer.raw import RawLayer

@@ -2,7 +2,7 @@ from collections import namedtuple
 
 from pyrdp.core.packing import Uint8
 from pyrdp.core.subject import ObservedBy
-from pyrdp.enum.segmentation import SegmentationPDUType
+from pyrdp.enum import SegmentationPDUType
 from pyrdp.layer.buffered import BufferedLayer
 from pyrdp.layer.layer import Layer, LayerObserver
 

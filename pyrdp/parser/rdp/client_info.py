@@ -3,7 +3,7 @@ from io import BytesIO
 from pyrdp.core.helper_methods import decodeUTF16LE, encodeUTF16LE
 from pyrdp.core.packing import Uint32LE, Uint16LE
 from pyrdp.core.stream import StrictStream
-from pyrdp.enum.rdp import ClientInfoFlags
+from pyrdp.enum import ClientInfoFlags
 from pyrdp.parser.parser import Parser
 from pyrdp.pdu.rdp.client_info import RDPClientInfoPDU, ClientExtraInfo
 

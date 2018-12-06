@@ -1,4 +1,4 @@
-from pyrdp.enum.gcc import GCCPDUType
+from pyrdp.enum import GCCPDUType
 from pyrdp.pdu.base_pdu import PDU
 
 

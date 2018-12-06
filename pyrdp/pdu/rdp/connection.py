@@ -1,6 +1,6 @@
 from typing import List
 
-from pyrdp.enum.rdp import RDPConnectionDataType, ServerCertificateType
+from pyrdp.enum import RDPConnectionDataType, ServerCertificateType
 from pyrdp.pdu.base_pdu import PDU
 
 

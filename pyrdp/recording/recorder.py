@@ -2,8 +2,7 @@ import time
 from typing import BinaryIO, Optional, List
 
 from pyrdp.logging import log
-from pyrdp.enum.core import ParserMode
-from pyrdp.enum.rdp import PlayerMessageType
+from pyrdp.enum import ParserMode, PlayerMessageType
 from pyrdp.layer.layer import Layer
 from pyrdp.layer.recording import RDPPlayerMessageLayer
 from pyrdp.layer.tpkt import TPKTLayer

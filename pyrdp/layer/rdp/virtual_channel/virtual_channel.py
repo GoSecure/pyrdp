@@ -1,5 +1,5 @@
 from pyrdp.logging import log
-from pyrdp.enum.virtual_channel.virtual_channel import VirtualChannelPDUFlag
+from pyrdp.enum import VirtualChannelPDUFlag
 from pyrdp.layer.layer import Layer
 from pyrdp.parser.rdp.virtual_channel.virtual_channel import VirtualChannelParser
 from pyrdp.pdu.rdp.virtual_channel.virtual_channel import VirtualChannelPDU

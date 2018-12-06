@@ -1,7 +1,7 @@
 from io import BytesIO
 
 from pyrdp.core.packing import Uint16LE, Uint32LE, Uint8
-from pyrdp.enum.rdp import RDPDataPDUType, RDPDataPDUSubtype, ErrorInfo, CapabilityType
+from pyrdp.enum import RDPDataPDUType, RDPDataPDUSubtype, ErrorInfo, CapabilityType
 from pyrdp.exceptions import UnknownPDUTypeError
 from pyrdp.parser.parser import Parser
 from pyrdp.parser.rdp.input import RDPInputParser

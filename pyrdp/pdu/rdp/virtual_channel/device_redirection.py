@@ -1,6 +1,6 @@
 from typing import List
 
-from pyrdp.enum.virtual_channel.device_redirection import DeviceRedirectionComponent, DeviceRedirectionPacketId, \
+from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketId, \
     MajorFunction, DeviceType
 from pyrdp.pdu.base_pdu import PDU
 

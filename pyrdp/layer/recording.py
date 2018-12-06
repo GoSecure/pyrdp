@@ -2,7 +2,7 @@ from io import BytesIO
 
 from pyrdp.core.packing import Uint8, Uint64LE
 from pyrdp.core.subject import ObservedBy
-from pyrdp.enum.rdp import PlayerMessageType
+from pyrdp.enum import PlayerMessageType
 from pyrdp.layer.layer import Layer, LayerRoutedObserver
 from pyrdp.pdu.rdp.recording import RDPPlayerMessagePDU
 

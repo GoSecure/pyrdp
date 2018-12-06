@@ -1,7 +1,7 @@
 from binascii import hexlify
 
 from pyrdp.core.subject import ObservedBy
-from pyrdp.enum.rdp import RDPSecurityFlags, EncryptionMethod
+from pyrdp.enum import RDPSecurityFlags, EncryptionMethod
 from pyrdp.layer.layer import Layer, LayerObserver
 from pyrdp.logging import log
 from pyrdp.parser.parser import Parser

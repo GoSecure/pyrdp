@@ -1,7 +1,7 @@
 from io import BytesIO
 
 from pyrdp.core.packing import Uint8, Uint16BE, Uint16LE
-from pyrdp.enum.x224 import X224PDUType
+from pyrdp.enum import X224PDUType
 from pyrdp.exceptions import ParsingError, UnknownPDUTypeError
 from pyrdp.parser.parser import Parser
 from pyrdp.pdu.x224 import X224ConnectionConfirmPDU, X224ConnectionRequestPDU, X224DisconnectRequestPDU, X224DataPDU, \

@@ -1,6 +1,6 @@
 from typing import List
 
-from pyrdp.enum.segmentation import SegmentationPDUType
+from pyrdp.enum import SegmentationPDUType
 from pyrdp.pdu.base_pdu import PDU
 from pyrdp.pdu.rdp.common import BitmapUpdateData
 from pyrdp.pdu.segmentation import SegmentationPDU

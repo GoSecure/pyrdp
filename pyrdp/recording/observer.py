@@ -1,4 +1,4 @@
-from pyrdp.enum.rdp import PlayerMessageType
+from pyrdp.enum import PlayerMessageType
 from pyrdp.layer.rdp.data import RDPFastPathDataLayerObserver, RDPDataLayerObserver
 from pyrdp.pdu.rdp.data import RDPConfirmActivePDU, RDPInputPDU, RDPUpdatePDU
 from pyrdp.recording.recorder import Recorder

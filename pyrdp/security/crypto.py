@@ -1,6 +1,6 @@
 from pyrdp.security import rc4
 from pyrdp.security.key import macData, macSaltedData, generateKeys, updateKey
-from pyrdp.enum.rdp import EncryptionMethod
+from pyrdp.enum import EncryptionMethod
 
 """
 Cryptographic utility functions

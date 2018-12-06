@@ -1,4 +1,4 @@
-from pyrdp.enum.x224 import X224PDUType
+from pyrdp.enum import X224PDUType
 from pyrdp.pdu.base_pdu import PDU
 
 

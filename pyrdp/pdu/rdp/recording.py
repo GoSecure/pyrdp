@@ -1,4 +1,4 @@
-from pyrdp.enum.rdp import PlayerMessageType
+from pyrdp.enum import PlayerMessageType
 from pyrdp.pdu.base_pdu import PDU
 
 

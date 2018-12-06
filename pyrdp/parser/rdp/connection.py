@@ -7,7 +7,7 @@ from Crypto.Util.number import bytes_to_long, long_to_bytes
 from pyrdp.core.helper_methods import decodeUTF16LE, encodeUTF16LE
 from pyrdp.core.packing import Uint16LE, Uint32LE, Uint8
 from pyrdp.core.stream import StrictStream
-from pyrdp.enum.rdp import RDPConnectionDataType, ServerCertificateType, RDPVersion, ColorDepth, KeyboardType, \
+from pyrdp.enum import RDPConnectionDataType, ServerCertificateType, RDPVersion, ColorDepth, KeyboardType, \
     HighColorDepth, ConnectionType, DesktopOrientation, EncryptionLevel, EncryptionMethod
 from pyrdp.exceptions import ParsingError, UnknownPDUTypeError
 from pyrdp.parser.parser import Parser

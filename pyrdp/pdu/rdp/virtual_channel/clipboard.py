@@ -1,4 +1,4 @@
-from pyrdp.enum.virtual_channel.clipboard import ClipboardMessageType, ClipboardMessageFlags, ClipboardFormatNumber
+from pyrdp.enum import ClipboardMessageType, ClipboardMessageFlags, ClipboardFormatNumber
 from pyrdp.pdu.base_pdu import PDU
 
 

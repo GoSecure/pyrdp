@@ -2,11 +2,10 @@ from PyQt4 import QtGui
 from PyQt4.QtGui import QTextCursor
 
 from pyrdp.core.helper_methods import decodeUTF16LE
-from pyrdp.logging import log
 from pyrdp.core.scancode import scancodeToChar
-from pyrdp.enum.core import ParserMode
-from pyrdp.enum.rdp import CapabilityType, SlowPathUpdateType, BitmapFlags, KeyboardFlag
+from pyrdp.enum import ParserMode, CapabilityType, SlowPathUpdateType, BitmapFlags, KeyboardFlag
 from pyrdp.layer.recording import RDPPlayerMessageObserver
+from pyrdp.logging import log
 from pyrdp.parser.rdp.client_info import RDPClientInfoParser
 from pyrdp.parser.rdp.common import RDPCommonParser
 from pyrdp.parser.rdp.data import RDPDataParser

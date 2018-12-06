@@ -1,7 +1,7 @@
 from io import BytesIO
 
 from pyrdp.core.packing import Uint8, Uint16LE, Uint32LE
-from pyrdp.enum.rdp import LicensingPDUType, LicenseBinaryBlobType, LicenseErrorCode, RDPStateTransition
+from pyrdp.enum import LicensingPDUType, LicenseBinaryBlobType, LicenseErrorCode, RDPStateTransition
 from pyrdp.exceptions import UnknownPDUTypeError
 from pyrdp.parser.parser import Parser
 from pyrdp.pdu.rdp.licensing import RDPLicenseBinaryBlob, RDPLicenseErrorAlertPDU, RDPLicensingPDU

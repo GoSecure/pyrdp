@@ -1,5 +1,4 @@
-from pyrdp.enum.negotiation import NegotiationType
-from pyrdp.enum.rdp import NegotiationProtocols
+from pyrdp.enum import NegotiationProtocols, NegotiationType
 from pyrdp.pdu.base_pdu import PDU
 
 

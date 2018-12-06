@@ -2,8 +2,7 @@ from binascii import hexlify
 from io import BytesIO
 
 from pyrdp.core.packing import Uint8, Uint16BE, Uint16LE
-from pyrdp.enum.core import ParserMode
-from pyrdp.enum.rdp import FastPathInputEventType, \
+from pyrdp.enum import ParserMode, FastPathInputEventType, \
     FastPathSecurityFlags, FIPSVersion, FastPathOutputCompressionType, FastPathOutputEventType, \
     DrawingOrderControlFlags, EncryptionMethod
 from pyrdp.logging import log

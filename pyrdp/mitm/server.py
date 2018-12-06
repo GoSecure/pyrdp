@@ -9,11 +9,8 @@ from twisted.internet.protocol import ClientFactory
 
 from pyrdp.core.helper_methods import decodeUTF16LE, getLoggerPassFilters
 from pyrdp.core.ssl import ServerTLSContext
-from pyrdp.enum.core import ParserMode
-from pyrdp.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, EncryptionMethod, EncryptionLevel, \
-    PlayerMessageType, CapabilityType, OrderFlag
-from pyrdp.enum.segmentation import SegmentationPDUType
-from pyrdp.enum.virtual_channel.virtual_channel import VirtualChannelName
+from pyrdp.enum import ParserMode, NegotiationProtocols, RDPDataPDUSubtype, InputEventType, EncryptionMethod, EncryptionLevel, \
+    PlayerMessageType, CapabilityType, OrderFlag, SegmentationPDUType, VirtualChannelName
 from pyrdp.layer.mcs import MCSLayer
 from pyrdp.layer.raw import RawLayer
 from pyrdp.layer.rdp.data import RDPDataLayer

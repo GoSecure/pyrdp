@@ -3,7 +3,7 @@ from io import BytesIO
 
 from pyrdp.core import ber, per
 from pyrdp.core.packing import Uint8, Uint16BE
-from pyrdp.enum.mcs import MCSChannelID, MCSPDUType
+from pyrdp.enum import MCSChannelID, MCSPDUType
 from pyrdp.exceptions import UnknownPDUTypeError, ParsingError
 from pyrdp.parser.parser import Parser
 from pyrdp.pdu.mcs import MCSConnectInitialPDU, MCSConnectResponsePDU, MCSErectDomainRequestPDU, \
