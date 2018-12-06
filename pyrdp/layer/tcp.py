@@ -2,7 +2,7 @@ import asyncio
 
 from twisted.internet.protocol import connectionDone, Protocol
 
-from pyrdp.core.helper_methods import getLoggerPassFilters
+from pyrdp.core.helpers import getLoggerPassFilters
 from pyrdp.core.subject import ObservedBy
 from pyrdp.layer.layer import Layer, LayerObserver
 from pyrdp.logging import log, LOGGER_NAMES

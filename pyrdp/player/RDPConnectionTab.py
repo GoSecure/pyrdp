@@ -1,7 +1,7 @@
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QWidget, QTextEdit, QScrollArea, QVBoxLayout
 
-from pyrdp.core.helper_methods import getLoggerPassFilters
+from pyrdp.core.helpers import getLoggerPassFilters
 from pyrdp.logging import LOGGER_NAMES
 
 

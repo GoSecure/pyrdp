@@ -4,7 +4,7 @@ from io import BytesIO
 from logging import Logger
 from typing import Dict
 
-from pyrdp.core.helper_methods import decodeUTF16LE, getLoggerPassFilters
+from pyrdp.core.helpers import decodeUTF16LE, getLoggerPassFilters
 from pyrdp.core.observer import Observer
 from pyrdp.enum import FileAccess, CreateOption, MajorFunction, IOOperationSeverity
 from pyrdp.layer import Layer

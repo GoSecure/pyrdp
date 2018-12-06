@@ -1,7 +1,7 @@
 from PyQt4.QtCore import pyqtSignal, Qt
 from PyQt4.QtGui import QHBoxLayout, QLabel, QSizePolicy, QSlider, QSpacerItem, QVBoxLayout, QWidget
 
-from pyrdp.core.helper_methods import getLoggerPassFilters
+from pyrdp.core.helpers import getLoggerPassFilters
 from pyrdp.layer import PlayerMessageLayer, TPKTLayer
 from pyrdp.logging import LOGGER_NAMES
 from pyrdp.player.BasePlayerWindow import BasePlayerWindow

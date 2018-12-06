@@ -1,6 +1,6 @@
 from PyQt4.QtGui import QTabWidget, QShortcut, QKeySequence
 
-from pyrdp.core.helper_methods import getLoggerPassFilters
+from pyrdp.core.helpers import getLoggerPassFilters
 from pyrdp.logging import LOGGER_NAMES
 
 
