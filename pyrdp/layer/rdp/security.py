@@ -4,9 +4,8 @@ from pyrdp.core.subject import ObservedBy
 from pyrdp.enum import EncryptionMethod, RDPSecurityFlags
 from pyrdp.layer.layer import Layer, LayerObserver
 from pyrdp.logging import log
-from pyrdp.parser.parser import Parser
-from pyrdp.parser.rdp.client_info import RDPClientInfoParser
-from pyrdp.parser.rdp.security import RDPBasicSecurityParser, RDPFIPSSecurityParser, RDPSignedSecurityParser
+from pyrdp.parser import Parser, RDPBasicSecurityParser, RDPClientInfoParser, RDPFIPSSecurityParser, \
+    RDPSignedSecurityParser
 from pyrdp.pdu import RDPClientInfoPDU, RDPSecurityExchangePDU, RDPSecurityPDU
 from pyrdp.security import RC4Crypter
 

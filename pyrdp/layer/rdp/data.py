@@ -3,7 +3,7 @@ from pyrdp.enum import CapabilityType, RDPDataPDUType, VirtualChannelCompression
 from pyrdp.exceptions import UnknownPDUTypeError
 from pyrdp.layer.layer import Layer, LayerObserver, LayerStrictRoutedObserver
 from pyrdp.logging import log
-from pyrdp.parser.rdp.data import RDPDataParser
+from pyrdp.parser import RDPDataParser
 from pyrdp.pdu import PDU, RDPConfirmActivePDU, RDPDemandActivePDU
 
 

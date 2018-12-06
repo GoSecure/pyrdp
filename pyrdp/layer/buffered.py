@@ -1,6 +1,5 @@
 from pyrdp.layer.layer import Layer
-from pyrdp.parser.parser import Parser
-from pyrdp.parser.segmentation import SegmentationParser
+from pyrdp.parser import Parser, SegmentationParser
 
 
 class BufferedLayer(Layer):

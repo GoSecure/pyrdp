@@ -6,11 +6,8 @@ from pyrdp.core.scancode import scancodeToChar
 from pyrdp.enum import BitmapFlags, CapabilityType, KeyboardFlag, ParserMode, SlowPathUpdateType
 from pyrdp.layer import PlayerMessageObserver
 from pyrdp.logging import log
-from pyrdp.parser.rdp.client_info import RDPClientInfoParser
-from pyrdp.parser.rdp.common import RDPCommonParser
-from pyrdp.parser.rdp.data import RDPDataParser
-from pyrdp.parser.rdp.fastpath import RDPBasicFastPathParser, RDPOutputEventParser
-from pyrdp.parser.rdp.virtual_channel.clipboard import ClipboardParser
+from pyrdp.parser import ClipboardParser, RDPBasicFastPathParser, RDPClientInfoParser, RDPCommonParser, RDPDataParser, \
+    RDPOutputEventParser
 from pyrdp.pdu import BitmapUpdateData, FastPathBitmapEvent, FastPathMouseEvent, FastPathOrdersEvent, \
     FastPathScanCodeEvent, FormatDataResponsePDU, KeyboardEvent, MouseEvent, PDU, PlayerMessagePDU, RDPConfirmActivePDU, \
     RDPInputPDU, RDPUpdatePDU

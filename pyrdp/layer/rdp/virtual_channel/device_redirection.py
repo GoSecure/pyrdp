@@ -1,5 +1,5 @@
 from pyrdp.layer.layer import Layer
-from pyrdp.parser.rdp.virtual_channel.device_redirection import DeviceRedirectionParser
+from pyrdp.parser import DeviceRedirectionParser
 
 
 class DeviceRedirectionLayer(Layer):

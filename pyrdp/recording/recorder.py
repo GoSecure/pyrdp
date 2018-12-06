@@ -4,11 +4,7 @@ from typing import BinaryIO, List, Optional
 from pyrdp.enum import ParserMode, PlayerMessageType
 from pyrdp.layer import Layer, PlayerMessageLayer, TPKTLayer
 from pyrdp.logging import log
-from pyrdp.parser.parser import Parser
-from pyrdp.parser.rdp.client_info import RDPClientInfoParser
-from pyrdp.parser.rdp.data import RDPDataParser
-from pyrdp.parser.rdp.fastpath import RDPBasicFastPathParser
-from pyrdp.parser.rdp.virtual_channel.clipboard import ClipboardParser
+from pyrdp.parser import ClipboardParser, Parser, RDPBasicFastPathParser, RDPClientInfoParser, RDPDataParser
 from pyrdp.pdu import PDU
 
 

@@ -3,7 +3,7 @@ from typing import Optional
 from pyrdp.core.observer import Observer
 from pyrdp.core.subject import Subject, ObservedBy
 from pyrdp.exceptions import UnknownPDUTypeError
-from pyrdp.parser.parser import Parser
+from pyrdp.parser import Parser
 from pyrdp.pdu import PDU
 
 

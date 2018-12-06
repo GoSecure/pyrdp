@@ -1,5 +1,5 @@
 from pyrdp.layer.buffered import BufferedLayer
-from pyrdp.parser.segmentation import SegmentationParser
+from pyrdp.parser import SegmentationParser
 
 
 class FastPathLayer(BufferedLayer):

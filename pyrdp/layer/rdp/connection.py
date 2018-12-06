@@ -1,5 +1,5 @@
 from pyrdp.layer.layer import Layer
-from pyrdp.parser.rdp.connection import RDPClientConnectionParser, RDPServerConnectionParser
+from pyrdp.parser import RDPClientConnectionParser, RDPServerConnectionParser
 
 
 class RDPClientConnectionLayer(Layer):

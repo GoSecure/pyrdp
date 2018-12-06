@@ -1,5 +1,5 @@
 from pyrdp.layer.layer import Layer
-from pyrdp.parser.rdp.virtual_channel.clipboard import ClipboardParser
+from pyrdp.parser import ClipboardParser
 
 
 class ClipboardLayer(Layer):

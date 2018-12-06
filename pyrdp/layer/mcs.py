@@ -1,5 +1,5 @@
 from pyrdp.layer.layer import Layer
-from pyrdp.parser.mcs import MCSParser
+from pyrdp.parser import MCSParser
 from pyrdp.pdu import MCSConnectInitialPDU, MCSDomainParams, MCSPDU
 
 

@@ -20,11 +20,8 @@ from pyrdp.mitm.observer import MITMFastPathObserver, MITMSlowPathObserver
 from pyrdp.mitm.virtual_channel.clipboard import PassiveClipboardChannelObserver
 from pyrdp.mitm.virtual_channel.device_redirection import ServerPassiveDeviceRedirectionObserver
 from pyrdp.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
-from pyrdp.parser.gcc import GCCParser
-from pyrdp.parser.rdp.client_info import RDPClientInfoParser
-from pyrdp.parser.rdp.connection import RDPClientConnectionParser, RDPServerConnectionParser
-from pyrdp.parser.rdp.fastpath import createFastPathParser
-from pyrdp.parser.rdp.negotiation import RDPNegotiationRequestParser, RDPNegotiationResponseParser
+from pyrdp.parser import createFastPathParser, GCCParser, RDPClientConnectionParser, RDPClientInfoParser, \
+    RDPNegotiationRequestParser, RDPNegotiationResponseParser, RDPServerConnectionParser
 from pyrdp.pdu import Capability, GCCConferenceCreateResponsePDU, MCSConnectResponsePDU, MultifragmentUpdateCapability, \
     ProprietaryCertificate, RDPNegotiationRequestPDU, RDPNegotiationResponsePDU, RDPServerDataPDU, ServerSecurityData
 from pyrdp.recording import FileLayer, Recorder, RecordingFastPathObserver, RecordingSlowPathObserver, SocketLayer

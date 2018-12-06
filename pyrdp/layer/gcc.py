@@ -1,5 +1,5 @@
 from pyrdp.layer.layer import Layer
-from pyrdp.parser.gcc import GCCParser
+from pyrdp.parser import GCCParser
 from pyrdp.pdu import GCCConferenceCreateRequestPDU
 
 
