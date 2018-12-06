@@ -18,7 +18,7 @@ from pyrdp.pdu.rdp.fastpath import FastPathBitmapEvent, FastPathEventMouse, Fast
 from pyrdp.pdu.rdp.input import KeyboardEvent, MouseEvent
 from pyrdp.pdu.rdp.recording import RDPPlayerMessagePDU
 from pyrdp.pdu.rdp.virtual_channel.clipboard import FormatDataResponsePDU
-from pyrdp.ui.qt4 import RDPBitmapToQtImage
+from pyrdp.ui import RDPBitmapToQtImage
 
 
 class PlayerMessageHandler(PlayerMessageObserver):

@@ -6,12 +6,10 @@ from pyrdp.layer import PlayerMessageLayer, TPKTLayer
 from pyrdp.logging import LOGGER_NAMES
 from pyrdp.player.BasePlayerWindow import BasePlayerWindow
 from pyrdp.player.ClickableProgressBar import ClickableProgressBar
+from pyrdp.player.event import PlayerMessageHandler
 from pyrdp.player.RDPConnectionTab import RDPConnectionTab
 from pyrdp.player.ReplayThread import ReplayThread
-from pyrdp.player.event import PlayerMessageHandler
-from pyrdp.ui.PlayPauseButton import PlayPauseButton
-from pyrdp.ui.qt4 import QRemoteDesktop
-from pyrdp.ui.rss import RSSAdaptor
+from pyrdp.ui import PlayPauseButton, QRemoteDesktop, RSSAdaptor
 
 
 class ReplayWindow(BasePlayerWindow):
