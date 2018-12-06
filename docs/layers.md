@@ -14,7 +14,7 @@ the MCS protocol, which has a complex initialization sequence and uses different
 whether it is used on a server or a client. In order to handle this complexity, we use layer observers.
 
 ## Layer Observers
-Each layer can have an observer attached to it. Whenever it receives a PDU, it calls the `Layer` class's 
+Each layer can have zero to many `Observer` attached to it. Whenever it receives a PDU, it calls the `Layer` class's 
 `pduReceived` method, which notifies the observer and optionally forwards it to the next layer in line.
 The job of handling special PDUs is thus left to the layer's observer. This allows us to keep a simple
 `parse and forward` design in our layer classes, where forwarding only happens when actual data PDUs are
@@ -79,7 +79,7 @@ This is where slow-path RDP data ends up. This layer is also used at the end of 
 
 ### Virtual channels (clipboard, drive, etc.)
 Virtual channels follow the same route that I/O takes, except their packet structure is different. For the 
-moment, only the clipboard virtual channel has been implemented.
+moment, only the clipboard and device redirection virtual channels have been implemented.
 
 ### Fast-path
 The aptly-named fast-path PDUs contain only the information we care about, so we don't have to deal with MCS.
