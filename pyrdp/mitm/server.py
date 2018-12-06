@@ -14,9 +14,7 @@ from pyrdp.enum import CapabilityType, EncryptionLevel, EncryptionMethod, InputE
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, MCSLayer, RawLayer, RDPDataLayer, \
     RDPSecurityLayer, SegmentationLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
 from pyrdp.logging import ActiveSessions, ConnectionMetadataFilter, LOGGER_NAMES, RC4LoggingObserver
-from pyrdp.mcs.channel import MCSChannelFactory, MCSServerChannel
-from pyrdp.mcs.server import MCSServerRouter
-from pyrdp.mcs.user import MCSUserObserver
+from pyrdp.mcs import MCSChannelFactory, MCSServerChannel, MCSServerRouter, MCSUserObserver
 from pyrdp.mitm.client import MITMClient
 from pyrdp.mitm.observer import MITMFastPathObserver, MITMSlowPathObserver
 from pyrdp.mitm.virtual_channel.clipboard import PassiveClipboardChannelObserver

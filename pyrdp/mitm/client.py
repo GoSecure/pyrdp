@@ -8,9 +8,7 @@ from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, G
     MCSClientConnectionLayer, MCSLayer, RawLayer, RDPClientConnectionLayer, RDPDataLayer, RDPSecurityLayer, \
     SegmentationLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
 from pyrdp.logging import LOGGER_NAMES, RC4LoggingObserver
-from pyrdp.mcs.channel import MCSChannelFactory, MCSClientChannel
-from pyrdp.mcs.client import MCSClientRouter
-from pyrdp.mcs.user import MCSUserObserver
+from pyrdp.mcs import MCSChannelFactory, MCSClientChannel, MCSClientRouter, MCSUserObserver
 from pyrdp.mitm.observer import MITMFastPathObserver, MITMSlowPathObserver
 from pyrdp.mitm.virtual_channel.clipboard import ActiveClipboardChannelObserver
 from pyrdp.mitm.virtual_channel.device_redirection import ClientPassiveDeviceRedirectionObserver
