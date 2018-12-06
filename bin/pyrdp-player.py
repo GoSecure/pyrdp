@@ -8,10 +8,10 @@ import sys
 import notify2
 from PyQt4.QtGui import QApplication
 
+from pyrdp import player
 from pyrdp.core.helper_methods import getLoggerPassFilters
 from pyrdp.logging import log
 from pyrdp.logging import LOGGER_NAMES
-from pyrdp.player.player import MainWindow
 
 
 class NotifyHandler(logging.StreamHandler):
@@ -92,7 +92,7 @@ def main():
 
     app = QApplication(sys.argv)
 
-    mainWindow = MainWindow(arguments.bind, int(arguments.port), files_to_read)
+    mainWindow = player.MainWindow(arguments.bind, int(arguments.port), files_to_read)
     mainWindow.show()
 
     return app.exec_()
