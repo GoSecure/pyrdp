@@ -3,7 +3,7 @@ from typing import BinaryIO, Optional, List
 
 from pyrdp.logging import log
 from pyrdp.enum.core import ParserMode
-from pyrdp.enum.rdp import RDPPlayerMessageType
+from pyrdp.enum.rdp import PlayerMessageType
 from pyrdp.layer.layer import Layer
 from pyrdp.layer.recording import RDPPlayerMessageLayer
 from pyrdp.layer.tpkt import TPKTLayer
@@ -24,11 +24,11 @@ class Recorder:
 
     def __init__(self, transportLayers: List[Layer]):
         self.parsers = {
-            RDPPlayerMessageType.FAST_PATH_INPUT: RDPBasicFastPathParser(ParserMode.CLIENT),
-            RDPPlayerMessageType.FAST_PATH_OUTPUT: RDPBasicFastPathParser(ParserMode.SERVER),
-            RDPPlayerMessageType.CLIENT_INFO: RDPClientInfoParser(),
-            RDPPlayerMessageType.SLOW_PATH_PDU: RDPDataParser(),
-            RDPPlayerMessageType.CLIPBOARD_DATA: ClipboardParser(),
+            PlayerMessageType.FAST_PATH_INPUT: RDPBasicFastPathParser(ParserMode.CLIENT),
+            PlayerMessageType.FAST_PATH_OUTPUT: RDPBasicFastPathParser(ParserMode.SERVER),
+            PlayerMessageType.CLIENT_INFO: RDPClientInfoParser(),
+            PlayerMessageType.SLOW_PATH_PDU: RDPDataParser(),
+            PlayerMessageType.CLIPBOARD_DATA: ClipboardParser(),
         }
 
         self.topLayers = []
@@ -41,13 +41,13 @@ class Recorder:
             tpktLayer.setNext(messageLayer)
             self.topLayers.append(messageLayer)
 
-    def setParser(self, messageType: RDPPlayerMessageType, parser: Parser):
+    def setParser(self, messageType: PlayerMessageType, parser: Parser):
         """
         Set the parser to use for a given message type.
         """
         self.parsers[messageType] = parser
 
-    def record(self, pdu: Optional[PDU], messageType: RDPPlayerMessageType):
+    def record(self, pdu: Optional[PDU], messageType: PlayerMessageType):
         """
         Encapsulate the pdu properly, then record the data
         """

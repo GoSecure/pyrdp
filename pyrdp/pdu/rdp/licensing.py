@@ -1,4 +1,4 @@
-from pyrdp.enum.rdp import RDPLicensingPDUType
+from pyrdp.enum.rdp import LicensingPDUType
 from pyrdp.pdu.base_pdu import PDU
 
 
@@ -11,7 +11,7 @@ class RDPLicensingPDU(PDU):
 
 class RDPLicenseErrorAlertPDU(RDPLicensingPDU):
     def __init__(self, flags, errorCode, stateTransition, blob):
-        RDPLicensingPDU.__init__(self, RDPLicensingPDUType.ERROR_ALERT, flags)
+        RDPLicensingPDU.__init__(self, LicensingPDUType.ERROR_ALERT, flags)
         self.errorCode = errorCode
         self.stateTransition = stateTransition
         self.blob = blob

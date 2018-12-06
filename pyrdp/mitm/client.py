@@ -7,7 +7,7 @@ from pyrdp.core.ssl import ClientTLSContext
 from pyrdp.crypto.crypto import SecuritySettings, RC4CrypterProxy
 from pyrdp.crypto.observer import RC4LoggingObserver
 from pyrdp.enum.core import ParserMode
-from pyrdp.enum.rdp import RDPPlayerMessageType, ClientInfoFlags
+from pyrdp.enum.rdp import PlayerMessageType, ClientInfoFlags
 from pyrdp.enum.segmentation import SegmentationPDUType
 from pyrdp.enum.virtual_channel.virtual_channel import VirtualChannel
 from pyrdp.layer.gcc import GCCClientConnectionLayer
@@ -321,7 +321,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.fastPathLayer = FastPathLayer(fastPathParser)
         self.fastPathObserver = MITMFastPathObserver(self.log, self.fastPathLayer)
         self.fastPathLayer.addObserver(self.fastPathObserver)
-        self.fastPathLayer.addObserver(RecordingFastPathObserver(self.recorder, RDPPlayerMessageType.FAST_PATH_OUTPUT))
+        self.fastPathLayer.addObserver(RecordingFastPathObserver(self.recorder, PlayerMessageType.FAST_PATH_OUTPUT))
 
         channel = MCSClientChannel(mcs, userID, channelID)
         channel.setNext(self.securityLayer)

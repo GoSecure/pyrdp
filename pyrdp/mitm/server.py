@@ -16,7 +16,7 @@ from pyrdp.crypto.crypto import SecuritySettings, RC4CrypterProxy
 from pyrdp.crypto.observer import RC4LoggingObserver
 from pyrdp.enum.core import ParserMode
 from pyrdp.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, EncryptionMethod, EncryptionLevel, \
-    RDPPlayerMessageType, CapabilityType, OrderFlag
+    PlayerMessageType, CapabilityType, OrderFlag
 from pyrdp.enum.segmentation import SegmentationPDUType
 from pyrdp.enum.virtual_channel.virtual_channel import VirtualChannel
 from pyrdp.layer.mcs import MCSLayer
@@ -168,7 +168,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.log.debug("TCP connected from {}:{}".format(clientInfo[0], clientInfo[1]))
 
     def onDisconnection(self, reason):
-        self.recorder.record(None, RDPPlayerMessageType.CONNECTION_CLOSE)
+        self.recorder.record(None, PlayerMessageType.CONNECTION_CLOSE)
         self.log.debug("Connection closed: {}".format(reason))
 
         if self.client:
@@ -442,7 +442,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         fastPathObserver = MITMFastPathObserver(self.log, self.fastPathLayer)
         fastPathObserver.setPeer(self.client.getFastPathObserver())
         self.fastPathLayer.addObserver(fastPathObserver)
-        self.fastPathLayer.addObserver(RecordingFastPathObserver(self.recorder, RDPPlayerMessageType.FAST_PATH_INPUT))
+        self.fastPathLayer.addObserver(RecordingFastPathObserver(self.recorder, PlayerMessageType.FAST_PATH_INPUT))
 
         channel = MCSServerChannel(mcs, userID, channelID)
         channel.setNext(self.securityLayer)
@@ -504,7 +504,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
                       "LOCAL IP ADDR: %(localIpAddress)s",
                       {"username": pdu.username, "password": pdu.password, "domain": pdu.domain,
                        "localIpAddress": pdu.extraInfo.clientAddress if hasExtraInfo else None})
-        self.recorder.record(pdu, RDPPlayerMessageType.CLIENT_INFO)
+        self.recorder.record(pdu, PlayerMessageType.CLIENT_INFO)
         self.client.onClientInfoPDUReceived(pdu)
 
     def onLicensingDataReceived(self, data):

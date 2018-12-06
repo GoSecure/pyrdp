@@ -1,7 +1,7 @@
 from io import BytesIO
 
 from pyrdp.core.packing import Uint8, Uint16LE, Uint32LE
-from pyrdp.enum.rdp import RDPLicensingPDUType, RDPLicenseBinaryBlobType, RDPLicenseErrorCode, RDPStateTransition
+from pyrdp.enum.rdp import LicensingPDUType, LicenseBinaryBlobType, LicenseErrorCode, RDPStateTransition
 from pyrdp.exceptions import UnknownPDUTypeError
 from pyrdp.parser.parser import Parser
 from pyrdp.pdu.rdp.licensing import RDPLicenseBinaryBlob, RDPLicenseErrorAlertPDU, RDPLicensingPDU
@@ -14,7 +14,7 @@ class RDPLicensingParser(Parser):
 
     def __init__(self):
         self.parsers = {
-            RDPLicensingPDUType.ERROR_ALERT: self.parseErrorAlert,
+            LicensingPDUType.ERROR_ALERT: self.parseErrorAlert,
         }
 
     def parse(self, data):
@@ -40,7 +40,7 @@ class RDPLicensingParser(Parser):
         :type stream: BytesIO
         :return: RDPLicenseBinaryBlob
         """
-        type = RDPLicenseBinaryBlobType(Uint16LE.unpack(stream))
+        type = LicenseBinaryBlobType(Uint16LE.unpack(stream))
         length = Uint16LE.unpack(stream)
         data = stream.read(length)
         return RDPLicenseBinaryBlob(type, data)
@@ -52,7 +52,7 @@ class RDPLicensingParser(Parser):
         :param flags: The flags of the Licencing PDU.
         :return: RDPLicenseErrorAlertPDU
         """
-        errorCode = RDPLicenseErrorCode(Uint32LE.unpack(stream))
+        errorCode = LicenseErrorCode(Uint32LE.unpack(stream))
         stateTransition = RDPStateTransition(Uint32LE.unpack(stream))
         blob = self.parseLicenseBlob(stream)
         return RDPLicenseErrorAlertPDU(flags, errorCode, stateTransition, blob)

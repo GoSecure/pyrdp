@@ -3,7 +3,7 @@ from logging import Logger
 
 from pyrdp.core.helper_methods import getLoggerPassFilters
 from pyrdp.core.observer import Observer
-from pyrdp.enum.rdp import RDPPlayerMessageType
+from pyrdp.enum.rdp import PlayerMessageType
 from pyrdp.enum.virtual_channel.clipboard import ClipboardMessageType, ClipboardFormat
 from pyrdp.layer.layer import Layer
 from pyrdp.parser.rdp.virtual_channel.clipboard import ClipboardParser
@@ -52,7 +52,7 @@ class PassiveClipboardChannelObserver(Observer):
                 self.layer.send(self.clipboardParser.write(pdu))
             if isinstance(pdu, FormatDataResponsePDU):
                 self.clipboard_log.info("%(clipboardData)s", {"clipboardData": hexlify(pdu.requestedFormatData).decode()})
-                self.recorder.record(pdu, RDPPlayerMessageType.CLIPBOARD_DATA)
+                self.recorder.record(pdu, PlayerMessageType.CLIPBOARD_DATA)
                 self.forwardNextDataResponse = True
 
 

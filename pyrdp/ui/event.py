@@ -116,7 +116,7 @@ class RSSEventHandler(RDPPlayerMessageObserver):
         if isinstance(pdu, RDPConfirmActivePDU):
             self.viewer.resize(pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP].desktopWidth,
                                pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP].desktopHeight)
-        elif isinstance(pdu, RDPUpdatePDU) and pdu.updateType == SlowPathUpdateType.FASTPATH_UPDATETYPE_BITMAP:
+        elif isinstance(pdu, RDPUpdatePDU) and pdu.updateType == SlowPathUpdateType.SLOWPATH_UPDATETYPE_BITMAP:
             updates = RDPCommonParser().parseBitmapUpdateData(pdu.updateData)
             for bitmap in updates:
                 self.handleBitmap(bitmap)

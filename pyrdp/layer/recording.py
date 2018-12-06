@@ -2,7 +2,7 @@ from io import BytesIO
 
 from pyrdp.core.packing import Uint8, Uint64LE
 from pyrdp.core.subject import ObservedBy
-from pyrdp.enum.rdp import RDPPlayerMessageType
+from pyrdp.enum.rdp import PlayerMessageType
 from pyrdp.layer.layer import Layer, LayerRoutedObserver
 from pyrdp.pdu.rdp.recording import RDPPlayerMessagePDU
 
@@ -10,12 +10,12 @@ from pyrdp.pdu.rdp.recording import RDPPlayerMessagePDU
 class RDPPlayerMessageObserver(LayerRoutedObserver):
     def __init__(self, **kwargs):
         LayerRoutedObserver.__init__(self, {
-            RDPPlayerMessageType.CONNECTION_CLOSE: "onConnectionClose",
-            RDPPlayerMessageType.CLIENT_INFO: "onClientInfo",
-            RDPPlayerMessageType.SLOW_PATH_PDU: "onSlowPathPDU",
-            RDPPlayerMessageType.FAST_PATH_INPUT: "onInput",
-            RDPPlayerMessageType.FAST_PATH_OUTPUT: "onOutput",
-            RDPPlayerMessageType.CLIPBOARD_DATA: "onClipboardData",
+            PlayerMessageType.CONNECTION_CLOSE: "onConnectionClose",
+            PlayerMessageType.CLIENT_INFO: "onClientInfo",
+            PlayerMessageType.SLOW_PATH_PDU: "onSlowPathPDU",
+            PlayerMessageType.FAST_PATH_INPUT: "onInput",
+            PlayerMessageType.FAST_PATH_OUTPUT: "onOutput",
+            PlayerMessageType.CLIPBOARD_DATA: "onClipboardData",
         }, **kwargs)
 
     def onConnectionClose(self, pdu):
@@ -51,13 +51,13 @@ class RDPPlayerMessageLayer(Layer):
         Parses data to make a RDPPlayerMessagePDU and calls the observer with it.
         """
         stream = BytesIO(data)
-        type = RDPPlayerMessageType(Uint8.unpack(stream))
+        type = PlayerMessageType(Uint8.unpack(stream))
         timestamp = Uint64LE.unpack(stream)
         payload = stream.read()
         pdu = RDPPlayerMessagePDU(type, timestamp, payload)
         self.pduReceived(pdu, forward=False)
 
-    def sendMessage(self, data: bytes, messageType: RDPPlayerMessageType, timeStamp: int):
+    def sendMessage(self, data: bytes, messageType: PlayerMessageType, timeStamp: int):
         stream = BytesIO()
         Uint8.pack(messageType, stream)
         Uint64LE.pack(timeStamp, stream)

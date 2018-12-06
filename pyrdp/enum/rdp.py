@@ -45,11 +45,20 @@ class RDPSecurityFlags:
     SEC_FLAGSHI_VALID = 0x8000
 
 
-class RDPFastPathSecurityFlags:
+class RDPSecurityHeaderType(IntEnum):
+    NONE = 0
+    BASIC = 1
+    SIGNED = 2
+    FIPS = 3
+
+    # Header type used for Client Info and Licensing PDUs if no encryption is used
+    DEFAULT = 1
+
+class FastPathSecurityFlags:
     FASTPATH_OUTPUT_SECURE_CHECKSUM = 0x40
     FASTPATH_OUTPUT_ENCRYPTED = 0x80
 
-class RDPFastPathInputEventType(IntEnum):
+class FastPathInputEventType(IntEnum):
     FASTPATH_INPUT_EVENT_SCANCODE = 0
     FASTPATH_INPUT_EVENT_MOUSE = 1
     FASTPATH_INPUT_EVENT_MOUSEX = 2
@@ -57,8 +66,7 @@ class RDPFastPathInputEventType(IntEnum):
     FASTPATH_INPUT_EVENT_UNICODE = 4
     FASTPATH_INPUT_EVENT_QOE_TIMESTAMP = 6
 
-
-class RDPFastPathOutputEventType(IntEnum):
+class FastPathOutputEventType(IntEnum):
     FASTPATH_UPDATETYPE_ORDERS = 0
     FASTPATH_UPDATETYPE_BITMAP = 1
     FASTPATH_UPDATETYPE_PALETTE = 2
@@ -75,26 +83,17 @@ class FastPathOutputCompressionType(IntEnum):
     FASTPATH_OUTPUT_COMPRESSION_USED = 0x2
 
 class SlowPathUpdateType(IntEnum):
-    FASTPATH_UPDATETYPE_ORDERS = 0
-    FASTPATH_UPDATETYPE_BITMAP = 1
-    FASTPATH_UPDATETYPE_PALETTE = 2
-    FASTPATH_UPDATETYPE_SYNCHRONIZE = 3
-
-class RDPSecurityHeaderType(IntEnum):
-    NONE = 0
-    BASIC = 1
-    SIGNED = 2
-    FIPS = 3
-
-    # Header type used for Client Info and Licensing PDUs if no encryption is used
-    DEFAULT = 1
+    SLOWPATH_UPDATETYPE_ORDERS = 0
+    SLOWPATH_UPDATETYPE_BITMAP = 1
+    SLOWPATH_UPDATETYPE_PALETTE = 2
+    SLOWPATH_UPDATETYPE_SYNCHRONIZE = 3
 
 
 class FIPSVersion(IntEnum):
     TSFIPS_VERSION1 = 1
 
 
-class RDPLicensingPDUType(IntEnum):
+class LicensingPDUType(IntEnum):
     LICENSE_REQUEST = 0x01
     PLATFORM_CHALLENGE = 0x02
     NEW_LICENSE = 0x03
@@ -105,7 +104,7 @@ class RDPLicensingPDUType(IntEnum):
     ERROR_ALERT = 0xFF
 
 
-class RDPLicenseBinaryBlobType(IntEnum):
+class LicenseBinaryBlobType(IntEnum):
     """
     License blob data type
     See http://msdn.microsoft.com/en-us/library/cc240481.aspx
@@ -122,7 +121,7 @@ class RDPLicenseBinaryBlobType(IntEnum):
     BB_CLIENT_MACHINE_NAME_BLOB = 0x0010
 
 
-class RDPLicenseErrorCode(IntEnum):
+class LicenseErrorCode(IntEnum):
     """
     @summary: License error message code
     @see: http://msdn.microsoft.com/en-us/library/cc240482.aspx
@@ -633,7 +632,7 @@ class PointerEventType(IntEnum):
     TS_PTRMSGTYPE_POINTER = 0x0008
 
 
-class RDPPlayerMessageType(IntEnum):
+class PlayerMessageType(IntEnum):
     """
     Types of events that we can encounter when replaying a RDP connection.
     """
@@ -671,13 +670,6 @@ class DrawingOrderControlFlags(IntEnum):
     TS_STANDARD = 0b00000001
     TS_SECONDARY = 0b00000010
 
-
-class RdpVersion(IntEnum):
-    """
-    https://msdn.microsoft.com/en-us/library/cc240517.aspx
-    """
-    RDP_4_0 = 0x00080001
-    RDP_5_TO_8_1 = 0x00080004
 
 class BitmapFlags(IntEnum):
     """

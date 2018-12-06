@@ -5,8 +5,8 @@ from pyrdp.logging import log
 from pyrdp.core.packing import Uint8, Uint16BE, Uint16LE
 from pyrdp.crypto.crypto import RC4Crypter
 from pyrdp.enum.core import ParserMode
-from pyrdp.enum.rdp import RDPFastPathInputEventType, \
-    RDPFastPathSecurityFlags, FIPSVersion, FastPathOutputCompressionType, RDPFastPathOutputEventType, \
+from pyrdp.enum.rdp import FastPathInputEventType, \
+    FastPathSecurityFlags, FIPSVersion, FastPathOutputCompressionType, FastPathOutputEventType, \
     DrawingOrderControlFlags, EncryptionMethod
 from pyrdp.parser.parser import Parser
 from pyrdp.parser.rdp.common import RDPCommonParser
@@ -173,7 +173,7 @@ class RDPSignedFastPathParser(RDPBasicFastPathParser):
 
         data = stream.read(pduLength - stream.tell())
 
-        if header & RDPFastPathSecurityFlags.FASTPATH_OUTPUT_ENCRYPTED != 0:
+        if header & FastPathSecurityFlags.FASTPATH_OUTPUT_ENCRYPTED != 0:
             data = self.crypter.decrypt(data)
             self.crypter.addDecryption()
 
@@ -200,7 +200,7 @@ class RDPSignedFastPathParser(RDPBasicFastPathParser):
         return RDPBasicFastPathParser.calculatePDULength(self, pdu) + 8
 
     def getHeaderFlags(self):
-        return RDPFastPathSecurityFlags.FASTPATH_OUTPUT_ENCRYPTED | RDPFastPathSecurityFlags.FASTPATH_OUTPUT_SECURE_CHECKSUM
+        return FastPathSecurityFlags.FASTPATH_OUTPUT_ENCRYPTED | FastPathSecurityFlags.FASTPATH_OUTPUT_SECURE_CHECKSUM
 
 
 
@@ -223,7 +223,7 @@ class RDPFIPSFastPathParser(RDPSignedFastPathParser):
 
         data = stream.read(pduLength - stream.tell())
 
-        if header & RDPFastPathSecurityFlags.FASTPATH_OUTPUT_ENCRYPTED != 0:
+        if header & FastPathSecurityFlags.FASTPATH_OUTPUT_ENCRYPTED != 0:
             data = self.crypter.decrypt(data)
             self.crypter.addDecryption()
 
@@ -246,12 +246,12 @@ class RDPFIPSFastPathParser(RDPSignedFastPathParser):
 
 class RDPInputEventParser(Parser):
     INPUT_EVENT_LENGTHS = {
-        RDPFastPathInputEventType.FASTPATH_INPUT_EVENT_SCANCODE: 2,
-        RDPFastPathInputEventType.FASTPATH_INPUT_EVENT_MOUSE: 7,
-        RDPFastPathInputEventType.FASTPATH_INPUT_EVENT_MOUSEX: 7,
-        RDPFastPathInputEventType.FASTPATH_INPUT_EVENT_SYNC: 1,
-        RDPFastPathInputEventType.FASTPATH_INPUT_EVENT_UNICODE: 3,
-        RDPFastPathInputEventType.FASTPATH_INPUT_EVENT_QOE_TIMESTAMP: 5,
+        FastPathInputEventType.FASTPATH_INPUT_EVENT_SCANCODE: 2,
+        FastPathInputEventType.FASTPATH_INPUT_EVENT_MOUSE: 7,
+        FastPathInputEventType.FASTPATH_INPUT_EVENT_MOUSEX: 7,
+        FastPathInputEventType.FASTPATH_INPUT_EVENT_SYNC: 1,
+        FastPathInputEventType.FASTPATH_INPUT_EVENT_UNICODE: 3,
+        FastPathInputEventType.FASTPATH_INPUT_EVENT_QOE_TIMESTAMP: 5,
     }
 
     def getEventLength(self, data):
@@ -262,9 +262,9 @@ class RDPInputEventParser(Parser):
             type = (header & 0b11100000) >> 5
             return RDPInputEventParser.INPUT_EVENT_LENGTHS[type]
         elif isinstance(data, FastPathEventScanCode):
-            return RDPInputEventParser.INPUT_EVENT_LENGTHS[RDPFastPathInputEventType.FASTPATH_INPUT_EVENT_SCANCODE]
+            return RDPInputEventParser.INPUT_EVENT_LENGTHS[FastPathInputEventType.FASTPATH_INPUT_EVENT_SCANCODE]
         elif isinstance(data, FastPathEventMouse):
-            return RDPInputEventParser.INPUT_EVENT_LENGTHS[RDPFastPathInputEventType.FASTPATH_INPUT_EVENT_MOUSE]
+            return RDPInputEventParser.INPUT_EVENT_LENGTHS[FastPathInputEventType.FASTPATH_INPUT_EVENT_MOUSE]
         raise ValueError("Unsupported event type?")
 
     def parse(self, data):
@@ -272,9 +272,9 @@ class RDPInputEventParser(Parser):
         eventHeader = Uint8.unpack(stream.read(1))
         eventCode = (eventHeader & 0b11100000) >> 5
         eventFlags= eventHeader & 0b00011111
-        if eventCode == RDPFastPathInputEventType.FASTPATH_INPUT_EVENT_SCANCODE:
+        if eventCode == FastPathInputEventType.FASTPATH_INPUT_EVENT_SCANCODE:
             return self.parseScanCode(eventFlags, eventHeader, stream)
-        elif eventCode == RDPFastPathInputEventType.FASTPATH_INPUT_EVENT_MOUSE:
+        elif eventCode == FastPathInputEventType.FASTPATH_INPUT_EVENT_MOUSE:
             return self.parseMouseEvent(data, eventHeader)
         return FastPathEventRaw(data)
 
@@ -354,9 +354,9 @@ class RDPOutputEventParser(Parser):
         if fragmentation:
             log.error("Fragmentation is present in fastpath packets, it is NOT handled.")
 
-        if eventType == RDPFastPathOutputEventType.FASTPATH_UPDATETYPE_BITMAP:
+        if eventType == FastPathOutputEventType.FASTPATH_UPDATETYPE_BITMAP:
             return self.parseBitmapEventRaw(stream, header, compressionFlags, size)
-        elif eventType == RDPFastPathOutputEventType.FASTPATH_UPDATETYPE_ORDERS:
+        elif eventType == FastPathOutputEventType.FASTPATH_UPDATETYPE_ORDERS:
             return self.parseOrdersEvent(stream, header, compressionFlags, size)
 
         return FastPathEventRaw(data)
