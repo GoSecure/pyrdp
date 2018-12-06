@@ -7,7 +7,7 @@ from pyrdp.enum import ClipboardMessageType, ClipboardFormatNumber, PlayerMessag
 from pyrdp.layer import Layer
 from pyrdp.parser.rdp.virtual_channel.clipboard import ClipboardParser
 from pyrdp.pdu.rdp.virtual_channel.clipboard import FormatDataResponsePDU, FormatDataRequestPDU, ClipboardPDU
-from pyrdp.recording.recorder import Recorder
+from pyrdp.recording import Recorder
 
 
 class PassiveClipboardChannelObserver(Observer):

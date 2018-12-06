@@ -12,7 +12,7 @@ from pyrdp.parser.rdp.virtual_channel.device_redirection import DeviceRedirectio
 from pyrdp.pdu.rdp.virtual_channel.device_redirection import DeviceIOResponsePDU, DeviceCreateRequestPDU, \
     DeviceCloseRequestPDU, DeviceReadRequestPDU, DeviceIORequestPDU, DeviceRedirectionPDU, \
     DeviceListAnnounceRequest
-from pyrdp.recording.recorder import Recorder
+from pyrdp.recording import Recorder
 
 
 class PassiveDeviceRedirectionObserver(Observer):

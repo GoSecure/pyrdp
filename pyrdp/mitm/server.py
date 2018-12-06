@@ -30,8 +30,7 @@ from pyrdp.pdu.mcs import MCSConnectResponsePDU
 from pyrdp.pdu.rdp.capability import Capability, MultifragmentUpdateCapability
 from pyrdp.pdu.rdp.connection import ProprietaryCertificate, RDPServerDataPDU, ServerSecurityData
 from pyrdp.pdu.rdp.negotiation import RDPNegotiationRequestPDU, RDPNegotiationResponsePDU
-from pyrdp.recording.observer import RecordingFastPathObserver, RecordingSlowPathObserver
-from pyrdp.recording.recorder import FileLayer, Recorder, SocketLayer
+from pyrdp.recording import FileLayer, Recorder, RecordingFastPathObserver, RecordingSlowPathObserver, SocketLayer
 from pyrdp.security import RC4CrypterProxy, SecuritySettings
 
 

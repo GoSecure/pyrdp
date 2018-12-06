@@ -17,8 +17,7 @@ from pyrdp.parser.rdp.fastpath import createFastPathParser
 from pyrdp.parser.rdp.negotiation import RDPNegotiationRequestParser, RDPNegotiationResponseParser
 from pyrdp.pdu.gcc import GCCConferenceCreateResponsePDU
 from pyrdp.pdu.rdp.client_info import RDPClientInfoPDU
-from pyrdp.recording.observer import RecordingFastPathObserver, RecordingSlowPathObserver
-from pyrdp.recording.recorder import FileLayer, Recorder, SocketLayer
+from pyrdp.recording import FileLayer, Recorder, RecordingFastPathObserver, RecordingSlowPathObserver, SocketLayer
 from pyrdp.security import RC4CrypterProxy, SecuritySettings
 
 
