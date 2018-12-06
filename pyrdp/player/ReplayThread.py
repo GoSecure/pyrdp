@@ -8,7 +8,7 @@ from typing import BinaryIO
 
 from PyQt4.QtCore import pyqtSignal, QThread
 
-from pyrdp.core.timer import Timer
+from pyrdp.core import Timer
 from pyrdp.layer import PlayerMessageLayer, TPKTLayer
 from pyrdp.pdu import PlayerMessagePDU
 

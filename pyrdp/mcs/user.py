@@ -1,5 +1,5 @@
-from pyrdp.core.observer import Observer
-from pyrdp.core.subject import Subject, ObservedBy
+from pyrdp.core import ObservedBy, Observer, Subject
+
 
 class MCSUserObserver(Observer):
     """

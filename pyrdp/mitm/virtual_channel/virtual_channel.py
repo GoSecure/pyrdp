@@ -1,4 +1,4 @@
-from pyrdp.core.observer import Observer
+from pyrdp.core import Observer
 
 
 class MITMVirtualChannelObserver(Observer):

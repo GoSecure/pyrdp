@@ -11,8 +11,7 @@ import names
 from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
 
-from pyrdp.core.Config import Config
-from pyrdp.core.helpers import getLoggerPassFilters
+from pyrdp.core import Config, getLoggerPassFilters
 from pyrdp.logging import JSONFormatter, log, LOGGER_NAMES, SensorFilter
 from pyrdp.mitm import MITMServer
 

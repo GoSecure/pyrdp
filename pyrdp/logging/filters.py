@@ -1,6 +1,6 @@
 from logging import Filter, LogRecord
 
-from pyrdp.core.Config import Config
+from pyrdp.core import Config
 from pyrdp.logging.ActiveSessions import ActiveSessions
 
 

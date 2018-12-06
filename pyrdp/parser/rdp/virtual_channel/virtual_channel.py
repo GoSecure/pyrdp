@@ -1,6 +1,6 @@
 from io import BytesIO
 
-from pyrdp.core.packing import Uint32LE
+from pyrdp.core import Uint32LE
 from pyrdp.enum import VirtualChannelPDUFlag
 from pyrdp.parser.parser import Parser
 from pyrdp.pdu import VirtualChannelPDU

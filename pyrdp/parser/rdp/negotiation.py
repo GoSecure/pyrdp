@@ -1,6 +1,6 @@
 from io import BytesIO
 
-from pyrdp.core.packing import Uint8, Uint16LE, Uint32LE
+from pyrdp.core import Uint16LE, Uint32LE, Uint8
 from pyrdp.enum import NegotiationRequestFlags, NegotiationType
 from pyrdp.parser.parser import Parser
 from pyrdp.pdu import RDPNegotiationRequestPDU, RDPNegotiationResponsePDU

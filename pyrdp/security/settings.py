@@ -2,11 +2,9 @@ from enum import IntEnum
 
 import Crypto.Random
 
-from pyrdp.core.observer import Observer
-from pyrdp.core.subject import ObservedBy, Subject
-from pyrdp.security.crypto import RC4Crypter
-
+from pyrdp.core import ObservedBy, Observer, Subject
 from pyrdp.exceptions import StateError
+from pyrdp.security.crypto import RC4Crypter
 
 
 class SecuritySettingsObserver(Observer):

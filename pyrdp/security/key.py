@@ -18,10 +18,9 @@
 #
 import hashlib
 
-from pyrdp.core.packing import Uint32LE
-from pyrdp.core.stream import ByteStream
-from pyrdp.security import rc4
+from pyrdp.core import ByteStream, Uint32LE
 from pyrdp.enum import EncryptionMethod
+from pyrdp.security import rc4
 
 
 def saltedHash(inputData, salt, salt1, salt2):

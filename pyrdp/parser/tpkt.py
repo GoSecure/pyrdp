@@ -1,6 +1,6 @@
 from io import BytesIO
 
-from pyrdp.core.packing import Uint8, Uint16BE
+from pyrdp.core import Uint16BE, Uint8
 from pyrdp.exceptions import ParsingError
 from pyrdp.parser.segmentation import SegmentationParser
 from pyrdp.pdu import TPKTPDU

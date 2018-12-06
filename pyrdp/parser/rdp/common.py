@@ -1,6 +1,6 @@
 from io import BytesIO
 
-from pyrdp.core.packing import Uint16LE
+from pyrdp.core import Uint16LE
 from pyrdp.pdu import BitmapUpdateData
 
 

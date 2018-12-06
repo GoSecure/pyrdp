@@ -1,6 +1,6 @@
 from io import BytesIO
 
-from pyrdp.core.packing import Uint16LE, Uint32LE
+from pyrdp.core import Uint16LE, Uint32LE
 from pyrdp.enum import ClipboardMessageFlags, ClipboardMessageType
 from pyrdp.parser.parser import Parser
 from pyrdp.pdu import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU, FormatListPDU, LongFormatName

@@ -1,7 +1,7 @@
 from binascii import hexlify
 from logging import Logger
 
-from pyrdp.core.observer import Observer
+from pyrdp.core import Observer
 from pyrdp.layer import Layer, RDPBaseDataLayerObserver, RDPDataLayerObserver, RDPFastPathDataLayerObserver
 
 

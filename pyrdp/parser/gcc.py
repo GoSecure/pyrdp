@@ -1,7 +1,6 @@
 from io import BytesIO
 
-from pyrdp.core import per
-from pyrdp.core.packing import Uint16BE
+from pyrdp.core import per, Uint16BE
 from pyrdp.enum import GCCPDUType
 from pyrdp.exceptions import ParsingError, UnknownPDUTypeError
 from pyrdp.parser.parser import Parser

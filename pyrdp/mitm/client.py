@@ -1,7 +1,7 @@
 from socket import socket
 from typing import BinaryIO, Dict
 
-from pyrdp.core.helpers import getLoggerPassFilters
+from pyrdp.core import getLoggerPassFilters
 from pyrdp.core.ssl import ClientTLSContext
 from pyrdp.enum import ClientInfoFlags, ParserMode, PlayerMessageType, SegmentationPDUType, VirtualChannelName
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, GCCClientConnectionLayer, \

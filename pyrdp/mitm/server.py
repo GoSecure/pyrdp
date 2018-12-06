@@ -7,7 +7,7 @@ from Crypto.PublicKey import RSA
 from twisted.internet import reactor
 from twisted.internet.protocol import ClientFactory
 
-from pyrdp.core.helpers import decodeUTF16LE, getLoggerPassFilters
+from pyrdp.core import decodeUTF16LE, getLoggerPassFilters
 from pyrdp.core.ssl import ServerTLSContext
 from pyrdp.enum import CapabilityType, EncryptionLevel, EncryptionMethod, InputEventType, NegotiationProtocols, \
     OrderFlag, ParserMode, PlayerMessageType, RDPDataPDUSubtype, SegmentationPDUType, VirtualChannelName

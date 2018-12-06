@@ -1,4 +1,4 @@
-from pyrdp.core.subject import ObservedBy
+from pyrdp.core import ObservedBy
 from pyrdp.enum import X224PDUType
 from pyrdp.layer.layer import Layer, LayerStrictRoutedObserver
 from pyrdp.parser import X224Parser

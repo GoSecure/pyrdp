@@ -1,7 +1,7 @@
 from io import BytesIO
 from typing import Dict
 
-from pyrdp.core.packing import Uint16LE, Uint32LE, Uint64LE
+from pyrdp.core import Uint16LE, Uint32LE, Uint64LE
 from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketId, DeviceType, MajorFunction
 from pyrdp.logging import log
 from pyrdp.parser.parser import Parser

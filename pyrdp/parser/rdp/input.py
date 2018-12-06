@@ -1,11 +1,10 @@
 from io import BytesIO
 
-from pyrdp.core.packing import Uint32LE, Uint16LE
+from pyrdp.core import Uint16LE, Uint32LE
 from pyrdp.enum import InputEventType
 from pyrdp.exceptions import ParsingError, WritingError
 from pyrdp.parser.parser import Parser
-from pyrdp.pdu import SynchronizeEvent, UnusedEvent, KeyboardEvent, UnicodeKeyboardEvent, \
-    MouseEvent, ExtendedMouseEvent
+from pyrdp.pdu import ExtendedMouseEvent, KeyboardEvent, MouseEvent, SynchronizeEvent, UnicodeKeyboardEvent, UnusedEvent
 
 
 class RDPInputParser(Parser):
