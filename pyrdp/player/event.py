@@ -21,7 +21,7 @@ from pyrdp.pdu.rdp.virtual_channel.clipboard import FormatDataResponsePDU
 from pyrdp.ui.qt4 import RDPBitmapToQtImage
 
 
-class RSSEventHandler(PlayerMessageObserver):
+class PlayerMessageHandler(PlayerMessageObserver):
     """
     Class to manage the display of the RDP player when reading events.
     """

@@ -7,7 +7,7 @@ from pyrdp.layer import AsyncIOTCPLayer, PlayerMessageLayer, TPKTLayer
 from pyrdp.player.BasePlayerWindow import BasePlayerWindow
 from pyrdp.player.RDPConnectionTab import RDPConnectionTab
 from pyrdp.player.ServerThread import ServerThread
-from pyrdp.player.event import RSSEventHandler
+from pyrdp.player.event import PlayerMessageHandler
 from pyrdp.ui.qt4 import QRemoteDesktop
 from pyrdp.ui.rss import RSSAdaptor
 
@@ -60,7 +60,7 @@ class LivePlayerTab(RDPConnectionTab):
         self.tcp = AsyncIOTCPLayer()
         self.tpkt = TPKTLayer()
         self.message = PlayerMessageLayer()
-        self.eventHandler = RSSEventHandler(self.widget, self.text)
+        self.eventHandler = PlayerMessageHandler(self.widget, self.text)
 
         self.tcp.setNext(self.tpkt)
         self.tpkt.setNext(self.message)
