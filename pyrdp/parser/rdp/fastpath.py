@@ -1,18 +1,18 @@
 from binascii import hexlify
 from io import BytesIO
 
-from pyrdp.logging import log
 from pyrdp.core.packing import Uint8, Uint16BE, Uint16LE
-from pyrdp.crypto.crypto import RC4Crypter
 from pyrdp.enum.core import ParserMode
 from pyrdp.enum.rdp import FastPathInputEventType, \
     FastPathSecurityFlags, FIPSVersion, FastPathOutputCompressionType, FastPathOutputEventType, \
     DrawingOrderControlFlags, EncryptionMethod
+from pyrdp.logging import log
 from pyrdp.parser.parser import Parser
 from pyrdp.parser.rdp.common import RDPCommonParser
 from pyrdp.parser.rdp.security import RDPBasicSecurityParser
 from pyrdp.pdu.rdp.fastpath import FastPathEventRaw, RDPFastPathPDU, FastPathEventScanCode, FastPathBitmapEvent, \
     FastPathOrdersEvent, FastPathEventMouse, SecondaryDrawingOrder
+from pyrdp.security import RC4Crypter
 
 
 class RDPBasicFastPathParser(RDPBasicSecurityParser):

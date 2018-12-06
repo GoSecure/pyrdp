@@ -1,10 +1,10 @@
 from io import BytesIO
 
 from pyrdp.core.packing import Uint16LE, Uint8, Uint32LE
-from pyrdp.crypto.crypto import RC4Crypter, RC4CrypterProxy
 from pyrdp.enum.rdp import RDPSecurityFlags, FIPSVersion
 from pyrdp.parser.parser import Parser
 from pyrdp.pdu.rdp.security import RDPSecurityPDU, RDPSecurityExchangePDU
+from pyrdp.security import RC4Crypter, RC4CrypterProxy
 
 
 class RDPBasicSecurityParser(Parser):

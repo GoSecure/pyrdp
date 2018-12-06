@@ -1,123 +1,10 @@
-from enum import IntEnum
-
-import Crypto.Random
-
-from pyrdp.core.subject import Subject, ObservedBy
-from pyrdp.crypto import rc4
-from pyrdp.crypto.key import macData, macSaltedData, generateKeys, updateKey
-from pyrdp.crypto.observer import SecuritySettingsObserver
+from pyrdp.security import rc4
+from pyrdp.security.key import macData, macSaltedData, generateKeys, updateKey
 from pyrdp.enum.rdp import EncryptionMethod
-from pyrdp.exceptions import StateError, CrypterUnavailableError
-from pyrdp.pdu.rdp.connection import ServerSecurityData
 
 """
 Cryptographic utility functions
 """
-
-
-@ObservedBy(SecuritySettingsObserver)
-class SecuritySettings(Subject):
-    """
-    Class containing RDP standard security settings.
-    """
-
-    class Mode(IntEnum):
-        """
-        SecuritySettings mode (client or server).
-        """
-        CLIENT = 0
-        SERVER = 1
-
-    def __init__(self, mode):
-        """
-        :param mode: the settings mode.
-        :type mode: SecuritySettings.Mode
-        """
-        Subject.__init__(self)
-        self.mode = mode
-        self.encryptionMethod = None
-        self.clientRandom = None
-        self.serverRandom = None
-        self.publicKey = None
-        self.crypter = None
-
-    def generateCrypter(self):
-        """
-        Generate a crypter with the current settings.
-        """
-        if self.mode == SecuritySettings.Mode.CLIENT:
-            self.crypter = RC4Crypter.generateClient(self.clientRandom, self.serverRandom, self.encryptionMethod)
-        else:
-            self.crypter = RC4Crypter.generateServer(self.clientRandom, self.serverRandom, self.encryptionMethod)
-
-        if self.observer:
-            self.observer.onCrypterGenerated(self)
-
-    def generateClientRandom(self):
-        """
-        Generate client random data.
-        """
-        self.setClientRandom(Crypto.Random.get_random_bytes(32))
-
-    def generateServerRandom(self):
-        """
-        Generate server random data.
-        """
-        self.setServerRandom(Crypto.Random.get_random_bytes(32))
-
-    def encryptClientRandom(self):
-        """
-        Encrypt the client random using the public key.
-        :return: str
-        """
-        # Client random is stored as little-endian but crypto functions expect it to be in big-endian format.
-        return self.publicKey.encrypt(self.clientRandom[:: -1], 0)[0][:: -1]
-
-    def serverSecurityReceived(self, security):
-        """
-        Called when a ServerSecurityData is received.
-        :param security: the RDP server's security data.
-        :type security: ServerSecurityData
-        """
-        self.encryptionMethod = security.encryptionMethod
-
-        if security.serverCertificate:
-            self.publicKey = security.serverCertificate.publicKey
-
-        self.setServerRandom(security.serverRandom)
-
-    def setServerRandom(self, random):
-        """
-        Set the serverRandom attribute.
-        :param random: server random data.
-        :type random: bytes
-        """
-        self.serverRandom = random
-
-        if self.clientRandom is not None and self.serverRandom is not None:
-            self.generateCrypter()
-
-    def setClientRandom(self, random):
-        """
-        Set the clientRandom attribute.
-        :param random: client random data.
-        :type random: bytes
-        """
-        self.clientRandom = random
-
-        if self.clientRandom is not None and self.serverRandom is not None:
-            self.generateCrypter()
-
-    def getCrypter(self):
-        """
-        Get the current crypter object.
-        :return: RC4Crypter
-        """
-        if self.crypter is None:
-            raise StateError("The crypter was not generated. The crypter will be generated when the server random is received.")
-
-        return self.crypter
-
 
 
 class RC4:
@@ -311,32 +198,5 @@ class RC4Crypter:
         :return: int
         """
         raise NotImplementedError("FIPS is not implemented")
-
-class RC4CrypterProxy(SecuritySettingsObserver):
-    """
-    SecuritySettingsObserver that can be used like an RC4Crypter once the crypter has been generated.
-    """
-    def __init__(self):
-        SecuritySettingsObserver.__init__(self)
-        self.crypter = None
-        self.encrypt = self.decrypt = self.sign = self.verify = self.addEncryption = self.addDecryption = self.raiseCrypterUnavailableError
-
-    def raiseCrypterUnavailableError(self):
-        raise CrypterUnavailableError("The crypter proxy instance was used before the crypter was generated.")
-
-    def onCrypterGenerated(self, settings):
-        """
-        Called when the crypter has been generated.
-        From this point on, the proxy can be used like a normal RC4Crypter.
-        :param settings: the event source.
-        :type settings: SecuritySettings
-        """
-        self.crypter = settings.getCrypter()
-        self.encrypt = self.crypter.encrypt
-        self.decrypt = self.crypter.decrypt
-        self.sign = self.crypter.sign
-        self.verify = self.crypter.verify
-        self.addEncryption = self.crypter.addEncryption
-        self.addDecryption = self.crypter.addDecryption
 
 

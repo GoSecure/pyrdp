@@ -1,16 +1,16 @@
 from binascii import hexlify
 
-from pyrdp.logging import log
 from pyrdp.core.subject import ObservedBy
-from pyrdp.crypto.crypto import RC4Crypter
 from pyrdp.enum.rdp import RDPSecurityFlags, EncryptionMethod
 from pyrdp.layer.layer import Layer, LayerObserver
+from pyrdp.logging import log
 from pyrdp.parser.parser import Parser
 from pyrdp.parser.rdp.client_info import RDPClientInfoParser
 from pyrdp.parser.rdp.security import RDPBasicSecurityParser, RDPSignedSecurityParser, RDPFIPSSecurityParser
 from pyrdp.pdu.rdp.client_info import RDPClientInfoPDU
 from pyrdp.pdu.rdp.security import RDPSecurityExchangePDU, \
     RDPSecurityPDU
+from pyrdp.security import RC4Crypter
 
 
 class RDPSecurityObserver(LayerObserver):

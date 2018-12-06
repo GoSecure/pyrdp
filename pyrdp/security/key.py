@@ -20,7 +20,7 @@ import hashlib
 
 from pyrdp.core.packing import Uint32LE
 from pyrdp.core.stream import ByteStream
-from pyrdp.crypto import rc4
+from pyrdp.security import rc4
 from pyrdp.enum.rdp import EncryptionMethod
 
 

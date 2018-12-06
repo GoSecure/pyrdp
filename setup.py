@@ -15,8 +15,8 @@ setup(name='pyrdp',
     packages=[
         'pyrdp',
         'pyrdp.core',
-        'pyrdp.core.logging',
-        'pyrdp.crypto',
+        'pyrdp.logging',
+        'pyrdp.security',
         'pyrdp.ui',
 
         'pyrdp.enum',
