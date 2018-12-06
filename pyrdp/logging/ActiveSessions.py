@@ -14,7 +14,8 @@ class ActiveSessions:
 
     @staticmethod
     def remove(sessionId: str):
-        ActiveSessions.sessions.pop(sessionId)
+        if sessionId in ActiveSessions.sessions.keys():
+            ActiveSessions.sessions.pop(sessionId)
 
     @staticmethod
     def get(sessionId: str):

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
-from distutils.core import setup, Extension
+from distutils.core import Extension, setup
 
 setup(name='pyrdp',
     version='1.0.0',
