@@ -38,7 +38,7 @@ setup(name='pyrdp',
     ],
     ext_modules=[Extension('rle', ['ext/rle.c'])],
     scripts=[
-            'bin/pyrdp-rdpmitm.py',
+            'bin/pyrdp-mitm.py',
             'bin/pyrdp-player.py'
     ],
     install_requires=[
