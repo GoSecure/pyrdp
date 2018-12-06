@@ -4,7 +4,7 @@ from pyrdp.core.packing import Uint32LE, Uint16LE
 from pyrdp.enum import InputEventType
 from pyrdp.exceptions import ParsingError, WritingError
 from pyrdp.parser.parser import Parser
-from pyrdp.pdu.rdp.input import SynchronizeEvent, UnusedEvent, KeyboardEvent, UnicodeKeyboardEvent, \
+from pyrdp.pdu import SynchronizeEvent, UnusedEvent, KeyboardEvent, UnicodeKeyboardEvent, \
     MouseEvent, ExtendedMouseEvent
 
 

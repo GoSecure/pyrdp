@@ -5,7 +5,7 @@ from pyrdp.core.packing import Uint16BE
 from pyrdp.enum import GCCPDUType
 from pyrdp.exceptions import ParsingError, UnknownPDUTypeError
 from pyrdp.parser.parser import Parser
-from pyrdp.pdu.gcc import GCCConferenceCreateRequestPDU, GCCConferenceCreateResponsePDU, GCCPDU
+from pyrdp.pdu import GCCConferenceCreateRequestPDU, GCCConferenceCreateResponsePDU, GCCPDU
 
 
 class GCCParser(Parser):

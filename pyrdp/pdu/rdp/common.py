@@ -1,4 +1,4 @@
-from pyrdp.pdu.base_pdu import PDU
+from pyrdp.pdu.pdu import PDU
 
 
 class BitmapUpdateData(PDU):

@@ -1,18 +1,16 @@
 from io import BytesIO
 
 from pyrdp.core.packing import Uint16LE, Uint32LE, Uint8
-from pyrdp.enum import RDPDataPDUType, RDPDataPDUSubtype, ErrorInfo, CapabilityType
+from pyrdp.enum import CapabilityType, ErrorInfo, RDPDataPDUSubtype, RDPDataPDUType
 from pyrdp.exceptions import UnknownPDUTypeError
 from pyrdp.parser.parser import Parser
 from pyrdp.parser.rdp.input import RDPInputParser
 from pyrdp.parser.rdp.pointer import PointerEventParser
-from pyrdp.pdu.base_pdu import PDU
-from pyrdp.pdu.rdp.capability import Capability, BitmapCapability, OrderCapability, GeneralCapability, \
-    GlyphCacheCapability, OffscreenBitmapCacheCapability, MultifragmentUpdateCapability, VirtualChannelCapability, \
-    PointerCapability
-from pyrdp.pdu.rdp.data import RDPShareControlHeader, RDPShareDataHeader, RDPDemandActivePDU, RDPConfirmActivePDU, \
-    RDPSetErrorInfoPDU, RDPSynchronizePDU, RDPControlPDU, RDPInputPDU, RDPPlaySoundPDU, RDPPointerPDU, \
-    RDPSuppressOutputPDU, RDPUpdatePDU
+from pyrdp.pdu import BitmapCapability, Capability, GeneralCapability, GlyphCacheCapability, \
+    MultifragmentUpdateCapability, OffscreenBitmapCacheCapability, OrderCapability, PDU, PointerCapability, \
+    RDPConfirmActivePDU, RDPControlPDU, RDPDemandActivePDU, RDPInputPDU, RDPPlaySoundPDU, RDPPointerPDU, \
+    RDPSetErrorInfoPDU, RDPShareControlHeader, RDPShareDataHeader, RDPSuppressOutputPDU, RDPSynchronizePDU, \
+    RDPUpdatePDU, VirtualChannelCapability
 
 
 class RDPDataParser(Parser):

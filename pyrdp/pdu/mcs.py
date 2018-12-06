@@ -1,7 +1,7 @@
 import pprint
 
 from pyrdp.enum import MCSPDUType
-from pyrdp.pdu.base_pdu import PDU
+from pyrdp.pdu.pdu import PDU
 
 
 class MCSPDU(PDU):

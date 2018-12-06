@@ -2,7 +2,7 @@ from typing import List
 
 from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketId, \
     MajorFunction, DeviceType
-from pyrdp.pdu.base_pdu import PDU
+from pyrdp.pdu.pdu import PDU
 
 
 class DeviceRedirectionPDU(PDU):

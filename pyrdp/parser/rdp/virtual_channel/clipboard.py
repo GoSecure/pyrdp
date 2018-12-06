@@ -1,10 +1,9 @@
 from io import BytesIO
 
 from pyrdp.core.packing import Uint16LE, Uint32LE
-from pyrdp.enum import ClipboardMessageType, ClipboardMessageFlags
+from pyrdp.enum import ClipboardMessageFlags, ClipboardMessageType
 from pyrdp.parser.parser import Parser
-from pyrdp.pdu.rdp.virtual_channel.clipboard import ClipboardPDU, FormatDataResponsePDU, FormatListPDU, \
-    FormatDataRequestPDU, LongFormatName
+from pyrdp.pdu import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU, FormatListPDU, LongFormatName
 
 
 class ClipboardParser(Parser):

@@ -1,5 +1,5 @@
 from pyrdp.enum import GCCPDUType
-from pyrdp.pdu.base_pdu import PDU
+from pyrdp.pdu.pdu import PDU
 
 
 class GCCPDU(PDU):

@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
 from pyrdp.layer import Layer
-from pyrdp.pdu.mcs import MCSSendDataRequestPDU, MCSSendDataIndicationPDU
+from pyrdp.pdu import MCSSendDataRequestPDU, MCSSendDataIndicationPDU
 
 
 class MCSChannelFactory:

@@ -1,5 +1,5 @@
 from pyrdp.enum import CapabilityType
-from pyrdp.pdu.base_pdu import PDU
+from pyrdp.pdu.pdu import PDU
 
 
 class Capability(PDU):
@@ -25,14 +25,6 @@ class GeneralCapability(Capability):
         self.generalCompressionLevel = generalCompressionLevel
         self.refreshRectSupport = refreshRectSupport
         self.suppressOutputSupport = suppressOutputSupport
-
-
-class GlyphCacheCapability(Capability):
-    def __init__(self, glyphCache, fragCache, glyphSupportLevel):
-        Capability.__init__(self, CapabilityType.CAPSTYPE_GLYPHCACHE)
-        self.glyphCache = glyphCache
-        self.fragCache = fragCache
-        self.glyphSupportLevel = glyphSupportLevel
 
 
 class BitmapCapability(Capability):
@@ -157,14 +149,6 @@ class BrushCapability(Capability):
         self.brushSupportLevel = brushSupportLevel
 
 
-class GlyphCacheCapability(Capability):
-    def __init__(self, glyphCache, fragCache, glyphSupportLevel):
-        Capability.__init__(self, CapabilityType.CAPSTYPE_GLYPHCACHE)
-        self.glyphCache = glyphCache
-        self.fragCache = fragCache
-        self.glyphSupportLevel = glyphSupportLevel
-
-
 class OffscreenBitmapCacheCapability(Capability):
     def __init__(self, offscreenSupportLevel, offscreenCacheSize, offscreenCacheEntries):
         Capability.__init__(self, CapabilityType.CAPSTYPE_OFFSCREENCACHE)
@@ -178,6 +162,13 @@ class BitmapCacheHostSupportCapability(Capability):
         Capability.__init__(self, CapabilityType.CAPSTYPE_BITMAPCACHE_HOSTSUPPORT)
         self.cacheVersion = cacheVersion
 
+
+class GlyphCacheCapability(Capability):
+    def __init__(self, glyphCache, fragCache, glyphSupportLevel):
+        Capability.__init__(self, CapabilityType.CAPSTYPE_GLYPHCACHE)
+        self.glyphCache = glyphCache
+        self.fragCache = fragCache
+        self.glyphSupportLevel = glyphSupportLevel
 
 class VirtualChannelCapability(Capability):
     def __init__(self, flags, vcChunkSize):

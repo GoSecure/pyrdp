@@ -3,7 +3,7 @@ from io import BytesIO
 from pyrdp.core.packing import Uint8, Uint16BE
 from pyrdp.exceptions import ParsingError
 from pyrdp.parser.segmentation import SegmentationParser
-from pyrdp.pdu.tpkt import TPKTPDU
+from pyrdp.pdu import TPKTPDU
 
 
 class TPKTParser(SegmentationParser):

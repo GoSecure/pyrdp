@@ -1,7 +1,7 @@
 from pyrdp.layer.buffered import BufferedLayer
 from pyrdp.parser.segmentation import SegmentationParser
 from pyrdp.parser.tpkt import TPKTParser
-from pyrdp.pdu.tpkt import TPKTPDU
+from pyrdp.pdu import TPKTPDU
 
 
 class TPKTLayer(BufferedLayer):

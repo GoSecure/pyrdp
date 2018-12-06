@@ -25,11 +25,8 @@ from pyrdp.parser.rdp.client_info import RDPClientInfoParser
 from pyrdp.parser.rdp.connection import RDPClientConnectionParser, RDPServerConnectionParser
 from pyrdp.parser.rdp.fastpath import createFastPathParser
 from pyrdp.parser.rdp.negotiation import RDPNegotiationRequestParser, RDPNegotiationResponseParser
-from pyrdp.pdu.gcc import GCCConferenceCreateResponsePDU
-from pyrdp.pdu.mcs import MCSConnectResponsePDU
-from pyrdp.pdu.rdp.capability import Capability, MultifragmentUpdateCapability
-from pyrdp.pdu.rdp.connection import ProprietaryCertificate, RDPServerDataPDU, ServerSecurityData
-from pyrdp.pdu.rdp.negotiation import RDPNegotiationRequestPDU, RDPNegotiationResponsePDU
+from pyrdp.pdu import Capability, GCCConferenceCreateResponsePDU, MCSConnectResponsePDU, MultifragmentUpdateCapability, \
+    ProprietaryCertificate, RDPNegotiationRequestPDU, RDPNegotiationResponsePDU, RDPServerDataPDU, ServerSecurityData
 from pyrdp.recording import FileLayer, Recorder, RecordingFastPathObserver, RecordingSlowPathObserver, SocketLayer
 from pyrdp.security import RC4CrypterProxy, SecuritySettings
 

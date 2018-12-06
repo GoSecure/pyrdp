@@ -6,7 +6,7 @@ from pyrdp.core.packing import Uint8, Uint16BE
 from pyrdp.enum import MCSChannelID, MCSPDUType
 from pyrdp.exceptions import UnknownPDUTypeError, ParsingError
 from pyrdp.parser.parser import Parser
-from pyrdp.pdu.mcs import MCSConnectInitialPDU, MCSConnectResponsePDU, MCSErectDomainRequestPDU, \
+from pyrdp.pdu import MCSConnectInitialPDU, MCSConnectResponsePDU, MCSErectDomainRequestPDU, \
     MCSDisconnectProviderUltimatumPDU, MCSAttachUserRequestPDU, MCSAttachUserConfirmPDU, MCSChannelJoinRequestPDU, \
     MCSChannelJoinConfirmPDU, MCSSendDataRequestPDU, MCSSendDataIndicationPDU, MCSDomainParams, MCSPDU
 

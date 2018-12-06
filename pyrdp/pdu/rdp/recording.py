@@ -1,8 +1,8 @@
 from pyrdp.enum import PlayerMessageType
-from pyrdp.pdu.base_pdu import PDU
+from pyrdp.pdu.pdu import PDU
 
 
-class RDPPlayerMessagePDU(PDU):
+class PlayerMessagePDU(PDU):
     """
     PDU to encapsulate different types (ex: input, output, creds) for (re)play purposes.
     Also contains a timestamp.

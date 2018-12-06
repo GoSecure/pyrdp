@@ -4,7 +4,7 @@ from pyrdp.core.packing import Uint8, Uint16LE, Uint32LE
 from pyrdp.enum import LicensingPDUType, LicenseBinaryBlobType, LicenseErrorCode, RDPStateTransition
 from pyrdp.exceptions import UnknownPDUTypeError
 from pyrdp.parser.parser import Parser
-from pyrdp.pdu.rdp.licensing import RDPLicenseBinaryBlob, RDPLicenseErrorAlertPDU, RDPLicensingPDU
+from pyrdp.pdu import RDPLicenseBinaryBlob, RDPLicenseErrorAlertPDU, RDPLicensingPDU
 
 
 class RDPLicensingParser(Parser):

@@ -7,13 +7,12 @@ from Crypto.Util.number import bytes_to_long, long_to_bytes
 from pyrdp.core.helper_methods import decodeUTF16LE, encodeUTF16LE
 from pyrdp.core.packing import Uint16LE, Uint32LE, Uint8
 from pyrdp.core.stream import StrictStream
-from pyrdp.enum import RDPConnectionDataType, ServerCertificateType, RDPVersion, ColorDepth, KeyboardType, \
-    HighColorDepth, ConnectionType, DesktopOrientation, EncryptionLevel, EncryptionMethod
+from pyrdp.enum import ColorDepth, ConnectionType, DesktopOrientation, EncryptionLevel, EncryptionMethod, \
+    HighColorDepth, KeyboardType, RDPConnectionDataType, RDPVersion, ServerCertificateType
 from pyrdp.exceptions import ParsingError, UnknownPDUTypeError
 from pyrdp.parser.parser import Parser
-from pyrdp.pdu.rdp.connection import RDPClientDataPDU, ClientCoreData, ClientSecurityData, ClientChannelDefinition, \
-    ClientNetworkData, ClientClusterData, RDPServerDataPDU, ServerCoreData, ServerNetworkData, ServerSecurityData, \
-    ProprietaryCertificate
+from pyrdp.pdu import ClientChannelDefinition, ClientClusterData, ClientCoreData, ClientNetworkData, ClientSecurityData, \
+    ProprietaryCertificate, RDPClientDataPDU, RDPServerDataPDU, ServerCoreData, ServerNetworkData, ServerSecurityData
 
 
 class RDPClientConnectionParser(Parser):

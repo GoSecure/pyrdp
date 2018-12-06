@@ -1,5 +1,5 @@
 from pyrdp.layer.layer import Layer
-from pyrdp.pdu.base_pdu import PDU
+from pyrdp.pdu import PDU
 
 
 class RawLayer(Layer):

@@ -9,7 +9,7 @@ from pyrdp.core.observer import Observer
 from pyrdp.enum import FileAccess, CreateOption, MajorFunction, IOOperationSeverity
 from pyrdp.layer import Layer
 from pyrdp.parser.rdp.virtual_channel.device_redirection import DeviceRedirectionParser
-from pyrdp.pdu.rdp.virtual_channel.device_redirection import DeviceIOResponsePDU, DeviceCreateRequestPDU, \
+from pyrdp.pdu import DeviceIOResponsePDU, DeviceCreateRequestPDU, \
     DeviceCloseRequestPDU, DeviceReadRequestPDU, DeviceIORequestPDU, DeviceRedirectionPDU, \
     DeviceListAnnounceRequest
 from pyrdp.recording import Recorder

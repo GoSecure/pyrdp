@@ -2,7 +2,7 @@ from pyrdp.core.subject import ObservedBy
 from pyrdp.enum import X224PDUType
 from pyrdp.layer.layer import Layer, LayerStrictRoutedObserver
 from pyrdp.parser.x224 import X224Parser
-from pyrdp.pdu.x224 import X224DataPDU, X224ConnectionRequestPDU, X224ConnectionConfirmPDU, X224DisconnectRequestPDU, \
+from pyrdp.pdu import X224DataPDU, X224ConnectionRequestPDU, X224ConnectionConfirmPDU, X224DisconnectRequestPDU, \
     X224ErrorPDU
 
 

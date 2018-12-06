@@ -1,6 +1,6 @@
 from pyrdp.layer.layer import Layer
 from pyrdp.parser.mcs import MCSParser
-from pyrdp.pdu.mcs import MCSConnectInitialPDU, MCSDomainParams, MCSPDU
+from pyrdp.pdu import MCSConnectInitialPDU, MCSDomainParams, MCSPDU
 
 
 class MCSLayer(Layer):

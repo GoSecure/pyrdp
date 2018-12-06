@@ -10,7 +10,7 @@ from PyQt4.QtCore import pyqtSignal, QThread
 
 from pyrdp.core.timer import Timer
 from pyrdp.layer import PlayerMessageLayer, TPKTLayer
-from pyrdp.pdu.rdp.recording import RDPPlayerMessagePDU
+from pyrdp.pdu import PlayerMessagePDU
 
 
 class ReplayThreadEvent(IntEnum):
@@ -54,7 +54,7 @@ class ReplayThread(QThread):
         player = PlayerMessageLayer()
         tpkt.setNext(player)
 
-        def registerEvent(pdu: RDPPlayerMessagePDU):
+        def registerEvent(pdu: PlayerMessagePDU):
             events[pdu.timestamp].append(currentMessagePosition)
 
         player.createObserver(onPDUReceived = registerEvent)

@@ -1,7 +1,7 @@
 from typing import List
 
 from pyrdp.enum import RDPConnectionDataType, ServerCertificateType
-from pyrdp.pdu.base_pdu import PDU
+from pyrdp.pdu.pdu import PDU
 
 
 class RDPClientDataPDU(PDU):

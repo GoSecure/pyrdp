@@ -4,7 +4,7 @@ from pyrdp.core.observer import Observer
 from pyrdp.core.subject import Subject, ObservedBy
 from pyrdp.exceptions import UnknownPDUTypeError
 from pyrdp.parser.parser import Parser
-from pyrdp.pdu.base_pdu import PDU
+from pyrdp.pdu import PDU
 
 
 class LayerObserver(Observer):

@@ -1,7 +1,7 @@
 from io import BytesIO
 
 from pyrdp.core.packing import Uint16LE
-from pyrdp.pdu.rdp.common import BitmapUpdateData
+from pyrdp.pdu import BitmapUpdateData
 
 
 class RDPCommonParser:

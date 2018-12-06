@@ -9,7 +9,7 @@ from pyrdp.parser.rdp.client_info import RDPClientInfoParser
 from pyrdp.parser.rdp.data import RDPDataParser
 from pyrdp.parser.rdp.fastpath import RDPBasicFastPathParser
 from pyrdp.parser.rdp.virtual_channel.clipboard import ClipboardParser
-from pyrdp.pdu.base_pdu import PDU
+from pyrdp.pdu import PDU
 
 
 class Recorder:

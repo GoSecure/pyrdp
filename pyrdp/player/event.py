@@ -11,13 +11,9 @@ from pyrdp.parser.rdp.common import RDPCommonParser
 from pyrdp.parser.rdp.data import RDPDataParser
 from pyrdp.parser.rdp.fastpath import RDPBasicFastPathParser, RDPOutputEventParser
 from pyrdp.parser.rdp.virtual_channel.clipboard import ClipboardParser
-from pyrdp.pdu.base_pdu import PDU
-from pyrdp.pdu.rdp.common import BitmapUpdateData
-from pyrdp.pdu.rdp.data import RDPConfirmActivePDU, RDPInputPDU, RDPUpdatePDU
-from pyrdp.pdu.rdp.fastpath import FastPathBitmapEvent, FastPathEventMouse, FastPathEventScanCode, FastPathOrdersEvent
-from pyrdp.pdu.rdp.input import KeyboardEvent, MouseEvent
-from pyrdp.pdu.rdp.recording import RDPPlayerMessagePDU
-from pyrdp.pdu.rdp.virtual_channel.clipboard import FormatDataResponsePDU
+from pyrdp.pdu import BitmapUpdateData, FastPathBitmapEvent, FastPathMouseEvent, FastPathOrdersEvent, \
+    FastPathScanCodeEvent, FormatDataResponsePDU, KeyboardEvent, MouseEvent, PDU, PlayerMessagePDU, RDPConfirmActivePDU, \
+    RDPInputPDU, RDPUpdatePDU
 from pyrdp.ui import RDPBitmapToQtImage
 
 
@@ -59,10 +55,10 @@ class PlayerMessageHandler(PlayerMessageObserver):
         pdu = self.inputParser.parse(pdu.payload)
 
         for event in pdu.events:
-            if isinstance(event, FastPathEventScanCode):
+            if isinstance(event, FastPathScanCodeEvent):
                 log.debug("handling {}".format(event))
                 self.onScanCode(event.scancode, not event.isReleased)
-            elif isinstance(event, FastPathEventMouse):
+            elif isinstance(event, FastPathMouseEvent):
                 self.onMousePosition(event.mouseX, event.mouseY)
             else:
                 log.debug("Can't handle input event: {}".format(event))
@@ -100,7 +96,7 @@ class PlayerMessageHandler(PlayerMessageObserver):
                                 bitmapData.destRight - bitmapData.destLeft + 1,
                                 bitmapData.destBottom - bitmapData.destTop + 1)
 
-    def onClientInfo(self, pdu: RDPPlayerMessagePDU):
+    def onClientInfo(self, pdu: PlayerMessagePDU):
         clientInfoPDU = self.clientInfoParser.parse(pdu.payload)
         self.text.insertPlainText("--------------------")
         self.text.insertPlainText("\nUSERNAME: {}\nPASSWORD: {}\nDOMAIN: {}\n"

@@ -1,5 +1,5 @@
 from pyrdp.enum import ClipboardMessageType, ClipboardMessageFlags, ClipboardFormatNumber
-from pyrdp.pdu.base_pdu import PDU
+from pyrdp.pdu.pdu import PDU
 
 
 class ClipboardPDU(PDU):
@@ -85,4 +85,3 @@ class LongFormatName(FormatName):
     """
     https://msdn.microsoft.com/en-us/library/cc241109.aspx
     """
-    pass

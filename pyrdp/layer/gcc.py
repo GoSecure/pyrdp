@@ -1,6 +1,6 @@
 from pyrdp.layer.layer import Layer
 from pyrdp.parser.gcc import GCCParser
-from pyrdp.pdu.gcc import GCCConferenceCreateRequestPDU
+from pyrdp.pdu import GCCConferenceCreateRequestPDU
 
 
 class GCCClientConnectionLayer(Layer):

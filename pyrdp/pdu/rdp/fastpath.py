@@ -1,12 +1,12 @@
 from typing import List
 
 from pyrdp.enum import SegmentationPDUType
-from pyrdp.pdu.base_pdu import PDU
+from pyrdp.pdu.pdu import PDU
 from pyrdp.pdu.rdp.common import BitmapUpdateData
 from pyrdp.pdu.segmentation import SegmentationPDU
 
 
-class RDPFastPathPDU(SegmentationPDU):
+class FastPathPDU(SegmentationPDU):
     def __init__(self, header, events):
         PDU.__init__(self)
         self.header = header
@@ -19,23 +19,23 @@ class RDPFastPathPDU(SegmentationPDU):
         return str([str(e.__class__) for e in self.events])
 
 
-class FastPathEventRaw(PDU):
+class FastPathEventRaw:
     def __init__(self, data):
         super().__init__()
         self.data = data
 
 
-class RDPFastPathEvent(PDU):
+class FastPathEvent:
     """
-    Base class for RDP fast path event (not PDU, a PDU contains multiple events)
-    such as a scancode event, a mouse event or a bitmap event.
+    Base class for RDP fast path event (not PDU, a PDU contains multiple events).
+    Used for scan code events, mouse events or bitmap events.
     """
 
     def __init__(self):
         super().__init__()
 
 
-class FastPathEventScanCode(RDPFastPathEvent):
+class FastPathScanCodeEvent(FastPathEvent):
 
     def __init__(self, rawHeaderByte, scancode, isReleased):
         """
@@ -43,13 +43,13 @@ class FastPathEventScanCode(RDPFastPathEvent):
         :type scancode: bytes
         :type isReleased: bool
         """
-        RDPFastPathEvent.__init__(self)
+        FastPathEvent.__init__(self)
         self.rawHeaderByte = rawHeaderByte
         self.scancode = scancode
         self.isReleased = isReleased
 
 
-class FastPathEventMouse(RDPFastPathEvent):
+class FastPathMouseEvent(FastPathEvent):
     """
     Mouse event (clicks, move, scroll, etc.)
     """
@@ -61,14 +61,14 @@ class FastPathEventMouse(RDPFastPathEvent):
         :type mouseX: int
         :type mouseY: int
         """
-        RDPFastPathEvent.__init__(self)
+        FastPathEvent.__init__(self)
         self.rawHeaderByte = rawHeaderByte
         self.mouseY = mouseY
         self.mouseX = mouseX
         self.pointerFlags = pointerFlags
 
 
-class FastPathOutputEvent(PDU):
+class FastPathOutputEvent:
     def __init__(self):
         super().__init__()
 
@@ -96,14 +96,13 @@ class FastPathOrdersEvent(FastPathOutputEvent):
         self.secondaryDrawingOrders = None
 
 
-class SecondaryDrawingOrder(PDU):
+class SecondaryDrawingOrder:
     """
     https://msdn.microsoft.com/en-us/library/cc241611.aspx
     """
-    def __init__(self, controlFlags, orderLength, extraFlags, orderType, payload):
-        super().__init__(payload)
+    def __init__(self, controlFlags, orderLength, extraFlags, orderType):
+        super().__init__()
         self.controlFlags = controlFlags
         self.orderLength = orderLength
         self.extraFlags = extraFlags
         self.orderType = orderType
-        self.payload = payload

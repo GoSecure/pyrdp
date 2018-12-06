@@ -3,7 +3,7 @@ from io import BytesIO
 from pyrdp.core.packing import Uint8, Uint16LE, Uint32LE
 from pyrdp.enum import NegotiationRequestFlags, NegotiationType
 from pyrdp.parser.parser import Parser
-from pyrdp.pdu.rdp.negotiation import RDPNegotiationRequestPDU, RDPNegotiationResponsePDU
+from pyrdp.pdu import RDPNegotiationRequestPDU, RDPNegotiationResponsePDU
 
 
 class RDPNegotiationRequestParser(Parser):

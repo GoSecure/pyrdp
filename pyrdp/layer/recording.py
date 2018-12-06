@@ -4,7 +4,7 @@ from pyrdp.core.packing import Uint8, Uint64LE
 from pyrdp.core.subject import ObservedBy
 from pyrdp.enum import PlayerMessageType
 from pyrdp.layer.layer import Layer, LayerRoutedObserver
-from pyrdp.pdu.rdp.recording import RDPPlayerMessagePDU
+from pyrdp.pdu import PlayerMessagePDU
 
 
 class PlayerMessageObserver(LayerRoutedObserver):
@@ -54,7 +54,7 @@ class PlayerMessageLayer(Layer):
         type = PlayerMessageType(Uint8.unpack(stream))
         timestamp = Uint64LE.unpack(stream)
         payload = stream.read()
-        pdu = RDPPlayerMessagePDU(type, timestamp, payload)
+        pdu = PlayerMessagePDU(type, timestamp, payload)
         self.pduReceived(pdu, forward=False)
 
     def sendMessage(self, data: bytes, messageType: PlayerMessageType, timeStamp: int):

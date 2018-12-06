@@ -1,8 +1,8 @@
 from pyrdp.core.observer import Observer
-from pyrdp.core.subject import Subject, ObservedBy
+from pyrdp.core.subject import ObservedBy, Subject
 from pyrdp.mcs.router import MCSRouter
 from pyrdp.mcs.user import MCSUser
-from pyrdp.pdu.mcs import MCSAttachUserConfirmPDU, MCSChannelJoinConfirmPDU
+from pyrdp.pdu import MCSAttachUserConfirmPDU, MCSChannelJoinConfirmPDU
 
 
 class MCSServerConnectionObserver(Observer):
