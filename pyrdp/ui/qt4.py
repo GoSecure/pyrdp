@@ -29,7 +29,7 @@ from PyQt4 import QtGui
 from PyQt4.QtCore import QPoint
 from PyQt4.QtGui import QColor
 
-import pyrdp.logging.log as log
+from pyrdp.logging import log
 
 
 def RDPBitmapToQtImage(width, height, bitsPerPixel, isCompressed, data):

@@ -7,8 +7,7 @@ from pyrdp.enum import ClientInfoFlags, ParserMode, PlayerMessageType, Segmentat
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, GCCClientConnectionLayer, \
     MCSClientConnectionLayer, MCSLayer, RawLayer, RDPClientConnectionLayer, RDPDataLayer, RDPSecurityLayer, \
     SegmentationLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
-from pyrdp.logging.log import LOGGER_NAMES
-from pyrdp.logging.rc4 import RC4LoggingObserver
+from pyrdp.logging import LOGGER_NAMES, RC4LoggingObserver
 from pyrdp.mcs.channel import MCSChannelFactory, MCSClientChannel
 from pyrdp.mcs.client import MCSClientRouter
 from pyrdp.mcs.user import MCSUserObserver

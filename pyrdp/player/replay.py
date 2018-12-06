@@ -3,7 +3,7 @@ from PyQt4.QtGui import QHBoxLayout, QLabel, QSizePolicy, QSlider, QSpacerItem, 
 
 from pyrdp.core.helper_methods import getLoggerPassFilters
 from pyrdp.layer import PlayerMessageLayer, TPKTLayer
-from pyrdp.logging.log import LOGGER_NAMES
+from pyrdp.logging import LOGGER_NAMES
 from pyrdp.player.BasePlayerWindow import BasePlayerWindow
 from pyrdp.player.ClickableProgressBar import ClickableProgressBar
 from pyrdp.player.RDPConnectionTab import RDPConnectionTab
