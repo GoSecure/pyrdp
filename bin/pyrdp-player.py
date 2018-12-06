@@ -9,8 +9,8 @@ import notify2
 from PyQt4.QtGui import QApplication
 
 from pyrdp.core.helper_methods import getLoggerPassFilters
-from pyrdp.core.logging import log
-from pyrdp.core.logging.log import LOGGER_NAMES
+from pyrdp.logging import log
+from pyrdp.logging.log import LOGGER_NAMES
 from pyrdp.player.player import MainWindow
 
 

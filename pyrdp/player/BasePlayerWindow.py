@@ -1,7 +1,7 @@
 from PyQt4.QtGui import QTabWidget, QShortcut, QKeySequence
 
 from pyrdp.core.helper_methods import getLoggerPassFilters
-from pyrdp.core.logging.log import LOGGER_NAMES
+from pyrdp.logging.log import LOGGER_NAMES
 
 
 class BasePlayerWindow(QTabWidget):

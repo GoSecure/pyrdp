@@ -1,7 +1,7 @@
 from binascii import hexlify
 from io import BytesIO
 
-from pyrdp.core.logging import log
+from pyrdp.logging import log
 from pyrdp.core.packing import Uint8, Uint16BE, Uint16LE
 from pyrdp.crypto.crypto import RC4Crypter
 from pyrdp.enum.core import ParserMode

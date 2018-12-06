@@ -2,7 +2,7 @@ from socket import socket
 from typing import Dict, BinaryIO
 
 from pyrdp.core.helper_methods import getLoggerPassFilters
-from pyrdp.core.logging.log import LOGGER_NAMES
+from pyrdp.logging.log import LOGGER_NAMES
 from pyrdp.core.ssl import ClientTLSContext
 from pyrdp.crypto.crypto import SecuritySettings, RC4CrypterProxy
 from pyrdp.crypto.observer import RC4LoggingObserver

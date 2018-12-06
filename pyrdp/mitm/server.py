@@ -7,9 +7,9 @@ from twisted.internet import reactor
 from twisted.internet.protocol import ClientFactory
 
 from pyrdp.core.helper_methods import decodeUTF16LE, getLoggerPassFilters
-from pyrdp.core.logging.ActiveSessions import ActiveSessions
-from pyrdp.core.logging.filters import ConnectionMetadataFilter
-from pyrdp.core.logging.log import LOGGER_NAMES
+from pyrdp.logging.ActiveSessions import ActiveSessions
+from pyrdp.logging.filters import ConnectionMetadataFilter
+from pyrdp.logging.log import LOGGER_NAMES
 from pyrdp.core.ssl import ServerTLSContext
 from pyrdp.crypto.crypto import SecuritySettings, RC4CrypterProxy
 from pyrdp.crypto.observer import RC4LoggingObserver

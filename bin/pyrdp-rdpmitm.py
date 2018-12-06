@@ -13,10 +13,10 @@ from twisted.internet.protocol import ServerFactory
 
 from pyrdp.core.Config import Config
 from pyrdp.core.helper_methods import getLoggerPassFilters
-from pyrdp.core.logging import log
-from pyrdp.core.logging.filters import SensorFilter
-from pyrdp.core.logging.formatters import JSONFormatter
-from pyrdp.core.logging.log import LOGGER_NAMES
+from pyrdp.logging import log
+from pyrdp.logging.filters import SensorFilter
+from pyrdp.logging.formatters import JSONFormatter
+from pyrdp.logging.log import LOGGER_NAMES
 from pyrdp.mitm.server import MITMServer
 
 

@@ -1,7 +1,7 @@
 from logging import Filter, LogRecord
 
 from pyrdp.core.Config import Config
-from pyrdp.core.logging.ActiveSessions import ActiveSessions
+from pyrdp.logging.ActiveSessions import ActiveSessions
 
 
 class SensorFilter(Filter):

@@ -1,7 +1,7 @@
 import time
 from typing import BinaryIO, Optional, List
 
-from pyrdp.core.logging import log
+from pyrdp.logging import log
 from pyrdp.enum.core import ParserMode
 from pyrdp.enum.rdp import RDPPlayerMessageType
 from pyrdp.layer.layer import Layer

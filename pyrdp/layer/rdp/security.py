@@ -1,6 +1,6 @@
 from binascii import hexlify
 
-from pyrdp.core.logging import log
+from pyrdp.logging import log
 from pyrdp.core.subject import ObservedBy
 from pyrdp.crypto.crypto import RC4Crypter
 from pyrdp.enum.rdp import RDPSecurityFlags, EncryptionMethod

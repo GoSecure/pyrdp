@@ -2,7 +2,7 @@ import logging
 import os
 
 from pyrdp.core.helper_methods import getLoggerPassFilters
-from pyrdp.core.logging.formatters import SSLSecretFormatter
+from pyrdp.logging.formatters import SSLSecretFormatter
 
 
 class LOGGER_NAMES:

@@ -1,4 +1,4 @@
-from pyrdp.core.logging import log
+from pyrdp.logging import log
 from pyrdp.core.subject import ObservedBy
 from pyrdp.enum.rdp import RDPDataPDUType, CapabilityType, VirtualChannelCompressionFlag
 from pyrdp.exceptions import UnknownPDUTypeError

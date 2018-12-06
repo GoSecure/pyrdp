@@ -2,7 +2,7 @@ from PyQt4 import QtGui
 from PyQt4.QtGui import QTextCursor
 
 from pyrdp.core.helper_methods import decodeUTF16LE
-from pyrdp.core.logging import log
+from pyrdp.logging import log
 from pyrdp.core.scancode import scancodeToChar
 from pyrdp.enum.core import ParserMode
 from pyrdp.enum.rdp import CapabilityType, SlowPathUpdateType, BitmapFlags, KeyboardFlag
