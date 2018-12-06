@@ -1,4 +1,5 @@
 import datetime
+import logging
 import random
 import socket
 
@@ -131,7 +132,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
             try:
                 self.socket.connect((recordHost, recordPort))
             except socket.error as e:
-                self.log.error("Could not connect to liveplayer: %(error)s", {"error": e})
+                logging.getLogger(LOGGER_NAMES.MITM).error("Could not connect to liveplayer: %(error)s", {"error": e})
                 self.socket = None
 
         recordingLayers = [FileLayer(self.fileHandle)]
