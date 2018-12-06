@@ -18,7 +18,7 @@ from pyrdp.enum.core import ParserMode
 from pyrdp.enum.rdp import NegotiationProtocols, RDPDataPDUSubtype, InputEventType, EncryptionMethod, EncryptionLevel, \
     PlayerMessageType, CapabilityType, OrderFlag
 from pyrdp.enum.segmentation import SegmentationPDUType
-from pyrdp.enum.virtual_channel.virtual_channel import VirtualChannel
+from pyrdp.enum.virtual_channel.virtual_channel import VirtualChannelName
 from pyrdp.layer.mcs import MCSLayer
 from pyrdp.layer.raw import RawLayer
 from pyrdp.layer.rdp.data import RDPDataLayer
@@ -334,9 +334,9 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         channelMap = self.client.channelMap
         if channelID == self.serverData.network.mcsChannelID:
             return self.buildIOChannel(mcs, userID, channelID)
-        elif channelID in channelMap.keys() and channelMap[channelID] == VirtualChannel.CLIPBOARD:
+        elif channelID in channelMap.keys() and channelMap[channelID] == VirtualChannelName.CLIPBOARD:
             return self.buildClipboardChannel(mcs, userID, channelID)
-        elif channelID in channelMap.keys() and channelMap[channelID] == VirtualChannel.DEVICE_REDIRECTION:
+        elif channelID in channelMap.keys() and channelMap[channelID] == VirtualChannelName.DEVICE_REDIRECTION:
             return self.buildDeviceRedirectionChannel(mcs, userID, channelID)
         else:
             return self.buildVirtualChannel(mcs, userID, channelID)

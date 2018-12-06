@@ -1,7 +1,7 @@
 from io import BytesIO
 
 from pyrdp.core.packing import Uint32LE
-from pyrdp.enum.virtual_channel.virtual_channel import ChannelFlag
+from pyrdp.enum.virtual_channel.virtual_channel import VirtualChannelPDUFlag
 from pyrdp.parser.parser import Parser
 from pyrdp.pdu.rdp.virtual_channel.virtual_channel import VirtualChannelPDU
 
@@ -39,10 +39,10 @@ class VirtualChannelParser(Parser):
             flags = pdu.flags & 0b11111111111111111111111111111100
             if len(rawPacketList) == 0:
                 # Means it's the first packet.
-                flags |= ChannelFlag.CHANNEL_FLAG_FIRST
+                flags |= VirtualChannelPDUFlag.CHANNEL_FLAG_FIRST
             if length <= self.MAX_CHUNK_SIZE:
                 # Means it's the last packet.
-                flags |= ChannelFlag.CHANNEL_FLAG_LAST
+                flags |= VirtualChannelPDUFlag.CHANNEL_FLAG_LAST
             Uint32LE.pack(flags, stream)
             toWrite = self.MAX_CHUNK_SIZE if length >= self.MAX_CHUNK_SIZE else length
             stream.write(dataStream.read(toWrite))

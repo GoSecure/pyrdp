@@ -1,5 +1,5 @@
 from pyrdp.logging import log
-from pyrdp.enum.virtual_channel.virtual_channel import ChannelFlag
+from pyrdp.enum.virtual_channel.virtual_channel import VirtualChannelPDUFlag
 from pyrdp.layer.layer import Layer
 from pyrdp.parser.rdp.virtual_channel.virtual_channel import VirtualChannelParser
 from pyrdp.pdu.rdp.virtual_channel.virtual_channel import VirtualChannelPDU
@@ -22,16 +22,16 @@ class VirtualChannelLayer(Layer):
     def recv(self, data: bytes):
         virtualChannelPDU = self.mainParser.parse(data)
 
-        if virtualChannelPDU.flags & ChannelFlag.CHANNEL_PACKET_COMPRESSED != 0:
+        if virtualChannelPDU.flags & VirtualChannelPDUFlag.CHANNEL_PACKET_COMPRESSED != 0:
             log.error("Compression flag is set on virtual channel data, it is NOT handled, crash will most likely occur.")
 
         flags = virtualChannelPDU.flags
-        if flags & ChannelFlag.CHANNEL_FLAG_FIRST:
+        if flags & VirtualChannelPDUFlag.CHANNEL_FLAG_FIRST:
             self.pduBuffer = virtualChannelPDU.payload
         else:
             self.pduBuffer += virtualChannelPDU.payload
 
-        if flags & ChannelFlag.CHANNEL_FLAG_LAST:
+        if flags & VirtualChannelPDUFlag.CHANNEL_FLAG_LAST:
             # Reassembly done, change the payload of the virtualChannelPDU for processing by the observer.
             virtualChannelPDU.payload = self.pduBuffer
             self.pduReceived(virtualChannelPDU, self.hasNext)
@@ -41,9 +41,9 @@ class VirtualChannelLayer(Layer):
         Send payload on the upper layer by encapsulating it in a VirtualChannelPDU.
         :type payload: bytes
         """
-        flags = ChannelFlag.CHANNEL_FLAG_FIRST | ChannelFlag.CHANNEL_FLAG_LAST
+        flags = VirtualChannelPDUFlag.CHANNEL_FLAG_FIRST | VirtualChannelPDUFlag.CHANNEL_FLAG_LAST
         if self.activateShowProtocolFlag:
-            flags |= ChannelFlag.CHANNEL_FLAG_SHOW_PROTOCOL
+            flags |= VirtualChannelPDUFlag.CHANNEL_FLAG_SHOW_PROTOCOL
         virtualChannelPDU = VirtualChannelPDU(len(payload), flags, payload)
         rawVirtualChannelPDUsList = self.mainParser.write(virtualChannelPDU)
         # Since a virtualChannelPDU may need to be sent using several packets

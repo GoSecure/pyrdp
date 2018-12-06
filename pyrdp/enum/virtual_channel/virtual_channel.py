@@ -1,7 +1,7 @@
 from enum import IntEnum
 
 
-class ChannelFlag(IntEnum):
+class VirtualChannelPDUFlag(IntEnum):
     """
     https://msdn.microsoft.com/en-us/library/cc240553.aspx
     """
@@ -17,6 +17,6 @@ class ChannelFlag(IntEnum):
     CompressionTypeMask = 0x000F0000
 
 
-class VirtualChannel:
+class VirtualChannelName:
     CLIPBOARD = "cliprdr"
     DEVICE_REDIRECTION = "rdpdr"

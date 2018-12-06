@@ -9,7 +9,7 @@ from pyrdp.crypto.observer import RC4LoggingObserver
 from pyrdp.enum.core import ParserMode
 from pyrdp.enum.rdp import PlayerMessageType, ClientInfoFlags
 from pyrdp.enum.segmentation import SegmentationPDUType
-from pyrdp.enum.virtual_channel.virtual_channel import VirtualChannel
+from pyrdp.enum.virtual_channel.virtual_channel import VirtualChannelName
 from pyrdp.layer.gcc import GCCClientConnectionLayer
 from pyrdp.layer.mcs import MCSLayer, MCSClientConnectionLayer
 from pyrdp.layer.raw import RawLayer
@@ -224,9 +224,9 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
         if channelName == "I/O":
             channel = self.buildIOChannel(mcs, userID, channelID)
-        elif channelName == VirtualChannel.CLIPBOARD:
+        elif channelName == VirtualChannelName.CLIPBOARD:
             channel = self.buildClipboardChannel(mcs, userID, channelID)
-        elif channelName == VirtualChannel.DEVICE_REDIRECTION:
+        elif channelName == VirtualChannelName.DEVICE_REDIRECTION:
             channel = self.buildDeviceRedirectionChannel(mcs, userID, channelID)
         else:
             channel = self.buildVirtualChannel(mcs, userID, channelID)
