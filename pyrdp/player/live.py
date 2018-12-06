@@ -7,7 +7,7 @@ from pyrdp.layer import AsyncIOTCPLayer, PlayerMessageLayer, TPKTLayer
 from pyrdp.player.BasePlayerWindow import BasePlayerWindow
 from pyrdp.player.RDPConnectionTab import RDPConnectionTab
 from pyrdp.player.ServerThread import ServerThread
-from pyrdp.ui.event import RSSEventHandler
+from pyrdp.player.event import RSSEventHandler
 from pyrdp.ui.qt4 import QRemoteDesktop
 from pyrdp.ui.rss import RSSAdaptor
 

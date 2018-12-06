@@ -8,7 +8,7 @@ from pyrdp.player.BasePlayerWindow import BasePlayerWindow
 from pyrdp.player.ClickableProgressBar import ClickableProgressBar
 from pyrdp.player.RDPConnectionTab import RDPConnectionTab
 from pyrdp.player.ReplayThread import ReplayThread
-from pyrdp.ui.event import RSSEventHandler
+from pyrdp.player.event import RSSEventHandler
 from pyrdp.ui.PlayPauseButton import PlayPauseButton
 from pyrdp.ui.qt4 import QRemoteDesktop
 from pyrdp.ui.rss import RSSAdaptor
