@@ -1,7 +1,7 @@
 from pyrdp.core import ObservedBy, Observer, Subject
 from pyrdp.mcs.router import MCSRouter
 from pyrdp.mcs.user import MCSUser
-from pyrdp.pdu import MCSAttachUserConfirmPDU, MCSChannelJoinConfirmPDU
+from pyrdp.pdu import MCSAttachUserConfirmPDU, MCSChannelJoinConfirmPDU, MCSSendDataRequestPDU
 
 
 class MCSServerConnectionObserver(Observer):
@@ -129,7 +129,7 @@ class MCSServerRouter(MCSRouter, Subject):
         pdu = MCSChannelJoinConfirmPDU(result, userID, channelID, channelID, b"")
         self.mcs.send(pdu)
 
-    def onSendDataRequest(self, pdu):
+    def onSendDataRequest(self, pdu: MCSSendDataRequestPDU):
         """
         Called when a Send Data Request PDU is received.
         """
@@ -143,3 +143,13 @@ class MCSServerRouter(MCSRouter, Subject):
         
     def onInvalidMCSUser(self, userID: int):
         raise ValueError(f"User does not exist: {userID}")
+
+
+class LousyMCSServerRouter(MCSServerRouter):
+    """
+    Like MCSServerRouter, but change the user ID in case of invalid user ID.
+    """
+
+    def onInvalidMCSUser(self, pdu: MCSSendDataRequestPDU):
+        pdu.initiator = next(iter(self.users))
+        self.onSendDataRequest(pdu)
