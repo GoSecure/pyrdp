@@ -20,6 +20,9 @@ PyQt4 is needed for the liveplayer/replayer.
 ```
 sudo apt install python3-pyqt4
 ```
+To run setup.py install, setuptools version >40.6.2 is required:
+`sudo pip3 install --upgrade setuptools`
+
 As for the other python dependencies, take a look at `setup.py` (`install_requires`).
  
 PyRDP has been tested to work on Python 3.6 on linux (Ubuntu 18.04). 
