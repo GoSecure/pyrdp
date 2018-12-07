@@ -37,7 +37,7 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
 
         self.sessionId = f"{friendlyName}{random.randrange(100000,999999)}"
         self.log = getLoggerPassFilters(f"{LOGGER_NAMES.MITM_CONNECTIONS}.{self.sessionId}.server")
-        self.metadataFilter = ConnectionMetadataFilter(self.sessionId)
+        self.metadataFilter = ConnectionMetadataFilter(self, self.sessionId)
         self.log.addFilter(self.metadataFilter)
 
         self.replacementPassword = replacementPassword
