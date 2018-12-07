@@ -5,7 +5,6 @@ import socket
 
 from Crypto.PublicKey import RSA
 from twisted.internet import reactor
-from twisted.internet.protocol import ClientFactory
 
 from pyrdp.core import decodeUTF16LE, getLoggerPassFilters
 from pyrdp.core.ssl import ServerTLSContext
@@ -16,6 +15,7 @@ from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, M
 from pyrdp.logging import ConnectionMetadataFilter, LOGGER_NAMES, RC4LoggingObserver
 from pyrdp.mcs import MCSChannelFactory, MCSServerChannel, MCSServerRouter, MCSUserObserver
 from pyrdp.mitm.client import MITMClient
+from pyrdp.mitm.factory import MITMClientFactory
 from pyrdp.mitm.observer import MITMFastPathObserver, MITMSlowPathObserver
 from pyrdp.mitm.virtual_channel.clipboard import PassiveClipboardChannelObserver
 from pyrdp.mitm.virtual_channel.device_redirection import ServerPassiveDeviceRedirectionObserver
@@ -28,7 +28,7 @@ from pyrdp.recording import FileLayer, Recorder, RecordingFastPathObserver, Reco
 from pyrdp.security import RC4CrypterProxy, SecuritySettings
 
 
-class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
+class MITMServer(MCSUserObserver, MCSChannelFactory):
 
     def __init__(self, friendlyName: str, targetHost: str, targetPort: int, certificateFileName: str,
                  privateKeyFileName: str, recordHost: str, recordPort: int, replacementUsername: str,
@@ -126,15 +126,12 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
     def getNegotiationPDU(self):
         return self.targetNegotiationPDU
 
-    def buildProtocol(self, addr):
-        # Build protocol for the client side of the connection
-        self.client = MITMClient(self, self.fileHandle, self.socket,
-                                 self.replacementUsername, self.replacementPassword)
-        return self.client.getProtocol()
-
     def connectClient(self):
         # Connect the client side to the target machine
-        self.clientConnector = reactor.connectTCP(self.targetHost, self.targetPort, self)
+        self.clientConnector = reactor.connectTCP(self.targetHost, self.targetPort, MITMClientFactory(self, self.fileHandle, self.socket, self.replacementUsername, self.replacementPassword))
+
+    def setClient(self, client: MITMClient):
+        self.client = client
 
     def onConnection(self):
         # Connection sequence #0
