@@ -33,6 +33,14 @@ We have not tested it on OSX nor on Windows.
 
 They are located in the bin/ folder of the project. Use `--help` to see how to use the programs.
 
+## RDP Network Layers
+
+PyRDP uses these layers to manage the many protocols that RDP uses:
+
+![layers](https://user-images.githubusercontent.com/14599855/49668060-03421400-fa2b-11e8-8843-cabfb46d34b4.png)
+
+For a more detailed explanation, head to `docs/layers.md`.
+
 ## Contribution guidelines
 
 1. Open an issue before starting your work;
