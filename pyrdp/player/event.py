@@ -6,7 +6,7 @@ from pyrdp.core.scancode import scancodeToChar
 from pyrdp.enum import BitmapFlags, CapabilityType, KeyboardFlag, ParserMode, SlowPathUpdateType
 from pyrdp.layer import PlayerMessageObserver
 from pyrdp.logging import log
-from pyrdp.parser import ClipboardParser, RDPBasicFastPathParser, RDPClientInfoParser, RDPCommonParser, RDPDataParser, \
+from pyrdp.parser import ClipboardParser, RDPBasicFastPathParser, RDPClientInfoParser, RDPBitmapParser, RDPDataParser, \
     RDPOutputEventParser
 from pyrdp.parser.rdp.connection import RDPClientConnectionParser
 from pyrdp.pdu import BitmapUpdateData, FastPathBitmapEvent, FastPathMouseEvent, FastPathOrdersEvent, \
@@ -110,7 +110,7 @@ class PlayerMessageHandler(PlayerMessageObserver):
             self.viewer.resize(pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP].desktopWidth,
                                pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP].desktopHeight)
         elif isinstance(pdu, RDPUpdatePDU) and pdu.updateType == SlowPathUpdateType.SLOWPATH_UPDATETYPE_BITMAP:
-            updates = RDPCommonParser().parseBitmapUpdateData(pdu.updateData)
+            updates = RDPBitmapParser().parseBitmapUpdateData(pdu.updateData)
             for bitmap in updates:
                 self.handleBitmap(bitmap)
         elif isinstance(pdu, RDPInputPDU):

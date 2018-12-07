@@ -2,7 +2,7 @@ from pyrdp.parser.gcc import GCCParser
 from pyrdp.parser.mcs import MCSParser
 from pyrdp.parser.parser import Parser
 from pyrdp.parser.rdp.client_info import RDPClientInfoParser
-from pyrdp.parser.rdp.common import RDPCommonParser
+from pyrdp.parser.rdp.bitmap import RDPBitmapParser
 from pyrdp.parser.rdp.connection import RDPClientConnectionParser, RDPServerConnectionParser
 from pyrdp.parser.rdp.data import RDPDataParser
 from pyrdp.parser.rdp.fastpath import createFastPathParser, RDPBasicFastPathParser, RDPFIPSFastPathParser, \

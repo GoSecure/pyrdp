@@ -6,7 +6,7 @@ from pyrdp.enum import DrawingOrderControlFlags, EncryptionMethod, FastPathInput
     FastPathOutputCompressionType, FastPathOutputEventType, FastPathSecurityFlags, FIPSVersion, ParserMode
 from pyrdp.logging import log
 from pyrdp.parser.parser import Parser
-from pyrdp.parser.rdp.common import RDPCommonParser
+from pyrdp.parser.rdp.bitmap import RDPBitmapParser
 from pyrdp.parser.rdp.security import RDPBasicSecurityParser
 from pyrdp.pdu import FastPathBitmapEvent, FastPathEventRaw, FastPathMouseEvent, FastPathOrdersEvent, FastPathPDU, \
     FastPathScanCodeEvent, SecondaryDrawingOrder
@@ -370,7 +370,7 @@ class RDPOutputEventParser(Parser):
         rawBitmapUpdateData = fastPathBitmapEvent.rawBitmapUpdateData
         stream = BytesIO(rawBitmapUpdateData)
         updateType = Uint16LE.unpack(stream.read(2))
-        bitmapData = RDPCommonParser().parseBitmapUpdateData(stream.read())
+        bitmapData = RDPBitmapParser().parseBitmapUpdateData(stream.read())
 
         return FastPathBitmapEvent(fastPathBitmapEvent.header, fastPathBitmapEvent.compressionFlags,
                                    bitmapData, rawBitmapUpdateData)

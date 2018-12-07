@@ -4,7 +4,7 @@ from pyrdp.core import Uint16LE
 from pyrdp.pdu import BitmapUpdateData
 
 
-class RDPCommonParser:
+class RDPBitmapParser:
     def parseBitmapUpdateData(self, data: bytes) -> [BitmapUpdateData]:
         stream = BytesIO(data)
 

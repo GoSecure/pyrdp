@@ -12,7 +12,7 @@ from pyrdp.pdu.rdp.capability import BitmapCacheHostSupportCapability, BitmapCac
     ShareCapability, SoundCapability, SurfaceCommandsCapability, VirtualChannelCapability, WindowListCapability, \
     WindowsActivationCapability
 from pyrdp.pdu.rdp.client_info import ClientExtraInfo, RDPClientInfoPDU
-from pyrdp.pdu.rdp.common import BitmapUpdateData
+from pyrdp.pdu.rdp.bitmap import BitmapUpdateData
 from pyrdp.pdu.rdp.connection import ClientChannelDefinition, ClientClusterData, ClientCoreData, ClientNetworkData, \
     ClientSecurityData, ProprietaryCertificate, RDPClientDataPDU, RDPServerDataPDU, ServerCertificate, ServerCoreData, \
     ServerNetworkData, ServerSecurityData
