@@ -165,7 +165,8 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.disconnectConnector()
         self.tcp.disconnect()
         self.log.removeFilter(self.metadataFilter)
-        self.socket.close()
+        if self.socket is not None:
+            self.socket.close()
 
     def disconnectConnector(self):
         if self.clientConnector:
