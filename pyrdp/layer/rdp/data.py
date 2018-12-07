@@ -148,13 +148,14 @@ class RDPFastPathDataLayerObserver(RDPBaseDataLayerObserver, LayerObserver):
         return pdu.header & 0b11100000
 
 
-class RDPBaseDataLayer(Layer):
+@ObservedBy(RDPDataLayerObserver)
+class RDPDataLayer(Layer):
     """
     Base for all RDP data layers.
     """
 
-    def __init__(self, dataParser):
-        Layer.__init__(self, dataParser, hasNext=False)
+    def __init__(self, parser = RDPDataParser()):
+        Layer.__init__(self, parser, hasNext=False)
 
     def recv(self, data):
         try:
@@ -172,9 +173,3 @@ class RDPBaseDataLayer(Layer):
 
     def sendData(self, data):
         self.previous.send(data)
-
-
-@ObservedBy(RDPDataLayerObserver)
-class RDPDataLayer(RDPBaseDataLayer):
-    def __init__(self):
-        RDPBaseDataLayer.__init__(self, RDPDataParser())
