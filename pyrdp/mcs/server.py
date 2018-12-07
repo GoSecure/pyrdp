@@ -136,7 +136,7 @@ class MCSServerRouter(MCSRouter, Subject):
         userID = pdu.initiator
 
         if userID not in self.users:
-            raise ValueError("User does not exist")
+            raise ValueError(f"User does not exist: {userID}")
 
         user = self.users[userID]
         user.recvSendDataRequest(pdu.channelID, pdu)
