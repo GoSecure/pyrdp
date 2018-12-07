@@ -107,6 +107,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
                 self.socket.connect((recordHost, recordPort))
             except socket.error as e:
                 logging.getLogger(LOGGER_NAMES.MITM).error("Could not connect to liveplayer: %(error)s", {"error": e})
+                self.socket.close()
                 self.socket = None
 
         recordingLayers = [FileLayer(self.fileHandle)]
@@ -161,6 +162,8 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         self.disconnectConnector()
         self.tcp.disconnect()
         self.log.removeFilter(self.metadataFilter)
+        if self.socket is not None:
+            self.socket.close()
 
     def disconnectConnector(self):
         if self.clientConnector:
