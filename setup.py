@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
+# setuptools MUST be imported first, otherwise we get an error with the ext_modules argument.
+import setuptools
 from distutils.core import Extension, setup
+
 
 setup(name='pyrdp',
     version='1.0.0',
@@ -12,30 +15,7 @@ setup(name='pyrdp',
     author='Émilio Gonzalez, Francis Labelle',
     author_email='egg997@gmail.com, flabelle@gosecure.ca',
     url='https://github.com/GoSecure/rdpy',
-    packages=[
-        'pyrdp',
-        'pyrdp.core',
-        'pyrdp.logging',
-        'pyrdp.security',
-        'pyrdp.ui',
-
-        'pyrdp.enum',
-        'pyrdp.enum.virtual_channel',
-        'pyrdp.layer',
-        'pyrdp.layer.rdp',
-        'pyrdp.layer.rdp.virtual_channel',
-        'pyrdp.mcs',
-        'pyrdp.mitm',
-        'pyrdp.mitm.virtual_channel',
-        'pyrdp.parser',
-        'pyrdp.parser.rdp',
-        'pyrdp.parser.rdp.virtual_channel',
-        'pyrdp.pdu',
-        'pyrdp.pdu.rdp',
-        'pyrdp.pdu.rdp.virtual_channel',
-        'pyrdp.player',
-        'pyrdp.recording',
-    ],
+    packages=setuptools.find_namespace_packages(include=["pyrdp", "pyrdp.*"]),
     ext_modules=[Extension('rle', ['ext/rle.c'])],
     scripts=[
             'bin/pyrdp-mitm.py',
