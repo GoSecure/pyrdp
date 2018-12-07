@@ -13,7 +13,7 @@ from pyrdp.enum import CapabilityType, EncryptionLevel, EncryptionMethod, InputE
     OrderFlag, ParserMode, PlayerMessageType, RDPDataPDUSubtype, SegmentationPDUType, VirtualChannelName
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, MCSLayer, RawLayer, RDPDataLayer, \
     RDPSecurityLayer, SegmentationLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
-from pyrdp.logging import ActiveSessions, ConnectionMetadataFilter, LOGGER_NAMES, RC4LoggingObserver
+from pyrdp.logging import ConnectionMetadataFilter, LOGGER_NAMES, RC4LoggingObserver
 from pyrdp.mcs import MCSChannelFactory, MCSServerChannel, MCSServerRouter, MCSUserObserver
 from pyrdp.mitm.client import MITMClient
 from pyrdp.mitm.observer import MITMFastPathObserver, MITMSlowPathObserver
@@ -36,7 +36,6 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         MCSUserObserver.__init__(self)
 
         self.sessionId = f"{friendlyName}{random.randrange(100000,999999)}"
-        ActiveSessions.add(self.sessionId, self)
         self.log = getLoggerPassFilters(f"{LOGGER_NAMES.MITM_CONNECTIONS}.{self.sessionId}.server")
         self.metadataFilter = ConnectionMetadataFilter(self.sessionId)
         self.log.addFilter(self.metadataFilter)
@@ -165,7 +164,6 @@ class MITMServer(ClientFactory, MCSUserObserver, MCSChannelFactory):
         self.disconnectConnector()
         self.tcp.disconnect()
         self.log.removeFilter(self.metadataFilter)
-        ActiveSessions.remove(self.sessionId)
 
     def disconnectConnector(self):
         if self.clientConnector:

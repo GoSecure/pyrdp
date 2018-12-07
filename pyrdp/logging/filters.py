@@ -1,7 +1,6 @@
 from logging import Filter, LogRecord
 
 from pyrdp.core import Config
-from pyrdp.logging.ActiveSessions import ActiveSessions
 
 
 class SensorFilter(Filter):
@@ -23,18 +22,20 @@ class ConnectionMetadataFilter(Filter):
     active session (such as source IP, port and sessionId)
     """
 
-    def __init__(self, sessionId: str):
-        self.info = ActiveSessions.get(sessionId)
-        self.sessionId = sessionId
+    def __init__(self, server, sessionId: str):
         super().__init__()
+        self.server = server
+        self.sessionId = sessionId
 
     def filter(self, record: LogRecord) -> bool:
         if isinstance(record.args, tuple):
             record.args = {}
-        clientInfo = self.info.tcp.transport.client
+
+        clientInfo = self.server.tcp.transport.client
         record.args.update({
             "src_ip": clientInfo[0],
             "src_port": clientInfo[1],
             "session": self.sessionId
         })
+
         return True
