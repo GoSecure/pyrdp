@@ -14,7 +14,7 @@ from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, M
     RDPSecurityLayer, SegmentationLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
 from pyrdp.logging import ConnectionMetadataFilter, LOGGER_NAMES, RC4LoggingObserver
 from pyrdp.mcs import MCSChannelFactory, MCSServerChannel, MCSUserObserver
-from pyrdp.mcs.server import LousyMCSServerRouter
+from pyrdp.mitm.router import MITMServerRouter
 from pyrdp.mitm.client import MITMClient
 from pyrdp.mitm.factory import MITMClientFactory
 from pyrdp.mitm.observer import MITMFastPathObserver, MITMSlowPathObserver
@@ -78,7 +78,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
                                  onDisconnectRequest=self.onDisconnectRequest)
 
         self.mcs = MCSLayer()
-        self.router = LousyMCSServerRouter(self.mcs, self)
+        self.router = MITMServerRouter(self.mcs, self)
         self.mcs.addObserver(self.router)
         self.router.createObserver(
             onConnectionReceived=self.onConnectInitial,

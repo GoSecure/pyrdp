@@ -145,11 +145,3 @@ class MCSServerRouter(MCSRouter, Subject):
         raise ValueError(f"User does not exist: {userID}")
 
 
-class LousyMCSServerRouter(MCSServerRouter):
-    """
-    Like MCSServerRouter, but change the user ID in case of invalid user ID.
-    """
-
-    def onInvalidMCSUser(self, pdu: MCSSendDataRequestPDU):
-        pdu.initiator = next(iter(self.users))
-        self.onSendDataRequest(pdu)
