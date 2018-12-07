@@ -5,6 +5,7 @@ from pyrdp.enum import ParserMode, PlayerMessageType
 from pyrdp.layer import Layer, PlayerMessageLayer, TPKTLayer
 from pyrdp.logging import log
 from pyrdp.parser import ClipboardParser, Parser, RDPBasicFastPathParser, RDPClientInfoParser, RDPDataParser
+from pyrdp.parser.rdp.connection import RDPClientConnectionParser
 from pyrdp.pdu import PDU
 
 
@@ -22,6 +23,7 @@ class Recorder:
             PlayerMessageType.CLIENT_INFO: RDPClientInfoParser(),
             PlayerMessageType.SLOW_PATH_PDU: RDPDataParser(),
             PlayerMessageType.CLIPBOARD_DATA: ClipboardParser(),
+            PlayerMessageType.CLIENT_DATA: RDPClientConnectionParser(),
         }
 
         self.topLayers = []

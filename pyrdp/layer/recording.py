@@ -15,25 +15,30 @@ class PlayerMessageObserver(LayerRoutedObserver):
             PlayerMessageType.FAST_PATH_INPUT: "onInput",
             PlayerMessageType.FAST_PATH_OUTPUT: "onOutput",
             PlayerMessageType.CLIPBOARD_DATA: "onClipboardData",
+            PlayerMessageType.CLIENT_DATA: "onClientData"
         }, **kwargs)
 
-    def onConnectionClose(self, pdu):
-        pass
+    def onConnectionClose(self, pdu: PlayerMessagePDU):
+        raise NotImplementedError()
 
-    def onClientInfo(self, pdu):
-        pass
+    def onClientInfo(self, pdu: PlayerMessagePDU):
+        raise NotImplementedError()
 
-    def onSlowPathPDU(self, pdu):
-        pass
+    def onSlowPathPDU(self, pdu: PlayerMessagePDU):
+        raise NotImplementedError()
 
-    def onInput(self, pdu):
-        pass
+    def onInput(self, pdu: PlayerMessagePDU):
+        raise NotImplementedError()
 
-    def onOutput(self, pdu):
-        pass
+    def onOutput(self, pdu: PlayerMessagePDU):
+        raise NotImplementedError()
 
-    def onClipboardData(self, pdu):
-        pass
+    def onClipboardData(self, pdu: PlayerMessagePDU):
+        raise NotImplementedError()
+
+    def onClientData(self, pdu: PlayerMessagePDU):
+        raise NotImplementedError()
+
 
 @ObservedBy(PlayerMessageObserver)
 class PlayerMessageLayer(Layer):

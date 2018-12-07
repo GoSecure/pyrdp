@@ -643,6 +643,7 @@ class PlayerMessageType(IntEnum):
     SLOW_PATH_PDU = 4  # For slow-path PDUs
     CONNECTION_CLOSE = 5  # To advertise the end of the connection
     CLIPBOARD_DATA = 6  # To collect clipboard data
+    CLIENT_DATA = 7  # Contains the clientName
 
 
 class ChannelOption(IntEnum):

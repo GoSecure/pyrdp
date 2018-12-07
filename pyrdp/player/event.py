@@ -8,8 +8,9 @@ from pyrdp.layer import PlayerMessageObserver
 from pyrdp.logging import log
 from pyrdp.parser import ClipboardParser, RDPBasicFastPathParser, RDPClientInfoParser, RDPCommonParser, RDPDataParser, \
     RDPOutputEventParser
+from pyrdp.parser.rdp.connection import RDPClientConnectionParser
 from pyrdp.pdu import BitmapUpdateData, FastPathBitmapEvent, FastPathMouseEvent, FastPathOrdersEvent, \
-    FastPathScanCodeEvent, FormatDataResponsePDU, KeyboardEvent, MouseEvent, PDU, PlayerMessagePDU, RDPConfirmActivePDU, \
+    FastPathScanCodeEvent, FormatDataResponsePDU, KeyboardEvent, MouseEvent, PlayerMessagePDU, RDPConfirmActivePDU, \
     RDPInputPDU, RDPUpdatePDU
 from pyrdp.ui import RDPBitmapToQtImage
 
@@ -31,12 +32,13 @@ class PlayerMessageHandler(PlayerMessageObserver):
         self.dataParser = RDPDataParser()
         self.clipboardParser = ClipboardParser()
         self.outputEventParser = RDPOutputEventParser()
+        self.clientConnectionParser = RDPClientConnectionParser()
 
-    def onConnectionClose(self, pdu):
+    def onConnectionClose(self, pdu: PlayerMessagePDU):
         self.text.moveCursor(QTextCursor.End)
         self.text.insertPlainText("\n<Connection closed>")
 
-    def onOutput(self, pdu):
+    def onOutput(self, pdu: PlayerMessagePDU):
         pdu = self.outputParser.parse(pdu.payload)
 
         for event in pdu.events:
@@ -48,7 +50,7 @@ class PlayerMessageHandler(PlayerMessageObserver):
             else:
                 log.debug("Can't handle output event: {}".format(event))
 
-    def onInput(self, pdu):
+    def onInput(self, pdu: PlayerMessagePDU):
         pdu = self.inputParser.parse(pdu.payload)
 
         for event in pdu.events:
@@ -95,14 +97,13 @@ class PlayerMessageHandler(PlayerMessageObserver):
 
     def onClientInfo(self, pdu: PlayerMessagePDU):
         clientInfoPDU = self.clientInfoParser.parse(pdu.payload)
-        self.text.insertPlainText("--------------------")
-        self.text.insertPlainText("\nUSERNAME: {}\nPASSWORD: {}\nDOMAIN: {}\n"
+        self.text.insertPlainText("USERNAME: {}\nPASSWORD: {}\nDOMAIN: {}\n"
                                   .format(clientInfoPDU.username.replace("\0", ""),
                                           clientInfoPDU.password.replace("\0", ""),
                                           clientInfoPDU.domain.replace("\0", "")))
         self.text.insertPlainText("--------------------\n")
 
-    def onSlowPathPDU(self, pdu: PDU):
+    def onSlowPathPDU(self, pdu: PlayerMessagePDU):
         pdu = self.dataParser.parse(pdu.payload)
 
         if isinstance(pdu, RDPConfirmActivePDU):
@@ -119,8 +120,18 @@ class PlayerMessageHandler(PlayerMessageObserver):
                 elif isinstance(event, KeyboardEvent):
                     self.onScanCode(event.keyCode, event.flags & KeyboardFlag.KBDFLAGS_DOWN != 0)
 
-    def onClipboardData(self, pdu: FormatDataResponsePDU):
-        pdu = self.clipboardParser.parse(pdu.payload)
+    def onClipboardData(self, pdu: PlayerMessagePDU):
+        formatDataResponsePDU: FormatDataResponsePDU = self.clipboardParser.parse(pdu.payload)
+        self.text.moveCursor(QtGui.QTextCursor.End)
         self.text.insertPlainText("\n=============\n")
-        self.text.insertPlainText("CLIPBOARD DATA: {}".format(decodeUTF16LE(pdu.requestedFormatData)))
+        self.text.insertPlainText("CLIPBOARD DATA: {}".format(decodeUTF16LE(formatDataResponsePDU.requestedFormatData)))
         self.text.insertPlainText("\n=============\n")
+
+    def onClientData(self, pdu: PlayerMessagePDU):
+        """
+        Prints the clientName on the screen
+        """
+        clientDataPDU = self.clientConnectionParser.parse(pdu.payload)
+        self.text.moveCursor(QtGui.QTextCursor.End)
+        self.text.insertPlainText("--------------------\n")
+        self.text.insertPlainText(f"HOST: {clientDataPDU.coreData.clientName.strip(chr(0))}\n")

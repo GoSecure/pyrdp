@@ -145,6 +145,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
                       "%(clientName)s, resolution %(desktopWidth)dx%(desktopHeight)d",
                       {"clientName": clientData.coreData.clientName, "desktopWidth": clientData.coreData.desktopWidth,
                        "desktopHeight": clientData.coreData.desktopHeight})
+        self.recorder.record(clientData, PlayerMessageType.CLIENT_DATA)
 
         if clientData.networkData:
             self.channelDefinitions = clientData.networkData.channelDefinitions
