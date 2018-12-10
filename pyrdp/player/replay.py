@@ -27,7 +27,7 @@ class ReplayWindow(BasePlayerWindow):
         """
         tab = ReplayTab(fileName)
         self.addTab(tab, fileName)
-        self.log.debug("Loading replay file {}".format(fileName))
+        self.log.debug("Loading replay file %(arg1)s", {"arg1": fileName})
 
 
 class ReplayTab(RDPConnectionTab):
@@ -156,11 +156,11 @@ class ControlBar(QWidget):
 
     def onSeek(self):
         time = self.timeSlider.value() / 1000.0
-        self.log.debug("Seek to {} seconds".format(time))
+        self.log.debug("Seek to %(arg1)d seconds", {"arg1": time})
         self.seek.emit(time)
 
     def onSpeedChanged(self):
         speed = self.speedSlider.value()
-        self.log.debug("Slider changed value: {}".format(speed))
+        self.log.debug("Slider changed value: %(arg1)d", {"arg1": speed})
         self.speedLabel.setText("Speed: {}x".format(speed))
         self.speedChanged.emit(speed)

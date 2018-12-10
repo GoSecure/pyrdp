@@ -6,7 +6,7 @@ from pyrdp.core.scancode import scancodeToChar
 from pyrdp.enum import BitmapFlags, CapabilityType, KeyboardFlag, ParserMode, SlowPathUpdateType
 from pyrdp.layer import PlayerMessageObserver
 from pyrdp.logging import log
-from pyrdp.parser import ClipboardParser, RDPBasicFastPathParser, RDPClientInfoParser, RDPBitmapParser, RDPDataParser, \
+from pyrdp.parser import ClipboardParser, RDPBasicFastPathParser, RDPBitmapParser, RDPClientInfoParser, RDPDataParser, \
     RDPOutputEventParser
 from pyrdp.parser.rdp.connection import RDPClientConnectionParser
 from pyrdp.pdu import BitmapUpdateData, FastPathBitmapEvent, FastPathMouseEvent, FastPathOrdersEvent, \
@@ -45,28 +45,28 @@ class PlayerMessageHandler(PlayerMessageObserver):
             if isinstance(event, FastPathOrdersEvent):
                 log.debug("Not handling orders event, not coded :)")
             elif isinstance(event, FastPathBitmapEvent):
-                log.debug("Handling bitmap event {}".format(vars(event)))
+                log.debug("Handling bitmap event %(arg1)s", {"arg1": vars(event)})
                 self.onBitmap(event)
             else:
-                log.debug("Can't handle output event: {}".format(event))
+                log.debug("Can't handle output event: %(arg1)s", {"arg1": event})
 
     def onInput(self, pdu: PlayerMessagePDU):
         pdu = self.inputParser.parse(pdu.payload)
 
         for event in pdu.events:
             if isinstance(event, FastPathScanCodeEvent):
-                log.debug("handling {}".format(event))
+                log.debug("handling %(arg1)s", {"arg1": event})
                 self.onScanCode(event.scancode, not event.isReleased)
             elif isinstance(event, FastPathMouseEvent):
                 self.onMousePosition(event.mouseX, event.mouseY)
             else:
-                log.debug("Can't handle input event: {}".format(event))
+                log.debug("Can't handle input event: %(arg1)s", {"arg1": event})
 
     def onScanCode(self, code: int, isPressed: bool):
         """
         Handle scan code.
         """
-        log.debug("Reading scancode {}".format(code))
+        log.debug("Reading scancode %(arg1)s", {"arg1": code})
 
         if code in [0x2A, 0x36]:
             self.text.moveCursor(QTextCursor.End)

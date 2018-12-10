@@ -206,7 +206,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
     def buildChannel(self, mcs, userID, channelID):
         channelName = self.channelMap.get(channelID, None)
         channelLog = channelName + " (%d)" % channelID if channelName else channelID
-        self.log.debug("building channel {} for user {}".format(channelLog, userID))
+        self.log.debug("building channel %(arg1)s for user %(arg2)d", {"arg1": channelLog, "arg2": userID })
 
         if channelName == "I/O":
             channel = self.buildIOChannel(mcs, userID, channelID)
@@ -338,7 +338,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         # Tell the server we don't want compression (unsure of the effectiveness of these flags)
         pdu.flags &= ~ClientInfoFlags.INFO_COMPRESSION
         pdu.flags &= ~ClientInfoFlags.INFO_CompressionTypeMask
-        self.log.debug("Sending Client Info: {}".format(pdu))
+        self.log.debug("Sending Client Info: %(arg1)s", {"arg1": pdu})
         self.securityLayer.sendClientInfo(pdu)
 
     def onLicensingDataReceived(self, data):

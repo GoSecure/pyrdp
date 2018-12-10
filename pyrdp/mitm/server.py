@@ -14,10 +14,10 @@ from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, M
     RDPSecurityLayer, SegmentationLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
 from pyrdp.logging import ConnectionMetadataFilter, LOGGER_NAMES, RC4LoggingObserver
 from pyrdp.mcs import MCSChannelFactory, MCSServerChannel, MCSUserObserver
-from pyrdp.mitm.router import MITMServerRouter
 from pyrdp.mitm.client import MITMClient
 from pyrdp.mitm.factory import MITMClientFactory
 from pyrdp.mitm.observer import MITMFastPathObserver, MITMSlowPathObserver
+from pyrdp.mitm.router import MITMServerRouter
 from pyrdp.mitm.virtual_channel.clipboard import PassiveClipboardChannelObserver
 from pyrdp.mitm.virtual_channel.device_redirection import ServerPassiveDeviceRedirectionObserver
 from pyrdp.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
@@ -138,11 +138,11 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
     def onConnection(self):
         # Connection sequence #0
         clientInfo = self.tcp.transport.client
-        self.log.debug("TCP connected from {}:{}".format(clientInfo[0], clientInfo[1]))
+        self.log.debug("TCP connected from %(arg1)s:%(arg2)s", {"arg1": clientInfo[0], "arg2": clientInfo[1]})
 
     def onDisconnection(self, reason):
         self.recorder.record(None, PlayerMessageType.CONNECTION_CLOSE)
-        self.log.debug("Connection closed: {}".format(reason))
+        self.log.debug("Connection closed: %(arg1)s", {"arg1": reason})
 
         if self.client:
             self.client.disconnect()
@@ -303,7 +303,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         self.router.sendChannelJoinConfirm(result, user.userID, channelID)
 
     def buildChannel(self, mcs, userID, channelID):
-        self.log.debug("building channel {} for user {}".format(channelID, userID))
+        self.log.debug("building channel %(arg1)s for user %(arg2)d", {"arg1": channelID, "arg2": userID})
 
         channelMap = self.client.channelMap
         if channelID == self.serverData.network.mcsChannelID:

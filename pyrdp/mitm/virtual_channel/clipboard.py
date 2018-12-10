@@ -32,7 +32,7 @@ class PassiveClipboardChannelObserver(Observer):
         :param pdu: the PDU that was received.
         """
 
-        self.mitm_log.debug("PDU received: {}".format(str(pdu.msgType)))
+        self.mitm_log.debug("PDU received: %(arg1)s", {"arg1": str(pdu.msgType)})
 
         if self.peer:
             self.peer.sendPDU(pdu)

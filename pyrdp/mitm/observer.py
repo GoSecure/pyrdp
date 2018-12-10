@@ -17,20 +17,20 @@ class MITMChannelObserver(Observer):
         self.setDefaultDataHandler = self.innerObserver.setDefaultDataHandler
 
     def onPDUReceived(self, pdu):
-        self.log.debug("Received {}".format(str(self.getEffectiveType(pdu))))
+        self.log.debug("Received %(arg1)s", {"arg1": str(self.getEffectiveType(pdu))})
         self.innerObserver.onPDUReceived(pdu)
         self.peer.sendPDU(pdu)
 
     def onUnparsedData(self, data):
-        self.log.debug("Received unparsed data: {}".format(hexlify(data)))
+        self.log.debug("Received unparsed data: %(arg1)s", {"arg1": hexlify(data)})
         self.peer.sendData(data)
 
     def sendPDU(self, pdu):
-        self.log.debug("Sending {}".format(str(self.getEffectiveType(pdu))))
+        self.log.debug("Sending %(arg1)s", {"arg1": str(self.getEffectiveType(pdu))})
         self.layer.sendPDU(pdu)
 
     def sendData(self, data):
-        self.log.debug("Sending data: {}".format(hexlify(data)))
+        self.log.debug("Sending data: %(arg1)s", {"arg1": hexlify(data)})
         self.layer.sendData(data)
 
     def getEffectiveType(self, pdu):
