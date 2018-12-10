@@ -127,7 +127,7 @@ def main():
                                                  "the client sent)", default=None)
     parser.add_argument("-L", "--log-level", help="Log level", default="INFO", choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"], nargs="?")
     parser.add_argument("-s", "--sensor-id", help="Sensor ID (to differentiate multiple instances of the MITM where logs "
-                                                  "are aggregated at one place)", default="0")
+                                                  "are aggregated at one place)", default="PyRDP")
 
     args = parser.parse_args()
     Config.arguments = args
