@@ -135,6 +135,7 @@ def main():
     logLevel = getattr(logging, args.log_level)
 
     prepare_loggers(logLevel)
+    os.makedirs("out", exist_ok=True)
     mitm_log = getLoggerPassFilters(LOGGER_NAMES.MITM)
 
     target = args.target
