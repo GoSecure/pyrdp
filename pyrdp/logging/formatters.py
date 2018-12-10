@@ -23,7 +23,7 @@ class JSONFormatter(logging.Formatter):
         data = {
             "message": record.msg,
             "loggerName": record.name,
-            "timestamp": datetime.strftime(datetime.fromtimestamp(record.created, reference.LocalTimezone()), "%Y-%m-%dT%l:%M:%S.%f%Z"),
+            "timestamp": datetime.strftime(datetime.fromtimestamp(record.created, reference.LocalTimezone()), "%Y-%m-%dT%H:%M:%S.%f%Z"),
             "level": record.levelname,
         }
         data.update(record.args)
