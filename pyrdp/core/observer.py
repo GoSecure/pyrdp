@@ -1,3 +1,6 @@
+from pyrdp.pdu import PDU
+
+
 class Observer:
     """
     Base observer class used across PyRDP.
@@ -18,6 +21,9 @@ class Observer:
     def setPeer(self, peer: 'Observer'):
         self.peer = peer
         peer.peer = self
+
+    def onPDUReceived(self, pdu: PDU):
+        raise NotImplementedError()
 
 
 class CompositeObserver:

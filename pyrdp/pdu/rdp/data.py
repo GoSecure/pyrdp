@@ -1,5 +1,8 @@
-from pyrdp.enum import SlowPathUpdateType
+from typing import Dict
+
+from pyrdp.enum import CapabilityType, SlowPathUpdateType
 from pyrdp.pdu.pdu import PDU
+from pyrdp.pdu.rdp.capability import Capability
 
 
 class RDPShareControlHeader(PDU):
@@ -8,6 +11,16 @@ class RDPShareControlHeader(PDU):
         self.type = type
         self.version = version
         self.source = source
+
+
+class RDPDataPDU(PDU):
+    """
+    Base class for RDP Data PDUs
+    """
+
+    def __init__(self, header: RDPShareControlHeader):
+        super().__init__()
+        self.header = header
 
 
 class RDPShareDataHeader(RDPShareControlHeader):
@@ -21,10 +34,15 @@ class RDPShareDataHeader(RDPShareControlHeader):
         self.compressedLength = compressedLength
 
 
-class RDPDemandActivePDU(PDU):
-    def __init__(self, header, shareID, sourceDescriptor, numberCapabilities, capabilitySets, sessionID, parsedCapabilitySets=None):
-        PDU.__init__(self)
-        self.header = header
+class RDPDemandActivePDU(RDPDataPDU):
+    """
+    https://msdn.microsoft.com/en-us/library/cc240484.aspx
+    """
+
+    def __init__(self, header: RDPShareControlHeader, shareID: int, sourceDescriptor: bytes, numberCapabilities: int,
+                 capabilitySets: bytes, sessionID: int, parsedCapabilitySets: Dict[CapabilityType, Capability] = None):
+
+        super().__init__(header)
         self.shareID = shareID
         self.sourceDescriptor = sourceDescriptor
         self.numberCapabilities = numberCapabilities
@@ -33,11 +51,11 @@ class RDPDemandActivePDU(PDU):
         self.parsedCapabilitySets = parsedCapabilitySets
 
 
-class RDPConfirmActivePDU(PDU):
+class RDPConfirmActivePDU(RDPDataPDU):
     def __init__(self, header, shareID, originatorID, sourceDescriptor, numberCapabilities, parsedCapabilitySets,
                  capabilitySetsRaw):
-        PDU.__init__(self)
-        self.header = header
+
+        super().__init__(header)
         self.shareID = shareID
         self.originatorID = originatorID
         self.sourceDescriptor = sourceDescriptor
@@ -46,56 +64,53 @@ class RDPConfirmActivePDU(PDU):
         self.capabilitySets = capabilitySetsRaw
 
 
-class RDPSetErrorInfoPDU(PDU):
+class RDPSetErrorInfoPDU(RDPDataPDU):
     def __init__(self, header, errorInfo):
-        PDU.__init__(self)
-        self.header = header
+        super().__init__(header)
         self.errorInfo = errorInfo
 
 
-class RDPSynchronizePDU(PDU):
+class RDPSynchronizePDU(RDPDataPDU):
     def __init__(self, header, messageType, targetUser):
-        PDU.__init__(self)
-        self.header = header
+
+        super().__init__(header)
         self.messageType = messageType
         self.targetUser = targetUser
 
 
-class RDPControlPDU(PDU):
+class RDPControlPDU(RDPDataPDU):
     def __init__(self, header, action, grantID, controlID):
-        PDU.__init__(self)
-        self.header = header
+        super().__init__(header)
         self.action = action
         self.grantID = grantID
         self.controlID = controlID
 
 
-class RDPInputPDU(PDU):
+class RDPInputPDU(RDPDataPDU):
     def __init__(self, header, events):
-        PDU.__init__(self)
+        super().__init__(header)
         self.header = header
         self.events = events
 
 
-class RDPPlaySoundPDU(PDU):
+class RDPPlaySoundPDU(RDPDataPDU):
     def __init__(self, header, duration, frequency):
-        PDU.__init__(self)
-        self.header = header
+        super().__init__(header)
         self.duration = duration
         self.frequency = frequency
 
 
-class RDPPointerPDU(PDU):
+class RDPPointerPDU(RDPDataPDU):
     def __init__(self, header, event):
-        PDU.__init__(self)
-        self.header = header
+
+        super().__init__(header)
         self.event = event
 
 
-class RDPSuppressOutputPDU(PDU):
+class RDPSuppressOutputPDU(RDPDataPDU):
     def __init__(self, header, allowDisplayUpdates, left, top, right, bottom):
-        PDU.__init__(self)
-        self.header = header
+
+        super().__init__(header)
         self.allowDisplayUpdates = bool(allowDisplayUpdates)
         self.left = left
         self.top = top
@@ -103,9 +118,8 @@ class RDPSuppressOutputPDU(PDU):
         self.bottom = bottom
 
 
-class RDPUpdatePDU(PDU):
+class RDPUpdatePDU(RDPDataPDU):
     def __init__(self, header: RDPShareDataHeader, updateType: SlowPathUpdateType, updateData: bytes):
-        PDU.__init__(self)
-        self.header = header
+        super().__init__(header)
         self.updateType = updateType
         self.updateData = updateData

@@ -15,6 +15,7 @@ from pyrdp.security import RC4Crypter
 
 class RDPBasicFastPathParser(RDPBasicSecurityParser):
     def __init__(self, mode):
+        super().__init__()
         self.mode = mode
         input, output = RDPInputEventParser(), RDPOutputEventParser()
 
@@ -362,9 +363,8 @@ class RDPOutputEventParser(Parser):
     def parseBitmapEventRaw(self, stream, header, compressionFlags, size):
         return FastPathBitmapEvent(header, compressionFlags, None, stream.read(size))
 
-    def parseBitmapEvent(self, fastPathBitmapEvent):
+    def parseBitmapEvent(self, fastPathBitmapEvent: FastPathBitmapEvent) -> FastPathBitmapEvent:
         """
-        :type fastPathBitmapEvent: FastPathBitmapEvent
         :return: a FastPathBitmapEvent with bitmapUpdateData
         """
         rawBitmapUpdateData = fastPathBitmapEvent.rawBitmapUpdateData

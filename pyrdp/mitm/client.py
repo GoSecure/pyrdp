@@ -244,6 +244,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
     def buildClipboardChannel(self, mcs: MCSLayer, userID: int, channelID: int) -> MCSClientChannel:
         """
+        :param mcs: The MCS Layer to transport traffic
         :param userID: The mcs user that builds the channel
         :param channelID: The channel ID to use to communicate in that channel
         :return: MCSClientChannel that handles the Clipboard virtual channel traffic from the server to the MITM.
@@ -269,6 +270,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
     def buildDeviceRedirectionChannel(self, mcs: MCSLayer, userID: int, channelID: int) -> MCSClientChannel:
         """
+        :param mcs: The MCS Layer to transport traffic
         :param userID: The mcs user that builds the channel
         :param channelID: The channel ID to use to communicate in that channel
         :return: MCSClientChannel that handles the Device redirection virtual channel traffic from the server to the MITM.

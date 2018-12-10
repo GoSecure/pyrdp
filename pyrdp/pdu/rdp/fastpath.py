@@ -96,7 +96,7 @@ class FastPathOrdersEvent(FastPathOutputEvent):
         self.secondaryDrawingOrders = None
 
 
-class SecondaryDrawingOrder:
+class SecondaryDrawingOrder(PDU):
     """
     https://msdn.microsoft.com/en-us/library/cc241611.aspx
     """

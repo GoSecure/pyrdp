@@ -1,20 +1,24 @@
-from pyrdp.core import ObservedBy
+from abc import ABCMeta
+
+from pyrdp.core import ObservedBy, Observer
 from pyrdp.enum import CapabilityType, RDPDataPDUType, VirtualChannelCompressionFlag
 from pyrdp.exceptions import UnknownPDUTypeError
 from pyrdp.layer.layer import Layer, LayerObserver, LayerStrictRoutedObserver
 from pyrdp.logging import log
 from pyrdp.parser import RDPDataParser
 from pyrdp.pdu import PDU, RDPConfirmActivePDU, RDPDemandActivePDU
+from pyrdp.pdu.rdp.data import RDPDataPDU
 
 
-class RDPBaseDataLayerObserver:
+class RDPBaseDataLayerObserver(Observer, metaclass=ABCMeta):
     """
     Base observer class for RDP data layers.
     A handler can be set for each data PDU type. A default handler can also be used.
     You can also set a handler for when data that could not be parsed was received.
     """
 
-    def __init__(self):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.dataHandlers = {}
         self.defaultDataHandler = None
         self.unparsedDataHandler = None
@@ -88,14 +92,14 @@ class RDPDataLayerObserver(RDPBaseDataLayerObserver, LayerStrictRoutedObserver):
         self.defaultDataHandler = None
         self.unparsedDataHandler = None
 
-    def getPDUType(self, pdu):
+    def getPDUType(self, pdu: RDPDataPDU):
         return pdu.header.subtype
 
-    def onPDUReceived(self, pdu):
+    def onPDUReceived(self, pdu: RDPDataPDU):
         if pdu.header.type in self.handlers:
             self.handlers[pdu.header.type](pdu)
         else:
-            self.onUnknownHeader(self, pdu)
+            self.onUnknownHeader(pdu)
 
     def onData(self, pdu):
         """
@@ -143,7 +147,7 @@ class RDPFastPathDataLayerObserver(RDPBaseDataLayerObserver, LayerObserver):
     def onPDUReceived(self, pdu):
         self.dispatchPDU(pdu)
 
-    def getPDUType(self, pdu):
+    def getPDUType(self, pdu: RDPDataPDU):
         # The PDU type is stored in the last 3 bits
         return pdu.header & 0b11100000
 
