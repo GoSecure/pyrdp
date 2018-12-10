@@ -53,3 +53,6 @@ For a more detailed explanation, head to `docs/layers.md`.
 3. Document your methods and classes with docstrings using the reStructuredText syntax;
 4. Respect PEP8 (except for the naming convention, use camelCase).
 5. Whenever possible, use format strings (`f"My variable: {myVariable}"`) instead of %-style formating or `str.format()`
+
+    5.1. For log statements, use %-style formatting like that: `myLogger.info("My log message and here's a variable: %(myNamedVariable)", {"myNamedVariable": myNamedVariable})`.
+    This separates variables from the message, which can be helpful for analysis purposes. 
