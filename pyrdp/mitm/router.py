@@ -1,3 +1,4 @@
+from pyrdp.logging import log
 from pyrdp.mcs import MCSServerRouter
 from pyrdp.pdu import MCSSendDataRequestPDU
 
@@ -8,5 +9,7 @@ class MITMServerRouter(MCSServerRouter):
     """
 
     def onInvalidMCSUser(self, pdu: MCSSendDataRequestPDU):
-        pdu.initiator = next(iter(self.users))
+        goodUserId = next(iter(self.users))
+        log.warning(f"Invalid MCS userID received: {pdu.initiator} changing to {goodUserId}.")
+        pdu.initiator = goodUserId
         self.onSendDataRequest(pdu)
