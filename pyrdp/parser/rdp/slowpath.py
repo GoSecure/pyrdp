@@ -82,6 +82,8 @@ class SlowPathParser(Parser):
         elif pdu.header.pduType == SlowPathPDUType.DATA_PDU:
             headerWriter = self.writeShareDataHeader
             self.writeData(substream, pdu)
+        else:
+            raise UnknownPDUTypeError("Trying to write unknown slow-path PDU type: %s" % pdu.header.pduType, pdu.header.pduType)
 
         substream = substream.getvalue()
         headerWriter(stream, pdu.header, len(substream))

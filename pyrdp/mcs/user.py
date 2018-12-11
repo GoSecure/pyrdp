@@ -15,6 +15,7 @@ class MCSUserObserver(Observer):
     def onChannelJoinRefused(self, user, result, channelID):
         pass
 
+
 @ObservedBy(MCSUserObserver)
 class MCSUser(Subject):
     """
