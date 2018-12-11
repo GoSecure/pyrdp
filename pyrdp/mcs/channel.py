@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
 from pyrdp.layer import Layer
-from pyrdp.pdu import MCSSendDataRequestPDU, MCSSendDataIndicationPDU
+from pyrdp.pdu import MCSSendDataIndicationPDU, MCSSendDataRequestPDU
 
 
 class MCSChannelFactory:
@@ -38,18 +38,6 @@ class MCSChannel:
         self.userID = userID
         self.channelID = channelID
     
-    def recvSendDataRequest(self, pdu):
-        """
-        Called when a Send Data Request PDU is received
-        """
-        raise NotImplementedError("Unhandled Send Data Request PDU")
-    
-    def recvSendDataIndication(self, pdu):
-        """
-        Called when a Send Data Indication PDU is received
-        """
-        raise NotImplementedError("Unhandled Send Data Indication PDU")
-    
     def sendSendDataRequest(self, data):
         """
         Send a Send Data Request PDU from this channel
@@ -78,8 +66,11 @@ class MCSClientChannel(MCSChannel, Layer):
         Layer.__init__(self)
     
     def recvSendDataIndication(self, pdu):
+        """
+        Called when a Send Data Indication PDU is received
+        """
         self.pduReceived(pdu, True)
-    
+
     def send(self, data):
         self.sendSendDataRequest(data)
 
@@ -96,6 +87,9 @@ class MCSServerChannel(MCSChannel, Layer):
         pass
     
     def recvSendDataRequest(self, pdu):
+        """
+        Called when a Send Data Request PDU is received
+        """
         self.pduReceived(pdu, True)
     
     def send(self, data):

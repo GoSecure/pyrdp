@@ -73,6 +73,7 @@ class RDPDataParser(Parser):
         stream = BytesIO()
         substream = BytesIO()
 
+        headerWriter = lambda x, y, z: None
         if isinstance(pdu, RDPDemandActivePDU):
             headerWriter = self.writeShareControlHeader
             self.writeDemandActive(substream, pdu)

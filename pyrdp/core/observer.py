@@ -23,7 +23,7 @@ class Observer:
         peer.peer = self
 
     def onPDUReceived(self, pdu: PDU):
-        raise NotImplementedError()
+        pass
 
 
 class CompositeObserver:

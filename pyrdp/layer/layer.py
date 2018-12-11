@@ -35,7 +35,6 @@ class LayerRoutedObserver(LayerObserver):
         for (header, name) in handlers.items():
             self.handlers[header] = getattr(self, name)
 
-
     def onPDUReceived(self, pdu):
         if pdu.header not in self.handlers:
             self.onUnknownHeader(pdu)

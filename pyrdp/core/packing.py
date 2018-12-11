@@ -23,7 +23,7 @@ class Integer:
             raise ValueError(str(e))
 
     @classmethod
-    def pack(cls, value, stream = None):
+    def pack(cls, value, stream=None):
         """
         :param value: value to pack
         :type value: int | str

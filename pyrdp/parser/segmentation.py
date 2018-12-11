@@ -1,7 +1,9 @@
+from abc import ABCMeta
+
 from pyrdp.parser.parser import Parser
 
 
-class SegmentationParser(Parser):
+class SegmentationParser(Parser, metaclass=ABCMeta):
     def isCompletePDU(self, data):
         """
         Check if a stream of data contains a complete PDU.

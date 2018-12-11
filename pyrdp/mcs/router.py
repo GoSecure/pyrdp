@@ -7,6 +7,8 @@ class MCSRouter(LayerStrictRoutedObserver):
     Base observer class for MCS layers. Simply routes PDU types to methods.
     """
     def __init__(self, mcs):
+        # Those are the methods inheritors of the class can implement.
+        # Of course, depending on if it's for a client or a server, you don't implement the same methods.
         LayerStrictRoutedObserver.__init__(self, {
             MCSPDUType.CONNECT_INITIAL: "onConnectInitial",
             MCSPDUType.CONNECT_RESPONSE: "onConnectResponse",
@@ -28,7 +30,7 @@ class MCSRouter(LayerStrictRoutedObserver):
 
     def onConnectResponse(self, pdu):
         raise NotImplementedError("Connect Response is not handled")
-    
+
     def onDisconnectProviderUltimatum(self, pdu):
         raise NotImplementedError("Disconnect Provider Ultimatum is not handled")
 
@@ -37,18 +39,18 @@ class MCSRouter(LayerStrictRoutedObserver):
 
     def onAttachUserRequest(self, pdu):
         raise NotImplementedError("Attach User Request is not handled")
-    
+
     def onAttachUserConfirm(self, pdu):
         raise NotImplementedError("Attach User Confirm is not handled")
-    
+
     def onChannelJoinRequest(self, pdu):
         raise NotImplementedError("Channel Join Request is not handled")
-    
+
     def onChannelJoinConfirm(self, pdu):
         raise NotImplementedError("Channel Join Confirm is not handled")
-    
+
     def onSendDataRequest(self, pdu):
         raise NotImplementedError("Send Data Request is not handled")
-    
+
     def onSendDataIndication(self, pdu):
         raise NotImplementedError("Send Data Indication is not handled")
