@@ -1,40 +1,91 @@
 # PyRDP
 
-PyRDP is a Python3 Remote Desktop Protocol (RDP) Man-in-the-Middle (MITM) and library to experiment with RDP.
+PyRDP is a Python 3 Remote Desktop Protocol (RDP) Man-in-the-Middle (MITM) and library.
 
 It has two main tools:
-- RDP Man-in-the-Middle (MITM)
+- RDP Man-in-the-Middle
+    - Logs credentials used to connect
+    - Steals data copied to the clipboard
+    - Saves a copy of the files transferred over the network
+    - Saves replays of connections so you can look at them later
 - RDP Player:
-    - Live player to look at RDP connections through the MITM as they happen
-    - Replayer to look at RDP connections after they happened from a file
+    - See live RDP connections coming from the MITM
+    - View replays of RDP connections
 
-PyRDP uses some code from [RDPY](https://github.com/citronneur/rdpy) such as RC4 decryption, bitmap 
-decompression and the base GUI for the PyRDP Player.
+PyRDP uses code from [RDPY](https://github.com/citronneur/rdpy) such as RC4 decryption, bitmap decompression bindings and
+the base GUI for the PyRDP Player.
 
-PyRDP is fully implemented in Python,
-except for the bitmap decompression algorithm which is implemented in C for performance purposes.
+PyRDP also uses code from [rdesktop](https://github.com/rdesktop/rdesktop), namely the bitmap decompression algorithm in C.
 
-### Dependencies
+## Supported systems
+PyRDP should work on Python 3.6 and up.
 
-PyQt4 is needed for the liveplayer/replayer.
+This tool has been tested to work on Python 3.6 on Linux (Ubuntu 18.04). It has not been tested on OSX and Windows.
+If you wish to install it on Windows, note that `setup.py` will try to compile `rle.c`, so you will need to have a C
+compiler installed. You will also need to generate a private key and certificate to run the MITM.
+
+## Installing
+
+First, make sure to update setuptools so the setup script won't break:
+
+```
+sudo pip3 install --upgrade setuptools
+```
+
+If you want to run the player, you will also need PyQt4:
+
 ```
 sudo apt install python3-pyqt4
 ```
-To run setup.py install, setuptools version >40.6.2 is required:
-`sudo pip3 install --upgrade setuptools`
 
-As for the other python dependencies, take a look at `setup.py` (`install_requires`).
- 
-PyRDP has been tested to work on Python 3.6 on linux (Ubuntu 18.04). 
-We have not tested it on OSX nor on Windows.
+You can now install PyRDP by running the setup script:
 
+```
+sudo python3 setup.py install
+```
 
-## PyRDP Binaries
+This should install all the dependencies required to run PyRDP.
 
-- PyRDP MITM
-- PyRDP Liveplayer/replayer
+## Using the PyRDP MITM
+Use `pyrdp-mitm.py <ServerIP>` or `pyrdp-mitm.py <ServerIP>:<ServerPort>` to run the MITM.
 
-They are located in the bin/ folder of the project. Use `--help` to see how to use the programs.
+Assuming you have an RDP server running on `192.168.1.10` listening on 3389, you would run:
+
+```
+pyrdp-mitm.py 192.168.1.10
+```
+
+When running the MITM for the first time on Linux, a private key and certificate should be generated for you in `~/.config/pyrdp`.
+
+### Specifying the private key and certificate
+If key generation didn't work or you want to use a custom key and certificate, you can specify them using the
+`-c` and `-k` arguments:
+
+```
+pyrdp-mitm.py 192.168.1.10 -k private_key.pem -c certificate.pem
+``` 
+
+### Connecting to the PyRDP player
+If you want to see live RDP connections through the PyRDP player, you will need to specify the ip and port on which the
+player is listening using the `-i` and `-d` arguments. Note: the port argument is optional, the default port is 3000.
+
+```
+pyrdp-mitm.py 192.168.1.10 -i 127.0.0.1 -d 3000
+```
+
+#### Connecting to a PyRDP player when the MITM is running on a server
+If you are running the MITM on a server and still want to see live RDP connections, you should use
+[SSH remote port forwarding](https://www.booleanworld.com/guide-ssh-port-forwarding-tunnelling/)
+to forward a port on your server to the player's port on your machine. Once this is done, you pass `127.0.0.1` and the forwarded
+port as arguments to the MITM. For example, if port 4000 on the server is forwarded to port 3000 on your machine, this would
+be the command to use:
+
+```
+pyrdp-mitm.py 192.168.1.10 -i 127.0.0.1 -d 4000
+```
+
+### Other arguments
+Run `pyrdp-mitm.py --help` for a full list of arguments.
 
 ## RDP Network Layers
 
