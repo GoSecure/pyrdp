@@ -1,12 +1,13 @@
-from pyrdp.layer import LayerObserver
+from pyrdp.core import ObservedBy
+from pyrdp.layer.layer import LayerObserver
 from pyrdp.layer.buffered import BufferedLayer
-from pyrdp.layer.rdp.slowpath import RDPDataLayerObserver
+from pyrdp.layer.rdp.data import RDPDataObserver
 from pyrdp.parser import SegmentationParser
 
 
-class RDPFastPathDataLayerObserver(RDPDataLayerObserver, LayerObserver):
+class FastPathObserver(RDPDataObserver, LayerObserver):
     """
-    Base observer class for fast-path PDUs.
+    Observer for fast-path PDUs.
     """
 
     def onPDUReceived(self, pdu):
@@ -17,12 +18,14 @@ class RDPFastPathDataLayerObserver(RDPDataLayerObserver, LayerObserver):
         return pdu.header & 0b11100000
 
 
+@ObservedBy(FastPathObserver)
 class FastPathLayer(BufferedLayer):
-    def __init__(self, parser):
-        """
-        :type parser: SegmentationParser
-        """
+    """
+    Layer for fast-path PDUs.
+    """
+
+    def __init__(self, parser: SegmentationParser):
         BufferedLayer.__init__(self, parser)
 
-    def send(self, data):
+    def send(self, data: bytes):
         raise NotImplementedError("FastPathLayer does not implement the send method. Use sendPDU instead.")

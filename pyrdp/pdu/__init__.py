@@ -18,7 +18,7 @@ from pyrdp.pdu.rdp.connection import ClientChannelDefinition, ClientClusterData,
     ServerNetworkData, ServerSecurityData
 from pyrdp.pdu.rdp.data import RDPConfirmActivePDU, RDPControlPDU, RDPDemandActivePDU, RDPInputPDU, RDPPlaySoundPDU, \
     RDPPointerPDU, RDPSetErrorInfoPDU, RDPShareControlHeader, RDPShareDataHeader, RDPSuppressOutputPDU, \
-    RDPSynchronizePDU, RDPUpdatePDU
+    RDPSynchronizePDU, RDPUpdatePDU, RDPDataPDU
 from pyrdp.pdu.rdp.fastpath import FastPathBitmapEvent, FastPathEvent, FastPathEventRaw, FastPathMouseEvent, \
     FastPathOrdersEvent, FastPathOutputEvent, FastPathPDU, FastPathScanCodeEvent, SecondaryDrawingOrder
 from pyrdp.pdu.rdp.input import ExtendedMouseEvent, KeyboardEvent, MouseEvent, SlowPathInput, SynchronizeEvent, \
