@@ -29,12 +29,15 @@ class Recorder:
         self.topLayers = []
 
         for transportLayer in transportLayers:
-            tpktLayer = TPKTLayer()
-            messageLayer = PlayerMessageLayer()
+            self.addTransportLayer(transportLayer)
 
-            transportLayer.setNext(tpktLayer)
-            tpktLayer.setNext(messageLayer)
-            self.topLayers.append(messageLayer)
+    def addTransportLayer(self, transportLayer: Layer):
+        tpktLayer = TPKTLayer()
+        messageLayer = PlayerMessageLayer()
+
+        transportLayer.setNext(tpktLayer)
+        tpktLayer.setNext(messageLayer)
+        self.topLayers.append(messageLayer)
 
     def setParser(self, messageType: PlayerMessageType, parser: Parser):
         """
