@@ -16,9 +16,9 @@ from pyrdp.pdu.rdp.bitmap import BitmapUpdateData
 from pyrdp.pdu.rdp.connection import ClientChannelDefinition, ClientClusterData, ClientCoreData, ClientNetworkData, \
     ClientSecurityData, ProprietaryCertificate, RDPClientDataPDU, RDPServerDataPDU, ServerCertificate, ServerCoreData, \
     ServerNetworkData, ServerSecurityData
-from pyrdp.pdu.rdp.data import RDPConfirmActivePDU, RDPControlPDU, RDPDemandActivePDU, RDPInputPDU, RDPPlaySoundPDU, \
+from pyrdp.pdu.rdp.slowpath import RDPConfirmActivePDU, RDPControlPDU, RDPDemandActivePDU, RDPInputPDU, RDPPlaySoundPDU, \
     RDPPointerPDU, RDPSetErrorInfoPDU, RDPShareControlHeader, RDPShareDataHeader, RDPSuppressOutputPDU, \
-    RDPSynchronizePDU, RDPUpdatePDU, RDPDataPDU
+    RDPSynchronizePDU, RDPUpdatePDU, RDPSlowPathPDU
 from pyrdp.pdu.rdp.fastpath import FastPathBitmapEvent, FastPathEvent, FastPathEventRaw, FastPathMouseEvent, \
     FastPathOrdersEvent, FastPathOutputEvent, FastPathPDU, FastPathScanCodeEvent, SecondaryDrawingOrder
 from pyrdp.pdu.rdp.input import ExtendedMouseEvent, KeyboardEvent, MouseEvent, SlowPathInput, SynchronizeEvent, \

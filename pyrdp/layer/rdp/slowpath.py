@@ -5,8 +5,7 @@ from pyrdp.layer.layer import Layer, LayerStrictRoutedObserver
 from pyrdp.layer.rdp.data import RDPDataObserver
 from pyrdp.logging import log
 from pyrdp.parser import RDPDataParser
-from pyrdp.pdu import RDPConfirmActivePDU, RDPDemandActivePDU
-from pyrdp.pdu.rdp.data import RDPDataPDU
+from pyrdp.pdu import RDPConfirmActivePDU, RDPDemandActivePDU, RDPSlowPathPDU
 
 
 class SlowPathObserver(RDPDataObserver, LayerStrictRoutedObserver):
@@ -27,10 +26,10 @@ class SlowPathObserver(RDPDataObserver, LayerStrictRoutedObserver):
         self.defaultDataHandler = None
         self.unparsedDataHandler = None
 
-    def getPDUType(self, pdu: RDPDataPDU):
+    def getPDUType(self, pdu: RDPSlowPathPDU):
         return pdu.header.subtype
 
-    def onPDUReceived(self, pdu: RDPDataPDU):
+    def onPDUReceived(self, pdu: RDPSlowPathPDU):
         if pdu.header.pduType in self.handlers:
             self.handlers[pdu.header.pduType](pdu)
         else:

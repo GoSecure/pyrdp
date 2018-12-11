@@ -10,9 +10,8 @@ from pyrdp.parser.rdp.pointer import PointerEventParser
 from pyrdp.pdu import BitmapCapability, Capability, GeneralCapability, GlyphCacheCapability, \
     MultifragmentUpdateCapability, OffscreenBitmapCacheCapability, OrderCapability, PDU, PointerCapability, \
     RDPConfirmActivePDU, RDPControlPDU, RDPDemandActivePDU, RDPInputPDU, RDPPlaySoundPDU, RDPPointerPDU, \
-    RDPSetErrorInfoPDU, RDPShareControlHeader, RDPShareDataHeader, RDPSuppressOutputPDU, RDPSynchronizePDU, \
-    RDPUpdatePDU, VirtualChannelCapability
-from pyrdp.pdu.rdp.data import RDPDataPDU
+    RDPSetErrorInfoPDU, RDPShareControlHeader, RDPShareDataHeader, RDPSlowPathPDU, RDPSuppressOutputPDU, \
+    RDPSynchronizePDU, RDPUpdatePDU, VirtualChannelCapability
 
 
 class RDPDataParser(Parser):
@@ -67,7 +66,7 @@ class RDPDataParser(Parser):
 
         return self.dataParsers[header.subtype](stream, header)
 
-    def write(self, pdu: RDPDataPDU) -> bytes:
+    def write(self, pdu: RDPSlowPathPDU) -> bytes:
         """
         Encode an RDP Data PDU instance to bytes.
         """
