@@ -19,12 +19,6 @@ class FastPathPDU(SegmentationPDU):
         return str([str(e.__class__) for e in self.events])
 
 
-class FastPathEventRaw:
-    def __init__(self, data):
-        super().__init__()
-        self.data = data
-
-
 class FastPathEvent:
     """
     Base class for RDP fast path event (not PDU, a PDU contains multiple events).
@@ -35,7 +29,22 @@ class FastPathEvent:
         super().__init__()
 
 
-class FastPathScanCodeEvent(FastPathEvent):
+class FastPathEventRaw(FastPathEvent):
+    def __init__(self, data):
+        super().__init__()
+        self.data = data
+
+
+class FastPathInputEvent(FastPathEvent):
+    def __init__(self):
+        super().__init__()
+
+class FastPathOutputEvent(FastPathEvent):
+    def __init__(self):
+        super().__init__()
+
+
+class FastPathScanCodeEvent(FastPathInputEvent):
 
     def __init__(self, rawHeaderByte, scancode, isReleased):
         """
@@ -49,7 +58,7 @@ class FastPathScanCodeEvent(FastPathEvent):
         self.isReleased = isReleased
 
 
-class FastPathMouseEvent(FastPathEvent):
+class FastPathMouseEvent(FastPathInputEvent):
     """
     Mouse event (clicks, move, scroll, etc.)
     """
@@ -66,11 +75,6 @@ class FastPathMouseEvent(FastPathEvent):
         self.mouseY = mouseY
         self.mouseX = mouseX
         self.pointerFlags = pointerFlags
-
-
-class FastPathOutputEvent:
-    def __init__(self):
-        super().__init__()
 
 
 class FastPathBitmapEvent(FastPathOutputEvent):
@@ -96,7 +100,7 @@ class FastPathOrdersEvent(FastPathOutputEvent):
         self.secondaryDrawingOrders = None
 
 
-class SecondaryDrawingOrder(PDU):
+class SecondaryDrawingOrder:
     """
     https://msdn.microsoft.com/en-us/library/cc241611.aspx
     """
