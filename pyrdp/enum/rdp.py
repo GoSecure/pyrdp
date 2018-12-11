@@ -148,7 +148,7 @@ class RDPStateTransition(IntEnum):
     ST_RESEND_LAST_MESSAGE = 0x00000004
 
 
-class RDPDataPDUType(IntEnum):
+class RDPSlowPathPDUType(IntEnum):
     """
     RDP Data PDU types
     @see: http://msdn.microsoft.com/en-us/library/cc240576.aspx
@@ -160,7 +160,7 @@ class RDPDataPDUType(IntEnum):
     SERVER_REDIR_PKT_PDU = 0xA
 
 
-class RDPDataPDUSubtype(IntEnum):
+class RDPSlowPathPDUSubtype(IntEnum):
     """
     @summary: Data PDU type secondary index
     @see: http://msdn.microsoft.com/en-us/library/cc240577.aspx

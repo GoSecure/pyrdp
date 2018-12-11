@@ -1,16 +1,13 @@
-from abc import ABCMeta
-
-from pyrdp.core import ObservedBy, Observer
-from pyrdp.enum import CapabilityType, RDPDataPDUType, VirtualChannelCompressionFlag
+from pyrdp.core import ObservedBy
+from pyrdp.enum import CapabilityType, RDPSlowPathPDUType, VirtualChannelCompressionFlag
 from pyrdp.exceptions import UnknownPDUTypeError
-from pyrdp.layer.layer import Layer, LayerObserver, LayerStrictRoutedObserver
+from pyrdp.layer.layer import Layer, LayerStrictRoutedObserver
 from pyrdp.logging import log
 from pyrdp.parser import RDPDataParser
 from pyrdp.pdu import PDU, RDPConfirmActivePDU, RDPDemandActivePDU
 from pyrdp.pdu.rdp.data import RDPDataPDU
 
-
-class RDPBaseDataLayerObserver(Observer, metaclass=ABCMeta):
+class RDPDataLayerObserver:
     """
     Base observer class for RDP data layers.
     A handler can be set for each data PDU type. A default handler can also be used.
@@ -46,7 +43,7 @@ class RDPBaseDataLayerObserver(Observer, metaclass=ABCMeta):
     def setDataHandler(self, type, handler):
         """
         Set a handler for a particular data PDU type.
-        :type type: RDPDataPDUType
+        :type type: RDPSlowPathPDUType
         :type handler: callable object
         """
         self.dataHandlers[type] = handler
@@ -74,18 +71,18 @@ class RDPBaseDataLayerObserver(Observer, metaclass=ABCMeta):
         raise NotImplementedError("getPDUType must be overridden")
 
 
-class RDPDataLayerObserver(RDPBaseDataLayerObserver, LayerStrictRoutedObserver):
+class SlowPathLayerObserver(RDPDataLayerObserver, LayerStrictRoutedObserver):
     """
     Layer for non fast-path data PDUs.
     """
 
     def __init__(self, **kwargs):
         LayerStrictRoutedObserver.__init__(self, {
-            RDPDataPDUType.DEMAND_ACTIVE_PDU: "onDemandActive",
-            RDPDataPDUType.CONFIRM_ACTIVE_PDU: "onConfirmActive",
-            RDPDataPDUType.DEACTIVATE_ALL_PDU: "onDeactivateAll",
-            RDPDataPDUType.DATA_PDU: "onData",
-            RDPDataPDUType.SERVER_REDIR_PKT_PDU: "onServerRedirect",
+            RDPSlowPathPDUType.DEMAND_ACTIVE_PDU: "onDemandActive",
+            RDPSlowPathPDUType.CONFIRM_ACTIVE_PDU: "onConfirmActive",
+            RDPSlowPathPDUType.DEACTIVATE_ALL_PDU: "onDeactivateAll",
+            RDPSlowPathPDUType.DATA_PDU: "onData",
+            RDPSlowPathPDUType.SERVER_REDIR_PKT_PDU: "onServerRedirect",
         }, **kwargs)
 
         self.dataHandlers = {}
@@ -137,23 +134,8 @@ class RDPDataLayerObserver(RDPBaseDataLayerObserver, LayerStrictRoutedObserver):
         """
         pass
 
-
-
-class RDPFastPathDataLayerObserver(RDPBaseDataLayerObserver, LayerObserver):
-    """
-    Base observer class for fast-path PDUs.
-    """
-
-    def onPDUReceived(self, pdu):
-        self.dispatchPDU(pdu)
-
-    def getPDUType(self, pdu: RDPDataPDU):
-        # The PDU type is stored in the last 3 bits
-        return pdu.header & 0b11100000
-
-
-@ObservedBy(RDPDataLayerObserver)
-class RDPDataLayer(Layer):
+@ObservedBy(SlowPathLayerObserver)
+class SlowPathLayer(Layer):
     """
     Base for all RDP data layers.
     """

@@ -10,8 +10,8 @@ from pyrdp.layer.tpkt import TPKTLayer
 from pyrdp.layer.x224 import X224Observer, X224Layer
 
 from pyrdp.layer.rdp.connection import RDPClientConnectionLayer
-from pyrdp.layer.rdp.data import RDPBaseDataLayerObserver, RDPDataLayerObserver, RDPFastPathDataLayerObserver, RDPDataLayer
-from pyrdp.layer.rdp.fastpath import FastPathLayer
+from pyrdp.layer.rdp.slowpath import RDPDataLayerObserver, SlowPathLayerObserver, SlowPathLayer
+from pyrdp.layer.rdp.fastpath import FastPathLayer, RDPFastPathDataLayerObserver
 from pyrdp.layer.rdp.security import RDPSecurityObserver, RDPSecurityLayer, TLSSecurityLayer
 
 from pyrdp.layer.rdp.virtual_channel.clipboard import ClipboardLayer

@@ -5,7 +5,7 @@ from pyrdp.core import getLoggerPassFilters
 from pyrdp.core.ssl import ClientTLSContext
 from pyrdp.enum import ClientInfoFlags, ParserMode, PlayerMessageType, SegmentationPDUType, VirtualChannelName
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, GCCClientConnectionLayer, \
-    MCSClientConnectionLayer, MCSLayer, RawLayer, RDPClientConnectionLayer, RDPDataLayer, RDPSecurityLayer, \
+    MCSClientConnectionLayer, MCSLayer, RawLayer, RDPClientConnectionLayer, SlowPathLayer, RDPSecurityLayer, \
     SegmentationLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
 from pyrdp.logging import LOGGER_NAMES, RC4LoggingObserver
 from pyrdp.mcs import MCSChannelFactory, MCSClientChannel, MCSClientRouter, MCSUserObserver
@@ -73,7 +73,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.rdpConnect.createObserver(onPDUReceived=self.onServerData)
 
         self.securityLayer = None
-        self.io = RDPDataLayer()
+        self.io = SlowPathLayer()
         self.fastPathLayer = None
 
         self.tcp.setNext(self.segmentation)

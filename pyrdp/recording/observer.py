@@ -1,5 +1,6 @@
 from pyrdp.enum import PlayerMessageType
-from pyrdp.layer import RDPFastPathDataLayerObserver, RDPDataLayerObserver
+from pyrdp.layer import SlowPathLayerObserver
+from pyrdp.layer.rdp.fastpath import RDPFastPathDataLayerObserver
 from pyrdp.pdu import RDPConfirmActivePDU, RDPInputPDU, RDPUpdatePDU
 from pyrdp.recording.recorder import Recorder
 
@@ -14,9 +15,9 @@ class RecordingFastPathObserver(RDPFastPathDataLayerObserver):
         self.recorder.record(pdu, self.messageType)
         RDPFastPathDataLayerObserver.__init__(self)
 
-class RecordingSlowPathObserver(RDPDataLayerObserver):
+class RecordingSlowPathObserver(SlowPathLayerObserver):
     def __init__(self, recorder: Recorder):
-        RDPDataLayerObserver.__init__(self)
+        SlowPathLayerObserver.__init__(self)
         self.recorder = recorder
 
     def onPDUReceived(self, pdu):

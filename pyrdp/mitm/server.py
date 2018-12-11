@@ -9,8 +9,8 @@ from twisted.internet import reactor
 from pyrdp.core import decodeUTF16LE, getLoggerPassFilters
 from pyrdp.core.ssl import ServerTLSContext
 from pyrdp.enum import CapabilityType, EncryptionLevel, EncryptionMethod, InputEventType, NegotiationProtocols, \
-    OrderFlag, ParserMode, PlayerMessageType, RDPDataPDUSubtype, SegmentationPDUType, VirtualChannelName
-from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, MCSLayer, RawLayer, RDPDataLayer, \
+    OrderFlag, ParserMode, PlayerMessageType, RDPSlowPathPDUSubtype, SegmentationPDUType, VirtualChannelName
+from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, MCSLayer, RawLayer, SlowPathLayer, \
     RDPSecurityLayer, SegmentationLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
 from pyrdp.logging import ConnectionMetadataFilter, LOGGER_NAMES, RC4LoggingObserver
 from pyrdp.mcs import MCSChannelFactory, MCSServerChannel, MCSUserObserver
@@ -95,7 +95,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         self.rdpServerConnectionParser = RDPServerConnectionParser()
 
         self.securityLayer = None
-        self.io = RDPDataLayer()
+        self.io = SlowPathLayer()
         self.fastPathLayer = None
 
         self.tcp.setNext(self.segmentation)
@@ -406,7 +406,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         )
 
         slowPathObserver = MITMSlowPathObserver(self.log, self.io, onConfirmActive=self.onConfirmActive)
-        slowPathObserver.setDataHandler(RDPDataPDUSubtype.PDUTYPE2_INPUT, self.onInputPDUReceived)
+        slowPathObserver.setDataHandler(RDPSlowPathPDUSubtype.PDUTYPE2_INPUT, self.onInputPDUReceived)
         clientObserver = self.client.getChannelObserver(channelID)
         slowPathObserver.setPeer(clientObserver)
         self.io.addObserver(slowPathObserver)
