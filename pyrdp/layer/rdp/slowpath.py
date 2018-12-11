@@ -5,7 +5,7 @@ from pyrdp.layer.layer import Layer, LayerStrictRoutedObserver
 from pyrdp.layer.rdp.data import RDPDataObserver
 from pyrdp.logging import log
 from pyrdp.parser import SlowPathParser
-from pyrdp.pdu import RDPConfirmActivePDU, RDPDemandActivePDU, RDPSlowPathPDU
+from pyrdp.pdu import ConfirmActivePDU, DemandActivePDU, SlowPathPDU
 
 
 class SlowPathObserver(RDPDataObserver, LayerStrictRoutedObserver):
@@ -26,10 +26,10 @@ class SlowPathObserver(RDPDataObserver, LayerStrictRoutedObserver):
         self.defaultDataHandler = None
         self.unparsedDataHandler = None
 
-    def getPDUType(self, pdu: RDPSlowPathPDU):
+    def getPDUType(self, pdu: SlowPathPDU):
         return pdu.header.subtype
 
-    def onPDUReceived(self, pdu: RDPSlowPathPDU):
+    def onPDUReceived(self, pdu: SlowPathPDU):
         if pdu.header.pduType in self.handlers:
             self.handlers[pdu.header.pduType](pdu)
         else:
@@ -42,7 +42,7 @@ class SlowPathObserver(RDPDataObserver, LayerStrictRoutedObserver):
         """
         self.dispatchPDU(pdu)
 
-    def onDemandActive(self, pdu: RDPDemandActivePDU):
+    def onDemandActive(self, pdu: DemandActivePDU):
         """
         Called when a Demand Active PDU is received.
         Disable Virtual channel compression (unsupported for now).
@@ -50,7 +50,7 @@ class SlowPathObserver(RDPDataObserver, LayerStrictRoutedObserver):
         pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].flags = VirtualChannelCompressionFlag.VCCAPS_NO_COMPR
         pass
 
-    def onConfirmActive(self, pdu: RDPConfirmActivePDU):
+    def onConfirmActive(self, pdu: ConfirmActivePDU):
         """
         Change the received ConfirmActivePDU to facilitate data interception.
         """

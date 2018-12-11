@@ -3,14 +3,14 @@ from io import BytesIO
 from pyrdp.core import Uint16LE, Uint32LE, Uint8
 from pyrdp.enum import NegotiationRequestFlags, NegotiationType
 from pyrdp.parser.parser import Parser
-from pyrdp.pdu import RDPNegotiationRequestPDU, RDPNegotiationResponsePDU
+from pyrdp.pdu import NegotiationRequestPDU, NegotiationResponsePDU
 
 
-class RDPNegotiationRequestParser(Parser):
+class NegotiationRequestParser(Parser):
     """
     Parser for RDP negotiaton requests (Connection Request payloads).
     """
-    def parse(self, data: bytes) -> RDPNegotiationRequestPDU:
+    def parse(self, data: bytes) -> NegotiationRequestPDU:
         """
         Parse a negotiation request.
         :param data: the request data.
@@ -41,15 +41,15 @@ class RDPNegotiationRequestParser(Parser):
                 correlationID = stream.read(16)
                 reserved = stream.read(16)
 
-            return RDPNegotiationRequestPDU(cookie, requestFlags, requestedProtocols, correlationFlags, correlationID, reserved)
+            return NegotiationRequestPDU(cookie, requestFlags, requestedProtocols, correlationFlags, correlationID, reserved)
         else:
-            return RDPNegotiationRequestPDU(cookie, None, None, None, None, None)
+            return NegotiationRequestPDU(cookie, None, None, None, None, None)
 
     def write(self, pdu):
         """
         Write a negotiation request.
         :param pdu: the request PDU.
-        :type pdu: RDPNegotiationRequestPDU
+        :type pdu: NegotiationRequestPDU
         :return: str
         """
         stream = BytesIO()
@@ -73,11 +73,11 @@ class RDPNegotiationRequestParser(Parser):
         return stream.getvalue()
 
 
-class RDPNegotiationResponseParser(Parser):
+class NegotiationResponseParser(Parser):
     """
     Parser for RDP negotiation responses (Connection Confirm payloads).
     """
-    def parse(self, data: bytes) -> RDPNegotiationResponsePDU:
+    def parse(self, data: bytes) -> NegotiationResponsePDU:
         """
         Parse a negotiation response.
         :param data: the response data.
@@ -89,15 +89,15 @@ class RDPNegotiationResponseParser(Parser):
             flags = Uint8.unpack(stream)
             length = Uint16LE.unpack(stream)
             selectedProtocols = Uint32LE.unpack(stream)
-            return RDPNegotiationResponsePDU(flags, selectedProtocols)
+            return NegotiationResponsePDU(flags, selectedProtocols)
         else:
-            return RDPNegotiationResponsePDU(None, None)
+            return NegotiationResponsePDU(None, None)
 
     def write(self, pdu):
         """
         Write a negotiation response.
         :param pdu: the response PDU.
-        :type pdu: RDPNegotiationResponsePDU
+        :type pdu: NegotiationResponsePDU
         :return: str
         """
         stream = BytesIO()

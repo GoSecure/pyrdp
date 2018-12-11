@@ -1,6 +1,6 @@
 from pyrdp.enum import PlayerMessageType
 from pyrdp.layer import FastPathObserver, SlowPathObserver
-from pyrdp.pdu import RDPConfirmActivePDU, RDPInputPDU, RDPUpdatePDU
+from pyrdp.pdu import ConfirmActivePDU, InputPDU, UpdatePDU
 from pyrdp.recording.recorder import Recorder
 
 
@@ -20,5 +20,5 @@ class RecordingSlowPathObserver(SlowPathObserver):
         self.recorder = recorder
 
     def onPDUReceived(self, pdu):
-        if isinstance(pdu, (RDPConfirmActivePDU, RDPUpdatePDU, RDPInputPDU)):
+        if isinstance(pdu, (ConfirmActivePDU, UpdatePDU, InputPDU)):
             self.recorder.record(pdu, PlayerMessageType.SLOW_PATH_PDU)

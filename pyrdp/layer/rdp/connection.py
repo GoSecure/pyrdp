@@ -1,15 +1,15 @@
 from pyrdp.layer.layer import Layer
-from pyrdp.parser import RDPClientConnectionParser, RDPServerConnectionParser
+from pyrdp.parser import ClientConnectionParser, ServerConnectionParser
 
 
-class RDPClientConnectionLayer(Layer):
+class ClientConnectionLayer(Layer):
     """
     Layer for client RDP connection data. Sends Client PDUs and receives Server PDUs.
     """
     def __init__(self):
         Layer.__init__(self, None, hasNext=True)
-        self.clientRDP = RDPClientConnectionParser()
-        self.serverRDP = RDPServerConnectionParser()
+        self.clientRDP = ClientConnectionParser()
+        self.serverRDP = ServerConnectionParser()
 
     def recv(self, data):
         pdu = self.serverRDP.parse(data)

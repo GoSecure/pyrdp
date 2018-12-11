@@ -1,10 +1,10 @@
 from typing import List
 
-from pyrdp.enum import RDPConnectionDataType, ServerCertificateType
+from pyrdp.enum import ConnectionDataType, ServerCertificateType
 from pyrdp.pdu.pdu import PDU
 
 
-class RDPClientDataPDU(PDU):
+class ClientDataPDU(PDU):
     def __init__(self, coreData, securityData, networkData, clusterData):
         """
         :type coreData: ClientCoreData
@@ -21,7 +21,7 @@ class RDPClientDataPDU(PDU):
 
 class ClientCoreData:
     def __init__(self, version, desktopWidth, desktopHeight, colorDepth, sasSequence, keyboardLayout, clientBuild, clientName, keyboardType, keyboardSubType, keyboardFunctionKey, imeFileName):
-        self.header = RDPConnectionDataType.CLIENT_CORE
+        self.header = ConnectionDataType.CLIENT_CORE
         self.version = version
         self.desktopWidth = desktopWidth
         self.desktopHeight = desktopHeight
@@ -53,7 +53,7 @@ class ClientCoreData:
 
 class ClientSecurityData:
     def __init__(self, encryptionMethods, extEncryptionMethods):
-        self.header = RDPConnectionDataType.CLIENT_SECURITY
+        self.header = ConnectionDataType.CLIENT_SECURITY
         self.encryptionMethods = encryptionMethods
         # extEncryptionMethods is used only for the French locale (https://msdn.microsoft.com/en-us/library/cc240511.aspx)
         self.extEncryptionMethods = extEncryptionMethods
@@ -70,18 +70,18 @@ class ClientChannelDefinition:
 
 class ClientNetworkData:
     def __init__(self, channelDefinitions):
-        self.header = RDPConnectionDataType.CLIENT_NETWORK
+        self.header = ConnectionDataType.CLIENT_NETWORK
         self.channelDefinitions: List[ClientChannelDefinition] = channelDefinitions
 
 
 class ClientClusterData:
     def __init__(self, flags, redirectedSessionID):
-        self.header = RDPConnectionDataType.CLIENT_CLUSTER
+        self.header = ConnectionDataType.CLIENT_CLUSTER
         self.flags = flags
         self.redirectedSessionID = redirectedSessionID
 
 
-class RDPServerDataPDU(PDU):
+class ServerDataPDU(PDU):
     """
     :type core: ServerCoreData
     :type security: ServerSecurityData
@@ -96,7 +96,7 @@ class RDPServerDataPDU(PDU):
 
 class ServerCoreData:
     def __init__(self, version, clientRequestedProtocols, earlyCapabilityFlags):
-        self.header = RDPConnectionDataType.SERVER_CORE
+        self.header = ConnectionDataType.SERVER_CORE
         self.version = version
         self.clientRequestedProtocols = clientRequestedProtocols
         self.earlyCapabilityFlags = earlyCapabilityFlags
@@ -104,14 +104,14 @@ class ServerCoreData:
 
 class ServerNetworkData:
     def __init__(self, mcsChannelID, channels):
-        self.header = RDPConnectionDataType.SERVER_NETWORK
+        self.header = ConnectionDataType.SERVER_NETWORK
         self.mcsChannelID = mcsChannelID
         self.channels = channels
 
 
 class ServerSecurityData:
     def __init__(self, encryptionMethod, encryptionLevel, serverRandom, serverCertificate):
-        self.header = RDPConnectionDataType.SERVER_SECURITY
+        self.header = ConnectionDataType.SERVER_SECURITY
         self.encryptionMethod = encryptionMethod
         self.encryptionLevel = encryptionLevel
         self.serverRandom = serverRandom

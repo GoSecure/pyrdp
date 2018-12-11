@@ -6,12 +6,12 @@ from pyrdp.core.scancode import scancodeToChar
 from pyrdp.enum import BitmapFlags, CapabilityType, KeyboardFlag, ParserMode, SlowPathUpdateType
 from pyrdp.layer import PlayerMessageObserver
 from pyrdp.logging import log
-from pyrdp.parser import ClipboardParser, RDPBasicFastPathParser, RDPBitmapParser, RDPClientInfoParser, SlowPathParser, \
-    RDPOutputEventParser
-from pyrdp.parser.rdp.connection import RDPClientConnectionParser
+from pyrdp.parser import ClipboardParser, BasicFastPathParser, BitmapParser, ClientInfoParser, SlowPathParser, \
+    FastPathOutputParser
+from pyrdp.parser.rdp.connection import ClientConnectionParser
 from pyrdp.pdu import BitmapUpdateData, FastPathBitmapEvent, FastPathMouseEvent, FastPathOrdersEvent, \
-    FastPathScanCodeEvent, FormatDataResponsePDU, KeyboardEvent, MouseEvent, PlayerMessagePDU, RDPConfirmActivePDU, \
-    RDPInputPDU, RDPUpdatePDU
+    FastPathScanCodeEvent, FormatDataResponsePDU, KeyboardEvent, MouseEvent, PlayerMessagePDU, ConfirmActivePDU, \
+    InputPDU, UpdatePDU
 from pyrdp.ui import RDPBitmapToQtImage
 
 
@@ -26,13 +26,13 @@ class PlayerMessageHandler(PlayerMessageObserver):
         self.text = text
         self.writeInCaps = False
 
-        self.inputParser = RDPBasicFastPathParser(ParserMode.SERVER)
-        self.outputParser = RDPBasicFastPathParser(ParserMode.CLIENT)
-        self.clientInfoParser = RDPClientInfoParser()
+        self.inputParser = BasicFastPathParser(ParserMode.SERVER)
+        self.outputParser = BasicFastPathParser(ParserMode.CLIENT)
+        self.clientInfoParser = ClientInfoParser()
         self.dataParser = SlowPathParser()
         self.clipboardParser = ClipboardParser()
-        self.outputEventParser = RDPOutputEventParser()
-        self.clientConnectionParser = RDPClientConnectionParser()
+        self.outputEventParser = FastPathOutputParser()
+        self.clientConnectionParser = ClientConnectionParser()
 
     def onConnectionClose(self, pdu: PlayerMessagePDU):
         self.text.moveCursor(QTextCursor.End)
@@ -106,14 +106,14 @@ class PlayerMessageHandler(PlayerMessageObserver):
     def onSlowPathPDU(self, pdu: PlayerMessagePDU):
         pdu = self.dataParser.parse(pdu.payload)
 
-        if isinstance(pdu, RDPConfirmActivePDU):
+        if isinstance(pdu, ConfirmActivePDU):
             self.viewer.resize(pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP].desktopWidth,
                                pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP].desktopHeight)
-        elif isinstance(pdu, RDPUpdatePDU) and pdu.updateType == SlowPathUpdateType.SLOWPATH_UPDATETYPE_BITMAP:
-            updates = RDPBitmapParser().parseBitmapUpdateData(pdu.updateData)
+        elif isinstance(pdu, UpdatePDU) and pdu.updateType == SlowPathUpdateType.SLOWPATH_UPDATETYPE_BITMAP:
+            updates = BitmapParser().parseBitmapUpdateData(pdu.updateData)
             for bitmap in updates:
                 self.handleBitmap(bitmap)
-        elif isinstance(pdu, RDPInputPDU):
+        elif isinstance(pdu, InputPDU):
             for event in pdu.events:
                 if isinstance(event, MouseEvent):
                     self.onMousePosition(event.x, event.y)

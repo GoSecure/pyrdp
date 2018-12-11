@@ -2,7 +2,7 @@ from pyrdp.enum import NegotiationProtocols, NegotiationType
 from pyrdp.pdu.pdu import PDU
 
 
-class RDPNegotiationRequestPDU(PDU):
+class NegotiationRequestPDU(PDU):
     """
     First PDU of the RDP connection sequence. Sent by the client.
     """
@@ -34,7 +34,7 @@ class RDPNegotiationRequestPDU(PDU):
         self.reserved = reserved
 
 
-class RDPNegotiationResponsePDU(PDU):
+class NegotiationResponsePDU(PDU):
     """
     Second PDU of the RDP connection sequence. Sent by the server.
     Important information is the chosen encryption method.

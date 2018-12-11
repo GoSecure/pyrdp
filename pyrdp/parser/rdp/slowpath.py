@@ -5,13 +5,13 @@ from pyrdp.core import Uint16LE, Uint32LE, Uint8
 from pyrdp.enum import CapabilityType, ErrorInfo, SlowPathDataType, SlowPathPDUType
 from pyrdp.exceptions import UnknownPDUTypeError
 from pyrdp.parser.parser import Parser
-from pyrdp.parser.rdp.input import RDPInputParser
+from pyrdp.parser.rdp.input import SlowPathInputParser
 from pyrdp.parser.rdp.pointer import PointerEventParser
 from pyrdp.pdu import BitmapCapability, Capability, GeneralCapability, GlyphCacheCapability, \
     MultifragmentUpdateCapability, OffscreenBitmapCacheCapability, OrderCapability, PDU, PointerCapability, \
-    RDPConfirmActivePDU, RDPControlPDU, RDPDemandActivePDU, RDPInputPDU, RDPPlaySoundPDU, RDPPointerPDU, \
-    RDPSetErrorInfoPDU, RDPShareControlHeader, RDPShareDataHeader, RDPSlowPathPDU, RDPSuppressOutputPDU, \
-    RDPSynchronizePDU, RDPUpdatePDU, VirtualChannelCapability
+    ConfirmActivePDU, ControlPDU, DemandActivePDU, InputPDU, PlaySoundPDU, PointerPDU, \
+    SetErrorInfoPDU, ShareControlHeader, ShareDataHeader, SlowPathPDU, SuppressOutputPDU, \
+    SynchronizePDU, UpdatePDU, VirtualChannelCapability
 
 
 class SlowPathParser(Parser):
@@ -66,17 +66,17 @@ class SlowPathParser(Parser):
 
         return self.dataParsers[header.subtype](stream, header)
 
-    def write(self, pdu: RDPSlowPathPDU) -> bytes:
+    def write(self, pdu: SlowPathPDU) -> bytes:
         """
         Encode an RDP Data PDU instance to bytes.
         """
         stream = BytesIO()
         substream = BytesIO()
 
-        if isinstance(pdu, RDPDemandActivePDU):
+        if isinstance(pdu, DemandActivePDU):
             headerWriter = self.writeShareControlHeader
             self.writeDemandActive(substream, pdu)
-        elif isinstance(pdu, RDPConfirmActivePDU):
+        elif isinstance(pdu, ConfirmActivePDU):
             headerWriter = self.writeShareControlHeader
             self.writeConfirmActive(substream, pdu)
         elif pdu.header.pduType == SlowPathPDUType.DATA_PDU:
@@ -100,15 +100,15 @@ class SlowPathParser(Parser):
         length = Uint16LE.unpack(stream)
         pduType = Uint16LE.unpack(stream)
         source = Uint16LE.unpack(stream)
-        return RDPShareControlHeader(SlowPathPDUType(pduType & 0xf), (pduType >> 4), source)
+        return ShareControlHeader(SlowPathPDUType(pduType & 0xf), (pduType >> 4), source)
 
-    def writeShareControlHeader(self, stream: BytesIO, header: RDPShareControlHeader, dataLength: int):
+    def writeShareControlHeader(self, stream: BytesIO, header: ShareControlHeader, dataLength: int):
         pduType = (header.pduType.value & 0xf) | (header.version << 4)
         stream.write(Uint16LE.pack(dataLength + 6))
         stream.write(Uint16LE.pack(pduType))
         stream.write(Uint16LE.pack(header.source))
 
-    def parseShareDataHeader(self, stream: BytesIO, controlHeader: RDPShareControlHeader):
+    def parseShareDataHeader(self, stream: BytesIO, controlHeader: ShareControlHeader):
         shareID = Uint32LE.unpack(stream)
         stream.read(1)
         streamID = Uint8.unpack(stream)
@@ -116,7 +116,7 @@ class SlowPathParser(Parser):
         pduSubtype = Uint8.unpack(stream)
         compressedType = Uint8.unpack(stream)
         compressedLength = Uint16LE.unpack(stream)
-        return RDPShareDataHeader(controlHeader.pduType, controlHeader.version, controlHeader.source, shareID, streamID, uncompressedLength, SlowPathDataType(pduSubtype), compressedType, compressedLength)
+        return ShareDataHeader(controlHeader.pduType, controlHeader.version, controlHeader.source, shareID, streamID, uncompressedLength, SlowPathDataType(pduSubtype), compressedType, compressedLength)
 
     def writeShareDataHeader(self, stream: BytesIO, header, dataLength):
         substream = BytesIO()
@@ -143,9 +143,9 @@ class SlowPathParser(Parser):
         sessionID = Uint32LE.unpack(stream)
         parsedCapabilitySets = self.parseCapabilitySets(capabilitySets, numberCapabilities)
 
-        return RDPDemandActivePDU(header, shareID, sourceDescriptor, numberCapabilities, capabilitySets, sessionID, parsedCapabilitySets)
+        return DemandActivePDU(header, shareID, sourceDescriptor, numberCapabilities, capabilitySets, sessionID, parsedCapabilitySets)
 
-    def writeDemandActive(self, stream: BytesIO, pdu: RDPDemandActivePDU):
+    def writeDemandActive(self, stream: BytesIO, pdu: DemandActivePDU):
         Uint32LE.pack(pdu.shareID, stream)
         Uint16LE.pack(len(pdu.sourceDescriptor), stream)
 
@@ -171,8 +171,8 @@ class SlowPathParser(Parser):
         capabilitySetsRaw = stream.read(lengthCombinedCapabilities - 4)
         capabilitySets = self.parseCapabilitySets(capabilitySetsRaw, numberCapabilities)
 
-        return RDPConfirmActivePDU(header, shareID, originatorID, sourceDescriptor,
-                                   numberCapabilities, capabilitySets, capabilitySetsRaw)
+        return ConfirmActivePDU(header, shareID, originatorID, sourceDescriptor,
+                                numberCapabilities, capabilitySets, capabilitySetsRaw)
 
     def parseCapabilitySets(self, capabilitySetsRaw, numberCapabilities):
         stream = BytesIO(capabilitySetsRaw)
@@ -327,7 +327,7 @@ class SlowPathParser(Parser):
         capability.rawData = data
         return capability
 
-    def writeConfirmActive(self, stream: BytesIO, pdu: RDPConfirmActivePDU):
+    def writeConfirmActive(self, stream: BytesIO, pdu: ConfirmActivePDU):
         Uint32LE.pack(pdu.shareID, stream)
         Uint16LE.pack(pdu.originatorID, stream)
         Uint16LE.pack(len(pdu.sourceDescriptor), stream)
@@ -367,7 +367,7 @@ class SlowPathParser(Parser):
 
     def parseError(self, stream: BytesIO, header):
         errorInfo = Uint32LE.unpack(stream)
-        return RDPSetErrorInfoPDU(header, ErrorInfo(errorInfo))
+        return SetErrorInfoPDU(header, ErrorInfo(errorInfo))
 
     def writeError(self, stream: BytesIO, pdu):
         Uint32LE.pack(pdu.errorInfo, stream)
@@ -375,7 +375,7 @@ class SlowPathParser(Parser):
     def parseSynchronize(self, stream: BytesIO, header):
         messageType = Uint16LE.unpack(stream)
         targetUser = Uint16LE.unpack(stream)
-        return RDPSynchronizePDU(header, messageType, targetUser)
+        return SynchronizePDU(header, messageType, targetUser)
 
     def writeSynchronize(self, stream: BytesIO, pdu):
         Uint16LE.pack(pdu.messageType, stream)
@@ -385,7 +385,7 @@ class SlowPathParser(Parser):
         action = Uint16LE.unpack(stream)
         grantID = Uint16LE.unpack(stream)
         controlID = Uint32LE.unpack(stream)
-        return RDPControlPDU(header, action, grantID, controlID)
+        return ControlPDU(header, action, grantID, controlID)
 
     def writeControl(self, stream: BytesIO, pdu):
         Uint16LE.pack(pdu.action, stream)
@@ -396,23 +396,23 @@ class SlowPathParser(Parser):
         numEvents = Uint16LE.unpack(stream)
         stream.read(2)
 
-        parser = RDPInputParser()
+        parser = SlowPathInputParser()
         inputEvents = [parser.parse(stream) for _ in range(numEvents)]
 
-        return RDPInputPDU(header, inputEvents)
+        return InputPDU(header, inputEvents)
 
     def writeInput(self, stream: BytesIO, pdu):
         Uint16LE.pack(len(pdu.events), stream)
         stream.write(b"\x00" * 2)
 
-        parser = RDPInputParser()
+        parser = SlowPathInputParser()
         for event in pdu.events:
             stream.write(parser.write(event))
 
     def parsePointer(self, stream: BytesIO, header):
         parser = PointerEventParser()
         event = parser.parse(stream)
-        return RDPPointerPDU(header, event)
+        return PointerPDU(header, event)
 
     def writePointer(self, stream: BytesIO, pdu):
         parser = PointerEventParser()
@@ -421,7 +421,7 @@ class SlowPathParser(Parser):
     def parsePlaySound(self, stream: BytesIO, header):
         duration = Uint32LE.unpack(stream)
         frequency = Uint32LE.unpack(stream)
-        return RDPPlaySoundPDU(header, duration, frequency)
+        return PlaySoundPDU(header, duration, frequency)
 
     def writePlaySound(self, stream: BytesIO, pdu):
         Uint32LE.pack(pdu.duration, stream)
@@ -434,7 +434,7 @@ class SlowPathParser(Parser):
         top = Uint16LE.unpack(stream)
         right = Uint16LE.unpack(stream)
         bottom = Uint16LE.unpack(stream)
-        return RDPSuppressOutputPDU(header, allowDisplayUpdates, left, top, right, bottom)
+        return SuppressOutputPDU(header, allowDisplayUpdates, left, top, right, bottom)
 
     def writeSuppressOutput(self, stream: BytesIO, pdu):
         Uint8.pack(int(pdu.allowDisplayUpdates), stream)
@@ -447,9 +447,9 @@ class SlowPathParser(Parser):
     def parseUpdate(self, stream: BytesIO, header):
         updateType = Uint16LE.unpack(stream)
         updateData = stream.read(header.uncompressedLength - 18)
-        return RDPUpdatePDU(header, updateType, updateData)
+        return UpdatePDU(header, updateType, updateData)
 
-    def writeUpdate(self, stream: BytesIO, pdu: RDPUpdatePDU):
+    def writeUpdate(self, stream: BytesIO, pdu: UpdatePDU):
         Uint16LE.pack(pdu.updateType, stream)
         stream.write(pdu.updateData)
 

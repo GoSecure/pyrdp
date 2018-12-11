@@ -26,7 +26,7 @@ class ClientInfoFlags:
     INFO_CompressionTypeMask = 0x00001E00
 
 
-class RDPSecurityFlags:
+class SecurityFlags:
     SEC_EXCHANGE_PKT = 0x0001
     SEC_TRANSPORT_REQ = 0x0002
     SEC_TRANSPORT_RSP = 0x0004
@@ -45,7 +45,7 @@ class RDPSecurityFlags:
     SEC_FLAGSHI_VALID = 0x8000
 
 
-class RDPSecurityHeaderType(IntEnum):
+class SecurityHeaderType(IntEnum):
     NONE = 0
     BASIC = 1
     SIGNED = 2
@@ -188,7 +188,7 @@ class SlowPathDataType(IntEnum):
     PDUTYPE2_MONITOR_LAYOUT_PDU = 0x37
 
 
-class RDPConnectionDataType(IntEnum):
+class ConnectionDataType(IntEnum):
     SERVER_CORE = 0x0C01
     SERVER_SECURITY = 0x0C02
     SERVER_NETWORK = 0x0C03

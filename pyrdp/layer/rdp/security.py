@@ -1,20 +1,20 @@
 from binascii import hexlify
 
 from pyrdp.core import ObservedBy
-from pyrdp.enum import EncryptionMethod, RDPSecurityFlags
+from pyrdp.enum import EncryptionMethod, SecurityFlags
 from pyrdp.layer.layer import Layer, LayerObserver
 from pyrdp.logging import log
-from pyrdp.parser import Parser, RDPBasicSecurityParser, RDPClientInfoParser, RDPFIPSSecurityParser, \
-    RDPSignedSecurityParser
-from pyrdp.pdu import RDPClientInfoPDU, RDPSecurityExchangePDU, RDPSecurityPDU
+from pyrdp.parser import Parser, BasicSecurityParser, ClientInfoParser, FIPSSecurityParser, \
+    SignedSecurityParser
+from pyrdp.pdu import ClientInfoPDU, SecurityExchangePDU, SecurityPDU
 from pyrdp.security import RC4Crypter
 
 
-class RDPSecurityObserver(LayerObserver):
+class SecurityObserver(LayerObserver):
     def onSecurityExchangeReceived(self, pdu):
         """
         Called when a Security Exchange PDU is received.
-        :type pdu: RDPSecurityExchangePDU
+        :type pdu: SecurityExchangePDU
         """
         pass
 
@@ -33,20 +33,20 @@ class RDPSecurityObserver(LayerObserver):
         pass
 
 
-@ObservedBy(RDPSecurityObserver)
-class RDPSecurityLayer(Layer):
+@ObservedBy(SecurityObserver)
+class SecurityLayer(Layer):
     """
     Layer for security related traffic.
     """
 
-    def __init__(self, parser: RDPBasicSecurityParser):
+    def __init__(self, parser: BasicSecurityParser):
         """
         :param parser: the parser to use for security traffic.
         :type parser: Parser
         """
         Layer.__init__(self, parser, hasNext=True)
         self.mainParser = parser
-        self.clientInfoParser = RDPClientInfoParser()
+        self.clientInfoParser = ClientInfoParser()
 
     @staticmethod
     def create(encryptionMethod, crypter):
@@ -57,11 +57,11 @@ class RDPSecurityLayer(Layer):
         :return: RDPSecurityLayer
         """
         if encryptionMethod in [EncryptionMethod.ENCRYPTION_40BIT, EncryptionMethod.ENCRYPTION_56BIT, EncryptionMethod.ENCRYPTION_128BIT]:
-            parser = RDPSignedSecurityParser(crypter)
-            return RDPSecurityLayer(parser)
+            parser = SignedSecurityParser(crypter)
+            return SecurityLayer(parser)
         elif encryptionMethod == EncryptionMethod.ENCRYPTION_FIPS:
-            parser = RDPFIPSSecurityParser(crypter)
-            return RDPSecurityLayer(parser)
+            parser = FIPSSecurityParser(crypter)
+            return SecurityLayer(parser)
 
     def recv(self, data):
         pdu = self.mainParser.parse(data)
@@ -70,7 +70,7 @@ class RDPSecurityLayer(Layer):
         except KeyboardInterrupt:
             raise
         except Exception:
-            if isinstance(pdu, RDPSecurityExchangePDU):
+            if isinstance(pdu, SecurityExchangePDU):
                 log.error("Exception occurred when receiving Security Exchange. Data: %(securityExchangeData)s",
                           {"securityExchangeData": hexlify(data)})
             else:
@@ -83,20 +83,20 @@ class RDPSecurityLayer(Layer):
         :param pdu: the pdu.
         :type pdu: PDU.
         """
-        if pdu.header & RDPSecurityFlags.SEC_EXCHANGE_PKT != 0:
+        if pdu.header & SecurityFlags.SEC_EXCHANGE_PKT != 0:
             if self.observer:
                 self.observer.onSecurityExchangeReceived(pdu)
-        elif pdu.header & RDPSecurityFlags.SEC_INFO_PKT != 0:
+        elif pdu.header & SecurityFlags.SEC_INFO_PKT != 0:
             if self.observer:
                 self.observer.onClientInfoReceived(pdu.payload)
-        elif pdu.header & RDPSecurityFlags.SEC_LICENSE_PKT != 0:
+        elif pdu.header & SecurityFlags.SEC_LICENSE_PKT != 0:
             if self.observer:
                 self.observer.onLicensingDataReceived(pdu.payload)
         else:
             self.pduReceived(pdu, self.hasNext)
 
     def send(self, data: bytes, header=0):
-        pdu = RDPSecurityPDU(header, data)
+        pdu = SecurityPDU(header, data)
         data = self.mainParser.write(pdu)
         self.previous.send(data)
 
@@ -106,17 +106,17 @@ class RDPSecurityLayer(Layer):
         :param clientRandom: the client random data.
         :type clientRandom: bytes
         """
-        pdu = RDPSecurityExchangePDU(RDPSecurityFlags.SEC_EXCHANGE_PKT, clientRandom + b"\x00" * 8)
+        pdu = SecurityExchangePDU(SecurityFlags.SEC_EXCHANGE_PKT, clientRandom + b"\x00" * 8)
         data = self.mainParser.writeSecurityExchange(pdu)
         self.previous.send(data)
 
     def sendClientInfo(self, pdu):
         """
         Send a client info PDU.
-        :type pdu: RDPClientInfoPDU
+        :type pdu: ClientInfoPDU
         """
         data = self.clientInfoParser.write(pdu)
-        pdu = RDPSecurityPDU(RDPSecurityFlags.SEC_INFO_PKT, data)
+        pdu = SecurityPDU(SecurityFlags.SEC_INFO_PKT, data)
         data = self.mainParser.write(pdu)
         self.previous.send(data)
 
@@ -125,11 +125,11 @@ class RDPSecurityLayer(Layer):
         Send raw licensing data.
         :type data: bytes
         """
-        pdu = RDPSecurityPDU(RDPSecurityFlags.SEC_LICENSE_PKT, data)
+        pdu = SecurityPDU(SecurityFlags.SEC_LICENSE_PKT, data)
         self.previous.send(self.mainParser.write(pdu))
 
 
-class TLSSecurityLayer(RDPSecurityLayer):
+class TLSSecurityLayer(SecurityLayer):
     """
     Security layer used when the connection uses TLS.
     If securityHeadExpected is True, then the layer expects to receive a basic security header.
@@ -137,17 +137,17 @@ class TLSSecurityLayer(RDPSecurityLayer):
     """
 
     def __init__(self):
-        RDPSecurityLayer.__init__(self, RDPBasicSecurityParser())
+        SecurityLayer.__init__(self, BasicSecurityParser())
         self.securityHeaderExpected = False
 
     def recv(self, data):
         if not self.securityHeaderExpected:
             self.next.recv(data)
         else:
-            RDPSecurityLayer.recv(self, data)
+            SecurityLayer.recv(self, data)
 
     def send(self, data, header = 0):
         if not self.securityHeaderExpected:
             self.previous.send(data)
         else:
-            RDPSecurityLayer.send(self, data, header)
+            SecurityLayer.send(self, data, header)

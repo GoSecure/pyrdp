@@ -5,7 +5,7 @@ from pyrdp.core import getLoggerPassFilters
 from pyrdp.core.ssl import ClientTLSContext
 from pyrdp.enum import ClientInfoFlags, ParserMode, PlayerMessageType, SegmentationPDUType, VirtualChannelName
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, GCCClientConnectionLayer, \
-    MCSClientConnectionLayer, MCSLayer, RawLayer, RDPClientConnectionLayer, SlowPathLayer, RDPSecurityLayer, \
+    MCSClientConnectionLayer, MCSLayer, RawLayer, ClientConnectionLayer, SlowPathLayer, SecurityLayer, \
     SegmentationLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
 from pyrdp.logging import LOGGER_NAMES, RC4LoggingObserver
 from pyrdp.mcs import MCSChannelFactory, MCSClientChannel, MCSClientRouter, MCSUserObserver
@@ -13,10 +13,10 @@ from pyrdp.mitm.observer import MITMFastPathObserver, MITMSlowPathObserver
 from pyrdp.mitm.virtual_channel.clipboard import ActiveClipboardChannelObserver
 from pyrdp.mitm.virtual_channel.device_redirection import ClientPassiveDeviceRedirectionObserver
 from pyrdp.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
-from pyrdp.parser import createFastPathParser, RDPNegotiationRequestParser, RDPNegotiationResponseParser
-from pyrdp.pdu import GCCConferenceCreateResponsePDU, RDPClientInfoPDU
+from pyrdp.parser import createFastPathParser, NegotiationRequestParser, NegotiationResponseParser
+from pyrdp.pdu import GCCConferenceCreateResponsePDU, ClientInfoPDU
 from pyrdp.pdu.gcc import GCCConferenceCreateRequestPDU
-from pyrdp.pdu.rdp.connection import RDPClientDataPDU
+from pyrdp.pdu.rdp.connection import ClientDataPDU
 from pyrdp.recording import FileLayer, Recorder, RecordingFastPathObserver, RecordingSlowPathObserver, SocketLayer
 from pyrdp.security import RC4CrypterProxy, SecuritySettings
 
@@ -69,7 +69,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.gccConnect = GCCClientConnectionLayer(b"1")
         self.gccConnect.createObserver(onPDUReceived=self.onConferenceCreateResponse)
 
-        self.rdpConnect = RDPClientConnectionLayer()
+        self.rdpConnect = ClientConnectionLayer()
         self.rdpConnect.createObserver(onPDUReceived=self.onServerData)
 
         self.securityLayer = None
@@ -99,7 +99,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         """
         self.log.debug("TCP connected")
         negotiation = self.server.getNegotiationPDU()
-        parser = RDPNegotiationRequestParser()
+        parser = NegotiationRequestParser()
         self.x224.sendConnectionRequest(parser.write(negotiation))
 
     def onDisconnection(self, reason):
@@ -126,7 +126,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         """
         self.log.debug("Connection Confirm received")
 
-        parser = RDPNegotiationResponseParser()
+        parser = NegotiationResponseParser()
         response = parser.parse(pdu.payload)
 
         if response.tlsSelected:
@@ -135,7 +135,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
         self.server.onConnectionConfirm(pdu)
 
-    def onConnectInitial(self, gccConferenceCreateRequest: GCCConferenceCreateRequestPDU, clientData: RDPClientDataPDU):
+    def onConnectInitial(self, gccConferenceCreateRequest: GCCConferenceCreateRequestPDU, clientData: ClientDataPDU):
         """
         Called when a Connect Initial PDU is received.
         :param gccConferenceCreateRequest: the conference create request.
@@ -226,7 +226,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         if self.useTLS:
             return TLSSecurityLayer()
         else:
-            return RDPSecurityLayer.create(encryptionMethod, self.crypter)
+            return SecurityLayer.create(encryptionMethod, self.crypter)
 
     def buildVirtualChannel(self, mcs, userID, channelID) -> MCSClientChannel:
         channel = MCSClientChannel(mcs, userID, channelID)
@@ -328,7 +328,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
     def onChannelJoinRefused(self, user, result, channelID):
         self.server.onChannelJoinRefused(user, result, channelID)
 
-    def onClientInfoPDUReceived(self, pdu: RDPClientInfoPDU):
+    def onClientInfoPDUReceived(self, pdu: ClientInfoPDU):
 
         # If set, replace the provided username and password to connect the user regardless of
         # the credentials they entered.

@@ -5,7 +5,7 @@ from pyrdp.pdu.pdu import PDU
 from pyrdp.pdu.rdp.capability import Capability
 
 
-class RDPShareControlHeader(PDU):
+class ShareControlHeader(PDU):
     def __init__(self, pduType, version, source):
         super().__init__()
         self.pduType = pduType
@@ -13,9 +13,9 @@ class RDPShareControlHeader(PDU):
         self.source = source
 
 
-class RDPShareDataHeader(RDPShareControlHeader):
+class ShareDataHeader(ShareControlHeader):
     def __init__(self, pduType, version, source, shareID, streamID, uncompressedLength, subtype, compressedType, compressedLength):
-        RDPShareControlHeader.__init__(self, pduType, version, source)
+        ShareControlHeader.__init__(self, pduType, version, source)
         self.shareID = shareID
         self.streamID = streamID
         self.uncompressedLength = uncompressedLength
@@ -24,22 +24,22 @@ class RDPShareDataHeader(RDPShareControlHeader):
         self.compressedLength = compressedLength
 
 
-class RDPSlowPathPDU(PDU):
+class SlowPathPDU(PDU):
     """
     Base class for slow-path PDUs
     """
 
-    def __init__(self, header: RDPShareControlHeader):
+    def __init__(self, header: ShareControlHeader):
         super().__init__()
         self.header = header
 
 
-class RDPDemandActivePDU(RDPSlowPathPDU):
+class DemandActivePDU(SlowPathPDU):
     """
     https://msdn.microsoft.com/en-us/library/cc240484.aspx
     """
 
-    def __init__(self, header: RDPShareControlHeader, shareID: int, sourceDescriptor: bytes, numberCapabilities: int,
+    def __init__(self, header: ShareControlHeader, shareID: int, sourceDescriptor: bytes, numberCapabilities: int,
                  capabilitySets: bytes, sessionID: int, parsedCapabilitySets: Dict[CapabilityType, Capability] = None):
 
         super().__init__(header)
@@ -51,7 +51,7 @@ class RDPDemandActivePDU(RDPSlowPathPDU):
         self.parsedCapabilitySets = parsedCapabilitySets
 
 
-class RDPConfirmActivePDU(RDPSlowPathPDU):
+class ConfirmActivePDU(SlowPathPDU):
     def __init__(self, header, shareID, originatorID, sourceDescriptor, numberCapabilities, parsedCapabilitySets,
                  capabilitySetsRaw):
 
@@ -64,13 +64,13 @@ class RDPConfirmActivePDU(RDPSlowPathPDU):
         self.capabilitySets = capabilitySetsRaw
 
 
-class RDPSetErrorInfoPDU(RDPSlowPathPDU):
+class SetErrorInfoPDU(SlowPathPDU):
     def __init__(self, header, errorInfo):
         super().__init__(header)
         self.errorInfo = errorInfo
 
 
-class RDPSynchronizePDU(RDPSlowPathPDU):
+class SynchronizePDU(SlowPathPDU):
     def __init__(self, header, messageType, targetUser):
 
         super().__init__(header)
@@ -78,7 +78,7 @@ class RDPSynchronizePDU(RDPSlowPathPDU):
         self.targetUser = targetUser
 
 
-class RDPControlPDU(RDPSlowPathPDU):
+class ControlPDU(SlowPathPDU):
     def __init__(self, header, action, grantID, controlID):
         super().__init__(header)
         self.action = action
@@ -86,28 +86,28 @@ class RDPControlPDU(RDPSlowPathPDU):
         self.controlID = controlID
 
 
-class RDPInputPDU(RDPSlowPathPDU):
+class InputPDU(SlowPathPDU):
     def __init__(self, header, events):
         super().__init__(header)
         self.header = header
         self.events = events
 
 
-class RDPPlaySoundPDU(RDPSlowPathPDU):
+class PlaySoundPDU(SlowPathPDU):
     def __init__(self, header, duration, frequency):
         super().__init__(header)
         self.duration = duration
         self.frequency = frequency
 
 
-class RDPPointerPDU(RDPSlowPathPDU):
+class PointerPDU(SlowPathPDU):
     def __init__(self, header, event):
 
         super().__init__(header)
         self.event = event
 
 
-class RDPSuppressOutputPDU(RDPSlowPathPDU):
+class SuppressOutputPDU(SlowPathPDU):
     def __init__(self, header, allowDisplayUpdates, left, top, right, bottom):
 
         super().__init__(header)
@@ -118,8 +118,8 @@ class RDPSuppressOutputPDU(RDPSlowPathPDU):
         self.bottom = bottom
 
 
-class RDPUpdatePDU(RDPSlowPathPDU):
-    def __init__(self, header: RDPShareDataHeader, updateType: SlowPathUpdateType, updateData: bytes):
+class UpdatePDU(SlowPathPDU):
+    def __init__(self, header: ShareDataHeader, updateType: SlowPathUpdateType, updateData: bytes):
         super().__init__(header)
         self.updateType = updateType
         self.updateData = updateData

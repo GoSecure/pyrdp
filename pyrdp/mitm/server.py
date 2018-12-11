@@ -11,7 +11,7 @@ from pyrdp.core.ssl import ServerTLSContext
 from pyrdp.enum import CapabilityType, EncryptionLevel, EncryptionMethod, InputEventType, NegotiationProtocols, \
     OrderFlag, ParserMode, PlayerMessageType, SlowPathDataType, SegmentationPDUType, VirtualChannelName
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, MCSLayer, RawLayer, SlowPathLayer, \
-    RDPSecurityLayer, SegmentationLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
+    SecurityLayer, SegmentationLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
 from pyrdp.logging import ConnectionMetadataFilter, LOGGER_NAMES, RC4LoggingObserver
 from pyrdp.mcs import MCSChannelFactory, MCSServerChannel, MCSUserObserver
 from pyrdp.mitm.client import MITMClient
@@ -21,11 +21,11 @@ from pyrdp.mitm.router import MITMServerRouter
 from pyrdp.mitm.virtual_channel.clipboard import PassiveClipboardChannelObserver
 from pyrdp.mitm.virtual_channel.device_redirection import ServerPassiveDeviceRedirectionObserver
 from pyrdp.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
-from pyrdp.parser import createFastPathParser, GCCParser, RDPClientConnectionParser, RDPClientInfoParser, \
-    RDPNegotiationRequestParser, RDPNegotiationResponseParser, RDPServerConnectionParser
+from pyrdp.parser import createFastPathParser, GCCParser, ClientConnectionParser, ClientInfoParser, \
+    NegotiationRequestParser, NegotiationResponseParser, ServerConnectionParser
 from pyrdp.pdu import Capability, GCCConferenceCreateRequestPDU, GCCConferenceCreateResponsePDU, MCSConnectResponsePDU, \
-    MultifragmentUpdateCapability, ProprietaryCertificate, RDPNegotiationRequestPDU, RDPNegotiationResponsePDU, \
-    RDPServerDataPDU, ServerSecurityData
+    MultifragmentUpdateCapability, ProprietaryCertificate, NegotiationRequestPDU, NegotiationResponsePDU, \
+    ServerDataPDU, ServerSecurityData
 from pyrdp.recording import FileLayer, Recorder, RecordingFastPathObserver, RecordingSlowPathObserver, SocketLayer
 from pyrdp.security import RC4CrypterProxy, SecuritySettings
 
@@ -90,9 +90,9 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
 
         self.gcc = GCCParser()
 
-        self.rdpClientInfoParser = RDPClientInfoParser()
-        self.rdpClientConnectionParser = RDPClientConnectionParser()
-        self.rdpServerConnectionParser = RDPServerConnectionParser()
+        self.rdpClientInfoParser = ClientInfoParser()
+        self.rdpClientConnectionParser = ClientConnectionParser()
+        self.rdpServerConnectionParser = ServerConnectionParser()
 
         self.securityLayer = None
         self.slowPathLayer = SlowPathLayer()
@@ -183,7 +183,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
 
         # We need to save the original negotiation PDU because Windows will cut the connection if it
         # sees that the requested protocols have changed.
-        parser = RDPNegotiationRequestParser()
+        parser = NegotiationRequestParser()
         self.originalNegotiationPDU = parser.parse(pdu.payload)
 
         if self.originalNegotiationPDU.cookie:
@@ -194,7 +194,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         # Only SSL is implemented, so remove other protocol flags
         chosenProtocols = self.originalNegotiationPDU.requestedProtocols & NegotiationProtocols.SSL \
             if self.originalNegotiationPDU.requestedProtocols is not None else None
-        self.targetNegotiationPDU = RDPNegotiationRequestPDU(
+        self.targetNegotiationPDU = NegotiationRequestPDU(
             self.originalNegotiationPDU.cookie,
             self.originalNegotiationPDU.flags,
             chosenProtocols,
@@ -209,8 +209,8 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         # X224 Response
         protocols = NegotiationProtocols.SSL if self.originalNegotiationPDU.tlsSupported else NegotiationProtocols.NONE
 
-        parser = RDPNegotiationResponseParser()
-        payload = parser.write(RDPNegotiationResponsePDU(0x00, protocols))
+        parser = NegotiationResponseParser()
+        payload = parser.write(NegotiationResponsePDU(0x00, protocols))
         self.x224.sendConnectionConfirm(payload, source=0x1234)
 
         if self.originalNegotiationPDU.tlsSupported:
@@ -239,7 +239,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         # MCS Connect Response
         """
         :type pdu: MCSConnectResponsePDU
-        :type serverData: RDPServerDataPDU
+        :type serverData: ServerDataPDU
         """
         if pdu.result != 0:
             self.mcs.send(pdu)
@@ -269,9 +269,9 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         serverData.core.clientRequestedProtocols = self.originalNegotiationPDU.requestedProtocols
 
         self.securitySettings.serverSecurityReceived(security)
-        self.serverData = RDPServerDataPDU(serverData.core, security, serverData.network)
+        self.serverData = ServerDataPDU(serverData.core, security, serverData.network)
 
-        rdpParser = RDPServerConnectionParser()
+        rdpParser = ServerConnectionParser()
         gccParser = GCCParser()
 
         gcc = self.client.conferenceCreateResponse
@@ -322,7 +322,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         if self.useTLS:
             return TLSSecurityLayer()
         else:
-            return RDPSecurityLayer.create(encryptionMethod, self.crypter)
+            return SecurityLayer.create(encryptionMethod, self.crypter)
 
     def buildVirtualChannel(self, mcs: MCSLayer, userID: int, channelID: int) -> MCSServerChannel:
         channel = MCSServerChannel(mcs, userID, channelID)
@@ -463,7 +463,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         Called when client info data is received.
         Record the PDU and send it to the MITMClient.
         """
-        pdu = RDPClientInfoParser().parse(data)
+        pdu = ClientInfoParser().parse(data)
 
         clientAddress = None
         if pdu.extraInfo:

@@ -4,8 +4,8 @@ from typing import BinaryIO, Dict, List, Optional
 from pyrdp.enum import ParserMode, PlayerMessageType
 from pyrdp.layer import Layer, PlayerMessageLayer, TPKTLayer
 from pyrdp.logging import log
-from pyrdp.parser import ClipboardParser, Parser, RDPBasicFastPathParser, RDPClientInfoParser, SlowPathParser
-from pyrdp.parser.rdp.connection import RDPClientConnectionParser
+from pyrdp.parser import ClipboardParser, Parser, BasicFastPathParser, ClientInfoParser, SlowPathParser
+from pyrdp.parser.rdp.connection import ClientConnectionParser
 from pyrdp.pdu import PDU
 
 
@@ -18,12 +18,12 @@ class Recorder:
 
     def __init__(self, transportLayers: List[Layer]):
         self.parsers: Dict[PlayerMessageType, Parser] = {
-            PlayerMessageType.FAST_PATH_INPUT: RDPBasicFastPathParser(ParserMode.CLIENT),
-            PlayerMessageType.FAST_PATH_OUTPUT: RDPBasicFastPathParser(ParserMode.SERVER),
-            PlayerMessageType.CLIENT_INFO: RDPClientInfoParser(),
+            PlayerMessageType.FAST_PATH_INPUT: BasicFastPathParser(ParserMode.CLIENT),
+            PlayerMessageType.FAST_PATH_OUTPUT: BasicFastPathParser(ParserMode.SERVER),
+            PlayerMessageType.CLIENT_INFO: ClientInfoParser(),
             PlayerMessageType.SLOW_PATH_PDU: SlowPathParser(),
             PlayerMessageType.CLIPBOARD_DATA: ClipboardParser(),
-            PlayerMessageType.CLIENT_DATA: RDPClientConnectionParser(),
+            PlayerMessageType.CLIENT_DATA: ClientConnectionParser(),
         }
 
         self.topLayers = []

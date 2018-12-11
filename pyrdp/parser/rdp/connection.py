@@ -6,35 +6,35 @@ from Crypto.Util.number import bytes_to_long, long_to_bytes
 
 from pyrdp.core import decodeUTF16LE, encodeUTF16LE, StrictStream, Uint16LE, Uint32LE, Uint8
 from pyrdp.enum import ColorDepth, ConnectionType, DesktopOrientation, EncryptionLevel, EncryptionMethod, \
-    HighColorDepth, KeyboardType, RDPConnectionDataType, RDPVersion, ServerCertificateType
+    HighColorDepth, KeyboardType, ConnectionDataType, RDPVersion, ServerCertificateType
 from pyrdp.exceptions import ParsingError, UnknownPDUTypeError
 from pyrdp.parser.parser import Parser
 from pyrdp.pdu import ClientChannelDefinition, ClientClusterData, ClientCoreData, ClientNetworkData, ClientSecurityData, \
-    ProprietaryCertificate, RDPClientDataPDU, RDPServerDataPDU, ServerCoreData, ServerNetworkData, ServerSecurityData
+    ProprietaryCertificate, ClientDataPDU, ServerDataPDU, ServerCoreData, ServerNetworkData, ServerSecurityData
 
 
-class RDPClientConnectionParser(Parser):
+class ClientConnectionParser(Parser):
     """
     Parser for Client Data PDUs (i.e: servers).
     """
     def __init__(self):
         super().__init__()
         self.parsers = {
-            RDPConnectionDataType.CLIENT_CORE: self.parseClientCoreData,
-            RDPConnectionDataType.CLIENT_SECURITY: self.parseClientSecurityData,
-            RDPConnectionDataType.CLIENT_NETWORK: self.parseClientNetworkData,
-            RDPConnectionDataType.CLIENT_CLUSTER: self.parseClientClusterData,
+            ConnectionDataType.CLIENT_CORE: self.parseClientCoreData,
+            ConnectionDataType.CLIENT_SECURITY: self.parseClientSecurityData,
+            ConnectionDataType.CLIENT_NETWORK: self.parseClientNetworkData,
+            ConnectionDataType.CLIENT_CLUSTER: self.parseClientClusterData,
         }
 
         self.writers = {
-            RDPConnectionDataType.CLIENT_CORE: self.writeClientCoreData,
-            RDPConnectionDataType.CLIENT_SECURITY: self.writeClientSecurityData,
-            RDPConnectionDataType.CLIENT_NETWORK: self.writeClientNetworkData,
-            RDPConnectionDataType.CLIENT_CLUSTER: self.writeClientClusterData,
+            ConnectionDataType.CLIENT_CORE: self.writeClientCoreData,
+            ConnectionDataType.CLIENT_SECURITY: self.writeClientSecurityData,
+            ConnectionDataType.CLIENT_NETWORK: self.writeClientNetworkData,
+            ConnectionDataType.CLIENT_CLUSTER: self.writeClientClusterData,
 
         }
 
-    def parse(self, data: bytes) -> RDPClientDataPDU:
+    def parse(self, data: bytes) -> ClientDataPDU:
         """
         Decode a Client Data PDU from bytes.
         :param data: Client Data PDU data.
@@ -48,19 +48,19 @@ class RDPClientConnectionParser(Parser):
         while stream.tell() != len(stream.getvalue()) and (core is None or security is None or network is None or cluster is None):
             structure = self.parseStructure(stream)
 
-            if structure.header == RDPConnectionDataType.CLIENT_CORE:
+            if structure.header == ConnectionDataType.CLIENT_CORE:
                 core = structure
-            elif structure.header == RDPConnectionDataType.CLIENT_SECURITY:
+            elif structure.header == ConnectionDataType.CLIENT_SECURITY:
                 security = structure
-            elif structure.header == RDPConnectionDataType.CLIENT_NETWORK:
+            elif structure.header == ConnectionDataType.CLIENT_NETWORK:
                 network = structure
-            elif structure.header == RDPConnectionDataType.CLIENT_CLUSTER:
+            elif structure.header == ConnectionDataType.CLIENT_CLUSTER:
                 cluster = structure
 
             if len(stream.getvalue()) == 0:
                 break
 
-        return RDPClientDataPDU(core, security, network, cluster)
+        return ClientDataPDU(core, security, network, cluster)
 
     def parseStructure(self, stream):
         header = Uint16LE.unpack(stream)
@@ -150,7 +150,7 @@ class RDPClientConnectionParser(Parser):
         """
         Encode a Client Data PDU to bytes.
         :param pdu: the Client Data PDU
-        :type pdu: RDPClientDataPDU
+        :type pdu: ClientDataPDU
         :return: str
         """
         stream = BytesIO()
@@ -235,7 +235,7 @@ class RDPClientConnectionParser(Parser):
         stream.write(Uint32LE.pack(cluster.redirectedSessionID))
 
 
-class RDPServerConnectionParser(Parser):
+class ServerConnectionParser(Parser):
     """
     Parser for Server Data PDUs (i.e: client).
     """
@@ -243,15 +243,15 @@ class RDPServerConnectionParser(Parser):
     def __init__(self):
         super().__init__()
         self.parsers = {
-            RDPConnectionDataType.SERVER_CORE: self.parseServerCoreData,
-            RDPConnectionDataType.SERVER_NETWORK: self.parseServerNetworkData,
-            RDPConnectionDataType.SERVER_SECURITY: self.parseServerSecurityData,
+            ConnectionDataType.SERVER_CORE: self.parseServerCoreData,
+            ConnectionDataType.SERVER_NETWORK: self.parseServerNetworkData,
+            ConnectionDataType.SERVER_SECURITY: self.parseServerSecurityData,
         }
 
         self.writers = {
-            RDPConnectionDataType.SERVER_CORE: self.writeServerCoreData,
-            RDPConnectionDataType.SERVER_NETWORK: self.writeServerNetworkData,
-            RDPConnectionDataType.SERVER_SECURITY: self.writeServerSecurityData,
+            ConnectionDataType.SERVER_CORE: self.writeServerCoreData,
+            ConnectionDataType.SERVER_NETWORK: self.writeServerNetworkData,
+            ConnectionDataType.SERVER_SECURITY: self.writeServerSecurityData,
         }
 
     def parse(self, data):
@@ -269,17 +269,17 @@ class RDPServerConnectionParser(Parser):
         while core is None or security is None or network is None:
             structure = self.parseStructure(stream)
 
-            if structure.header == RDPConnectionDataType.SERVER_CORE:
+            if structure.header == ConnectionDataType.SERVER_CORE:
                 core = structure
-            elif structure.header == RDPConnectionDataType.SERVER_SECURITY:
+            elif structure.header == ConnectionDataType.SERVER_SECURITY:
                 security = structure
-            elif structure.header == RDPConnectionDataType.SERVER_NETWORK:
+            elif structure.header == ConnectionDataType.SERVER_NETWORK:
                 network = structure
 
             if len(stream.getvalue()) == 0:
                 break
 
-        return RDPServerDataPDU(core, security, network)
+        return ServerDataPDU(core, security, network)
 
     def parseStructure(self, stream):
         header = Uint16LE.unpack(stream)
@@ -380,7 +380,7 @@ class RDPServerConnectionParser(Parser):
         """
         Encode a Server Data PDU to bytes
         :param pdu: the Server Data PDU
-        :type pdu: RDPServerDataPDU
+        :type pdu: ServerDataPDU
         :return: str
         """
         stream = BytesIO()

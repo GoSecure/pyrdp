@@ -7,7 +7,7 @@ from pyrdp.parser.parser import Parser
 from pyrdp.pdu import ExtendedMouseEvent, KeyboardEvent, MouseEvent, SynchronizeEvent, UnicodeKeyboardEvent, UnusedEvent
 
 
-class RDPInputParser(Parser):
+class SlowPathInputParser(Parser):
     def __init__(self):
         super().__init__()
         self.parsers = {

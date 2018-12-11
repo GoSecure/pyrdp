@@ -6,18 +6,18 @@ from pyrdp.enum import DrawingOrderControlFlags, EncryptionMethod, FastPathInput
     FastPathOutputCompressionType, FastPathOutputType, FastPathSecurityFlags, FIPSVersion, ParserMode
 from pyrdp.logging import log
 from pyrdp.parser.parser import Parser
-from pyrdp.parser.rdp.bitmap import RDPBitmapParser
-from pyrdp.parser.rdp.security import RDPBasicSecurityParser
+from pyrdp.parser.rdp.bitmap import BitmapParser
+from pyrdp.parser.rdp.security import BasicSecurityParser
 from pyrdp.pdu import FastPathBitmapEvent, FastPathEventRaw, FastPathMouseEvent, FastPathOrdersEvent, FastPathPDU, \
     FastPathScanCodeEvent, SecondaryDrawingOrder
 from pyrdp.security import RC4Crypter
 
 
-class RDPBasicFastPathParser(RDPBasicSecurityParser):
+class BasicFastPathParser(BasicSecurityParser):
     def __init__(self, mode):
         super().__init__()
         self.mode = mode
-        input, output = RDPInputEventParser(), RDPOutputEventParser()
+        input, output = FastPathInputParser(), FastPathOutputParser()
 
         if mode == ParserMode.CLIENT:
             self.readParser = output
@@ -154,9 +154,9 @@ class RDPBasicFastPathParser(RDPBasicSecurityParser):
         return 0
 
 
-class RDPSignedFastPathParser(RDPBasicFastPathParser):
+class SignedFastPathParser(BasicFastPathParser):
     def __init__(self, crypter, mode):
-        RDPBasicFastPathParser.__init__(self, mode)
+        BasicFastPathParser.__init__(self, mode)
         self.crypter = crypter
         self.eventData = b""
 
@@ -186,7 +186,7 @@ class RDPSignedFastPathParser(RDPBasicFastPathParser):
         signature = self.crypter.sign(self.eventData, True)
 
         stream.write(signature)
-        RDPBasicFastPathParser.writeBody(self, stream, pdu)
+        BasicFastPathParser.writeBody(self, stream, pdu)
 
     def writePayload(self, stream, pdu):
         eventData = self.crypter.encrypt(self.eventData)
@@ -196,15 +196,15 @@ class RDPSignedFastPathParser(RDPBasicFastPathParser):
         stream.write(eventData)
 
     def calculatePDULength(self, pdu):
-        return RDPBasicFastPathParser.calculatePDULength(self, pdu) + 8
+        return BasicFastPathParser.calculatePDULength(self, pdu) + 8
 
     def getHeaderFlags(self):
         return FastPathSecurityFlags.FASTPATH_OUTPUT_ENCRYPTED | FastPathSecurityFlags.FASTPATH_OUTPUT_SECURE_CHECKSUM
 
 
-class RDPFIPSFastPathParser(RDPSignedFastPathParser):
+class FIPSFastPathParser(SignedFastPathParser):
     def __init__(self, crypter, mode):
-        RDPSignedFastPathParser.__init__(self, crypter, mode)
+        SignedFastPathParser.__init__(self, crypter, mode)
 
     def parse(self, data):
         stream = BytesIO(data)
@@ -230,7 +230,7 @@ class RDPFIPSFastPathParser(RDPSignedFastPathParser):
 
     def writeBody(self, stream, pdu):
         bodyStream = BytesIO()
-        RDPSignedFastPathParser.writeBody(self, bodyStream, pdu)
+        SignedFastPathParser.writeBody(self, bodyStream, pdu)
         body = bodyStream.getvalue()
 
         Uint16LE.pack(0x10, stream)
@@ -239,10 +239,10 @@ class RDPFIPSFastPathParser(RDPSignedFastPathParser):
         stream.write(body)
 
     def calculatePDULength(self, pdu):
-        return RDPSignedFastPathParser.calculatePDULength(self, pdu) + 4
+        return SignedFastPathParser.calculatePDULength(self, pdu) + 4
 
 
-class RDPInputEventParser(Parser):
+class FastPathInputParser(Parser):
     INPUT_EVENT_LENGTHS = {
         FastPathInputType.FASTPATH_INPUT_EVENT_SCANCODE: 2,
         FastPathInputType.FASTPATH_INPUT_EVENT_MOUSE: 7,
@@ -258,11 +258,11 @@ class RDPInputEventParser(Parser):
         elif isinstance(data, bytes):
             header = Uint8.unpack(data[0])
             type = (header & 0b11100000) >> 5
-            return RDPInputEventParser.INPUT_EVENT_LENGTHS[type]
+            return FastPathInputParser.INPUT_EVENT_LENGTHS[type]
         elif isinstance(data, FastPathScanCodeEvent):
-            return RDPInputEventParser.INPUT_EVENT_LENGTHS[FastPathInputType.FASTPATH_INPUT_EVENT_SCANCODE]
+            return FastPathInputParser.INPUT_EVENT_LENGTHS[FastPathInputType.FASTPATH_INPUT_EVENT_SCANCODE]
         elif isinstance(data, FastPathMouseEvent):
-            return RDPInputEventParser.INPUT_EVENT_LENGTHS[FastPathInputType.FASTPATH_INPUT_EVENT_MOUSE]
+            return FastPathInputParser.INPUT_EVENT_LENGTHS[FastPathInputType.FASTPATH_INPUT_EVENT_MOUSE]
         raise ValueError("Unsupported event type?")
 
     def parse(self, data):
@@ -310,7 +310,7 @@ class RDPInputEventParser(Parser):
         return rawData.getvalue()
 
 
-class RDPOutputEventParser(Parser):
+class FastPathOutputParser(Parser):
     def getEventLength(self, data):
         if isinstance(data, FastPathEventRaw):
             return len(data.data)
@@ -369,7 +369,7 @@ class RDPOutputEventParser(Parser):
         rawBitmapUpdateData = fastPathBitmapEvent.rawBitmapUpdateData
         stream = BytesIO(rawBitmapUpdateData)
         updateType = Uint16LE.unpack(stream.read(2))
-        bitmapData = RDPBitmapParser().parseBitmapUpdateData(stream.read())
+        bitmapData = BitmapParser().parseBitmapUpdateData(stream.read())
 
         return FastPathBitmapEvent(fastPathBitmapEvent.header, fastPathBitmapEvent.compressionFlags,
                                    bitmapData, rawBitmapUpdateData)
@@ -439,10 +439,10 @@ def createFastPathParser(tls, encryptionMethod, crypter, mode):
     :type mode: ParserMode
     """
     if tls:
-        return RDPBasicFastPathParser(mode)
+        return BasicFastPathParser(mode)
     elif encryptionMethod in [EncryptionMethod.ENCRYPTION_40BIT, EncryptionMethod.ENCRYPTION_56BIT, EncryptionMethod.ENCRYPTION_128BIT]:
-        return RDPSignedFastPathParser(crypter, mode)
+        return SignedFastPathParser(crypter, mode)
     elif encryptionMethod == EncryptionMethod.ENCRYPTION_FIPS:
-        return RDPFIPSFastPathParser(crypter, mode)
+        return FIPSFastPathParser(crypter, mode)
     else:
         raise ValueError("Invalid fast-path layer mode")

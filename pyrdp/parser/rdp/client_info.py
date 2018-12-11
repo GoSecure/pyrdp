@@ -3,16 +3,16 @@ from io import BytesIO
 from pyrdp.core import decodeUTF16LE, encodeUTF16LE, StrictStream, Uint16LE, Uint32LE
 from pyrdp.enum import ClientInfoFlags
 from pyrdp.parser.parser import Parser
-from pyrdp.pdu import ClientExtraInfo, RDPClientInfoPDU
+from pyrdp.pdu import ClientExtraInfo, ClientInfoPDU
 
 
-class RDPClientInfoParser(Parser):
+class ClientInfoParser(Parser):
     """
     Read and write the RDP ClientInfo PDU which contains very useful information.
     See https://msdn.microsoft.com/en-us/library/cc240475.aspx
     """
 
-    def parse(self, data: bytes) -> RDPClientInfoPDU:
+    def parse(self, data: bytes) -> ClientInfoPDU:
         """
         Decode a Client Info PDU from bytes.
         :param data: the Client Info PDU bytes.
@@ -45,13 +45,13 @@ class RDPClientInfoParser(Parser):
         else:
             extraInfo = None
 
-        return RDPClientInfoPDU(codePage, flags, domain, username, password, alternateShell, workingDir, extraInfo)
+        return ClientInfoPDU(codePage, flags, domain, username, password, alternateShell, workingDir, extraInfo)
 
     def write(self, pdu):
         """
         Encode a Client Info PDU to bytes.
         :param pdu: the Client Info PDU.
-        :type pdu: RDPClientInfoPDU
+        :type pdu: ClientInfoPDU
         :return: str
         """
         stream = BytesIO()

@@ -14,7 +14,7 @@ class ClientExtraInfo(PDU):
         self.dynamicDSTTimeZoneKeyName = None
         self.dynamicDaylightTimeDisabled = None
 
-class RDPClientInfoPDU(PDU):
+class ClientInfoPDU(PDU):
     def __init__(self, codePage: int, flags: int, domain: str, username: str, password: str, alternateShell: str, workingDir: str, extraInfo: ClientExtraInfo):
         PDU.__init__(self)
         self.codePage = codePage

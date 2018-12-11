@@ -4,10 +4,10 @@ from pyrdp.core import Uint16LE, Uint32LE, Uint8
 from pyrdp.enum import LicenseBinaryBlobType, LicenseErrorCode, LicensingPDUType, RDPStateTransition
 from pyrdp.exceptions import UnknownPDUTypeError
 from pyrdp.parser.parser import Parser
-from pyrdp.pdu import RDPLicenseBinaryBlob, RDPLicenseErrorAlertPDU, RDPLicensingPDU
+from pyrdp.pdu import LicenseBinaryBlob, LicenseErrorAlertPDU, LicensingPDU
 
 
-class RDPLicensingParser(Parser):
+class LicensingParser(Parser):
     """
     Parse the RDP Licensing part of the RDP connection sequence
     """
@@ -44,7 +44,7 @@ class RDPLicensingParser(Parser):
         type = LicenseBinaryBlobType(Uint16LE.unpack(stream))
         length = Uint16LE.unpack(stream)
         data = stream.read(length)
-        return RDPLicenseBinaryBlob(type, data)
+        return LicenseBinaryBlob(type, data)
 
     def parseErrorAlert(self, stream, flags):
         """
@@ -56,9 +56,9 @@ class RDPLicensingParser(Parser):
         errorCode = LicenseErrorCode(Uint32LE.unpack(stream))
         stateTransition = RDPStateTransition(Uint32LE.unpack(stream))
         blob = self.parseLicenseBlob(stream)
-        return RDPLicenseErrorAlertPDU(flags, errorCode, stateTransition, blob)
+        return LicenseErrorAlertPDU(flags, errorCode, stateTransition, blob)
 
-    def write(self, pdu: RDPLicensingPDU) -> bytes:
+    def write(self, pdu: LicensingPDU) -> bytes:
         """
         Encode a RDPLicensingPDU into a byte stream to send to the previous layer.
         """
@@ -67,7 +67,7 @@ class RDPLicensingParser(Parser):
         stream.write(Uint8.pack(pdu.flags))
         substream = BytesIO()
 
-        if isinstance(pdu, RDPLicenseErrorAlertPDU):
+        if isinstance(pdu, LicenseErrorAlertPDU):
             self.writeErrorAlert(substream, pdu)
         else:
             raise UnknownPDUTypeError("Trying to write unknown RDP Licensing PDU: {}".format(pdu.header), pdu.header)
@@ -80,7 +80,7 @@ class RDPLicensingParser(Parser):
         """
         Writes LicenceErrorAlertPDU-specific fields to stream
         :type stream: BytesIO
-        :type pdu: RDPLicenseErrorAlertPDU
+        :type pdu: LicenseErrorAlertPDU
         """
         stream.write(Uint32LE.pack(pdu.errorCode))
         stream.write(Uint32LE.pack(pdu.stateTransition))
