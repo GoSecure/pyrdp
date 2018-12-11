@@ -44,10 +44,9 @@ class X224Observer(LayerStrictRoutedObserver):
         """
         pass
 
-    def onError(self, pdu):
+    def onError(self, pdu: X224ErrorPDU):
         """
         Called when an Error PDU is received.
-        :type pdu: X224ErrorPDU
         """
         raise NotImplementedError("Unhandled X224 Error PDU")
 

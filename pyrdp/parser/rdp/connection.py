@@ -18,6 +18,7 @@ class RDPClientConnectionParser(Parser):
     Parser for Client Data PDUs (i.e: servers).
     """
     def __init__(self):
+        super().__init__()
         self.parsers = {
             RDPConnectionDataType.CLIENT_CORE: self.parseClientCoreData,
             RDPConnectionDataType.CLIENT_SECURITY: self.parseClientSecurityData,
@@ -240,6 +241,7 @@ class RDPServerConnectionParser(Parser):
     """
 
     def __init__(self):
+        super().__init__()
         self.parsers = {
             RDPConnectionDataType.SERVER_CORE: self.parseServerCoreData,
             RDPConnectionDataType.SERVER_NETWORK: self.parseServerNetworkData,

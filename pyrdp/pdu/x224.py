@@ -63,7 +63,7 @@ class X224DataPDU(X224PDU):
 
 class X224ErrorPDU(X224PDU):
 
-    def __init__(self, destination, cause, payload):
+    def __init__(self, destination, cause, payload=b""):
         X224PDU.__init__(self, len(payload) + 4, X224PDUType.X224_TPDU_ERROR, payload)
         self.destination = destination
         self.cause = cause

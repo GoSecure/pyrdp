@@ -3,6 +3,7 @@ from logging import Logger
 
 from pyrdp.core import Observer
 from pyrdp.layer import Layer, RDPBaseDataLayerObserver, RDPDataLayerObserver, RDPFastPathDataLayerObserver
+from pyrdp.pdu.rdp.data import RDPDataPDU
 
 
 class MITMChannelObserver(Observer):
@@ -41,14 +42,14 @@ class MITMSlowPathObserver(MITMChannelObserver):
     def __init__(self, log: Logger, layer: Layer, **kwargs):
         MITMChannelObserver.__init__(self, log, layer, RDPDataLayerObserver(**kwargs))
 
-    def getEffectiveType(self, pdu):
+    def getEffectiveType(self, pdu: RDPDataPDU):
         if hasattr(pdu.header, "subtype"):
             if hasattr(pdu, "errorInfo"):
                 return pdu.errorInfo
             else:
                 return pdu.header.subtype
         else:
-            return pdu.header.type
+            return pdu.header.pduType
 
 
 class MITMFastPathObserver(MITMChannelObserver):

@@ -3,12 +3,9 @@ from pyrdp.pdu.pdu import PDU
 
 
 class Capability(PDU):
-    def __init__(self, type: int, rawData=b""):
-        """
-        :type rawData: bytes
-        """
+    def __init__(self, capabilityType: int, rawData=b""):
         super().__init__()
-        self.type = type
+        self.capabilityType = capabilityType
         self.rawData = rawData
 
 

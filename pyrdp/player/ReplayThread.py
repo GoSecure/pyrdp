@@ -1,9 +1,9 @@
 import os
 import queue
-import time
 from collections import defaultdict
 from enum import IntEnum
 from multiprocessing import Queue
+from time import sleep
 from typing import BinaryIO
 
 from PyQt4.QtCore import pyqtSignal, QThread
@@ -131,7 +131,7 @@ class ReplayThread(QThread):
 
                     currentIndex += 1
 
-            time.sleep(step)
+            sleep(step)
 
     def play(self):
         self.queue.put(ReplayThreadEvent.PLAY)

@@ -108,6 +108,7 @@ class AsyncIOTCPLayer(asyncio.Protocol, Layer):
         asyncio.Protocol.__init__(self)
         Layer.__init__(self)
         self.logSSLRequired = False
+        self.transport = None
 
     def connection_made(self, transport):
         """
@@ -115,7 +116,6 @@ class AsyncIOTCPLayer(asyncio.Protocol, Layer):
         """
         self.transport = transport
         self.observer.onConnection()
-
 
     def connection_lost(self, exception=connectionDone):
         """

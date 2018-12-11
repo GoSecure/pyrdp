@@ -9,6 +9,7 @@ from pyrdp.pdu import ExtendedMouseEvent, KeyboardEvent, MouseEvent, Synchronize
 
 class RDPInputParser(Parser):
     def __init__(self):
+        super().__init__()
         self.parsers = {
             InputEventType.INPUT_EVENT_SYNC: self.parseSynchronizeEvent,
             InputEventType.INPUT_EVENT_UNUSED: self.parseUnusedEvent,
@@ -75,7 +76,7 @@ class RDPInputParser(Parser):
         stream.write(b"\x00" * 2)
 
     def parseUnicodeKeyboardEvent(self, stream, eventTime):
-        event = self.parseKeyboardEvent(stream)
+        event = self.parseKeyboardEvent(stream, eventTime)
         return UnicodeKeyboardEvent(eventTime, event.flags, event.keyCode)
 
     def writeUnicodeKeyboardEvent(self, stream, event):
@@ -93,7 +94,7 @@ class RDPInputParser(Parser):
         Uint16LE.pack(event.y, stream)
 
     def parseExtendedMouseEvent(self, stream, eventTime):
-        event = self.parseMouseEvent(stream)
+        event = self.parseMouseEvent(stream, eventTime)
         return ExtendedMouseEvent(eventTime, event.flags, event.x, event.y)
 
     def writeExtendedMouseEvent(self, stream, event):

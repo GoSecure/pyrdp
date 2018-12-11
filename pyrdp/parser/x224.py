@@ -14,6 +14,7 @@ class X224Parser(Parser):
     """
 
     def __init__(self):
+        super().__init__()
         self.parsers = {
             X224PDUType.X224_TPDU_CONNECTION_REQUEST: self.parseConnectionRequest,
             X224PDUType.X224_TPDU_CONNECTION_CONFIRM: self.parseConnectionConfirm,

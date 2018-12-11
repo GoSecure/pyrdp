@@ -13,6 +13,7 @@ class RDPLicensingParser(Parser):
     """
 
     def __init__(self):
+        super().__init__()
         self.parsers = {
             LicensingPDUType.ERROR_ALERT: self.parseErrorAlert,
         }
@@ -57,7 +58,7 @@ class RDPLicensingParser(Parser):
         blob = self.parseLicenseBlob(stream)
         return RDPLicenseErrorAlertPDU(flags, errorCode, stateTransition, blob)
 
-    def write(self, pdu: RDPLicensingPDU) -> RDPLicensingPDU:
+    def write(self, pdu: RDPLicensingPDU) -> bytes:
         """
         Encode a RDPLicensingPDU into a byte stream to send to the previous layer.
         """

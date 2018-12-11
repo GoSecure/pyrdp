@@ -10,6 +10,7 @@ from pyrdp.pdu import Point, PointerCacheEvent, PointerColorEvent, PointerNewEve
 
 class PointerEventParser(Parser):
     def __init__(self):
+        super().__init__()
         self.parsers = {
             PointerEventType.TS_PTRMSGTYPE_SYSTEM: self.parseSystemEvent,
             PointerEventType.TS_PTRMSGTYPE_POSITION: self.parsePositionEvent,

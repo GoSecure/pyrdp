@@ -18,6 +18,7 @@ class GCCParser(Parser):
     NODE_ID = 0x79f3
 
     def __init__(self):
+        super().__init__()
         self.parsers = {
             GCCPDUType.CREATE_CONFERENCE_REQUEST: self.parseConferenceCreateRequest,
             GCCPDUType.CREATE_CONFERENCE_RESPONSE: self.parseConferenceCreateResponse,

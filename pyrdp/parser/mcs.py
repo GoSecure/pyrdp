@@ -16,6 +16,7 @@ class MCSParser(Parser):
     """
 
     def __init__(self):
+        super().__init__()
         self.parsers = {
             MCSPDUType.CONNECT_INITIAL: self.parseConnectInitial,
             MCSPDUType.CONNECT_RESPONSE: self.parseConnectResponse,

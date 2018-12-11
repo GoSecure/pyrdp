@@ -6,9 +6,9 @@ from pyrdp.pdu.rdp.capability import Capability
 
 
 class RDPShareControlHeader(PDU):
-    def __init__(self, type, version, source):
+    def __init__(self, pduType, version, source):
         super().__init__()
-        self.type = type
+        self.pduType = pduType
         self.version = version
         self.source = source
 
@@ -24,8 +24,8 @@ class RDPDataPDU(PDU):
 
 
 class RDPShareDataHeader(RDPShareControlHeader):
-    def __init__(self, type, version, source, shareID, streamID, uncompressedLength, subtype, compressedType, compressedLength):
-        RDPShareControlHeader.__init__(self, type, version, source)
+    def __init__(self, pduType, version, source, shareID, streamID, uncompressedLength, subtype, compressedType, compressedLength):
+        RDPShareControlHeader.__init__(self, pduType, version, source)
         self.shareID = shareID
         self.streamID = streamID
         self.uncompressedLength = uncompressedLength

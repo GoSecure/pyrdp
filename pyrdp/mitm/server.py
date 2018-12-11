@@ -23,8 +23,9 @@ from pyrdp.mitm.virtual_channel.device_redirection import ServerPassiveDeviceRed
 from pyrdp.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
 from pyrdp.parser import createFastPathParser, GCCParser, RDPClientConnectionParser, RDPClientInfoParser, \
     RDPNegotiationRequestParser, RDPNegotiationResponseParser, RDPServerConnectionParser
-from pyrdp.pdu import Capability, GCCConferenceCreateResponsePDU, MCSConnectResponsePDU, MultifragmentUpdateCapability, \
-    ProprietaryCertificate, RDPNegotiationRequestPDU, RDPNegotiationResponsePDU, RDPServerDataPDU, ServerSecurityData
+from pyrdp.pdu import Capability, GCCConferenceCreateRequestPDU, GCCConferenceCreateResponsePDU, MCSConnectResponsePDU, \
+    MultifragmentUpdateCapability, ProprietaryCertificate, RDPNegotiationRequestPDU, RDPNegotiationResponsePDU, \
+    RDPServerDataPDU, ServerSecurityData
 from pyrdp.recording import FileLayer, Recorder, RecordingFastPathObserver, RecordingSlowPathObserver, SocketLayer
 from pyrdp.security import RC4CrypterProxy, SecuritySettings
 
@@ -224,7 +225,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         :param pdu: The GCC ConferenceCreateResponse PDU that contains the ClientData PDU.
         """
         self.log.debug("Connect Initial received")
-        gccConferenceCreateRequestPDU = self.gcc.parse(pdu.payload)
+        gccConferenceCreateRequestPDU: GCCConferenceCreateRequestPDU = self.gcc.parse(pdu.payload)
 
         # FIPS is not implemented, so remove this flag if it's set
         rdpClientDataPdu = self.rdpClientConnectionParser.parse(gccConferenceCreateRequestPDU.payload)

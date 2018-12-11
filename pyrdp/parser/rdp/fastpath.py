@@ -112,7 +112,7 @@ class RDPBasicFastPathParser(RDPBasicSecurityParser):
 
         return events
 
-    def writeHeader(self, stream, pdu):
+    def writeHeader(self, stream: BytesIO, pdu: FastPathPDU):
         header = (pdu.header & 0xc0) | self.getHeaderFlags()
         eventCount = len(pdu.events)
 
@@ -122,13 +122,13 @@ class RDPBasicFastPathParser(RDPBasicSecurityParser):
         Uint8.pack(header, stream)
         self.writeLength(stream, pdu)
 
-    def writeBody(self, stream, pdu):
+    def writeBody(self, stream: BytesIO, pdu: FastPathPDU):
         eventCount = len(pdu.events)
 
         if self.mode == ParserMode.CLIENT and eventCount > 15:
             Uint8.pack(eventCount, stream)
 
-    def writePayload(self, stream, pdu):
+    def writePayload(self, stream: BytesIO, pdu: FastPathPDU):
         self.writeEvents(stream, pdu)
 
     def writeLength(self, stream, pdu):
@@ -200,7 +200,6 @@ class RDPSignedFastPathParser(RDPBasicFastPathParser):
 
     def getHeaderFlags(self):
         return FastPathSecurityFlags.FASTPATH_OUTPUT_ENCRYPTED | FastPathSecurityFlags.FASTPATH_OUTPUT_SECURE_CHECKSUM
-
 
 
 class RDPFIPSFastPathParser(RDPSignedFastPathParser):
@@ -361,7 +360,7 @@ class RDPOutputEventParser(Parser):
         return FastPathEventRaw(data)
 
     def parseBitmapEventRaw(self, stream, header, compressionFlags, size):
-        return FastPathBitmapEvent(header, compressionFlags, None, stream.read(size))
+        return FastPathBitmapEvent(header, compressionFlags, [], stream.read(size))
 
     def parseBitmapEvent(self, fastPathBitmapEvent: FastPathBitmapEvent) -> FastPathBitmapEvent:
         """

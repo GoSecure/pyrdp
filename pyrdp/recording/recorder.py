@@ -1,5 +1,5 @@
 import time
-from typing import BinaryIO, List, Optional
+from typing import BinaryIO, Dict, List, Optional
 
 from pyrdp.enum import ParserMode, PlayerMessageType
 from pyrdp.layer import Layer, PlayerMessageLayer, TPKTLayer
@@ -17,7 +17,7 @@ class Recorder:
     """
 
     def __init__(self, transportLayers: List[Layer]):
-        self.parsers = {
+        self.parsers: Dict[PlayerMessageType, Parser] = {
             PlayerMessageType.FAST_PATH_INPUT: RDPBasicFastPathParser(ParserMode.CLIENT),
             PlayerMessageType.FAST_PATH_OUTPUT: RDPBasicFastPathParser(ParserMode.SERVER),
             PlayerMessageType.CLIENT_INFO: RDPClientInfoParser(),

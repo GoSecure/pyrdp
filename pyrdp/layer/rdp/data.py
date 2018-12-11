@@ -96,8 +96,8 @@ class RDPDataLayerObserver(RDPBaseDataLayerObserver, LayerStrictRoutedObserver):
         return pdu.header.subtype
 
     def onPDUReceived(self, pdu: RDPDataPDU):
-        if pdu.header.type in self.handlers:
-            self.handlers[pdu.header.type](pdu)
+        if pdu.header.pduType in self.handlers:
+            self.handlers[pdu.header.pduType](pdu)
         else:
             self.onUnknownHeader(pdu)
 

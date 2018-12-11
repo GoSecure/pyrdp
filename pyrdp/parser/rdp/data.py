@@ -1,4 +1,5 @@
 from io import BytesIO
+from typing import List
 
 from pyrdp.core import Uint16LE, Uint32LE, Uint8
 from pyrdp.enum import CapabilityType, ErrorInfo, RDPDataPDUSubtype, RDPDataPDUType
@@ -11,6 +12,7 @@ from pyrdp.pdu import BitmapCapability, Capability, GeneralCapability, GlyphCach
     RDPConfirmActivePDU, RDPControlPDU, RDPDemandActivePDU, RDPInputPDU, RDPPlaySoundPDU, RDPPointerPDU, \
     RDPSetErrorInfoPDU, RDPShareControlHeader, RDPShareDataHeader, RDPSuppressOutputPDU, RDPSynchronizePDU, \
     RDPUpdatePDU, VirtualChannelCapability
+from pyrdp.pdu.rdp.data import RDPDataPDU
 
 
 class RDPDataParser(Parser):
@@ -52,10 +54,10 @@ class RDPDataParser(Parser):
         stream = BytesIO(data)
         header = self.parseShareControlHeader(stream)
 
-        if header.type not in self.parsers:
-            raise UnknownPDUTypeError("Trying to parse unknown Data PDU type: %s" % header.type, header.type)
+        if header.pduType not in self.parsers:
+            raise UnknownPDUTypeError("Trying to parse unknown Data PDU type: %s" % header.pduType, header.pduType)
 
-        return self.parsers[header.type](stream, header)
+        return self.parsers[header.pduType](stream, header)
 
     def parseData(self, stream: BytesIO, header):
         header = self.parseShareDataHeader(stream, header)
@@ -65,20 +67,20 @@ class RDPDataParser(Parser):
 
         return self.dataParsers[header.subtype](stream, header)
 
-    def write(self, pdu: PDU) -> bytes:
+    def write(self, pdu: RDPDataPDU) -> bytes:
         """
         Encode an RDP Data PDU instance to bytes.
         """
         stream = BytesIO()
         substream = BytesIO()
 
-        if pdu.header.type == RDPDataPDUType.DEMAND_ACTIVE_PDU:
+        if isinstance(pdu, RDPDemandActivePDU):
             headerWriter = self.writeShareControlHeader
             self.writeDemandActive(substream, pdu)
-        elif pdu.header.type == RDPDataPDUType.CONFIRM_ACTIVE_PDU:
+        elif isinstance(pdu, RDPConfirmActivePDU):
             headerWriter = self.writeShareControlHeader
             self.writeConfirmActive(substream, pdu)
-        elif pdu.header.type == RDPDataPDUType.DATA_PDU:
+        elif pdu.header.pduType == RDPDataPDUType.DATA_PDU:
             headerWriter = self.writeShareDataHeader
             self.writeData(substream, pdu)
 
@@ -99,13 +101,13 @@ class RDPDataParser(Parser):
         source = Uint16LE.unpack(stream)
         return RDPShareControlHeader(RDPDataPDUType(pduType & 0xf), (pduType >> 4), source)
 
-    def writeShareControlHeader(self, stream: BytesIO, header, dataLength):
-        pduType = (header.type.value & 0xf) | (header.version << 4)
+    def writeShareControlHeader(self, stream: BytesIO, header: RDPShareControlHeader, dataLength: int):
+        pduType = (header.pduType.value & 0xf) | (header.version << 4)
         stream.write(Uint16LE.pack(dataLength + 6))
         stream.write(Uint16LE.pack(pduType))
         stream.write(Uint16LE.pack(header.source))
 
-    def parseShareDataHeader(self, stream: BytesIO, controlHeader):
+    def parseShareDataHeader(self, stream: BytesIO, controlHeader: RDPShareControlHeader):
         shareID = Uint32LE.unpack(stream)
         stream.read(1)
         streamID = Uint8.unpack(stream)
@@ -113,7 +115,7 @@ class RDPDataParser(Parser):
         pduSubtype = Uint8.unpack(stream)
         compressedType = Uint8.unpack(stream)
         compressedLength = Uint16LE.unpack(stream)
-        return RDPShareDataHeader(controlHeader.type, controlHeader.version, controlHeader.source, shareID, streamID, uncompressedLength, RDPDataPDUSubtype(pduSubtype), compressedType, compressedLength)
+        return RDPShareDataHeader(controlHeader.pduType, controlHeader.version, controlHeader.source, shareID, streamID, uncompressedLength, RDPDataPDUSubtype(pduSubtype), compressedType, compressedLength)
 
     def writeShareDataHeader(self, stream: BytesIO, header, dataLength):
         substream = BytesIO()
@@ -338,27 +340,27 @@ class RDPDataParser(Parser):
         stream.write(b"\x00" * 2)  # pad2octets
         stream.write(substream.getvalue())
 
-    def writeCapabilitySets(self, capabilitySets, substream):
+    def writeCapabilitySets(self, capabilitySets: List[Capability], substream):
         for capability in capabilitySets:
             # Since the general capability is fully parsed, write it back.....
-            if capability.type == CapabilityType.CAPSTYPE_GENERAL:
+            if isinstance(capability, GeneralCapability):
                 self.writeGeneralCapability(capability, substream)
-            elif capability.type == CapabilityType.CAPSTYPE_ORDER:
+            elif isinstance(capability, OrderCapability):
                 self.writeOrderCapability(capability, substream)
-            elif capability.type == CapabilityType.CAPSTYPE_BITMAP:
+            elif isinstance(capability, BitmapCapability):
                 self.writeBitmapCapability(capability, substream)
-            elif capability.type == CapabilityType.CAPSTYPE_OFFSCREENCACHE:
+            elif isinstance(capability, OffscreenBitmapCacheCapability):
                 self.writeOffscreenCacheCapability(capability, substream)
             elif isinstance(capability, VirtualChannelCapability):
                 self.writeVirtualChannelCapability(capability, substream)
-            elif capability.type == CapabilityType.CAPSTYPE_POINTER:
+            elif isinstance(capability, PointerCapability):
                 self.writePointerCapability(capability, substream)
-            elif capability.type == CapabilityType.CAPSETTYPE_MULTIFRAGMENTUPDATE \
+            elif capability.capabilityType == CapabilityType.CAPSETTYPE_MULTIFRAGMENTUPDATE \
                     and isinstance(capability, MultifragmentUpdateCapability):
                 self.writeMultiFragmentUpdateCapability(capability, substream)
             # Every other capability is parsed minimally.
             else:
-                Uint16LE.pack(capability.type, substream)
+                Uint16LE.pack(capability.capabilityType, substream)
                 Uint16LE.pack(len(capability.rawData) + 4, substream)
                 substream.write(capability.rawData)
 
@@ -455,7 +457,7 @@ class RDPDataParser(Parser):
         https://msdn.microsoft.com/en-us/library/cc240549.aspx
         """
         substream = BytesIO()
-        Uint16LE.pack(capability.type, stream)
+        Uint16LE.pack(capability.capabilityType, stream)
         Uint16LE.pack(capability.majorType, substream)
         Uint16LE.pack(capability.minorType, substream)
         Uint16LE.pack(capability.protocolVersion, substream)
@@ -473,7 +475,7 @@ class RDPDataParser(Parser):
 
     def writeOrderCapability(self, capability: OrderCapability, stream: BytesIO):
         substream = BytesIO()
-        Uint16LE.pack(capability.type, stream)
+        Uint16LE.pack(capability.capabilityType, stream)
         substream.write(capability.terminalDescriptor)
         substream.write(b"\x00"*4)
         Uint16LE.pack(capability.desktopSaveXGranularity, substream)
@@ -496,7 +498,7 @@ class RDPDataParser(Parser):
 
     def writeBitmapCapability(self, capability: BitmapCapability, stream: BytesIO):
         substream = BytesIO()
-        Uint16LE.pack(capability.type, stream)
+        Uint16LE.pack(capability.capabilityType, stream)
 
         Uint16LE.pack(capability.preferredBitsPerPixel, substream)
         Uint16LE.pack(capability.receive1BitPerPixel, substream)
@@ -518,7 +520,7 @@ class RDPDataParser(Parser):
 
     def writeOffscreenCacheCapability(self, capability: OffscreenBitmapCacheCapability, stream: BytesIO):
         substream = BytesIO()
-        Uint16LE.pack(capability.type, stream)
+        Uint16LE.pack(capability.capabilityType, stream)
 
         Uint32LE.pack(capability.offscreenSupportLevel, substream)
         Uint16LE.pack(capability.offscreenCacheSize, substream)
@@ -529,7 +531,7 @@ class RDPDataParser(Parser):
 
     def writeMultiFragmentUpdateCapability(self, capability: MultifragmentUpdateCapability, stream: BytesIO):
         substream = BytesIO()
-        Uint16LE.pack(capability.type, stream)
+        Uint16LE.pack(capability.capabilityType, stream)
 
         Uint32LE.pack(capability.maxRequestSize, substream)
 
@@ -549,7 +551,7 @@ class RDPDataParser(Parser):
 
     def writeVirtualChannelCapability(self, capability: VirtualChannelCapability, stream: BytesIO):
         substream = BytesIO()
-        Uint16LE.pack(capability.type, stream)
+        Uint16LE.pack(capability.capabilityType, stream)
 
         Uint32LE.pack(capability.flags, substream)
 
@@ -573,7 +575,7 @@ class RDPDataParser(Parser):
 
     def writePointerCapability(self, capability: PointerCapability, stream: BytesIO):
         substream = BytesIO()
-        Uint16LE.pack(capability.type, stream)
+        Uint16LE.pack(capability.capabilityType, stream)
 
         Uint16LE.pack(capability.colorPointerFlag, substream)
         Uint16LE.pack(capability.colorPointerCacheSize, substream)
