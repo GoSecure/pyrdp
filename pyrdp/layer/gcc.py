@@ -7,12 +7,12 @@ class GCCClientConnectionLayer(Layer):
     """
     GCC Layer for parsing GCC conference PDUs.
     """
-    def __init__(self, conferenceName):
+    def __init__(self, conferenceName, parser = GCCParser()):
         """
         :param conferenceName: the conference name
         :type conferenceName: bytes
         """
-        Layer.__init__(self, GCCParser(), hasNext=True)
+        Layer.__init__(self, parser, hasNext=True)
         self.conferenceName = conferenceName
 
     def recv(self, data):

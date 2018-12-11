@@ -58,8 +58,8 @@ class X224Layer(Layer):
     ObservedBy: X224Observer
     """
 
-    def __init__(self):
-        Layer.__init__(self, X224Parser(), hasNext=True)
+    def __init__(self, parser = X224Parser()):
+        Layer.__init__(self, parser, hasNext=True)
         self.handlers = {}
 
     def recv(self, data):

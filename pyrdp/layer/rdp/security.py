@@ -136,8 +136,8 @@ class TLSSecurityLayer(SecurityLayer):
     Otherwise, the layer just forwards all the data it receives to the next layer.
     """
 
-    def __init__(self):
-        SecurityLayer.__init__(self, BasicSecurityParser())
+    def __init__(self, parser = BasicSecurityParser()):
+        SecurityLayer.__init__(self, parser)
         self.securityHeaderExpected = False
 
     def recv(self, data):

@@ -10,8 +10,8 @@ class MCSLayer(Layer):
     (since MCS is channel-based), so traffic is never forwarded.
     """
 
-    def __init__(self):
-        Layer.__init__(self, MCSParser(), hasNext=False)
+    def __init__(self, parser = MCSParser()):
+        Layer.__init__(self, parser, hasNext=False)
 
     def recv(self, data):
         """

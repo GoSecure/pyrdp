@@ -8,5 +8,5 @@ class ClipboardLayer(Layer):
     https://msdn.microsoft.com/en-us/library/cc241066.aspx
     """
 
-    def __init__(self):
-        Layer.__init__(self, ClipboardParser(), hasNext=False)
+    def __init__(self, parser = ClipboardParser()):
+        Layer.__init__(self, parser, hasNext=False)

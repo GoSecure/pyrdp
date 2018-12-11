@@ -11,11 +11,11 @@ class VirtualChannelLayer(Layer):
     https://msdn.microsoft.com/en-us/library/cc240548.aspx
     """
 
-    def __init__(self, activateShowProtocolFlag=True):
+    def __init__(self, parser = VirtualChannelParser(), activateShowProtocolFlag=True):
         """
         :param activateShowProtocolFlag: True if the channelFlagShowProtocol must be set (depends on virtual channels)
         """
-        Layer.__init__(self, VirtualChannelParser(), hasNext=True)
+        Layer.__init__(self, parser, hasNext=True)
         self.activateShowProtocolFlag = activateShowProtocolFlag
         self.pduBuffer = b""
 

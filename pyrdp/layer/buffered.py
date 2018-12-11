@@ -1,5 +1,5 @@
 from pyrdp.layer.layer import Layer
-from pyrdp.parser import Parser, SegmentationParser
+from pyrdp.parser import SegmentationParser
 
 
 class BufferedLayer(Layer):
@@ -7,10 +7,7 @@ class BufferedLayer(Layer):
     Abstract class for layers which might need reassembly.
     """
 
-    def __init__(self, parser: Parser):
-        """
-        :type parser: SegmentationParser
-        """
+    def __init__(self, parser: SegmentationParser):
         Layer.__init__(self, parser, hasNext=True)
         self.buffer = b""
 

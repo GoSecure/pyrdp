@@ -7,5 +7,5 @@ class DeviceRedirectionLayer(Layer):
     Layer to receive and send DeviceRedirection channel (rdpdr) packets.
     """
 
-    def __init__(self):
-        super().__init__(DeviceRedirectionParser(), hasNext=False)
+    def __init__(self, parser = DeviceRedirectionParser()):
+        super().__init__(parser, hasNext=False)
