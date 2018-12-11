@@ -49,7 +49,7 @@ This should install all the dependencies required to run PyRDP.
 ## Using the PyRDP MITM
 Use `pyrdp-mitm.py <ServerIP>` or `pyrdp-mitm.py <ServerIP>:<ServerPort>` to run the MITM.
 
-Assuming you have an RDP server running on `192.168.1.10` listening on 3389, you would run:
+Assuming you have an RDP server running on `192.168.1.10` and listening on port 3389, you would run:
 
 ```
 pyrdp-mitm.py 192.168.1.10
