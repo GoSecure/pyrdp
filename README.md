@@ -56,6 +56,8 @@ pyrdp-mitm.py 192.168.1.10
 ```
 
 When running the MITM for the first time on Linux, a private key and certificate should be generated for you in `~/.config/pyrdp`.
+These are used when TLS security is used on a connection. You can use them to decrypt PyRDP traffic in Wireshark, for
+example.
 
 ### Specifying the private key and certificate
 If key generation didn't work or you want to use a custom key and certificate, you can specify them using the
