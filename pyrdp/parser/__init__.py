@@ -4,7 +4,7 @@ from pyrdp.parser.parser import Parser
 from pyrdp.parser.rdp.client_info import RDPClientInfoParser
 from pyrdp.parser.rdp.bitmap import RDPBitmapParser
 from pyrdp.parser.rdp.connection import RDPClientConnectionParser, RDPServerConnectionParser
-from pyrdp.parser.rdp.data import RDPDataParser
+from pyrdp.parser.rdp.slowpath import SlowPathParser
 from pyrdp.parser.rdp.fastpath import createFastPathParser, RDPBasicFastPathParser, RDPFIPSFastPathParser, \
     RDPInputEventParser, RDPOutputEventParser, RDPSignedFastPathParser
 from pyrdp.parser.rdp.input import RDPInputParser

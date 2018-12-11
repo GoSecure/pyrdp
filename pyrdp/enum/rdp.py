@@ -58,7 +58,7 @@ class FastPathSecurityFlags:
     FASTPATH_OUTPUT_SECURE_CHECKSUM = 0x40
     FASTPATH_OUTPUT_ENCRYPTED = 0x80
 
-class FastPathInputEventType(IntEnum):
+class FastPathInputType(IntEnum):
     FASTPATH_INPUT_EVENT_SCANCODE = 0
     FASTPATH_INPUT_EVENT_MOUSE = 1
     FASTPATH_INPUT_EVENT_MOUSEX = 2
@@ -66,7 +66,7 @@ class FastPathInputEventType(IntEnum):
     FASTPATH_INPUT_EVENT_UNICODE = 4
     FASTPATH_INPUT_EVENT_QOE_TIMESTAMP = 6
 
-class FastPathOutputEventType(IntEnum):
+class FastPathOutputType(IntEnum):
     FASTPATH_UPDATETYPE_ORDERS = 0
     FASTPATH_UPDATETYPE_BITMAP = 1
     FASTPATH_UPDATETYPE_PALETTE = 2
@@ -81,12 +81,6 @@ class FastPathOutputEventType(IntEnum):
 
 class FastPathOutputCompressionType(IntEnum):
     FASTPATH_OUTPUT_COMPRESSION_USED = 0x2
-
-class SlowPathUpdateType(IntEnum):
-    SLOWPATH_UPDATETYPE_ORDERS = 0
-    SLOWPATH_UPDATETYPE_BITMAP = 1
-    SLOWPATH_UPDATETYPE_PALETTE = 2
-    SLOWPATH_UPDATETYPE_SYNCHRONIZE = 3
 
 
 class FIPSVersion(IntEnum):
@@ -139,8 +133,7 @@ class LicenseErrorCode(IntEnum):
 
 class RDPStateTransition(IntEnum):
     """
-    Automata state transition
-    See http://msdn.microsoft.com/en-us/library/cc240482.aspx
+    http://msdn.microsoft.com/en-us/library/cc240482.aspx
     """
     ST_TOTAL_ABORT = 0x00000001
     ST_NO_TRANSITION = 0x00000002
@@ -148,10 +141,9 @@ class RDPStateTransition(IntEnum):
     ST_RESEND_LAST_MESSAGE = 0x00000004
 
 
-class RDPSlowPathPDUType(IntEnum):
+class SlowPathPDUType(IntEnum):
     """
-    RDP Data PDU types
-    @see: http://msdn.microsoft.com/en-us/library/cc240576.aspx
+    http://msdn.microsoft.com/en-us/library/cc240576.aspx
     """
     DEMAND_ACTIVE_PDU = 0x1
     CONFIRM_ACTIVE_PDU = 0x3
@@ -159,11 +151,16 @@ class RDPSlowPathPDUType(IntEnum):
     DATA_PDU = 0x7
     SERVER_REDIR_PKT_PDU = 0xA
 
+class SlowPathUpdateType(IntEnum):
+    SLOWPATH_UPDATETYPE_ORDERS = 0
+    SLOWPATH_UPDATETYPE_BITMAP = 1
+    SLOWPATH_UPDATETYPE_PALETTE = 2
+    SLOWPATH_UPDATETYPE_SYNCHRONIZE = 3
 
-class RDPSlowPathPDUSubtype(IntEnum):
+class SlowPathDataType(IntEnum):
     """
-    @summary: Data PDU type secondary index
-    @see: http://msdn.microsoft.com/en-us/library/cc240577.aspx
+    Slow-path data PDU types.
+    http://msdn.microsoft.com/en-us/library/cc240577.aspx
     """
     PDUTYPE2_UPDATE = 0x02
     PDUTYPE2_CONTROL = 0x14

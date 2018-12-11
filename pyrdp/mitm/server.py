@@ -9,7 +9,7 @@ from twisted.internet import reactor
 from pyrdp.core import decodeUTF16LE, getLoggerPassFilters
 from pyrdp.core.ssl import ServerTLSContext
 from pyrdp.enum import CapabilityType, EncryptionLevel, EncryptionMethod, InputEventType, NegotiationProtocols, \
-    OrderFlag, ParserMode, PlayerMessageType, RDPSlowPathPDUSubtype, SegmentationPDUType, VirtualChannelName
+    OrderFlag, ParserMode, PlayerMessageType, SlowPathDataType, SegmentationPDUType, VirtualChannelName
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, MCSLayer, RawLayer, SlowPathLayer, \
     RDPSecurityLayer, SegmentationLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
 from pyrdp.logging import ConnectionMetadataFilter, LOGGER_NAMES, RC4LoggingObserver
@@ -95,7 +95,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         self.rdpServerConnectionParser = RDPServerConnectionParser()
 
         self.securityLayer = None
-        self.io = SlowPathLayer()
+        self.slowPathLayer = SlowPathLayer()
         self.fastPathLayer = None
 
         self.tcp.setNext(self.segmentation)
@@ -405,12 +405,12 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
             onLicensingDataReceived=self.onLicensingDataReceived
         )
 
-        slowPathObserver = MITMSlowPathObserver(self.log, self.io, onConfirmActive=self.onConfirmActive)
-        slowPathObserver.setDataHandler(RDPSlowPathPDUSubtype.PDUTYPE2_INPUT, self.onInputPDUReceived)
+        slowPathObserver = MITMSlowPathObserver(self.log, self.slowPathLayer, onConfirmActive=self.onConfirmActive)
+        slowPathObserver.setDataHandler(SlowPathDataType.PDUTYPE2_INPUT, self.onInputPDUReceived)
         clientObserver = self.client.getChannelObserver(channelID)
         slowPathObserver.setPeer(clientObserver)
-        self.io.addObserver(slowPathObserver)
-        self.io.addObserver(RecordingSlowPathObserver(self.recorder))
+        self.slowPathLayer.addObserver(slowPathObserver)
+        self.slowPathLayer.addObserver(RecordingSlowPathObserver(self.recorder))
 
         fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, self.crypter, ParserMode.SERVER)
         self.fastPathLayer = FastPathLayer(fastPathParser)
@@ -421,7 +421,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
 
         channel = MCSServerChannel(mcs, userID, channelID)
         channel.setNext(self.securityLayer)
-        self.securityLayer.setNext(self.io)
+        self.securityLayer.setNext(self.slowPathLayer)
 
         self.segmentation.attachLayer(SegmentationPDUType.FAST_PATH, self.fastPathLayer)
 

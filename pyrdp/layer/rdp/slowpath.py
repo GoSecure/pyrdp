@@ -1,10 +1,10 @@
 from pyrdp.core import ObservedBy
-from pyrdp.enum import CapabilityType, RDPSlowPathPDUType, VirtualChannelCompressionFlag
+from pyrdp.enum import CapabilityType, SlowPathPDUType, VirtualChannelCompressionFlag
 from pyrdp.exceptions import UnknownPDUTypeError
 from pyrdp.layer.layer import Layer, LayerStrictRoutedObserver
 from pyrdp.layer.rdp.data import RDPDataObserver
 from pyrdp.logging import log
-from pyrdp.parser import RDPDataParser
+from pyrdp.parser import SlowPathParser
 from pyrdp.pdu import RDPConfirmActivePDU, RDPDemandActivePDU, RDPSlowPathPDU
 
 
@@ -15,11 +15,11 @@ class SlowPathObserver(RDPDataObserver, LayerStrictRoutedObserver):
 
     def __init__(self, **kwargs):
         LayerStrictRoutedObserver.__init__(self, {
-            RDPSlowPathPDUType.DEMAND_ACTIVE_PDU: "onDemandActive",
-            RDPSlowPathPDUType.CONFIRM_ACTIVE_PDU: "onConfirmActive",
-            RDPSlowPathPDUType.DEACTIVATE_ALL_PDU: "onDeactivateAll",
-            RDPSlowPathPDUType.DATA_PDU: "onData",
-            RDPSlowPathPDUType.SERVER_REDIR_PKT_PDU: "onServerRedirect",
+            SlowPathPDUType.DEMAND_ACTIVE_PDU: "onDemandActive",
+            SlowPathPDUType.CONFIRM_ACTIVE_PDU: "onConfirmActive",
+            SlowPathPDUType.DEACTIVATE_ALL_PDU: "onDeactivateAll",
+            SlowPathPDUType.DATA_PDU: "onData",
+            SlowPathPDUType.SERVER_REDIR_PKT_PDU: "onServerRedirect",
         }, **kwargs)
 
         self.dataHandlers = {}
@@ -76,7 +76,7 @@ class SlowPathLayer(Layer):
     Layer for slow-path PDUs.
     """
 
-    def __init__(self, parser = RDPDataParser()):
+    def __init__(self, parser = SlowPathParser()):
         Layer.__init__(self, parser, hasNext=False)
 
     def recv(self, data):

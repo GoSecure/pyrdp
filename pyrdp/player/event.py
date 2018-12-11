@@ -6,7 +6,7 @@ from pyrdp.core.scancode import scancodeToChar
 from pyrdp.enum import BitmapFlags, CapabilityType, KeyboardFlag, ParserMode, SlowPathUpdateType
 from pyrdp.layer import PlayerMessageObserver
 from pyrdp.logging import log
-from pyrdp.parser import ClipboardParser, RDPBasicFastPathParser, RDPBitmapParser, RDPClientInfoParser, RDPDataParser, \
+from pyrdp.parser import ClipboardParser, RDPBasicFastPathParser, RDPBitmapParser, RDPClientInfoParser, SlowPathParser, \
     RDPOutputEventParser
 from pyrdp.parser.rdp.connection import RDPClientConnectionParser
 from pyrdp.pdu import BitmapUpdateData, FastPathBitmapEvent, FastPathMouseEvent, FastPathOrdersEvent, \
@@ -29,7 +29,7 @@ class PlayerMessageHandler(PlayerMessageObserver):
         self.inputParser = RDPBasicFastPathParser(ParserMode.SERVER)
         self.outputParser = RDPBasicFastPathParser(ParserMode.CLIENT)
         self.clientInfoParser = RDPClientInfoParser()
-        self.dataParser = RDPDataParser()
+        self.dataParser = SlowPathParser()
         self.clipboardParser = ClipboardParser()
         self.outputEventParser = RDPOutputEventParser()
         self.clientConnectionParser = RDPClientConnectionParser()

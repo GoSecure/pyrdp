@@ -2,7 +2,7 @@ from io import BytesIO
 from typing import List
 
 from pyrdp.core import Uint16LE, Uint32LE, Uint8
-from pyrdp.enum import CapabilityType, ErrorInfo, RDPSlowPathPDUSubtype, RDPSlowPathPDUType
+from pyrdp.enum import CapabilityType, ErrorInfo, SlowPathDataType, SlowPathPDUType
 from pyrdp.exceptions import UnknownPDUTypeError
 from pyrdp.parser.parser import Parser
 from pyrdp.parser.rdp.input import RDPInputParser
@@ -14,35 +14,35 @@ from pyrdp.pdu import BitmapCapability, Capability, GeneralCapability, GlyphCach
     RDPSynchronizePDU, RDPUpdatePDU, VirtualChannelCapability
 
 
-class RDPDataParser(Parser):
+class SlowPathParser(Parser):
     def __init__(self):
         super().__init__()
         self.parsers = {
-            RDPSlowPathPDUType.DEMAND_ACTIVE_PDU: self.parseDemandActive,
-            RDPSlowPathPDUType.CONFIRM_ACTIVE_PDU: self.parseConfirmActive,
-            RDPSlowPathPDUType.DATA_PDU: self.parseData,
+            SlowPathPDUType.DEMAND_ACTIVE_PDU: self.parseDemandActive,
+            SlowPathPDUType.CONFIRM_ACTIVE_PDU: self.parseConfirmActive,
+            SlowPathPDUType.DATA_PDU: self.parseData,
         }
 
         self.dataParsers = {
-            RDPSlowPathPDUSubtype.PDUTYPE2_SET_ERROR_INFO_PDU: self.parseError,
-            RDPSlowPathPDUSubtype.PDUTYPE2_SYNCHRONIZE: self.parseSynchronize,
-            RDPSlowPathPDUSubtype.PDUTYPE2_CONTROL: self.parseControl,
-            RDPSlowPathPDUSubtype.PDUTYPE2_INPUT: self.parseInput,
+            SlowPathDataType.PDUTYPE2_SET_ERROR_INFO_PDU: self.parseError,
+            SlowPathDataType.PDUTYPE2_SYNCHRONIZE: self.parseSynchronize,
+            SlowPathDataType.PDUTYPE2_CONTROL: self.parseControl,
+            SlowPathDataType.PDUTYPE2_INPUT: self.parseInput,
             # RDPDataPDUSubtype.PDUTYPE2_POINTER: self.parsePointer,
-            RDPSlowPathPDUSubtype.PDUTYPE2_PLAY_SOUND: self.parsePlaySound,
-            RDPSlowPathPDUSubtype.PDUTYPE2_SUPPRESS_OUTPUT: self.parseSuppressOutput,
-            RDPSlowPathPDUSubtype.PDUTYPE2_UPDATE: self.parseUpdate,
+            SlowPathDataType.PDUTYPE2_PLAY_SOUND: self.parsePlaySound,
+            SlowPathDataType.PDUTYPE2_SUPPRESS_OUTPUT: self.parseSuppressOutput,
+            SlowPathDataType.PDUTYPE2_UPDATE: self.parseUpdate,
         }
 
         self.dataWriters = {
-            RDPSlowPathPDUSubtype.PDUTYPE2_SET_ERROR_INFO_PDU: self.writeError,
-            RDPSlowPathPDUSubtype.PDUTYPE2_SYNCHRONIZE: self.writeSynchronize,
-            RDPSlowPathPDUSubtype.PDUTYPE2_CONTROL: self.writeControl,
-            RDPSlowPathPDUSubtype.PDUTYPE2_INPUT: self.writeInput,
+            SlowPathDataType.PDUTYPE2_SET_ERROR_INFO_PDU: self.writeError,
+            SlowPathDataType.PDUTYPE2_SYNCHRONIZE: self.writeSynchronize,
+            SlowPathDataType.PDUTYPE2_CONTROL: self.writeControl,
+            SlowPathDataType.PDUTYPE2_INPUT: self.writeInput,
             # RDPDataPDUSubtype.PDUTYPE2_POINTER: self.writePointer,
-            RDPSlowPathPDUSubtype.PDUTYPE2_PLAY_SOUND: self.writePlaySound,
-            RDPSlowPathPDUSubtype.PDUTYPE2_SUPPRESS_OUTPUT: self.writeSuppressOutput,
-            RDPSlowPathPDUSubtype.PDUTYPE2_UPDATE: self.writeUpdate,
+            SlowPathDataType.PDUTYPE2_PLAY_SOUND: self.writePlaySound,
+            SlowPathDataType.PDUTYPE2_SUPPRESS_OUTPUT: self.writeSuppressOutput,
+            SlowPathDataType.PDUTYPE2_UPDATE: self.writeUpdate,
         }
 
     def parse(self, data: bytes) -> PDU:
@@ -54,7 +54,7 @@ class RDPDataParser(Parser):
         header = self.parseShareControlHeader(stream)
 
         if header.pduType not in self.parsers:
-            raise UnknownPDUTypeError("Trying to parse unknown Data PDU type: %s" % header.pduType, header.pduType)
+            raise UnknownPDUTypeError("Trying to parse unknown slow-path PDU type: %s" % header.pduType, header.pduType)
 
         return self.parsers[header.pduType](stream, header)
 
@@ -62,7 +62,7 @@ class RDPDataParser(Parser):
         header = self.parseShareDataHeader(stream, header)
 
         if header.subtype not in self.dataParsers:
-            raise UnknownPDUTypeError("Trying to parse unknown Data PDU Subtype: %s" % header.subtype, header.subtype)
+            raise UnknownPDUTypeError("Trying to parse unknown slow-path data type: %s" % header.subtype, header.subtype)
 
         return self.dataParsers[header.subtype](stream, header)
 
@@ -79,7 +79,7 @@ class RDPDataParser(Parser):
         elif isinstance(pdu, RDPConfirmActivePDU):
             headerWriter = self.writeShareControlHeader
             self.writeConfirmActive(substream, pdu)
-        elif pdu.header.pduType == RDPSlowPathPDUType.DATA_PDU:
+        elif pdu.header.pduType == SlowPathPDUType.DATA_PDU:
             headerWriter = self.writeShareDataHeader
             self.writeData(substream, pdu)
 
@@ -90,7 +90,7 @@ class RDPDataParser(Parser):
 
     def writeData(self, stream: BytesIO, pdu):
         if pdu.header.subtype not in self.dataWriters:
-            raise UnknownPDUTypeError("Trying to write unknown Data PDU Subtype: %s" % pdu.header.subtype, pdu.header.subtype)
+            raise UnknownPDUTypeError("Trying to write unknown slow-path data type: %s" % pdu.header.subtype, pdu.header.subtype)
 
         self.dataWriters[pdu.header.subtype](stream, pdu)
 
@@ -98,7 +98,7 @@ class RDPDataParser(Parser):
         length = Uint16LE.unpack(stream)
         pduType = Uint16LE.unpack(stream)
         source = Uint16LE.unpack(stream)
-        return RDPShareControlHeader(RDPSlowPathPDUType(pduType & 0xf), (pduType >> 4), source)
+        return RDPShareControlHeader(SlowPathPDUType(pduType & 0xf), (pduType >> 4), source)
 
     def writeShareControlHeader(self, stream: BytesIO, header: RDPShareControlHeader, dataLength: int):
         pduType = (header.pduType.value & 0xf) | (header.version << 4)
@@ -114,7 +114,7 @@ class RDPDataParser(Parser):
         pduSubtype = Uint8.unpack(stream)
         compressedType = Uint8.unpack(stream)
         compressedLength = Uint16LE.unpack(stream)
-        return RDPShareDataHeader(controlHeader.pduType, controlHeader.version, controlHeader.source, shareID, streamID, uncompressedLength, RDPSlowPathPDUSubtype(pduSubtype), compressedType, compressedLength)
+        return RDPShareDataHeader(controlHeader.pduType, controlHeader.version, controlHeader.source, shareID, streamID, uncompressedLength, SlowPathDataType(pduSubtype), compressedType, compressedLength)
 
     def writeShareDataHeader(self, stream: BytesIO, header, dataLength):
         substream = BytesIO()

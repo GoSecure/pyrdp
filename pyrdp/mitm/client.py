@@ -73,7 +73,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.rdpConnect.createObserver(onPDUReceived=self.onServerData)
 
         self.securityLayer = None
-        self.io = SlowPathLayer()
+        self.slowPathLayer = SlowPathLayer()
         self.fastPathLayer = None
 
         self.tcp.setNext(self.segmentation)
@@ -300,9 +300,9 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.securityLayer = self.createSecurityLayer()
         self.securityLayer.createObserver(onLicensingDataReceived=self.onLicensingDataReceived)
 
-        slowPathObserver = MITMSlowPathObserver(self.log, self.io)
-        self.io.addObserver(slowPathObserver)
-        self.io.addObserver(RecordingSlowPathObserver(self.recorder))
+        slowPathObserver = MITMSlowPathObserver(self.log, self.slowPathLayer)
+        self.slowPathLayer.addObserver(slowPathObserver)
+        self.slowPathLayer.addObserver(RecordingSlowPathObserver(self.recorder))
         self.channelObservers[channelID] = slowPathObserver
 
         fastPathParser = createFastPathParser(self.useTLS, encryptionMethod, self.crypter, ParserMode.CLIENT)
@@ -313,7 +313,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
         channel = MCSClientChannel(mcs, userID, channelID)
         channel.setNext(self.securityLayer)
-        self.securityLayer.setNext(self.io)
+        self.securityLayer.setNext(self.slowPathLayer)
 
         self.segmentation.attachLayer(SegmentationPDUType.FAST_PATH, self.fastPathLayer)
 
@@ -321,7 +321,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
             self.securityLayer.securityHeaderExpected = True
         elif encryptionMethod != 0:
             self.log.debug("Sending Security Exchange")
-            self.io.previous.sendSecurityExchange(self.securitySettings.encryptClientRandom())
+            self.slowPathLayer.previous.sendSecurityExchange(self.securitySettings.encryptClientRandom())
 
         return channel
 
