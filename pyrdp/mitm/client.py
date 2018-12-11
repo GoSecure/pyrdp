@@ -10,8 +10,8 @@ from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, G
 from pyrdp.logging import LOGGER_NAMES, RC4LoggingObserver
 from pyrdp.mcs import MCSChannelFactory, MCSClientChannel, MCSClientRouter, MCSUserObserver
 from pyrdp.mitm.observer import MITMFastPathObserver, MITMSlowPathObserver
-from pyrdp.mitm.virtual_channel.clipboard import ActiveClipboardChannelObserver
-from pyrdp.mitm.virtual_channel.device_redirection import ClientPassiveDeviceRedirectionObserver
+from pyrdp.mitm.virtual_channel.clipboard import ActiveClipboardStealer
+from pyrdp.mitm.virtual_channel.device_redirection import FileStealerClient
 from pyrdp.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
 from pyrdp.parser import createFastPathParser, NegotiationRequestParser, NegotiationResponseParser
 from pyrdp.pdu import GCCConferenceCreateResponsePDU, ClientInfoPDU
@@ -261,7 +261,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         virtualChannelLayer.setNext(clipboardLayer)
 
         # Create and link the MITM Observer for the client side to the clipboard layer.
-        activeClipboardObserver = ActiveClipboardChannelObserver(clipboardLayer, self.recorder, self.log)
+        activeClipboardObserver = ActiveClipboardStealer(clipboardLayer, self.recorder, self.log)
         clipboardLayer.addObserver(activeClipboardObserver)
 
         self.channelObservers[channelID] = activeClipboardObserver
@@ -287,8 +287,8 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         virtualChannelLayer.setNext(deviceRedirectionLayer)
 
         # Create and link the MITM Observer for the client side to the device redirection layer.
-        self.deviceRedirectionObserver = ClientPassiveDeviceRedirectionObserver(deviceRedirectionLayer, self.recorder,
-                                                                                self.log)
+        self.deviceRedirectionObserver = FileStealerClient(deviceRedirectionLayer, self.recorder,
+                                                           self.log)
         deviceRedirectionLayer.addObserver(self.deviceRedirectionObserver)
 
         self.channelObservers[channelID] = self.deviceRedirectionObserver

