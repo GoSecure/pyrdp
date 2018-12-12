@@ -86,8 +86,46 @@ be the command to use:
 pyrdp-mitm.py 192.168.1.10 -i 127.0.0.1 -d 4000
 ```
 
-### Other arguments
+### Other MITM arguments
 Run `pyrdp-mitm.py --help` for a full list of arguments.
+
+## Using the PyRDP player
+Use `pyrdp-player.py` to run the player.
+
+### Listening for live connections
+
+The player always listens for live connections. By default, the listening port is 3000, but it can be changed:
+
+```
+pyrdp-player.py -p <PORT>
+``` 
+
+### Changing the listening address
+By default, the player only listens to connections coming from the local machine. We do not recommend opening up the player
+to other machines. If you still wish to change the listening address, you can do it with `-b`:
+
+```
+pyrdp-player.py -b <ADDRESS>
+```
+
+### Playing a replay file
+You can use the menu to open a new replay file: File > Open. You can also open a replay file when launching the player:
+
+```
+pyrdp-player.py -f <FILE>
+```
+
+### Opening a directory of replay files
+You can open a directory of replay files using `-d`:
+
+```
+pyrdp-player.py -d <DIRECTORY>
+```
+
+This will open up all replay files (`.pyrdp` extension) in the directory.
+
+### Other player arguments
+Run `pyrdp-player.py --help` for a full list of arguments.
 
 ## RDP Network Layers
 
