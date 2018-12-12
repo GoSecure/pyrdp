@@ -14,14 +14,28 @@ It has two main tools:
 We are using this tool as part of an RDP honeypot which records sessions and saves a copy of the malware dropped on our
 target machine.
 
-## Supported systems
+## Table of Contents
+- [Supported Systems](#supported-systems)
+- [Installing](#installing)
+    - [Installing on Windows](#installing-on-windows)
+- [Using the PyRDP MITM](#using-the-pyrdp-mitm)
+    - [Specifying the private key and certificate](#specifying-the-private-key-and-certificate)
+    - [Connecting to the PyRDP player](#connecting-to-the-pyrdp-player)
+    - [Connecting to a PyRDP player when the MITM is running on a server](#connecting-to-a-pyrdp-player-when-the-mitm-is-running-on-a-server)
+    - [Other MITM arguments](#other-mitm-arguments)
+- [Using the PyRDP Player](#using-the-pyrdp-player)
+    - [Playing a replay file](#playing-a-replay-file)
+    - [Listening for live connections](#listening-for-live-connections)
+    - [Changing the listening address](#changing-the-listening-address)
+    - [Other player arguments](#other-player-arguments)
+- [Using PyRDP as a Library](#using-pyrdp-as-a-library)
+- [Contributing to PyRDP](#contributing-to-pyrdp)
+- [Acknowledgements](#acknowledgements)
+
+## Supported Systems
 PyRDP should work on Python 3.6 and up.
 
 This tool has been tested to work on Python 3.6 on Linux (Ubuntu 18.04). It has not been tested on OSX and Windows.
-
-### Installing on Windows
-If you want to install PyRDP on Windows, note that `setup.py` will try to compile `ext/rle.c`, so you will need to have
-a C compiler installed. You will also need to generate a private key and certificate to run the MITM.
 
 ## Installing
 First, make sure to update setuptools so the setup script won't break:
@@ -43,6 +57,10 @@ sudo python3 setup.py install
 ```
 
 This should install all the dependencies required to run PyRDP.
+
+### Installing on Windows
+If you want to install PyRDP on Windows, note that `setup.py` will try to compile `ext/rle.c`, so you will need to have
+a C compiler installed. You will also need to generate a private key and certificate to run the MITM.
 
 ## Using the PyRDP MITM
 Use `pyrdp-mitm.py <ServerIP>` or `pyrdp-mitm.py <ServerIP>:<ServerPort>` to run the MITM.
@@ -87,7 +105,7 @@ pyrdp-mitm.py 192.168.1.10 -i 127.0.0.1 -d 4000
 ### Other MITM arguments
 Run `pyrdp-mitm.py --help` for a full list of arguments.
 
-## Using the PyRDP player
+## Using the PyRDP Player
 Use `pyrdp-player.py` to run the player.
 
 ### Playing a replay file
@@ -117,7 +135,7 @@ pyrdp-player.py -b <ADDRESS>
 ### Other player arguments
 Run `pyrdp-player.py --help` for a full list of arguments.
 
-## Using PyRDP as a library
+## Using PyRDP as a Library
 If you're interested in experimenting with RDP and making your own tools, head over to our
 [documentation section](docs/README.md) for more information.
 
