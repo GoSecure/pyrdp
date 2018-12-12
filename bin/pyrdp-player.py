@@ -68,31 +68,19 @@ def main():
     :return: The app exit code (0 for normal exit, non-zero for errors)
     """
     parser = argparse.ArgumentParser()
+    parser.add_argument("replay", help="Replay files to open on launch (optional)", nargs="*")
     parser.add_argument("-b", "--bind", help="Bind address (default: 127.0.0.1)", default="127.0.0.1")
     parser.add_argument("-p", "--port", help="Bind port (default: 3000)", default=3000)
-    parser.add_argument("-d", "--directory", help="Directory that contains replay files to open.")
-    parser.add_argument("-f", "--file", help="replay file to open.")
     parser.add_argument("-L", "--log-level", help="Log level", default="INFO", choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"], nargs="?")
 
     arguments = parser.parse_args()
 
     logLevel = getattr(logging, arguments.log_level)
-
     prepare_loggers(logLevel)
-
-    files_to_read = []
-    if arguments.file is not None:
-        files_to_read.append(arguments.file)
-    if arguments.directory is not None:
-        if not arguments.directory.endswith("/"):
-            arguments.directory += "/"
-        files = filter(lambda file_name: file_name.endswith(".pyrdp"), os.listdir(arguments.directory))
-        files = map(lambda file_name: arguments.directory + file_name, files)
-        files_to_read += files
 
     app = QApplication(sys.argv)
 
-    mainWindow = player.MainWindow(arguments.bind, int(arguments.port), files_to_read)
+    mainWindow = player.MainWindow(arguments.bind, int(arguments.port), arguments.replay)
     mainWindow.show()
 
     return app.exec_()

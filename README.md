@@ -1,5 +1,4 @@
 # PyRDP
-
 PyRDP is a Python 3 Remote Desktop Protocol (RDP) Man-in-the-Middle (MITM) and library.
 
 It has two main tools:
@@ -25,7 +24,6 @@ If you wish to install it on Windows, note that `setup.py` will try to compile `
 compiler installed. You will also need to generate a private key and certificate to run the MITM.
 
 ## Installing
-
 First, make sure to update setuptools so the setup script won't break:
 
 ```
@@ -92,8 +90,16 @@ Run `pyrdp-mitm.py --help` for a full list of arguments.
 ## Using the PyRDP player
 Use `pyrdp-player.py` to run the player.
 
-### Listening for live connections
+### Playing a replay file
+You can use the menu to open a new replay file: File > Open.
 
+You can also open replay files when launching the player:
+
+```
+pyrdp-player.py <FILE1> <FILE2> ...
+```
+
+### Listening for live connections
 The player always listens for live connections. By default, the listening port is 3000, but it can be changed:
 
 ```
@@ -107,22 +113,6 @@ to other machines. If you still wish to change the listening address, you can do
 ```
 pyrdp-player.py -b <ADDRESS>
 ```
-
-### Playing a replay file
-You can use the menu to open a new replay file: File > Open. You can also open a replay file when launching the player:
-
-```
-pyrdp-player.py -f <FILE>
-```
-
-### Opening a directory of replay files
-You can open a directory of replay files using `-d`:
-
-```
-pyrdp-player.py -d <DIRECTORY>
-```
-
-This will open up all replay files (`.pyrdp` extension) in the directory.
 
 ### Other player arguments
 Run `pyrdp-player.py --help` for a full list of arguments.
