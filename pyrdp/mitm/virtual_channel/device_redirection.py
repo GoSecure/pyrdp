@@ -13,16 +13,16 @@ from pyrdp.pdu import DeviceCloseRequestPDU, DeviceCreateRequestPDU, DeviceIOReq
 from pyrdp.recording import Recorder
 
 
-class FileStealer(Observer):
+class PassiveFileStealer(Observer):
     """
-    The passive device redirection observer parses specific packets in the RDPDR channel to intercept
+    The passive file stealer parses specific packets in the RDPDR channel to intercept
     and reconstruct transferred files. They are then saved to {currentDir}/saved_files/{filePath}
     as soon as it's done being transferred.
     """
 
     def __init__(self, layer: Layer, recorder: Recorder, logger: logging.Logger, **kwargs):
         super().__init__(**kwargs)
-        self.peer: FileStealer = None
+        self.peer: PassiveFileStealer = None
         self.layer = layer
         self.recorder = recorder
         self.mitm_log = getLoggerPassFilters(f"{logger.name}.deviceRedirection")
@@ -150,18 +150,18 @@ class FileStealer(Observer):
         return decodeUTF16LE(pathAsBytes).strip("\x00")
 
 
-class FileStealerClient(FileStealer):
+class PassiveFileStealerClient(PassiveFileStealer):
 
     def __init__(self, layer: Layer, recorder: Recorder, logger: Logger, **kwargs):
         super().__init__(layer, recorder, logger, **kwargs)
 
 
-class FileStealerServer(FileStealer):
+class PassiveFileStealerServer(PassiveFileStealer):
 
-    def __init__(self, layer: Layer, recorder: Recorder, clientObserver: FileStealerClient, logger: Logger, **kwargs):
+    def __init__(self, layer: Layer, recorder: Recorder, clientObserver: PassiveFileStealerClient, logger: Logger, **kwargs):
         super().__init__(layer, recorder, logger, **kwargs)
         self.clientObserver = clientObserver
 
     def sendPDU(self, pdu: DeviceRedirectionPDU):
-        super(FileStealerServer, self).sendPDU(pdu)
+        super(PassiveFileStealerServer, self).sendPDU(pdu)
 

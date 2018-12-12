@@ -12,7 +12,7 @@ from pyrdp.logging import LOGGER_NAMES, RC4LoggingObserver
 from pyrdp.mcs import MCSChannelFactory, MCSClientChannel, MCSClientRouter, MCSUserObserver
 from pyrdp.mitm.observer import MITMFastPathObserver, MITMSlowPathObserver
 from pyrdp.mitm.virtual_channel.clipboard import ActiveClipboardStealer
-from pyrdp.mitm.virtual_channel.device_redirection import FileStealerClient
+from pyrdp.mitm.virtual_channel.device_redirection import PassiveFileStealerClient
 from pyrdp.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
 from pyrdp.parser import createFastPathParser, NegotiationRequestParser, NegotiationResponseParser
 from pyrdp.pdu import ClientInfoPDU, GCCConferenceCreateResponsePDU
@@ -282,7 +282,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         Layer.chain(channel, securityLayer, virtualChannelLayer, deviceRedirectionLayer)
 
         # Create and link the MITM Observer for the client side to the device redirection layer.
-        self.deviceRedirectionObserver = FileStealerClient(deviceRedirectionLayer, self.recorder, self.log)
+        self.deviceRedirectionObserver = PassiveFileStealerClient(deviceRedirectionLayer, self.recorder, self.log)
         deviceRedirectionLayer.addObserver(self.deviceRedirectionObserver)
 
         self.channelObservers[channelID] = self.deviceRedirectionObserver
