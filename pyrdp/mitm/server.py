@@ -8,10 +8,12 @@ from twisted.internet import reactor
 
 from pyrdp.core import decodeUTF16LE, getLoggerPassFilters
 from pyrdp.core.ssl import ServerTLSContext
-from pyrdp.enum import CapabilityType, EncryptionLevel, EncryptionMethod, InputEventType, NegotiationProtocols, \
-    OrderFlag, ParserMode, PlayerMessageType, SegmentationPDUType, SlowPathDataType, VirtualChannelName
+from pyrdp.enum import CapabilityType, ClientCapabilityFlag, EncryptionLevel, EncryptionMethod, InputEventType, \
+    NegotiationProtocols, OrderFlag, ParserMode, PlayerMessageType, SegmentationPDUType, SlowPathDataType, \
+    VirtualChannelName
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, Layer, MCSLayer, RawLayer, SecurityLayer, \
     SegmentationLayer, SlowPathLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
+from pyrdp.layer.rdp.virtual_channel.dynamic_channel import DynamicChannelLayer
 from pyrdp.logging import ConnectionMetadataFilter, LOGGER_NAMES, RC4LoggingObserver
 from pyrdp.mcs import MCSChannelFactory, MCSServerChannel, MCSUserObserver
 from pyrdp.mitm.client import MITMClient
@@ -230,6 +232,10 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         rdpClientDataPdu = self.rdpClientConnectionParser.parse(gccConferenceCreateRequestPDU.payload)
         rdpClientDataPdu.securityData.encryptionMethods &= ~EncryptionMethod.ENCRYPTION_FIPS
         rdpClientDataPdu.securityData.extEncryptionMethods &= ~EncryptionMethod.ENCRYPTION_FIPS
+
+        #  This disables the support for the Graphics pipeline extension, which is a completely different way to
+        #  transfer graphics from server to client. https://msdn.microsoft.com/en-us/library/dn366933.aspx
+        rdpClientDataPdu.coreData.earlyCapabilityFlags &= ~ClientCapabilityFlag.RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL
 
         self.client.onConnectInitial(gccConferenceCreateRequestPDU, rdpClientDataPdu)
         return True
