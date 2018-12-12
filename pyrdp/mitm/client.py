@@ -6,8 +6,8 @@ from pyrdp.core.ssl import ClientTLSContext
 from pyrdp.enum import ClientCapabilityFlag, ClientInfoFlags, ParserMode, PlayerMessageType, SegmentationPDUType, \
     VirtualChannelName
 from pyrdp.layer import ClientConnectionLayer, ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, \
-    GCCClientConnectionLayer, MCSClientConnectionLayer, MCSLayer, RawLayer, SecurityLayer, SegmentationLayer, \
-    SlowPathLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer, Layer
+    GCCClientConnectionLayer, Layer, MCSClientConnectionLayer, MCSLayer, RawLayer, SecurityLayer, SegmentationLayer, \
+    SlowPathLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
 from pyrdp.logging import LOGGER_NAMES, RC4LoggingObserver
 from pyrdp.mcs import MCSChannelFactory, MCSClientChannel, MCSClientRouter, MCSUserObserver
 from pyrdp.mitm.observer import MITMFastPathObserver, MITMSlowPathObserver
@@ -15,9 +15,9 @@ from pyrdp.mitm.virtual_channel.clipboard import ActiveClipboardStealer
 from pyrdp.mitm.virtual_channel.device_redirection import PassiveFileStealerClient
 from pyrdp.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
 from pyrdp.parser import createFastPathParser, NegotiationRequestParser, NegotiationResponseParser
-from pyrdp.pdu import ClientInfoPDU, GCCConferenceCreateResponsePDU
+from pyrdp.pdu import ClientInfoPDU, GCCConferenceCreateResponsePDU, MCSChannelJoinRequestPDU
 from pyrdp.pdu.gcc import GCCConferenceCreateRequestPDU
-from pyrdp.pdu.rdp.connection import ClientDataPDU
+from pyrdp.pdu.rdp.connection import ClientDataPDU, ServerDataPDU
 from pyrdp.recording import FileLayer, Recorder, RecordingFastPathObserver, RecordingSlowPathObserver, SocketLayer
 from pyrdp.security import RC4CrypterProxy, SecuritySettings
 
@@ -175,7 +175,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         """
         self.conferenceCreateResponse = pdu
 
-    def onServerData(self, serverData):
+    def onServerData(self, serverData: ServerDataPDU):
         """
         Called when the server data from the GCC Conference Create Response is received.
         """
@@ -202,7 +202,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         # MCS Attach User Confirm failed
         self.server.onAttachRefused(user, result)
 
-    def onChannelJoinRequest(self, pdu):
+    def onChannelJoinRequest(self, pdu: MCSChannelJoinRequestPDU):
         self.mcs.send(pdu)
 
     def buildChannel(self, mcs, userID, channelID):

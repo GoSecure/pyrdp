@@ -5,12 +5,12 @@ from Crypto.PublicKey import RSA
 from Crypto.Util.number import bytes_to_long, long_to_bytes
 
 from pyrdp.core import decodeUTF16LE, encodeUTF16LE, StrictStream, Uint16LE, Uint32LE, Uint8
-from pyrdp.enum import ColorDepth, ConnectionType, DesktopOrientation, EncryptionLevel, EncryptionMethod, \
-    HighColorDepth, KeyboardType, ConnectionDataType, RDPVersion, ServerCertificateType
+from pyrdp.enum import ColorDepth, ConnectionDataType, ConnectionType, DesktopOrientation, EncryptionLevel, \
+    EncryptionMethod, HighColorDepth, KeyboardType, RDPVersion, ServerCertificateType
 from pyrdp.exceptions import ParsingError, UnknownPDUTypeError
 from pyrdp.parser.parser import Parser
-from pyrdp.pdu import ClientChannelDefinition, ClientClusterData, ClientCoreData, ClientNetworkData, ClientSecurityData, \
-    ProprietaryCertificate, ClientDataPDU, ServerDataPDU, ServerCoreData, ServerNetworkData, ServerSecurityData
+from pyrdp.pdu import ClientChannelDefinition, ClientClusterData, ClientCoreData, ClientDataPDU, ClientNetworkData, \
+    ClientSecurityData, ProprietaryCertificate, ServerCoreData, ServerDataPDU, ServerNetworkData, ServerSecurityData
 
 
 class ClientConnectionParser(Parser):
@@ -426,10 +426,9 @@ class ServerConnectionParser(Parser):
         if data.earlyCapabilityFlags is not None:
             stream.write(Uint32LE.pack(data.earlyCapabilityFlags))
 
-    def writeServerNetworkData(self, stream, data):
+    def writeServerNetworkData(self, stream: BytesIO, data: ServerNetworkData):
         """
-        :type stream: BytesIO
-        :type data: ServerNetworkData
+        https://msdn.microsoft.com/en-us/library/cc240522.aspx
         """
         stream.write(Uint16LE.pack(data.mcsChannelID))
         stream.write(Uint16LE.pack(len(data.channels)))

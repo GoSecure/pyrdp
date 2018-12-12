@@ -9,10 +9,9 @@ from twisted.internet import reactor
 from pyrdp.core import decodeUTF16LE, getLoggerPassFilters
 from pyrdp.core.ssl import ServerTLSContext
 from pyrdp.enum import CapabilityType, EncryptionLevel, EncryptionMethod, InputEventType, NegotiationProtocols, \
-    OrderFlag, ParserMode, PlayerMessageType, SlowPathDataType, SegmentationPDUType, VirtualChannelName
-from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, MCSLayer, RawLayer, SlowPathLayer, \
-    SecurityLayer, SegmentationLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer, \
-    Layer
+    OrderFlag, ParserMode, PlayerMessageType, SegmentationPDUType, SlowPathDataType, VirtualChannelName
+from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, Layer, MCSLayer, RawLayer, SecurityLayer, \
+    SegmentationLayer, SlowPathLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
 from pyrdp.logging import ConnectionMetadataFilter, LOGGER_NAMES, RC4LoggingObserver
 from pyrdp.mcs import MCSChannelFactory, MCSServerChannel, MCSUserObserver
 from pyrdp.mitm.client import MITMClient
@@ -22,11 +21,11 @@ from pyrdp.mitm.router import MITMServerRouter
 from pyrdp.mitm.virtual_channel.clipboard import PassiveClipboardStealer
 from pyrdp.mitm.virtual_channel.device_redirection import PassiveFileStealerServer
 from pyrdp.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
-from pyrdp.parser import createFastPathParser, GCCParser, ClientConnectionParser, ClientInfoParser, \
+from pyrdp.parser import ClientConnectionParser, ClientInfoParser, createFastPathParser, GCCParser, \
     NegotiationRequestParser, NegotiationResponseParser, ServerConnectionParser
 from pyrdp.pdu import Capability, GCCConferenceCreateRequestPDU, GCCConferenceCreateResponsePDU, MCSConnectResponsePDU, \
-    MultifragmentUpdateCapability, ProprietaryCertificate, NegotiationRequestPDU, NegotiationResponsePDU, \
-    ServerDataPDU, ServerSecurityData
+    MultifragmentUpdateCapability, NegotiationRequestPDU, NegotiationResponsePDU, ProprietaryCertificate, ServerDataPDU, \
+    ServerSecurityData
 from pyrdp.recording import FileLayer, Recorder, RecordingFastPathObserver, RecordingSlowPathObserver, SocketLayer
 from pyrdp.security import RC4CrypterProxy, SecuritySettings
 
@@ -301,6 +300,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
 
     def onChannelJoinRefused(self, user, result, channelID):
         # MCS Channel Join Confirm failed
+        self.log.debug("Refusing to connect channelId %(channelId)d", {"channelId": channelID})
         self.router.sendChannelJoinConfirm(result, user.userID, channelID)
 
     def buildChannel(self, mcs, userID, channelID):

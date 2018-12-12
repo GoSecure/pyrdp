@@ -25,7 +25,9 @@ class MCSResult(IntEnum):
     MCS Result enumeration.
     """
     RT_SUCCESSFUL = 0
+    RT_UNSPECIFIED_FAILURE = 14
     RT_USER_REJECTED = 15
+
 
 class MCSChannelID(IntEnum):
     """

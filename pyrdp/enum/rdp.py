@@ -66,6 +66,7 @@ class FastPathInputType(IntEnum):
     FASTPATH_INPUT_EVENT_UNICODE = 4
     FASTPATH_INPUT_EVENT_QOE_TIMESTAMP = 6
 
+
 class FastPathOutputType(IntEnum):
     FASTPATH_UPDATETYPE_ORDERS = 0
     FASTPATH_UPDATETYPE_BITMAP = 1
@@ -79,7 +80,11 @@ class FastPathOutputType(IntEnum):
     FASTPATH_UPDATETYPE_CACHED = 10
     FASTPATH_UPDATETYPE_POINTER = 11
 
+
 class FastPathOutputCompressionType(IntEnum):
+    """
+    https://msdn.microsoft.com/en-us/library/cc240622.aspx
+    """
     FASTPATH_OUTPUT_COMPRESSION_USED = 0x2
 
 
