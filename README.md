@@ -11,17 +11,17 @@ It has two main tools:
     - See live RDP connections coming from the MITM
     - View replays of RDP connections
 
-PyRDP uses code from [RDPY](https://github.com/citronneur/rdpy) such as RC4 decryption, bitmap decompression bindings and
-the base GUI for the PyRDP Player.
-
-PyRDP also uses code from [rdesktop](https://github.com/rdesktop/rdesktop), namely the bitmap decompression algorithm in C.
+We are using this tool as part of an RDP honeypot which records sessions and saves a copy of the malware dropped on our
+target machine.
 
 ## Supported systems
 PyRDP should work on Python 3.6 and up.
 
 This tool has been tested to work on Python 3.6 on Linux (Ubuntu 18.04). It has not been tested on OSX and Windows.
-If you wish to install it on Windows, note that `setup.py` will try to compile `rle.c`, so you will need to have a C
-compiler installed. You will also need to generate a private key and certificate to run the MITM.
+
+### Installing on Windows
+If you want to install PyRDP on Windows, note that `setup.py` will try to compile `ext/rle.c`, so you will need to have
+a C compiler installed. You will also need to generate a private key and certificate to run the MITM.
 
 ## Installing
 First, make sure to update setuptools so the setup script won't break:
@@ -108,7 +108,7 @@ pyrdp-player.py -p <PORT>
 
 ### Changing the listening address
 By default, the player only listens to connections coming from the local machine. We do not recommend opening up the player
-to other machines. If you still wish to change the listening address, you can do it with `-b`:
+to other machines. If you still want to change the listening address, you can do it with `-b`:
 
 ```
 pyrdp-player.py -b <ADDRESS>
@@ -137,3 +137,11 @@ For a more detailed explanation, head to `docs/layers.md`.
 
     5.1. For log statements, use %-style formatting like that: `myLogger.info("My log message and here's a variable: %(myNamedVariable)s", {"myNamedVariable": myNamedVariable})`.
     This separates variables from the message, which can be helpful for analysis purposes. 
+
+## Acknowledgements
+PyRDP uses code from the following open-source software:
+
+- [RC4-Python](https://github.com/bozhu/RC4-Python) for the RC4 implementation.
+- [rdesktop](https://github.com/rdesktop/rdesktop) for bitmap decompression.
+- [rdpy](https://github.com/citronneur/rdpy) for RC4 keys, the bitmap decompression bindings and the base GUI code for the
+PyRDP player.
