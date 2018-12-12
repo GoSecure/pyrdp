@@ -147,7 +147,7 @@ class FileStealer(Observer):
         """
         Converts a windows-encoded path to a beautiful, python-ready path.
         """
-        return decodeUTF16LE(pathAsBytes).strip("\00")
+        return decodeUTF16LE(pathAsBytes).strip("\x00")
 
 
 class FileStealerClient(FileStealer):
