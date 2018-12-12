@@ -1,11 +1,11 @@
 # Layers
 ## Purpose
-Data received from the network passes through a series of layers. The job of a layer is to simply parse a PDU
-and forward it to the next layer in line. Ideally, every single layer would just remove part of the total data
-received until we're left with only the data of interest.
+Data received from the network passes through a series of layers. The job of a layer is to parse a PDU and forward it to
+the next layer in line. Ideally, every single layer would just remove part of the total data received until we're left
+with only the data of interest.
 
 ```
-TCP -> Intermediate layers -> Data
+TCP -> Intermediate Layer 1 (400 bytes) -> Intermediate Layer 2 (380 bytes) -> ... -> Data (250 bytes)
 ```
 
 Unfortunately, most protocols that are used in RDP are not as simple. For example, most of them have some 
@@ -15,15 +15,22 @@ whether it is used on a server or a client. In order to handle this complexity, 
 
 ## Layer Observers
 Each layer can have zero to many `Observer` attached to it. Whenever it receives a PDU, it calls the `Layer` class's 
-`pduReceived` method, which notifies the observer and optionally forwards it to the next layer in line.
-The job of handling special PDUs is thus left to the layer's observer. This allows us to keep a simple
+`pduReceived` method, which notifies the observers and optionally forwards it to the next layer in line.
+The job of handling special PDUs is thus left to the layer's observers. This allows us to keep a simple
 `parse and forward` design in our layer classes, where forwarding only happens when actual data PDUs are
 received.
 
-Observers are also useful if you want to monitor everything that is received. For example, you could attach 
+The clipboard and file stealing logic are implemented using observers. For example, when creating the drive redirection
+channel, we simply attach the file stealing observer to the channel and let it do the work.
+
+Observers can be useful if you want to monitor everything that is received. For example, you could attach 
 an observer to every layer and record it in a file or log it for debugging.
 
 ## Layers in RDP
+Here is a diagram of the layers used in RDP:
+
+![RDP layers](layers.png)
+
 ### TCP
 The TCP layer comes first and is simply an adaptor for the backend networking engine. It forwards all data 
 and provides a way to start using TLS on the connection, among other things.
@@ -31,12 +38,12 @@ and provides a way to start using TLS on the connection, among other things.
 ### Segmentation
 The segmentation layer comes right after TCP and its primary job is to send data to the proper layer for the 
 current PDU type. Depending on the PDU's header, it will send data either to the TPKT layer or the fast-path
-layer, and send all bytes to this layer until a full PDU has been read.
+layer, and send all bytes to this layer until a full PDU has been read. In RDP, two different protocols can be seen as
+having a segmentation job: TPKT and fast-path.
 
-In RDP, two different protocols can be seen as having a segmentation job: TPKT and fast-path. TPKT PDUs are 
-very simple: they only have a header, a length and a payload field. Segmentation is its only job. On the 
-other hand, fast-path is much more complicated: it contains a length field, which allows it to be used for 
-segmentation, but it also contains actual input or output data.
+TPKT PDUs are very simple: they only have a header, a length and a payload field. Segmentation is their only job.
+On the other hand, fast-path is much more complicated: a fast-path PDU contains a length field, which allows it to be used
+for segmentation, but it also contains input or output data.
 
 Both of these protocols can be used during the same session. Fast-path is used for quick input and output 
 transmissions. TPKT is used for the entire connection sequence as well as more specialized PDUs. It's also 
@@ -78,12 +85,11 @@ used. It also handles security headers, which are used even in TLS connections f
 This is where slow-path RDP data ends up. This layer is also used at the end of the connection sequence.
 
 ### Virtual channels (clipboard, drive, etc.)
-Virtual channels follow the same route that I/O takes, except their packet structure is different. For the 
-moment, only the clipboard and device redirection virtual channels have been implemented.
+Virtual channels follow the same route that I/O takes, except their packet structure is different.
 
 ### Fast-path
 The aptly-named fast-path PDUs contain only the information we care about, so we don't have to deal with MCS.
-When enabled (which it is, by default), fast-path is used to transport input and output information. The PDUs 
+When enabled (the default setting), fast-path is used to transport input and output information. The PDUs 
 themselves are handled as a mix of the TPKT, Security and Data layers: they are used for segmentation, have
 encryption / decryption information and contain the actual data of interest.
 
