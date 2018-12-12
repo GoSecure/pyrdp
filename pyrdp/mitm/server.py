@@ -11,7 +11,8 @@ from pyrdp.core.ssl import ServerTLSContext
 from pyrdp.enum import CapabilityType, EncryptionLevel, EncryptionMethod, InputEventType, NegotiationProtocols, \
     OrderFlag, ParserMode, PlayerMessageType, SlowPathDataType, SegmentationPDUType, VirtualChannelName
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, MCSLayer, RawLayer, SlowPathLayer, \
-    SecurityLayer, SegmentationLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
+    SecurityLayer, SegmentationLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer, \
+    Layer
 from pyrdp.logging import ConnectionMetadataFilter, LOGGER_NAMES, RC4LoggingObserver
 from pyrdp.mcs import MCSChannelFactory, MCSServerChannel, MCSUserObserver
 from pyrdp.mitm.client import MITMClient
@@ -100,8 +101,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
 
         self.tcp.setNext(self.segmentation)
         self.segmentation.attachLayer(SegmentationPDUType.TPKT, self.tpkt)
-        self.tpkt.setNext(self.x224)
-        self.x224.setNext(self.mcs)
+        Layer.chain(self.tpkt, self.x224, self.mcs)
 
         if recordHost is not None and recordPort is not None:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -329,8 +329,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         securityLayer = self.createSecurityLayer()
         rawLayer = RawLayer()
 
-        channel.setNext(securityLayer)
-        securityLayer.setNext(rawLayer)
+        Layer.chain(channel, securityLayer, rawLayer)
 
         peer = self.client.getChannelObserver(channelID)
         observer = MITMVirtualChannelObserver(rawLayer)
@@ -352,10 +351,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         virtualChannelLayer = VirtualChannelLayer()
         clipboardLayer = ClipboardLayer()
 
-        # Link layers together in the good order: MCS --> Security --> VirtualChannel --> Clipboard
-        channel.setNext(securityLayer)
-        securityLayer.setNext(virtualChannelLayer)
-        virtualChannelLayer.setNext(clipboardLayer)
+        Layer.chain(channel, securityLayer, virtualChannelLayer, clipboardLayer)
 
         # Create and link the MITM Observer for the server side to the clipboard layer.
         # Also link both MITM Observers (client and server) so they can send traffic the other way.
@@ -379,20 +375,17 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         channel = MCSServerChannel(mcs, userID, channelID)
         securityLayer = self.createSecurityLayer()
         virtualChannelLayer = VirtualChannelLayer(activateShowProtocolFlag=False)
-        deviceRedirection = DeviceRedirectionLayer()
+        deviceRedirectionLayer = DeviceRedirectionLayer()
 
-        # Link layers together in the good order: MCS --> Security --> VirtualChannel --> Device redirection
-        channel.setNext(securityLayer)
-        securityLayer.setNext(virtualChannelLayer)
-        virtualChannelLayer.setNext(deviceRedirection)
+        Layer.chain(channel, securityLayer, virtualChannelLayer, deviceRedirectionLayer)
 
         # Create and link the MITM Observer for the server side to the device redirection layer.
         # Also link both MITM Observers (client and server) so they can send traffic the other way.
         peer = self.client.getChannelObserver(channelID)
-        observer = FileStealerServer(deviceRedirection, self.recorder,
+        observer = FileStealerServer(deviceRedirectionLayer, self.recorder,
                                      self.client.deviceRedirectionObserver, self.log)
         observer.setPeer(peer)
-        deviceRedirection.addObserver(observer)
+        deviceRedirectionLayer.addObserver(observer)
 
         return channel
 
@@ -420,8 +413,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         self.fastPathLayer.addObserver(RecordingFastPathObserver(self.recorder, PlayerMessageType.FAST_PATH_INPUT))
 
         channel = MCSServerChannel(mcs, userID, channelID)
-        channel.setNext(self.securityLayer)
-        self.securityLayer.setNext(self.slowPathLayer)
+        Layer.chain(channel, self.securityLayer, self.slowPathLayer)
 
         self.segmentation.attachLayer(SegmentationPDUType.FAST_PATH, self.fastPathLayer)
 

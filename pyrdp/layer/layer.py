@@ -78,6 +78,21 @@ class Layer(Subject):
         self.mainParser = mainParser
         self.previous: Layer = None
         self.next: Layer = None
+
+    @staticmethod
+    def chain(first: 'Layer', second: 'Layer', *layers: ['Layer']):
+        """
+        Chain a series of layers together by calling setNext iteratively.
+        :param first: first layer in the chain.
+        :param second: second layer in the chain.
+        :param layers: additional layers in the chain.
+        """
+        first.setNext(second)
+
+        current = second
+        for nextLayer in layers:
+            current.setNext(nextLayer)
+            current = nextLayer
     
     def setNext(self, layer: 'Layer'):
         """

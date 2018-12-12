@@ -6,7 +6,7 @@ from pyrdp.core.ssl import ClientTLSContext
 from pyrdp.enum import ClientInfoFlags, ParserMode, PlayerMessageType, SegmentationPDUType, VirtualChannelName
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, GCCClientConnectionLayer, \
     MCSClientConnectionLayer, MCSLayer, RawLayer, ClientConnectionLayer, SlowPathLayer, SecurityLayer, \
-    SegmentationLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
+    SegmentationLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer, Layer
 from pyrdp.logging import LOGGER_NAMES, RC4LoggingObserver
 from pyrdp.mcs import MCSChannelFactory, MCSClientChannel, MCSClientRouter, MCSUserObserver
 from pyrdp.mitm.observer import MITMFastPathObserver, MITMSlowPathObserver
@@ -78,10 +78,9 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
         self.tcp.setNext(self.segmentation)
         self.segmentation.attachLayer(SegmentationPDUType.TPKT, self.tpkt)
-        self.tpkt.setNext(self.x224)
-        self.x224.setNext(self.mcs)
-        self.mcsConnect.setNext(self.gccConnect)
-        self.gccConnect.setNext(self.rdpConnect)
+
+        Layer.chain(self.tpkt, self.x224, self.mcs)
+        Layer.chain(self.mcsConnect, self.gccConnect, self.rdpConnect)
 
         record_layers = [FileLayer(fileHandle)]
 
@@ -233,8 +232,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         securityLayer = self.createSecurityLayer()
         rawLayer = RawLayer()
 
-        channel.setNext(securityLayer)
-        securityLayer.setNext(rawLayer)
+        Layer.chain(channel, securityLayer, rawLayer)
 
         observer = MITMVirtualChannelObserver(rawLayer)
         rawLayer.addObserver(observer)
@@ -255,10 +253,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         virtualChannelLayer = VirtualChannelLayer()
         clipboardLayer = ClipboardLayer()
 
-        # Link layers together in the good order: MCS --> Security --> VirtualChannel --> Clipboard
-        channel.setNext(securityLayer)
-        securityLayer.setNext(virtualChannelLayer)
-        virtualChannelLayer.setNext(clipboardLayer)
+        Layer.chain(channel, securityLayer, virtualChannelLayer, clipboardLayer)
 
         # Create and link the MITM Observer for the client side to the clipboard layer.
         activeClipboardObserver = ActiveClipboardStealer(clipboardLayer, self.recorder, self.log)
@@ -281,14 +276,10 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         virtualChannelLayer = VirtualChannelLayer(activateShowProtocolFlag=False)
         deviceRedirectionLayer = DeviceRedirectionLayer()
 
-        # Link layers together in the good order: MCS --> Security --> VirtualChannel --> DeviceRedirection
-        channel.setNext(securityLayer)
-        securityLayer.setNext(virtualChannelLayer)
-        virtualChannelLayer.setNext(deviceRedirectionLayer)
+        Layer.chain(channel, securityLayer, virtualChannelLayer, deviceRedirectionLayer)
 
         # Create and link the MITM Observer for the client side to the device redirection layer.
-        self.deviceRedirectionObserver = FileStealerClient(deviceRedirectionLayer, self.recorder,
-                                                           self.log)
+        self.deviceRedirectionObserver = FileStealerClient(deviceRedirectionLayer, self.recorder, self.log)
         deviceRedirectionLayer.addObserver(self.deviceRedirectionObserver)
 
         self.channelObservers[channelID] = self.deviceRedirectionObserver
@@ -312,8 +303,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.fastPathLayer.addObserver(RecordingFastPathObserver(self.recorder, PlayerMessageType.FAST_PATH_OUTPUT))
 
         channel = MCSClientChannel(mcs, userID, channelID)
-        channel.setNext(self.securityLayer)
-        self.securityLayer.setNext(self.slowPathLayer)
+        Layer.chain(channel, self.securityLayer, self.slowPathLayer)
 
         self.segmentation.attachLayer(SegmentationPDUType.FAST_PATH, self.fastPathLayer)
 

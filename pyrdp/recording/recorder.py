@@ -35,8 +35,7 @@ class Recorder:
         tpktLayer = TPKTLayer()
         messageLayer = PlayerMessageLayer()
 
-        transportLayer.setNext(tpktLayer)
-        tpktLayer.setNext(messageLayer)
+        Layer.chain(transportLayer, tpktLayer, messageLayer)
         self.topLayers.append(messageLayer)
 
     def setParser(self, messageType: PlayerMessageType, parser: Parser):
