@@ -1,4 +1,5 @@
 from pyrdp.core import ObservedBy, Observer, Subject
+from pyrdp.enum import MCSResult
 from pyrdp.mcs.router import MCSRouter
 from pyrdp.mcs.user import MCSUser
 from pyrdp.pdu import MCSAttachUserConfirmPDU, MCSChannelJoinConfirmPDU, MCSSendDataRequestPDU
@@ -100,8 +101,8 @@ class MCSServerRouter(MCSRouter, Subject):
             pdu = MCSAttachUserConfirmPDU(param, None)
 
         self.mcs.send(pdu)
-    
-    def onChannelJoinRequest(self, pdu):
+
+    def onChannelJoinRequest(self, pdu: MCSSendDataRequestPDU):
         """
         Called when a Channel Join Request PDU is received
         """
@@ -121,12 +122,15 @@ class MCSServerRouter(MCSRouter, Subject):
         """
 
         if notify:
-            if result == 0:
+            if result == MCSResult.RT_SUCCESSFUL:
                 self.users[userID].channelJoinAccepted(self.mcs, channelID)
             else:
                 self.users[userID].channelJoinRefused(result, channelID)
 
-        pdu = MCSChannelJoinConfirmPDU(result, userID, channelID, channelID, b"")
+        # t.125 specification document, section 11.22
+        channelIdField = channelID if result == MCSResult.RT_SUCCESSFUL else None
+
+        pdu = MCSChannelJoinConfirmPDU(result, userID, channelID, channelIdField, b"")
         self.mcs.send(pdu)
 
     def onSendDataRequest(self, pdu: MCSSendDataRequestPDU):
@@ -140,7 +144,7 @@ class MCSServerRouter(MCSRouter, Subject):
 
         user = self.users[userID]
         user.recvSendDataRequest(pdu.channelID, pdu)
-        
+
     def onInvalidMCSUser(self, pdu: MCSSendDataRequestPDU):
         raise ValueError(f"User does not exist: {pdu.initiator}")
 

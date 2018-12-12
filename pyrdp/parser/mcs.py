@@ -387,12 +387,10 @@ class MCSParser(Parser):
         stream.write(Uint16BE.pack(pdu.channelID))
         stream.write(pdu.payload)
 
-    def writeChannelJoinConfirm(self, stream, pdu):
+    def writeChannelJoinConfirm(self, stream: BytesIO, pdu: MCSChannelJoinConfirmPDU):
         """
         Encode a Channel Join Confirm PDU
         :param stream: The destination stream to write into.
-        :type stream: BytesIO
-        :type pdu: MCSChannelJoinConfirmPDU
         """
         stream.write(per.writeEnumeration(pdu.result))
         stream.write(Uint16BE.pack(pdu.initiator - MCSChannelID.USERCHANNEL_BASE))
