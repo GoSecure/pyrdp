@@ -3,10 +3,11 @@ from typing import BinaryIO, Dict
 
 from pyrdp.core import getLoggerPassFilters
 from pyrdp.core.ssl import ClientTLSContext
-from pyrdp.enum import ClientInfoFlags, ParserMode, PlayerMessageType, SegmentationPDUType, VirtualChannelName
-from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, GCCClientConnectionLayer, \
-    MCSClientConnectionLayer, MCSLayer, RawLayer, ClientConnectionLayer, SlowPathLayer, SecurityLayer, \
-    SegmentationLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer, Layer
+from pyrdp.enum import ClientCapabilityFlag, ClientInfoFlags, ParserMode, PlayerMessageType, SegmentationPDUType, \
+    VirtualChannelName
+from pyrdp.layer import ClientConnectionLayer, ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, \
+    GCCClientConnectionLayer, MCSClientConnectionLayer, MCSLayer, RawLayer, SecurityLayer, SegmentationLayer, \
+    SlowPathLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer, Layer
 from pyrdp.logging import LOGGER_NAMES, RC4LoggingObserver
 from pyrdp.mcs import MCSChannelFactory, MCSClientChannel, MCSClientRouter, MCSUserObserver
 from pyrdp.mitm.observer import MITMFastPathObserver, MITMSlowPathObserver
@@ -14,7 +15,7 @@ from pyrdp.mitm.virtual_channel.clipboard import ActiveClipboardStealer
 from pyrdp.mitm.virtual_channel.device_redirection import FileStealerClient
 from pyrdp.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserver
 from pyrdp.parser import createFastPathParser, NegotiationRequestParser, NegotiationResponseParser
-from pyrdp.pdu import GCCConferenceCreateResponsePDU, ClientInfoPDU
+from pyrdp.pdu import ClientInfoPDU, GCCConferenceCreateResponsePDU
 from pyrdp.pdu.gcc import GCCConferenceCreateRequestPDU
 from pyrdp.pdu.rdp.connection import ClientDataPDU
 from pyrdp.recording import FileLayer, Recorder, RecordingFastPathObserver, RecordingSlowPathObserver, SocketLayer
@@ -145,6 +146,8 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
                       {"clientName": clientData.coreData.clientName, "desktopWidth": clientData.coreData.desktopWidth,
                        "desktopHeight": clientData.coreData.desktopHeight})
         self.recorder.record(clientData, PlayerMessageType.CLIENT_DATA)
+
+        clientData.coreData.earlyCapabilityFlags &= ~ClientCapabilityFlag.RNS_UD_CS_WANT_32BPP_SESSION
 
         if clientData.networkData:
             self.channelDefinitions = clientData.networkData.channelDefinitions

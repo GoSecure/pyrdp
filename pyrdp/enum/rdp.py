@@ -264,6 +264,16 @@ class ServerCapabilityFlag:
     RNS_UD_SC_EDGE_ACTIONS_SUPPORTED_V2 = 4
 
 
+class DrawingFlags(IntEnum):
+    """
+    https://msdn.microsoft.com/en-us/library/cc240554.aspx
+    """
+    DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY = 0x02
+    DRAW_ALLOW_COLOR_SUBSAMPLING = 0x04
+    DRAW_ALLOW_SKIP_ALPHA = 0x08
+    DRAW_UNUSED_FLAG = 0x10
+
+
 class ConnectionType(IntEnum):
     CONNECTION_TYPE_UNKNOWN = 0x00
     CONNECTION_TYPE_MODEM = 0x01
