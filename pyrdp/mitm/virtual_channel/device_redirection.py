@@ -84,11 +84,11 @@ class PassiveFileStealer(Observer):
             elif isinstance(requestPDU, DeviceCloseRequestPDU):
                 self.dealWithCloseResponse(pdu, requestPDU)
             else:
-                self.mitm_log.debug(f"Unknown response received: {pdu}")
+                self.mitm_log.debug("Unknown response received: %(pdu)s", {"pdu": pdu})
             self.completionIdInProgress.pop(pdu.completionId)
         else:
-            self.mitm_log.error(f"Completion id {pdu.completionId} not in the completionId in progress list. "
-                                f"This might mean that someone is sending corrupted data.")
+            self.mitm_log.error("Completion id %(completionId)d not in the completionId in progress list. "
+                                "This might mean that someone is sending corrupted data.", {"completionId": pdu.completionId})
 
     def dealWithReadResponse(self, pdu: DeviceIOResponsePDU, requestPDU: DeviceReadRequestPDU):
         """
