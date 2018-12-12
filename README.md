@@ -117,13 +117,9 @@ pyrdp-player.py -b <ADDRESS>
 ### Other player arguments
 Run `pyrdp-player.py --help` for a full list of arguments.
 
-## RDP Network Layers
-
-PyRDP uses these layers to manage the many protocols that RDP uses:
-
-![layers](https://user-images.githubusercontent.com/14599855/49668060-03421400-fa2b-11e8-8843-cabfb46d34b4.png)
-
-For a more detailed explanation, head to [docs/layers.md](docs/layers.md).
+## Using PyRDP as a library
+If you're interested in experimenting with RDP and making your own tools, head over to our
+[documentation section](docs/README.md) for more information.
 
 ## Contributing to PyRDP
 See our [contribution guidelines](CONTRIBUTING.md).
