@@ -123,25 +123,15 @@ PyRDP uses these layers to manage the many protocols that RDP uses:
 
 ![layers](https://user-images.githubusercontent.com/14599855/49668060-03421400-fa2b-11e8-8843-cabfb46d34b4.png)
 
-For a more detailed explanation, head to `docs/layers.md`.
+For a more detailed explanation, head to [docs/layers.md](docs/layers.md).
 
-## Contribution guidelines
-
-1. Open an issue before starting your work;
-2. Use Python3 type hinting whenever possible to remove ambiguity;
-
-    2.1. If you come across restructuredText type hinting (such us `:type param1: str`), please change it to Python 3 type hinting `def function1(param1: str)`
-3. Document your methods and classes with docstrings using the reStructuredText syntax;
-4. Respect PEP8 (except for the naming convention, use camelCase).
-5. Whenever possible, use format strings (`f"My variable: {myVariable}"`) instead of %-style formating or `str.format()`
-
-    5.1. For log statements, use %-style formatting like that: `myLogger.info("My log message and here's a variable: %(myNamedVariable)s", {"myNamedVariable": myNamedVariable})`.
-    This separates variables from the message, which can be helpful for analysis purposes. 
+## Contributing to PyRDP
+See our [contribution guidelines](CONTRIBUTING.md).
 
 ## Acknowledgements
 PyRDP uses code from the following open-source software:
 
 - [RC4-Python](https://github.com/bozhu/RC4-Python) for the RC4 implementation.
 - [rdesktop](https://github.com/rdesktop/rdesktop) for bitmap decompression.
-- [rdpy](https://github.com/citronneur/rdpy) for RC4 keys, the bitmap decompression bindings and the base GUI code for the
-PyRDP player.
+- [rdpy](https://github.com/citronneur/rdpy) for RC4 keys, the bitmap decompression bindings and the base GUI code for
+the PyRDP player.
