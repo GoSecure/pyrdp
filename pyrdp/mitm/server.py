@@ -26,7 +26,7 @@ from pyrdp.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserve
 from pyrdp.parser import ClientConnectionParser, ClientInfoParser, createFastPathParser, GCCParser, \
     NegotiationRequestParser, NegotiationResponseParser, ServerConnectionParser
 from pyrdp.pdu import Capability, GCCConferenceCreateRequestPDU, GCCConferenceCreateResponsePDU, MCSConnectResponsePDU, \
-    MultifragmentUpdateCapability, NegotiationRequestPDU, NegotiationResponsePDU, ProprietaryCertificate, ServerDataPDU, \
+    NegotiationRequestPDU, NegotiationResponsePDU, ProprietaryCertificate, ServerDataPDU, \
     ServerSecurityData
 from pyrdp.recording import FileLayer, Recorder, RecordingFastPathObserver, RecordingSlowPathObserver, SocketLayer
 from pyrdp.security import RC4CrypterProxy, SecuritySettings
@@ -445,8 +445,6 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderFlags = OrderFlag.NEGOTIATEORDERSUPPORT \
                                                                              | OrderFlag.ZEROBOUNDSDELTASSUPPORT
         pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderSupport = b"\x00" * 32
-
-        pdu.parsedCapabilitySets[CapabilityType.CAPSETTYPE_MULTIFRAGMENTUPDATE] = MultifragmentUpdateCapability(0)
 
         # Disable virtual channel compression
         if CapabilityType.CAPSTYPE_VIRTUALCHANNEL in pdu.parsedCapabilitySets.keys():

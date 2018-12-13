@@ -350,7 +350,7 @@ class FastPathOutputParser(Parser):
         eventType = header & 0xf
         fragmentation = header & 0b00110000 != 0
         if fragmentation:
-            log.error("Fragmentation is present in fastpath packets, it is NOT handled.")
+            log.warning("Fragmentation is present in output fastpath event packets, errors might happen during replay.")
 
         if eventType == FastPathOutputType.FASTPATH_UPDATETYPE_BITMAP:
             return self.parseBitmapEventRaw(stream, header, compressionFlags, size)
