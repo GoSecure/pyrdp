@@ -199,7 +199,6 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
             chosenProtocols,
             self.originalNegotiationPDU.correlationFlags,
             self.originalNegotiationPDU.correlationID,
-            self.originalNegotiationPDU.reserved,
         )
 
         self.connectClient()

@@ -1,4 +1,6 @@
-from pyrdp.enum import NegotiationProtocols, NegotiationType
+from typing import Optional
+
+from pyrdp.enum import NegotiationProtocols, NegotiationType, NegotiationRequestFlags
 from pyrdp.pdu.pdu import PDU
 
 
@@ -6,20 +8,13 @@ class NegotiationRequestPDU(PDU):
     """
     First PDU of the RDP connection sequence. Sent by the client.
     """
-    def __init__(self, cookie, flags, requestedProtocols, correlationFlags, correlationID, reserved):
+    def __init__(self, cookie: Optional[bytes], flags: Optional[NegotiationRequestFlags], requestedProtocols: Optional[NegotiationProtocols], correlationFlags: Optional[int] = None, correlationID: Optional[int] = None):
         """
         :param cookie: mstshash identifier or routing token.
-        :type cookie: bytes | None
         :param flags: request flags.
-        :type flags: int | None
         :param requestedProtocols: transport protocols supported by the client.
-        :type requestedProtocols: int | None
         :param correlationFlags: correlation info flags.
-        :type correlationFlags: int | None
         :param correlationID: correlation info id.
-        :type correlationID: bytes | None
-        :param reserved: correlation info reserved data.
-        :type reserved: bytes | None
         """
         PDU.__init__(self)
         self.cookie = cookie
@@ -31,7 +26,6 @@ class NegotiationRequestPDU(PDU):
         self.earlyUserAuthSupported = requestedProtocols is not None and requestedProtocols & NegotiationProtocols.EARLY_USER_AUTHORIZATION_RESULT != 0
         self.correlationFlags = correlationFlags
         self.correlationID = correlationID
-        self.reserved = reserved
 
 
 class NegotiationResponsePDU(PDU):
@@ -39,12 +33,10 @@ class NegotiationResponsePDU(PDU):
     Second PDU of the RDP connection sequence. Sent by the server.
     Important information is the chosen encryption method.
     """
-    def __init__(self, flags, selectedProtocols):
+    def __init__(self, flags: Optional[int], selectedProtocols: Optional[NegotiationProtocols]):
         """
         :param flags: response flags.
-        :type flags: int | None
         :param selectedProtocols: transport protocol chosen by the server.
-        :type selectedProtocols: int | None
         """
         PDU.__init__(self)
         self.packetType = NegotiationType.TYPE_RDP_NEG_RSP

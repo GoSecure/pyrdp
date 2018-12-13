@@ -32,18 +32,17 @@ class NegotiationRequestParser(Parser):
 
             correlationFlags = None
             correlationID = None
-            reserved = None
 
             if requestFlags & NegotiationRequestFlags.CORRELATION_INFO_PRESENT != 0 and len(data) >= 36:
                 type = Uint8.unpack(stream)
                 correlationFlags = Uint8.unpack(stream)
                 correlationLength = Uint16LE.unpack(stream)
                 correlationID = stream.read(16)
-                reserved = stream.read(16)
+                stream.read(16)
 
-            return NegotiationRequestPDU(cookie, requestFlags, requestedProtocols, correlationFlags, correlationID, reserved)
+            return NegotiationRequestPDU(cookie, requestFlags, requestedProtocols, correlationFlags, correlationID)
         else:
-            return NegotiationRequestPDU(cookie, None, None, None, None, None)
+            return NegotiationRequestPDU(cookie, None, None, None, None)
 
     def write(self, pdu):
         """
@@ -63,12 +62,12 @@ class NegotiationRequestParser(Parser):
             Uint16LE.pack(8, stream)
             Uint32LE.pack(pdu.requestedProtocols, stream)
 
-            if pdu.correlationFlags is not None and pdu.correlationID is not None and pdu.reserved is not None:
+            if pdu.correlationFlags is not None and pdu.correlationID is not None:
                 Uint8.pack(NegotiationType.TYPE_RDP_CORRELATION_INFO, stream)
                 Uint8.pack(pdu.correlationFlags, stream)
                 Uint16LE.pack(36, stream)
                 stream.write(pdu.correlationID)
-                stream.write(pdu.reserved)
+                stream.write(b"\x00" * 16)
 
         return stream.getvalue()
 
