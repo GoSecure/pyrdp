@@ -144,7 +144,7 @@ public key and signature of the certificate using the new private key. This can 
 you're trying to trick a legitimate user into going through your MITM. Using a certificate that looks like a legitimate
 certificate could increase your success rate.
 
-### Usage
+### Cloning a certificate
 You can clone a certificate by using `pyrdp-clonecert.py`:
 
 ```
