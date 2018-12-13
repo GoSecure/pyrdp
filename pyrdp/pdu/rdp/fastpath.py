@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pyrdp.enum import SegmentationPDUType
 from pyrdp.pdu.pdu import PDU
@@ -19,14 +19,14 @@ class FastPathPDU(SegmentationPDU):
         return str([str(e.__class__) for e in self.events])
 
 
-class FastPathEvent:
+class FastPathEvent(PDU):
     """
     Base class for RDP fast path event (not PDU, a PDU contains multiple events).
     Used for scan code events, mouse events or bitmap events.
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, payload=b""):
+        super().__init__(payload)
 
 
 class FastPathEventRaw(FastPathEvent):
@@ -39,9 +39,15 @@ class FastPathInputEvent(FastPathEvent):
     def __init__(self):
         super().__init__()
 
-class FastPathOutputEvent(FastPathEvent):
-    def __init__(self):
-        super().__init__()
+
+class FastPathOutputUpdateEvent(FastPathEvent):
+    """
+    https://msdn.microsoft.com/en-us/library/cc240622.aspx
+    """
+    def __init__(self, header: int, compressionFlags: Optional[int], payload=b""):
+        super().__init__(payload)
+        self.header = header
+        self.compressionFlags = compressionFlags
 
 
 class FastPathScanCodeEvent(FastPathInputEvent):
@@ -77,23 +83,20 @@ class FastPathMouseEvent(FastPathInputEvent):
         self.pointerFlags = pointerFlags
 
 
-class FastPathBitmapEvent(FastPathOutputEvent):
+class FastPathBitmapEvent(FastPathOutputUpdateEvent):
     def __init__(self, header: int, compressionFlags: int, bitmapUpdateData: List[BitmapUpdateData],
-                 rawBitmapUpdateData: bytes):
-        super().__init__()
-        self.header = header
+                 payload: bytes):
+        super().__init__(header, compressionFlags, payload)
         self.compressionFlags = compressionFlags
-        self.rawBitmapUpdateData = rawBitmapUpdateData
         self.bitmapUpdateData = bitmapUpdateData
 
 
-class FastPathOrdersEvent(FastPathOutputEvent):
+class FastPathOrdersEvent(FastPathOutputUpdateEvent):
     """
     https://msdn.microsoft.com/en-us/library/cc241573.aspx
     """
     def __init__(self, header, compressionFlags, orderCount, orderData):
-        super().__init__()
-        self.header = header
+        super().__init__(header, compressionFlags)
         self.compressionFlags = compressionFlags
         self.orderCount = orderCount
         self.orderData = orderData

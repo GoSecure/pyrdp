@@ -1,17 +1,19 @@
+from typing import Optional
+
 from PyQt4 import QtGui
 from PyQt4.QtGui import QTextCursor
 
 from pyrdp.core import decodeUTF16LE
 from pyrdp.core.scancode import scancodeToChar
-from pyrdp.enum import BitmapFlags, CapabilityType, KeyboardFlag, ParserMode, SlowPathUpdateType
+from pyrdp.enum import BitmapFlags, CapabilityType, FastPathFragmentation, KeyboardFlag, ParserMode, SlowPathUpdateType
 from pyrdp.layer import PlayerMessageObserver
 from pyrdp.logging import log
-from pyrdp.parser import ClipboardParser, BasicFastPathParser, BitmapParser, ClientInfoParser, SlowPathParser, \
-    FastPathOutputParser
+from pyrdp.parser import BasicFastPathParser, BitmapParser, ClientInfoParser, ClipboardParser, FastPathOutputParser, \
+    SlowPathParser
 from pyrdp.parser.rdp.connection import ClientConnectionParser
-from pyrdp.pdu import BitmapUpdateData, FastPathBitmapEvent, FastPathMouseEvent, FastPathOrdersEvent, \
-    FastPathScanCodeEvent, FormatDataResponsePDU, KeyboardEvent, MouseEvent, PlayerMessagePDU, ConfirmActivePDU, \
-    InputPDU, UpdatePDU
+from pyrdp.pdu import BitmapUpdateData, ConfirmActivePDU, FastPathBitmapEvent, FastPathMouseEvent, FastPathOrdersEvent, \
+    FastPathScanCodeEvent, FormatDataResponsePDU, InputPDU, KeyboardEvent, MouseEvent, PlayerMessagePDU, UpdatePDU
+from pyrdp.pdu.rdp.fastpath import FastPathOutputUpdateEvent
 from pyrdp.ui import RDPBitmapToQtImage
 
 
@@ -34,6 +36,8 @@ class PlayerMessageHandler(PlayerMessageObserver):
         self.outputEventParser = FastPathOutputParser()
         self.clientConnectionParser = ClientConnectionParser()
 
+        self.buffer = b""
+
     def onConnectionClose(self, pdu: PlayerMessagePDU):
         self.text.moveCursor(QTextCursor.End)
         self.text.insertPlainText("\n<Connection closed>")
@@ -42,13 +46,17 @@ class PlayerMessageHandler(PlayerMessageObserver):
         pdu = self.outputParser.parse(pdu.payload)
 
         for event in pdu.events:
-            if isinstance(event, FastPathOrdersEvent):
-                log.debug("Not handling orders event, not coded :)")
-            elif isinstance(event, FastPathBitmapEvent):
-                log.debug("Handling bitmap event %(arg1)s", {"arg1": vars(event)})
-                self.onBitmap(event)
+            reassembledEvent = self.reassembleEvent(event)
+            if reassembledEvent is not None:
+                if isinstance(reassembledEvent, FastPathOrdersEvent):
+                    log.debug("Not handling orders event, not coded :)")
+                elif isinstance(reassembledEvent, FastPathBitmapEvent):
+                    log.debug("Handling bitmap event %(arg1)s", {"arg1": type(reassembledEvent)})
+                    self.onBitmap(reassembledEvent)
+                else:
+                    log.debug("Can't handle output event: %(arg1)s", {"arg1": type(reassembledEvent)})
             else:
-                log.debug("Can't handle output event: %(arg1)s", {"arg1": event})
+                log.debug("Reassembling output event...")
 
     def onInput(self, pdu: PlayerMessagePDU):
         pdu = self.inputParser.parse(pdu.payload)
@@ -135,3 +143,23 @@ class PlayerMessageHandler(PlayerMessageObserver):
         self.text.moveCursor(QtGui.QTextCursor.End)
         self.text.insertPlainText("--------------------\n")
         self.text.insertPlainText(f"HOST: {clientDataPDU.coreData.clientName.strip(chr(0))}\n")
+
+    def reassembleEvent(self, event: FastPathOutputUpdateEvent) -> Optional[FastPathBitmapEvent]:
+        """
+        Handles FastPath event reassembly as described in
+        https://msdn.microsoft.com/en-us/library/cc240622.aspx
+        :param event: A potentially segmented fastpath output event
+        """
+        fragmentationFlag = FastPathFragmentation((event.header & 0b00110000) >> 4)
+        if fragmentationFlag == FastPathFragmentation.FASTPATH_FRAGMENT_SINGLE:
+            return event
+        elif fragmentationFlag == FastPathFragmentation.FASTPATH_FRAGMENT_FIRST:
+            self.buffer = event.payload
+        elif fragmentationFlag == FastPathFragmentation.FASTPATH_FRAGMENT_NEXT:
+            self.buffer += event.payload
+        elif fragmentationFlag == FastPathFragmentation.FASTPATH_FRAGMENT_LAST:
+            self.buffer += event.payload
+            event.payload = self.buffer
+            return self.outputEventParser.parseBitmapEvent(event)
+
+        return None

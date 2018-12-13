@@ -3,6 +3,7 @@ from pyrdp.pdu.mcs import MCSAttachUserConfirmPDU, MCSAttachUserRequestPDU, MCSC
     MCSChannelJoinRequestPDU, MCSConnectInitialPDU, MCSConnectResponsePDU, MCSDisconnectProviderUltimatumPDU, \
     MCSDomainParams, MCSErectDomainRequestPDU, MCSPDU, MCSSendDataIndicationPDU, MCSSendDataRequestPDU
 from pyrdp.pdu.pdu import PDU
+from pyrdp.pdu.rdp.bitmap import BitmapUpdateData
 from pyrdp.pdu.rdp.capability import BitmapCacheHostSupportCapability, BitmapCacheV1Capability, BitmapCacheV2Capability, \
     BitmapCapability, BitmapCodec, BitmapCodecsCapability, BrushCapability, Capability, ClientCapsContainer, \
     ColorCacheCapability, ControlCapability, DesktopCompositionCapability, DrawGDIPlusCapability, \
@@ -12,15 +13,11 @@ from pyrdp.pdu.rdp.capability import BitmapCacheHostSupportCapability, BitmapCac
     ShareCapability, SoundCapability, SurfaceCommandsCapability, VirtualChannelCapability, WindowListCapability, \
     WindowsActivationCapability
 from pyrdp.pdu.rdp.client_info import ClientExtraInfo, ClientInfoPDU
-from pyrdp.pdu.rdp.bitmap import BitmapUpdateData
-from pyrdp.pdu.rdp.connection import ClientChannelDefinition, ClientClusterData, ClientCoreData, ClientNetworkData, \
-    ClientSecurityData, ProprietaryCertificate, ClientDataPDU, ServerDataPDU, ServerCertificate, ServerCoreData, \
+from pyrdp.pdu.rdp.connection import ClientChannelDefinition, ClientClusterData, ClientCoreData, ClientDataPDU, \
+    ClientNetworkData, ClientSecurityData, ProprietaryCertificate, ServerCertificate, ServerCoreData, ServerDataPDU, \
     ServerNetworkData, ServerSecurityData
-from pyrdp.pdu.rdp.slowpath import ConfirmActivePDU, ControlPDU, DemandActivePDU, InputPDU, PlaySoundPDU, \
-    PointerPDU, SetErrorInfoPDU, ShareControlHeader, ShareDataHeader, SuppressOutputPDU, \
-    SynchronizePDU, UpdatePDU, SlowPathPDU
 from pyrdp.pdu.rdp.fastpath import FastPathBitmapEvent, FastPathEvent, FastPathEventRaw, FastPathMouseEvent, \
-    FastPathOrdersEvent, FastPathOutputEvent, FastPathPDU, FastPathScanCodeEvent, SecondaryDrawingOrder
+    FastPathOrdersEvent, FastPathOutputUpdateEvent, FastPathPDU, FastPathScanCodeEvent, SecondaryDrawingOrder
 from pyrdp.pdu.rdp.input import ExtendedMouseEvent, KeyboardEvent, MouseEvent, SlowPathInput, SynchronizeEvent, \
     UnicodeKeyboardEvent, UnusedEvent
 from pyrdp.pdu.rdp.licensing import LicenseBinaryBlob, LicenseErrorAlertPDU, LicensingPDU
@@ -29,6 +26,8 @@ from pyrdp.pdu.rdp.pointer import Point, PointerCacheEvent, PointerColorEvent, P
     PointerPositionEvent, PointerSystemEvent
 from pyrdp.pdu.rdp.recording import PlayerMessagePDU
 from pyrdp.pdu.rdp.security import SecurityExchangePDU, SecurityPDU
+from pyrdp.pdu.rdp.slowpath import ConfirmActivePDU, ControlPDU, DemandActivePDU, InputPDU, PlaySoundPDU, PointerPDU, \
+    SetErrorInfoPDU, ShareControlHeader, ShareDataHeader, SlowPathPDU, SuppressOutputPDU, SynchronizePDU, UpdatePDU
 from pyrdp.pdu.rdp.virtual_channel.clipboard import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU, \
     FormatListPDU, FormatListResponsePDU, FormatName, LongFormatName, ServerMonitorReadyPDU, ShortFormatName
 from pyrdp.pdu.rdp.virtual_channel.device_redirection import DeviceAnnounce, DeviceCloseRequestPDU, \
