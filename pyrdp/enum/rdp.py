@@ -700,3 +700,12 @@ class FastPathFragmentation(IntEnum):
     FASTPATH_FRAGMENT_LAST = 0x1
     FASTPATH_FRAGMENT_FIRST = 0x2
     FASTPATH_FRAGMENT_NEXT = 0x3
+
+
+class SurfaceCommand(IntEnum):
+    """
+    https://msdn.microsoft.com/en-us/library/dd871563.aspx
+    """
+    SURFCMDS_SETSURFACEBITS = 0x00000002
+    SURFCMDS_FRAMEMARKER = 0x00000010
+    SURFCMDS_STREAMSURFACEBITS = 0x00000040
