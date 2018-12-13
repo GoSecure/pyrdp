@@ -1,7 +1,7 @@
 # PyRDP
 PyRDP is a Python 3 Remote Desktop Protocol (RDP) Man-in-the-Middle (MITM) and library.
 
-It has two main tools:
+It features a few tools:
 - RDP Man-in-the-Middle
     - Logs credentials used to connect
     - Steals data copied to the clipboard
@@ -10,6 +10,8 @@ It has two main tools:
 - RDP Player:
     - See live RDP connections coming from the MITM
     - View replays of RDP connections
+- RDP Certificate Cloner:
+    - Create a self-signed X509 certificate with the same fields as an RDP server's certificate
 
 We are using this tool as part of an RDP honeypot which records sessions and saves a copy of the malware dropped on our
 target machine.
@@ -134,6 +136,32 @@ pyrdp-player.py -b <ADDRESS>
 
 ### Other player arguments
 Run `pyrdp-player.py --help` for a full list of arguments.
+
+## Using the PyRDP Certificate Cloner
+The PyRDP certificate cloner creates a brand new X509 certificate by using the values from an existing RDP server's
+certificate. It connects to an RDP server, downloads its certificate, generates a new private key and replaces the
+public key and signature of the certificate using the new private key. This can be used in a pentest if, for example,
+you're trying to trick a legitimate user into going through your MITM. Using a certificate that looks like a legitimate
+certificate could increase your success rate.
+
+### Usage
+You can clone a certificate by using `pyrdp-clonecert.py`:
+
+```
+pyrdp-clonecert.py 192.168.1.10 cert.pem -o key.pem
+```
+
+The `-o` parameter defines the path name to use for the generated private key.
+
+### Using a custom private key
+If you want to use your own private key instead of generating a new one:
+
+```
+pyrdp-clonecert.py 192.168.1.10 cert.pem -i input_key.pem
+```
+
+### Other cloner arguments
+Run `pyrdp-clonecert.py --help` for a full list of arguments.
 
 ## Using PyRDP as a Library
 If you're interested in experimenting with RDP and making your own tools, head over to our

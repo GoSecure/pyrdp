@@ -18,6 +18,7 @@ setup(name='pyrdp',
     packages=setuptools.find_namespace_packages(include=["pyrdp", "pyrdp.*"]),
     ext_modules=[Extension('rle', ['ext/rle.c'])],
     scripts=[
+            'bin/pyrdp-clonecert.py',
             'bin/pyrdp-mitm.py',
             'bin/pyrdp-player.py'
     ],
