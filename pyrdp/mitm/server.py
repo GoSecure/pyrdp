@@ -1,5 +1,6 @@
 import datetime
 import logging
+import os
 import random
 import socket
 
@@ -13,7 +14,6 @@ from pyrdp.enum import CapabilityType, ClientCapabilityFlag, EncryptionLevel, En
     VirtualChannelName
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, Layer, MCSLayer, RawLayer, SecurityLayer, \
     SegmentationLayer, SlowPathLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
-from pyrdp.layer.rdp.virtual_channel.dynamic_channel import DynamicChannelLayer
 from pyrdp.logging import ConnectionMetadataFilter, LOGGER_NAMES, RC4LoggingObserver
 from pyrdp.mcs import MCSChannelFactory, MCSServerChannel, MCSUserObserver
 from pyrdp.mitm.client import MITMClient
@@ -143,14 +143,26 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         self.log.debug("TCP connected from %(arg1)s:%(arg2)s", {"arg1": clientInfo[0], "arg2": clientInfo[1]})
 
     def onDisconnection(self, reason):
+        """
+        Record the end of the connection, close everything and delete the replay file if its too
+        small (no useful information)
+        """
         self.recorder.record(None, PlayerMessageType.CONNECTION_CLOSE)
-        self.log.debug("Connection closed: %(arg1)s", {"arg1": reason})
+        self.log.info("Connection closed: %(arg1)s", {"arg1": reason})
 
         if self.client:
             self.client.disconnect()
 
         self.disconnectConnector()
+        fileSize = self.fileHandle.tell()
+        fileName = self.fileHandle.name
         self.fileHandle.close()
+        if fileSize < 16:
+            try:
+                os.remove(fileName)
+            except Exception as e:
+                logging.getLogger(LOGGER_NAMES.MITM).error("Can't delete small replay file %(replayFile)s: %(error)s",
+                                                           {"replayFile": fileName, "error": e})
 
     def onDisconnectRequest(self, pdu):
         self.log.debug("X224 Disconnect Request received")
