@@ -20,3 +20,4 @@ class VirtualChannelPDUFlag(IntEnum):
 class VirtualChannelName:
     CLIPBOARD = "cliprdr"
     DEVICE_REDIRECTION = "rdpdr"
+    DYNAMIC_CHANNEL = "drdynvc"

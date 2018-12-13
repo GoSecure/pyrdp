@@ -10,6 +10,7 @@ from pyrdp.parser.rdp.bitmap import BitmapParser
 from pyrdp.parser.rdp.security import BasicSecurityParser
 from pyrdp.pdu import FastPathBitmapEvent, FastPathEventRaw, FastPathMouseEvent, FastPathOrdersEvent, FastPathPDU, \
     FastPathScanCodeEvent, SecondaryDrawingOrder
+from pyrdp.pdu.rdp.fastpath import FastPathOutputUpdateEvent
 from pyrdp.security import RC4Crypter
 
 
@@ -311,32 +312,40 @@ class FastPathInputParser(Parser):
 
 
 class FastPathOutputParser(Parser):
-    def getEventLength(self, data):
-        if isinstance(data, FastPathEventRaw):
-            return len(data.data)
-        elif isinstance(data, bytes):
-            header = Uint8.unpack(data[0])
+    def __init__(self):
+        super().__init__()
+        self.bitmapParser = BitmapParser()
+
+    def getEventLength(self, event: FastPathOutputUpdateEvent):
+
+        if isinstance(event, bytes):
+            header = Uint8.unpack(event[0])
             if self.isCompressed(header):
-                return Uint16LE.unpack(data[2 : 4]) + 4
+                return Uint16LE.unpack(event[2: 4]) + 4
             else:
-                return Uint16LE.unpack(data[1 : 3]) + 3
+                return Uint16LE.unpack(event[1: 3]) + 3
 
         size = 3
 
-        if self.isCompressed(data.header):
+        if self.isCompressed(event.header):
             size += 1
 
-        if isinstance(data, FastPathOrdersEvent):
-            size += 2 + len(data.orderData)
-        elif isinstance(data, FastPathBitmapEvent):
-            size += len(data.rawBitmapUpdateData)
+        if isinstance(event, FastPathOrdersEvent):
+            size += 2 + len(event.orderData)
+        elif isinstance(event, FastPathBitmapEvent):
+            size += len(event.payload)
+        elif isinstance(event, FastPathOutputUpdateEvent):
+            length = len(event.payload) + 3
+            if event.compressionFlags is not None:
+                length += 1
+            return length
 
         return size
 
     def isCompressed(self, header):
         return (header >> 6) & FastPathOutputCompressionType.FASTPATH_OUTPUT_COMPRESSION_USED
 
-    def parse(self, data):
+    def parse(self, data) -> FastPathOutputUpdateEvent:
         stream = BytesIO(data)
         header = Uint8.unpack(stream)
 
@@ -350,32 +359,35 @@ class FastPathOutputParser(Parser):
         eventType = header & 0xf
         fragmentation = header & 0b00110000 != 0
         if fragmentation:
-            log.error("Fragmentation is present in fastpath packets, it is NOT handled.")
+            log.debug("Fragmentation is present in output fastpath event packets."
+                      " Not parsing it and saving to FastPathOutputUpdateEvent.")
+            return FastPathOutputUpdateEvent(header, compressionFlags, payload=stream.read(size))
 
         if eventType == FastPathOutputType.FASTPATH_UPDATETYPE_BITMAP:
             return self.parseBitmapEventRaw(stream, header, compressionFlags, size)
         elif eventType == FastPathOutputType.FASTPATH_UPDATETYPE_ORDERS:
             return self.parseOrdersEvent(stream, header, compressionFlags, size)
 
-        return FastPathEventRaw(data)
+        read = stream.read(size)
+        return FastPathOutputUpdateEvent(header, compressionFlags, read)
 
     def parseBitmapEventRaw(self, stream, header, compressionFlags, size):
         return FastPathBitmapEvent(header, compressionFlags, [], stream.read(size))
 
-    def parseBitmapEvent(self, fastPathBitmapEvent: FastPathBitmapEvent) -> FastPathBitmapEvent:
+    def parseBitmapEvent(self, fastPathBitmapEvent: FastPathOutputUpdateEvent) -> FastPathBitmapEvent:
         """
         :return: a FastPathBitmapEvent with bitmapUpdateData
         """
-        rawBitmapUpdateData = fastPathBitmapEvent.rawBitmapUpdateData
+        rawBitmapUpdateData = fastPathBitmapEvent.payload
         stream = BytesIO(rawBitmapUpdateData)
         updateType = Uint16LE.unpack(stream.read(2))
-        bitmapData = BitmapParser().parseBitmapUpdateData(stream.read())
+        bitmapData = self.bitmapParser.parseBitmapUpdateData(stream.read())
 
         return FastPathBitmapEvent(fastPathBitmapEvent.header, fastPathBitmapEvent.compressionFlags,
                                    bitmapData, rawBitmapUpdateData)
 
-    def writeBitmapEvent(self, stream, event):
-        stream.write(event.rawBitmapUpdateData)
+    def writeBitmapEvent(self, stream, event: FastPathBitmapEvent):
+        stream.write(event.payload)
 
     def parseOrdersEvent(self, stream, header, compressionFlags, size):
         orderCount = Uint16LE.unpack(stream)
@@ -402,9 +414,7 @@ class FastPathOutputParser(Parser):
         Uint16LE.pack(event.orderCount, stream)
         stream.write(event.orderData)
 
-    def write(self, event):
-        if isinstance(event, FastPathEventRaw):
-            return event.data
+    def write(self, event: FastPathOutputUpdateEvent):
 
         stream = BytesIO()
         Uint8.pack(event.header, stream)
@@ -418,11 +428,13 @@ class FastPathOutputParser(Parser):
             self.writeBitmapEvent(updateStream, event)
         elif isinstance(event, FastPathOrdersEvent):
             self.writeOrdersEvent(updateStream, event)
+        else:
+            # Means it's simply a FastPathOutputUpdateEvent, this needs to be the last elif.
+            updateStream.write(event.payload)
 
         updateData = updateStream.getvalue()
         Uint16LE.pack(len(updateData), stream)
         stream.write(updateData)
-
         return stream.getvalue()
 
 

@@ -7,11 +7,11 @@ from pyrdp.exceptions import UnknownPDUTypeError
 from pyrdp.parser.parser import Parser
 from pyrdp.parser.rdp.input import SlowPathInputParser
 from pyrdp.parser.rdp.pointer import PointerEventParser
-from pyrdp.pdu import BitmapCapability, Capability, GeneralCapability, GlyphCacheCapability, \
-    MultifragmentUpdateCapability, OffscreenBitmapCacheCapability, OrderCapability, PDU, PointerCapability, \
-    ConfirmActivePDU, ControlPDU, DemandActivePDU, InputPDU, PlaySoundPDU, PointerPDU, \
-    SetErrorInfoPDU, ShareControlHeader, ShareDataHeader, SlowPathPDU, SuppressOutputPDU, \
-    SynchronizePDU, UpdatePDU, VirtualChannelCapability
+from pyrdp.pdu import BitmapCapability, Capability, ConfirmActivePDU, ControlPDU, DemandActivePDU, GeneralCapability, \
+    GlyphCacheCapability, InputPDU, MultifragmentUpdateCapability, OffscreenBitmapCacheCapability, OrderCapability, PDU, \
+    PlaySoundPDU, PointerCapability, PointerPDU, SetErrorInfoPDU, ShareControlHeader, ShareDataHeader, SlowPathPDU, \
+    SuppressOutputPDU, SynchronizePDU, UpdatePDU, VirtualChannelCapability
+from pyrdp.pdu.rdp.capability import SurfaceCommandsCapability
 
 
 class SlowPathParser(Parser):
@@ -199,6 +199,11 @@ class SlowPathParser(Parser):
             capabilitySets[CapabilityType.CAPSTYPE_OFFSCREENCACHE] = \
                 self.parseOffscreenCacheCapability(capabilitySets[CapabilityType.CAPSTYPE_OFFSCREENCACHE].rawData)
 
+        # If present, fully parse the surface commands cache capability set
+        if CapabilityType.CAPSETTYPE_SURFACE_COMMANDS in capabilitySets:
+            capabilitySets[CapabilityType.CAPSETTYPE_SURFACE_COMMANDS] = \
+                self.parseSurfaceCommandsCapability(capabilitySets[CapabilityType.CAPSETTYPE_SURFACE_COMMANDS].rawData)
+
         # Fully parse the Bitmap capability set
         capabilitySets[CapabilityType.CAPSTYPE_BITMAP] = \
             self.parseBitmapCapability(capabilitySets[CapabilityType.CAPSTYPE_BITMAP].rawData)
@@ -242,6 +247,28 @@ class SlowPathParser(Parser):
                                        refreshRectSupport, suppressOutputSupport)
         capability.rawData = data
         return capability
+
+    def parseSurfaceCommandsCapability(self, data: bytes) -> SurfaceCommandsCapability:
+        """
+        https://msdn.microsoft.com/en-us/library/dd871563.aspx
+        :param data: Raw data starting after lengthCapability
+        """
+        stream = BytesIO(data)
+        cmdFlags = Uint32LE.unpack(stream)
+        reserved = Uint32LE.unpack(stream)
+        capability = SurfaceCommandsCapability(cmdFlags, reserved)
+        capability.rawData = data
+        return capability
+
+    def writeSurfaceCommandsCapability(self, capability: SurfaceCommandsCapability, stream: BytesIO):
+        substream = BytesIO()
+        Uint16LE.pack(capability.capabilityType, stream)
+
+        Uint32LE.pack(capability.cmdFlags, substream)
+        Uint32LE.pack(capability.reserved, substream)
+
+        Uint16LE.pack(len(substream.getvalue()) + 4, stream)
+        stream.write(substream.getvalue())
 
     def parseOffscreenCacheCapability(self, data) -> OffscreenBitmapCacheCapability:
         """
@@ -350,6 +377,8 @@ class SlowPathParser(Parser):
                 self.writeOrderCapability(capability, substream)
             elif isinstance(capability, BitmapCapability):
                 self.writeBitmapCapability(capability, substream)
+            elif isinstance(capability, SurfaceCommandsCapability):
+                self.writeSurfaceCommandsCapability(capability, substream)
             elif isinstance(capability, OffscreenBitmapCacheCapability):
                 self.writeOffscreenCacheCapability(capability, substream)
             elif isinstance(capability, VirtualChannelCapability):

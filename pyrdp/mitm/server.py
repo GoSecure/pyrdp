@@ -1,5 +1,6 @@
 import datetime
 import logging
+import os
 import random
 import socket
 
@@ -8,8 +9,9 @@ from twisted.internet import reactor
 
 from pyrdp.core import decodeUTF16LE, getLoggerPassFilters
 from pyrdp.core.ssl import ServerTLSContext
-from pyrdp.enum import CapabilityType, EncryptionLevel, EncryptionMethod, InputEventType, NegotiationProtocols, \
-    OrderFlag, ParserMode, PlayerMessageType, SegmentationPDUType, SlowPathDataType, VirtualChannelName
+from pyrdp.enum import CapabilityType, ClientCapabilityFlag, EncryptionLevel, EncryptionMethod, InputEventType, \
+    NegotiationProtocols, OrderFlag, ParserMode, PlayerMessageType, SegmentationPDUType, SlowPathDataType, \
+    VirtualChannelName
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, Layer, MCSLayer, RawLayer, SecurityLayer, \
     SegmentationLayer, SlowPathLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
 from pyrdp.logging import ConnectionMetadataFilter, LOGGER_NAMES, RC4LoggingObserver
@@ -24,7 +26,7 @@ from pyrdp.mitm.virtual_channel.virtual_channel import MITMVirtualChannelObserve
 from pyrdp.parser import ClientConnectionParser, ClientInfoParser, createFastPathParser, GCCParser, \
     NegotiationRequestParser, NegotiationResponseParser, ServerConnectionParser
 from pyrdp.pdu import Capability, GCCConferenceCreateRequestPDU, GCCConferenceCreateResponsePDU, MCSConnectResponsePDU, \
-    MultifragmentUpdateCapability, NegotiationRequestPDU, NegotiationResponsePDU, ProprietaryCertificate, ServerDataPDU, \
+    NegotiationRequestPDU, NegotiationResponsePDU, ProprietaryCertificate, ServerDataPDU, \
     ServerSecurityData
 from pyrdp.recording import FileLayer, Recorder, RecordingFastPathObserver, RecordingSlowPathObserver, SocketLayer
 from pyrdp.security import RC4CrypterProxy, SecuritySettings
@@ -141,14 +143,26 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         self.log.debug("TCP connected from %(arg1)s:%(arg2)s", {"arg1": clientInfo[0], "arg2": clientInfo[1]})
 
     def onDisconnection(self, reason):
+        """
+        Record the end of the connection, close everything and delete the replay file if its too
+        small (no useful information)
+        """
         self.recorder.record(None, PlayerMessageType.CONNECTION_CLOSE)
-        self.log.debug("Connection closed: %(arg1)s", {"arg1": reason})
+        self.log.info("Connection closed: %(arg1)s", {"arg1": reason})
 
         if self.client:
             self.client.disconnect()
 
         self.disconnectConnector()
+        fileSize = self.fileHandle.tell()
+        fileName = self.fileHandle.name
         self.fileHandle.close()
+        if fileSize < 16:
+            try:
+                os.remove(fileName)
+            except Exception as e:
+                logging.getLogger(LOGGER_NAMES.MITM).error("Can't delete small replay file %(replayFile)s: %(error)s",
+                                                           {"replayFile": fileName, "error": e})
 
     def onDisconnectRequest(self, pdu):
         self.log.debug("X224 Disconnect Request received")
@@ -229,6 +243,10 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         rdpClientDataPdu = self.rdpClientConnectionParser.parse(gccConferenceCreateRequestPDU.payload)
         rdpClientDataPdu.securityData.encryptionMethods &= ~EncryptionMethod.ENCRYPTION_FIPS
         rdpClientDataPdu.securityData.extEncryptionMethods &= ~EncryptionMethod.ENCRYPTION_FIPS
+
+        #  This disables the support for the Graphics pipeline extension, which is a completely different way to
+        #  transfer graphics from server to client. https://msdn.microsoft.com/en-us/library/dn366933.aspx
+        rdpClientDataPdu.coreData.earlyCapabilityFlags &= ~ClientCapabilityFlag.RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL
 
         self.client.onConnectInitial(gccConferenceCreateRequestPDU, rdpClientDataPdu)
         return True
@@ -427,16 +445,18 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
                                                                              | OrderFlag.ZEROBOUNDSDELTASSUPPORT
         pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderSupport = b"\x00" * 32
 
-        pdu.parsedCapabilitySets[CapabilityType.CAPSETTYPE_MULTIFRAGMENTUPDATE] = MultifragmentUpdateCapability(0)
-
         # Disable virtual channel compression
-        if CapabilityType.CAPSTYPE_VIRTUALCHANNEL in pdu.parsedCapabilitySets.keys():
+        if CapabilityType.CAPSTYPE_VIRTUALCHANNEL in pdu.parsedCapabilitySets:
             pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].flags = 0
 
         # Override the bitmap cache capability set with null values.
-        if CapabilityType.CAPSTYPE_BITMAPCACHE in pdu.parsedCapabilitySets.keys():
+        if CapabilityType.CAPSTYPE_BITMAPCACHE in pdu.parsedCapabilitySets:
             pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAPCACHE] =\
                 Capability(CapabilityType.CAPSTYPE_BITMAPCACHE, b"\x00" * 36)
+
+        # Disable surface commands
+        if CapabilityType.CAPSETTYPE_SURFACE_COMMANDS in pdu.parsedCapabilitySets:
+            pdu.parsedCapabilitySets[CapabilityType.CAPSETTYPE_SURFACE_COMMANDS].cmdFlags = 0
 
     # Security Exchange
     def onSecurityExchangeReceived(self, pdu):

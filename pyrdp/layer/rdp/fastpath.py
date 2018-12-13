@@ -1,8 +1,9 @@
 from pyrdp.core import ObservedBy
-from pyrdp.layer.layer import LayerObserver
 from pyrdp.layer.buffered import BufferedLayer
+from pyrdp.layer.layer import LayerObserver
 from pyrdp.layer.rdp.data import RDPDataObserver
 from pyrdp.parser import SegmentationParser
+from pyrdp.pdu.rdp.fastpath import FastPathPDU
 
 
 class FastPathObserver(RDPDataObserver, LayerObserver):
@@ -10,7 +11,7 @@ class FastPathObserver(RDPDataObserver, LayerObserver):
     Observer for fast-path PDUs.
     """
 
-    def onPDUReceived(self, pdu):
+    def onPDUReceived(self, pdu: FastPathPDU):
         self.dispatchPDU(pdu)
 
     def getPDUType(self, pdu):
