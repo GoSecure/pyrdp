@@ -249,10 +249,13 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         #  transfer graphics from server to client. https://msdn.microsoft.com/en-us/library/dn366933.aspx
         rdpClientDataPdu.coreData.earlyCapabilityFlags &= ~ClientCapabilityFlag.RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL
 
+        #  Remove 24bpp and 32bpp support, fall back to 16bpp.
         rdpClientDataPdu.coreData.supportedColorDepths &= ~SupportedColorDepth.RNS_UD_32BPP_SUPPORT
         rdpClientDataPdu.coreData.supportedColorDepths &= ~SupportedColorDepth.RNS_UD_24BPP_SUPPORT
         rdpClientDataPdu.coreData.highColorDepth &= ~HighColorDepth.HIGH_COLOR_24BPP
-        rdpClientDataPdu.coreData.highColorDepth |= HighColorDepth.HIGH_COLOR_16BPP
+        if rdpClientDataPdu.coreData.highColorDepth == 0:
+            # Means the requested color depth was 24bpp, fallback to 16bpp
+            rdpClientDataPdu.coreData.highColorDepth |= HighColorDepth.HIGH_COLOR_16BPP
 
         self.client.onConnectInitial(gccConferenceCreateRequestPDU, rdpClientDataPdu)
         return True
