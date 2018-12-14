@@ -250,6 +250,8 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         rdpClientDataPdu.coreData.earlyCapabilityFlags &= ~ClientCapabilityFlag.RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL
 
         #  Remove 24bpp and 32bpp support, fall back to 16bpp.
+        #  2018-12-14: This is only there because there is a bug in the pyrdp player where 24bpp
+        #  decompression in rle.c causes random crashes. If this bug is fixed, we could remove this.
         rdpClientDataPdu.coreData.supportedColorDepths &= ~SupportedColorDepth.RNS_UD_32BPP_SUPPORT
         rdpClientDataPdu.coreData.supportedColorDepths &= ~SupportedColorDepth.RNS_UD_24BPP_SUPPORT
         rdpClientDataPdu.coreData.highColorDepth &= ~HighColorDepth.HIGH_COLOR_24BPP
