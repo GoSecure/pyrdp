@@ -1,6 +1,8 @@
 from socket import socket
 from typing import BinaryIO, Dict
 
+from rdpy.enum.negotiation import NegotiationType
+
 from pyrdp.core import getLoggerPassFilters
 from pyrdp.core.ssl import ClientTLSContext
 from pyrdp.enum import ClientCapabilityFlag, ClientInfoFlags, ParserMode, PlayerMessageType, SegmentationPDUType, \
@@ -128,6 +130,10 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
 
         parser = NegotiationResponseParser()
         response = parser.parse(pdu.payload)
+
+        if response.type == NegotiationType.TYPE_RDP_NEG_FAILURE:
+            self.log.error("Server returned a TYPE_RDP_NEG_FAILURE packet, most likely because NLA is "
+                           "enforced by the server and the MITM does not handle NLA.")
 
         if response.tlsSelected:
             self.tcp.startTLS(ClientTLSContext())

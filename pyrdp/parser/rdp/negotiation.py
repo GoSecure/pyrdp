@@ -88,9 +88,9 @@ class NegotiationResponseParser(Parser):
             flags = Uint8.unpack(stream)
             length = Uint16LE.unpack(stream)
             selectedProtocols = Uint32LE.unpack(stream)
-            return NegotiationResponsePDU(flags, selectedProtocols)
+            return NegotiationResponsePDU(type, flags, selectedProtocols)
         else:
-            return NegotiationResponsePDU(None, None)
+            return NegotiationResponsePDU(None, None, None)
 
     def write(self, pdu):
         """
