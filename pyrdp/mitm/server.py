@@ -5,6 +5,7 @@ import random
 import socket
 
 from Crypto.PublicKey import RSA
+from rdpy.enum.negotiation import NegotiationType
 from twisted.internet import reactor
 
 from pyrdp.core import decodeUTF16LE, getLoggerPassFilters
@@ -223,7 +224,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         protocols = NegotiationProtocols.SSL if self.originalNegotiationPDU.tlsSupported else NegotiationProtocols.NONE
 
         parser = NegotiationResponseParser()
-        payload = parser.write(NegotiationResponsePDU(0x00, protocols))
+        payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, protocols))
         self.x224.sendConnectionConfirm(payload, source=0x1234)
 
         if self.originalNegotiationPDU.tlsSupported:

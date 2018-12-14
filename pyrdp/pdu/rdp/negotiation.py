@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pyrdp.enum import NegotiationProtocols, NegotiationType, NegotiationRequestFlags
+from pyrdp.enum import NegotiationProtocols, NegotiationRequestFlags, NegotiationType
 from pyrdp.pdu.pdu import PDU
 
 
@@ -33,12 +33,13 @@ class NegotiationResponsePDU(PDU):
     Second PDU of the RDP connection sequence. Sent by the server.
     Important information is the chosen encryption method.
     """
-    def __init__(self, flags: Optional[int], selectedProtocols: Optional[NegotiationProtocols]):
+    def __init__(self, type: int, flags: Optional[int], selectedProtocols: Optional[NegotiationProtocols]):
         """
         :param flags: response flags.
         :param selectedProtocols: transport protocol chosen by the server.
         """
         PDU.__init__(self)
+        self.type = type
         self.packetType = NegotiationType.TYPE_RDP_NEG_RSP
         self.length = 8
         self.flags = flags
