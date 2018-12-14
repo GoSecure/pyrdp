@@ -30,7 +30,9 @@ class ReplayThread(QThread):
     """
 
     timeUpdated = pyqtSignal(float, name="Time changed")
-    eventReached = pyqtSignal(int, name="Event reached")
+
+    # We use the object type instead of int for this signal to prevent Python integers from being converted to 32-bit integers
+    eventReached = pyqtSignal(object, name="Event reached")
     clearNeeded = pyqtSignal()
 
     def __init__(self, file: BinaryIO):
