@@ -140,7 +140,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
     def onConnection(self):
         # Connection sequence #0
         clientInfo = self.tcp.transport.client
-        self.log.debug("TCP connected from %(arg1)s:%(arg2)s", {"arg1": clientInfo[0], "arg2": clientInfo[1]})
+        self.log.info("TCP connected from %(arg1)s:%(arg2)s", {"arg1": clientInfo[0], "arg2": clientInfo[1]})
 
     def onDisconnection(self, reason):
         """
