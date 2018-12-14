@@ -75,6 +75,12 @@ class ClientInfoParser(Parser):
             password = encodeUTF16LE(password)
             alternateShell = encodeUTF16LE(alternateShell)
             workingDir = encodeUTF16LE(workingDir)
+        else:
+            domain = domain.encode()
+            username = username.encode()
+            password = password.encode()
+            alternateShell = alternateShell.encode()
+            workingDir = workingDir.encode()
 
         domainLength = len(domain) - nullByteCount * unicodeMultiplier
         usernameLength = len(username) - nullByteCount * unicodeMultiplier

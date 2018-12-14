@@ -12,6 +12,7 @@ from pyrdp.core.ssl import ServerTLSContext
 from pyrdp.enum import CapabilityType, ClientCapabilityFlag, EncryptionLevel, EncryptionMethod, InputEventType, \
     NegotiationProtocols, OrderFlag, ParserMode, PlayerMessageType, SegmentationPDUType, SlowPathDataType, \
     VirtualChannelName
+from pyrdp.enum.rdp import HighColorDepth, SupportedColorDepth
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, Layer, MCSLayer, RawLayer, SecurityLayer, \
     SegmentationLayer, SlowPathLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
 from pyrdp.logging import ConnectionMetadataFilter, LOGGER_NAMES, RC4LoggingObserver
@@ -140,7 +141,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
     def onConnection(self):
         # Connection sequence #0
         clientInfo = self.tcp.transport.client
-        self.log.debug("TCP connected from %(arg1)s:%(arg2)s", {"arg1": clientInfo[0], "arg2": clientInfo[1]})
+        self.log.info("TCP connected from %(arg1)s:%(arg2)s", {"arg1": clientInfo[0], "arg2": clientInfo[1]})
 
     def onDisconnection(self, reason):
         """
@@ -247,6 +248,16 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         #  This disables the support for the Graphics pipeline extension, which is a completely different way to
         #  transfer graphics from server to client. https://msdn.microsoft.com/en-us/library/dn366933.aspx
         rdpClientDataPdu.coreData.earlyCapabilityFlags &= ~ClientCapabilityFlag.RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL
+
+        #  Remove 24bpp and 32bpp support, fall back to 16bpp.
+        #  2018-12-14: This is only there because there is a bug in the pyrdp player where 24bpp
+        #  decompression in rle.c causes random crashes. If this bug is fixed, we could remove this.
+        rdpClientDataPdu.coreData.supportedColorDepths &= ~SupportedColorDepth.RNS_UD_32BPP_SUPPORT
+        rdpClientDataPdu.coreData.supportedColorDepths &= ~SupportedColorDepth.RNS_UD_24BPP_SUPPORT
+        rdpClientDataPdu.coreData.highColorDepth &= ~HighColorDepth.HIGH_COLOR_24BPP
+        if rdpClientDataPdu.coreData.highColorDepth == 0:
+            # Means the requested color depth was 24bpp, fallback to 16bpp
+            rdpClientDataPdu.coreData.highColorDepth |= HighColorDepth.HIGH_COLOR_16BPP
 
         self.client.onConnectInitial(gccConferenceCreateRequestPDU, rdpClientDataPdu)
         return True

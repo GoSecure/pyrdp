@@ -22,9 +22,9 @@ Qt specific code
 
 QRemoteDesktop is a widget use for render in rdpy
 """
+from io import BytesIO
 
 import rle
-
 from PyQt4 import QtGui
 from PyQt4.QtCore import QPoint
 from PyQt4.QtGui import QColor
@@ -64,6 +64,16 @@ def RDPBitmapToQtImage(width, height, bitsPerPixel, isCompressed, data):
         if isCompressed:
             buf = bytearray(width * height * 3)
             rle.bitmap_decompress(buf, width, height, data, 3)
+
+            # This is a ugly patch because there is a bug in the 24bpp decompression in rle.c
+            # where the red and the blue colors are inverted. Fixing this in python causes a performance
+            # issue, but at least it shows the good colors.
+            buf2 = BytesIO(buf)
+            while buf2.tell() < len(buf2.getvalue()):
+                pixel = buf2.read(3)
+                buf[buf2.tell() - 3] = pixel[2]
+                buf[buf2.tell() - 1] = pixel[0]
+
             image = QtGui.QImage(buf, width, height, QtGui.QImage.Format_RGB888)
         else:
             image = QtGui.QImage(data, width, height, QtGui.QImage.Format_RGB888).transformed(QtGui.QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))

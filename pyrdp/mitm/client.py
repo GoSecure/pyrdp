@@ -330,6 +330,9 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         if self.replacementPassword is not None:
             pdu.password = self.replacementPassword
 
+        if self.replacementUsername is not None and self.replacementPassword is not None:
+            pdu.flags |= ClientInfoFlags.INFO_AUTOLOGON
+
         # Tell the server we don't want compression (unsure of the effectiveness of these flags)
         pdu.flags &= ~ClientInfoFlags.INFO_COMPRESSION
         pdu.flags &= ~ClientInfoFlags.INFO_CompressionTypeMask
