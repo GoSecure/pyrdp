@@ -62,7 +62,7 @@ class CertFetcher(ClientFactory):
     def sendConnectionRequest(self):
         self.log.info("Connected to RDP server")
 
-        negotiationRequest = NegotiationRequestPDU(None, 0, NegotiationProtocols.SSL)
+        negotiationRequest = NegotiationRequestPDU(None, 0, NegotiationProtocols.SSL | NegotiationProtocols.CRED_SSP)
         negoParser = NegotiationRequestParser()
         payload = negoParser.write(negotiationRequest)
         self.x224.sendConnectionRequest(payload)
