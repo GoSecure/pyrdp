@@ -35,6 +35,7 @@ target machine.
     * [Using a custom private key](#using-a-custom-private-key)
     * [Other cloner arguments](#other-cloner-arguments)
 - [Using PyRDP as a Library](#using-pyrdp-as-a-library)
+- [Using PyRDP with Bettercap](#using-pyrdp-with-bettercap)
 - [Contributing to PyRDP](#contributing-to-pyrdp)
 - [Acknowledgements](#acknowledgements)
 
@@ -170,6 +171,13 @@ Run `pyrdp-clonecert.py --help` for a full list of arguments.
 ## Using PyRDP as a Library
 If you're interested in experimenting with RDP and making your own tools, head over to our
 [documentation section](docs/README.md) for more information.
+
+## Using PyRDP with Bettercap
+We wanted to test using PyRDP to man-in-the-middle all RDP connections on a
+given LAN. Due to our architecture right now this redirects to a single
+destination RDP server specified on the command-line. If you're interested in
+making that working, check out [this document](docs/bettercap-rdp-mitm.md) for
+more information.
 
 ## Contributing to PyRDP
 See our [contribution guidelines](CONTRIBUTING.md).

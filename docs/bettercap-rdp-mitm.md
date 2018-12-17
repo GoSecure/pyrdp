@@ -1,7 +1,9 @@
 # Run PyRDP alongisde Bettercap
 
 Here is a short tutorial on how to combine the MITM RPD tool and Bettercap to
-redirect all RDP sessions on a LAN segment.
+redirect all RDP sessions on a LAN segment. By default Bettercap poisons only
+the gateway so connections will need to cross the gateway for them to be
+poisoned.
 
 Start bettercap in normal mode (you can use other options if you like).
 
