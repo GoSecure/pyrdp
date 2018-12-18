@@ -89,7 +89,7 @@ class ClientConnectionParser(Parser):
         keyboardLayout = Uint32LE.unpack(stream)
         clientBuild = Uint32LE.unpack(stream)
         clientName = decodeUTF16LE(stream.read(32))
-        keyboardType = KeyboardType(Uint32LE.unpack(stream))
+        keyboardType = Uint32LE.unpack(stream)
         keyboardSubType = Uint32LE.unpack(stream)
         keyboardFunctionKey = Uint32LE.unpack(stream)
         imeFileName = stream.read(64)
