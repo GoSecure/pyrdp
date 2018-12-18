@@ -1,7 +1,7 @@
 from socket import socket
 from typing import BinaryIO, Dict
 
-from rdpy.enum.negotiation import NegotiationType
+from pyrdp.enum.negotiation import NegotiationType
 
 from pyrdp.core import getLoggerPassFilters
 from pyrdp.core.ssl import ClientTLSContext

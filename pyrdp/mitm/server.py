@@ -5,7 +5,7 @@ import random
 import socket
 
 from Crypto.PublicKey import RSA
-from rdpy.enum.negotiation import NegotiationType
+from pyrdp.enum.negotiation import NegotiationType
 from twisted.internet import reactor
 
 from pyrdp.core import decodeUTF16LE, getLoggerPassFilters
