@@ -3,11 +3,14 @@ from typing import Dict
 
 from pyrdp.core import Uint16LE, Uint32LE, Uint64LE
 from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketId, DeviceType, MajorFunction
+from pyrdp.enum.virtual_channel.device_redirection import CapabilityType, GeneralCapabilityVersion
 from pyrdp.logging import log
 from pyrdp.parser.parser import Parser
 from pyrdp.pdu import DeviceAnnounce, DeviceCloseRequestPDU, DeviceCloseResponsePDU, DeviceCreateRequestPDU, \
     DeviceCreateResponsePDU, DeviceIORequestPDU, DeviceIOResponsePDU, DeviceListAnnounceRequest, DeviceReadRequestPDU, \
     DeviceReadResponsePDU, DeviceRedirectionPDU
+from pyrdp.pdu.rdp.virtual_channel.device_redirection import DeviceRedirectionCapabilitiesPDU, \
+    DeviceRedirectionCapability, DeviceRedirectionGeneralCapability
 
 
 class DeviceRedirectionParser(Parser):
@@ -20,12 +23,14 @@ class DeviceRedirectionParser(Parser):
         self.parsers: Dict[DeviceRedirectionPacketId, callable] = {
             DeviceRedirectionPacketId.PAKID_CORE_DEVICE_IOCOMPLETION: self.parseDeviceIOResponse,
             DeviceRedirectionPacketId.PAKID_CORE_DEVICE_IOREQUEST: self.parseDeviceIORequest,
-            DeviceRedirectionPacketId.PAKID_CORE_DEVICELIST_ANNOUNCE: self.parseDeviceListAnnounce
+            DeviceRedirectionPacketId.PAKID_CORE_DEVICELIST_ANNOUNCE: self.parseDeviceListAnnounce,
+            DeviceRedirectionPacketId.PAKID_CORE_SERVER_CAPABILITY: self.parseCapabilities,
         }
         self.writers: Dict[DeviceRedirectionPacketId, callable] = {
             DeviceRedirectionPacketId.PAKID_CORE_DEVICE_IOREQUEST: self.writeDeviceIORequest,
             DeviceRedirectionPacketId.PAKID_CORE_DEVICE_IOCOMPLETION: self.writeDeviceIOResponse,
-            DeviceRedirectionPacketId.PAKID_CORE_DEVICELIST_ANNOUNCE: self.writeDeviceListAnnounce
+            DeviceRedirectionPacketId.PAKID_CORE_DEVICELIST_ANNOUNCE: self.writeDeviceListAnnounce,
+            DeviceRedirectionPacketId.PAKID_CORE_SERVER_CAPABILITY: self.writeCapabilities,
         }
 
         self.ioRequestParsers: Dict[MajorFunction, callable] = {
@@ -81,10 +86,24 @@ class DeviceRedirectionParser(Parser):
             deviceList.append(self.parseSingleDeviceAnnounce(stream))
         return DeviceListAnnounceRequest(deviceList)
 
+    def parseCapabilities(self, stream: BytesIO) -> DeviceRedirectionCapabilitiesPDU:
+        numCapabilities = Uint16LE.unpack(stream)
+        stream.read(2)  # Padding
+        capabilities = []
+        for i in range(numCapabilities):
+            capabilities.append(self.parseSingleCapability(stream))
+        return DeviceRedirectionCapabilitiesPDU(DeviceRedirectionPacketId.PAKID_CORE_SERVER_CAPABILITY, capabilities)
+
     def writeDeviceListAnnounce(self, pdu: DeviceListAnnounceRequest, stream: BytesIO):
         Uint32LE.pack(len(pdu.deviceList), stream)
         for device in pdu.deviceList:
             self.writeSingleDeviceAnnounce(device, stream)
+
+    def writeCapabilities(self, pdu: DeviceRedirectionCapabilitiesPDU, stream: BytesIO):
+        Uint16LE.pack(len(pdu.capabilities), stream)
+        stream.write(b"\x00" * 2)  # Padding
+        for capability in pdu.capabilities:
+            self.writeSingleCapability(capability, stream)
 
     def parseDeviceReadRequest(self, deviceId: int, fileId: int, completionId: int,
                                minorFunction: int, stream: BytesIO) -> DeviceReadRequestPDU:
@@ -220,3 +239,37 @@ class DeviceRedirectionParser(Parser):
         stream.write(pdu.preferredDosName)
         Uint32LE.pack(len(pdu.deviceData), stream)
         stream.write(pdu.deviceData)
+
+    def parseSingleCapability(self, stream: BytesIO) -> DeviceRedirectionCapability:
+        """
+        https://msdn.microsoft.com/en-us/library/cc241325.aspx
+        """
+        capabilityType = Uint16LE.unpack(stream)
+        capabilityLength = Uint16LE.unpack(stream)
+        version = Uint32LE.unpack(stream)
+        payload = stream.read(capabilityLength - 8)
+        return DeviceRedirectionCapability(CapabilityType(capabilityType), version, payload=payload)
+
+    def parseGeneralCapability(self, version: int, payload: bytes) -> DeviceRedirectionGeneralCapability:
+        stream = BytesIO(payload)
+        osType = Uint32LE.unpack(stream)
+        osVersion = Uint32LE.unpack(stream)
+        protocolMajorVersion = Uint16LE.unpack(stream)
+        protocolMinorVersion = Uint16LE.unpack(stream)
+        ioCode1 = Uint32LE.unpack(stream)
+        ioCode2 = Uint32LE.unpack(stream)
+        extendedPDU = Uint32LE.unpack(stream)
+        extraFlags1 = Uint32LE.unpack(stream)
+        extraFlags2 = Uint32LE.unpack(stream)
+        specialTypeDeviceCap = None
+        if version == GeneralCapabilityVersion.GENERAL_CAPABILITY_VERSION_02:
+            specialTypeDeviceCap = Uint32LE.unpack(stream)
+        return DeviceRedirectionGeneralCapability(version, osType, osVersion, protocolMajorVersion,
+                                                  protocolMinorVersion, ioCode1, ioCode2, extendedPDU, extraFlags1,
+                                                  extraFlags2, specialTypeDeviceCap)
+
+    def writeSingleCapability(self, capability: DeviceRedirectionCapability, stream: BytesIO):
+        Uint16LE.pack(capability.capabilityType, stream)
+        Uint16LE.pack(len(capability.payload) + 8, stream)
+        Uint32LE.pack(capability.version, stream)
+        stream.write(capability.payload)

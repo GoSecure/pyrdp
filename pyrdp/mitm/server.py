@@ -5,7 +5,6 @@ import random
 import socket
 
 from Crypto.PublicKey import RSA
-from pyrdp.enum.negotiation import NegotiationType
 from twisted.internet import reactor
 
 from pyrdp.core import decodeUTF16LE, getLoggerPassFilters
@@ -13,6 +12,7 @@ from pyrdp.core.ssl import ServerTLSContext
 from pyrdp.enum import CapabilityType, ClientCapabilityFlag, EncryptionLevel, EncryptionMethod, InputEventType, \
     NegotiationProtocols, OrderFlag, ParserMode, PlayerMessageType, SegmentationPDUType, SlowPathDataType, \
     VirtualChannelName
+from pyrdp.enum.negotiation import NegotiationType
 from pyrdp.enum.rdp import HighColorDepth, SupportedColorDepth
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, Layer, MCSLayer, RawLayer, SecurityLayer, \
     SegmentationLayer, SlowPathLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer

@@ -64,7 +64,7 @@ class PassiveFileStealer(Observer):
             if pdu.desiredAccess & (FileAccess.GENERIC_READ | FileAccess.FILE_READ_DATA):
                 self.mitm_log.debug(f"Create request for read received for path {self.bytesToPath(pdu.path)}")
         else:
-            self.mitm_log.debug(f"Unparsed request: {pdu.majorFunction}")
+            self.mitm_log.debug(f"Unparsed request: {MajorFunction(pdu.majorFunction).name}")
 
     def dealWithResponse(self, pdu: DeviceIOResponsePDU):
         """

@@ -2,6 +2,7 @@ from typing import List
 
 from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketId, \
     MajorFunction, DeviceType
+from pyrdp.enum.virtual_channel.device_redirection import CapabilityType
 from pyrdp.pdu.pdu import PDU
 
 
@@ -135,3 +136,61 @@ class DeviceListAnnounceRequest(DeviceRedirectionPDU):
     def __init__(self, deviceList: List[DeviceAnnounce]):
         super().__init__(DeviceRedirectionComponent.RDPDR_CTYP_CORE, DeviceRedirectionPacketId.PAKID_CORE_DEVICELIST_ANNOUNCE)
         self.deviceList = deviceList
+
+
+class DeviceRedirectionCapability(PDU):
+    """
+    https://msdn.microsoft.com/en-us/library/cc241325.aspx
+    """
+    def __init__(self, capabilityType: CapabilityType, version: int, payload=None):
+        super().__init__(payload=payload)
+        self.capabilityType = capabilityType
+        self.version = version
+
+
+class DeviceRedirectionGeneralCapability(DeviceRedirectionCapability):
+    """
+    https://msdn.microsoft.com/en-us/library/cc241349.aspx
+    """
+
+    def __init__(self, version: int, osType: int, osVersion: int, protocolMajorVersion: int,
+                 protocolMinorVersion: int, ioCode1: int, ioCode2: int, extendedPDU: int, extraFlags1: int,
+                 extraFlags2: int, specialTypeDeviceCap: int):
+        super().__init__(CapabilityType.CAP_GENERAL_TYPE, version)
+        self.osType = osType
+        self.osVersion = osVersion
+        self.protocolMajorVersion = protocolMajorVersion
+        self.protocolMinorVersion = protocolMinorVersion
+        self.ioCode1 = ioCode1
+        self.ioCode2 = ioCode2
+        self.extendedPDU = extendedPDU
+        self.extraFlags1 = extraFlags1
+        self.extraFlags2 = extraFlags2
+        self.specialTypeDeviceCap = specialTypeDeviceCap
+
+
+class DeviceRedirectionCapabilitiesPDU(DeviceRedirectionPDU):
+    """
+    Base class for capability PDU (client and server) because they're pretty much the same
+    """
+    def __init__(self, packetId: DeviceRedirectionPacketId, capabilities: List[DeviceRedirectionCapability]):
+        super().__init__(DeviceRedirectionComponent.RDPDR_CTYP_CORE, packetId)
+        self.capabilities = capabilities
+
+
+class DeviceRedirectionServerCapabilitiesPDU(DeviceRedirectionCapabilitiesPDU):
+    """
+    https://msdn.microsoft.com/en-us/library/cc241348.aspx
+    """
+    def __init__(self, capabilities: List[DeviceRedirectionCapability]):
+        super().__init__(DeviceRedirectionPacketId.PAKID_CORE_SERVER_CAPABILITY, capabilities)
+        self.capabilities = capabilities
+
+
+class DeviceRedirectionClientCapabilitiesPDU(DeviceRedirectionCapabilitiesPDU):
+    """
+    https://msdn.microsoft.com/en-us/library/cc241354.aspx
+    """
+    def __init__(self, capabilities: List[DeviceRedirectionCapability]):
+        super().__init__(DeviceRedirectionPacketId.PAKID_CORE_CLIENT_CAPABILITY, capabilities)
+        self.capabilities = capabilities

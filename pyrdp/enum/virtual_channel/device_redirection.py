@@ -125,3 +125,22 @@ class DeviceType(IntEnum):
     RDPDR_DTYP_PRINT = 0x00000004
     RDPDR_DTYP_FILESYSTEM = 0x00000008
     RDPDR_DTYP_SMARTCARD = 0x00000020
+
+
+class CapabilityType(IntEnum):
+    """
+    https://msdn.microsoft.com/en-us/library/cc241325.aspx
+    """
+    CAP_GENERAL_TYPE = 0x0001
+    CAP_PRINTER_TYPE = 0x0002
+    CAP_PORT_TYPE = 0x0003
+    CAP_DRIVE_TYPE = 0x0004
+    CAP_SMARTCARD_TYPE = 0x0005
+
+
+class GeneralCapabilityVersion(IntEnum):
+    """
+    https://msdn.microsoft.com/en-us/library/cc241349.aspx
+    """
+    GENERAL_CAPABILITY_VERSION_01 = 0x00000001
+    GENERAL_CAPABILITY_VERSION_02 = 0x00000002
