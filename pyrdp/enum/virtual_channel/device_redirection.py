@@ -144,3 +144,12 @@ class GeneralCapabilityVersion(IntEnum):
     """
     GENERAL_CAPABILITY_VERSION_01 = 0x00000001
     GENERAL_CAPABILITY_VERSION_02 = 0x00000002
+
+
+class ExtendedPDUFlags(IntEnum):
+    """
+    https://msdn.microsoft.com/en-us/library/cc241349.aspx
+    """
+    RDPDR_DEVICE_REMOVE_PDUS = 0x00000001
+    RDPDR_CLIENT_DISPLAY_NAME_PDU = 0x00000002
+    RDPDR_USER_LOGGEDON_PDU = 0x00000004

@@ -10,6 +10,8 @@ from pyrdp.layer import Layer
 from pyrdp.parser import DeviceRedirectionParser
 from pyrdp.pdu import DeviceCloseRequestPDU, DeviceCreateRequestPDU, DeviceIORequestPDU, DeviceIOResponsePDU, \
     DeviceListAnnounceRequest, DeviceReadRequestPDU, DeviceRedirectionPDU
+from pyrdp.pdu.rdp.virtual_channel.device_redirection import DeviceRedirectionServerCapabilitiesPDU, \
+    DeviceRedirectionClientCapabilitiesPDU
 from pyrdp.recording import Recorder
 
 
@@ -47,6 +49,10 @@ class PassiveFileStealer(Observer):
                                 {"deviceName": device.deviceType.name, "deviceId": device.deviceId,
                                  "deviceData": device.deviceData.decode(errors="backslashreplace")})
              for device in pdu.deviceList]
+        elif isinstance(pdu, DeviceRedirectionServerCapabilitiesPDU):
+            self.dealWithServerCapabilities(pdu)
+        elif isinstance(pdu, DeviceRedirectionClientCapabilitiesPDU):
+            self.dealWithClientCapabilities(pdu)
         else:
             self.mitm_log.debug(f"Received unparsed PDU: {pdu.packetId.name}")
 
@@ -125,6 +131,12 @@ class PassiveFileStealer(Observer):
             if path in self.finalFiles:
                 self.writeToDisk(path, self.finalFiles[path])
             self.openedFiles.pop(requestPDU.fileId)
+
+    def dealWithServerCapabilities(self, pdu: DeviceRedirectionServerCapabilitiesPDU):
+        self.mitm_log.debug("Received Server capabilities")
+
+    def dealWithClientCapabilities(self, pdu: DeviceRedirectionClientCapabilitiesPDU):
+        self.mitm_log.debug("Received Client capabilities")
 
     def sendPDU(self, pdu: DeviceRedirectionPDU):
         """

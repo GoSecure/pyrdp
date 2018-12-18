@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 
 from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketId, \
     MajorFunction, DeviceType
@@ -173,7 +173,8 @@ class DeviceRedirectionCapabilitiesPDU(DeviceRedirectionPDU):
     """
     Base class for capability PDU (client and server) because they're pretty much the same
     """
-    def __init__(self, packetId: DeviceRedirectionPacketId, capabilities: List[DeviceRedirectionCapability]):
+    def __init__(self, packetId: DeviceRedirectionPacketId,
+                 capabilities: Dict[CapabilityType, DeviceRedirectionCapability]):
         super().__init__(DeviceRedirectionComponent.RDPDR_CTYP_CORE, packetId)
         self.capabilities = capabilities
 
@@ -184,13 +185,13 @@ class DeviceRedirectionServerCapabilitiesPDU(DeviceRedirectionCapabilitiesPDU):
     """
     def __init__(self, capabilities: List[DeviceRedirectionCapability]):
         super().__init__(DeviceRedirectionPacketId.PAKID_CORE_SERVER_CAPABILITY, capabilities)
-        self.capabilities = capabilities
+        self.capabilities: Dict[CapabilityType, DeviceRedirectionCapability] = capabilities
 
 
 class DeviceRedirectionClientCapabilitiesPDU(DeviceRedirectionCapabilitiesPDU):
     """
     https://msdn.microsoft.com/en-us/library/cc241354.aspx
     """
-    def __init__(self, capabilities: List[DeviceRedirectionCapability]):
+    def __init__(self, capabilities: Dict[CapabilityType, DeviceRedirectionCapability]):
         super().__init__(DeviceRedirectionPacketId.PAKID_CORE_CLIENT_CAPABILITY, capabilities)
         self.capabilities = capabilities
