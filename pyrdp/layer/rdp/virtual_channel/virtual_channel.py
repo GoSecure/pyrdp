@@ -1,3 +1,9 @@
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2018 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
 from pyrdp.logging import log
 from pyrdp.enum import VirtualChannelPDUFlag
 from pyrdp.layer.layer import Layer

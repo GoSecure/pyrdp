@@ -1,3 +1,9 @@
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2018 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
 """
 File that contains helper methods to use in the library.
 """

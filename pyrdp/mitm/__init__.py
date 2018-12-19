@@ -1,3 +1,9 @@
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2018 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
 from pyrdp.mitm.client import MITMClient
 from pyrdp.mitm.observer import MITMChannelObserver, MITMFastPathObserver, MITMSlowPathObserver
 from pyrdp.mitm.server import MITMServer

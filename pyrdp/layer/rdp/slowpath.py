@@ -1,3 +1,9 @@
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2018 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
 from pyrdp.core import ObservedBy
 from pyrdp.enum import CapabilityType, SlowPathPDUType, VirtualChannelCompressionFlag
 from pyrdp.exceptions import UnknownPDUTypeError
