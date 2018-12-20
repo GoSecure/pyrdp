@@ -6,19 +6,18 @@
 
 from logging import Filter, LogRecord
 
-from pyrdp.core import Config
-
 
 class SensorFilter(Filter):
     """
     Filter that adds the sensor id to the logrecord's arguments.
     """
 
-    def __init__(self):
+    def __init__(self, sensorID):
         super().__init__()
+        self.sensorID = sensorID
 
     def filter(self, record: LogRecord) -> bool:
-        record.args.update({"sensor": Config.arguments.sensor_id})
+        record.args.update({"sensor": self.sensorID})
         return True
 
 

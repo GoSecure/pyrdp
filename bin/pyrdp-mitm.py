@@ -18,7 +18,7 @@ import names
 from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
 
-from pyrdp.core import Config, getLoggerPassFilters
+from pyrdp.core import getLoggerPassFilters
 from pyrdp.logging import JSONFormatter, log, LOGGER_NAMES, SensorFilter
 from pyrdp.mitm import MITMServer
 
@@ -68,7 +68,7 @@ def generateCertificate(keyPath, certificatePath):
     return result == 0
 
 
-def prepare_loggers(logLevel):
+def prepare_loggers(logLevel, sensorID):
     """
         Sets up the "mitm" and the "mitm.connections" loggers.
     """
@@ -103,7 +103,7 @@ def prepare_loggers(logLevel):
 
     jsonFormatter = JSONFormatter()
     jsonFileHandler = logging.FileHandler("log/mitm.json")
-    sensorFilter = SensorFilter()
+    sensorFilter = SensorFilter(sensorID)
 
     jsonFileHandler.setFormatter(jsonFormatter)
     jsonFileHandler.setLevel(logging.INFO)
@@ -128,11 +128,10 @@ def main():
     parser.add_argument("-s", "--sensor-id", help="Sensor ID (to differentiate multiple instances of the MITM where logs are aggregated at one place)", default="PyRDP")
 
     args = parser.parse_args()
-    Config.arguments = args
 
     logLevel = getattr(logging, args.log_level)
 
-    prepare_loggers(logLevel)
+    prepare_loggers(logLevel, args.sensor_id)
     os.makedirs("out", exist_ok=True)
     mitm_log = getLoggerPassFilters(LOGGER_NAMES.MITM)
 
