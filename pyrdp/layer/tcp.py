@@ -115,6 +115,7 @@ class AsyncIOTCPLayer(asyncio.Protocol, Layer):
     def __init__(self):
         asyncio.Protocol.__init__(self)
         Layer.__init__(self)
+        self.connectedEvent = asyncio.Event()
         self.logSSLRequired = False
         self.transport = None
 
@@ -123,6 +124,7 @@ class AsyncIOTCPLayer(asyncio.Protocol, Layer):
         When the TCP handshake is completed, notify the observer.
         """
         self.transport = transport
+        self.connectedEvent.set()
         self.observer.onConnection()
 
     def connection_lost(self, exception=connectionDone):
