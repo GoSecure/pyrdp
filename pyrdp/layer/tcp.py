@@ -38,6 +38,7 @@ class TwistedTCPLayer(Protocol, Layer):
     """
     def __init__(self):
         Layer.__init__(self, None)
+        self.connectedEvent = asyncio.Event()
         self.logSSLRequired = False
 
     def logSSLParameters(self):
@@ -51,6 +52,7 @@ class TwistedTCPLayer(Protocol, Layer):
         """
         When the TCP handshake is completed, notify the observer.
         """
+        self.connectedEvent.set()
         self.observer.onConnection()
 
     def connectionLost(self, reason=connectionDone):
