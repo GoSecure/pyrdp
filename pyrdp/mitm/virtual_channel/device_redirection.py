@@ -47,9 +47,9 @@ class PassiveFileStealer(Observer):
         """
         self.pduToSend = pdu
         if isinstance(pdu, DeviceIORequestPDU):
-            self.handleRequest(pdu)
+            self.handleIORequest(pdu)
         elif isinstance(pdu, DeviceIOResponsePDU):
-            self.handleResponse(pdu)
+            self.handleIOResponse(pdu)
         elif isinstance(pdu, DeviceListAnnounceRequest):
             [self.mitm_log.info("%(deviceName)s mapped with ID %(deviceId)d: %(deviceData)s",
                                 {"deviceName": device.deviceType.name, "deviceId": device.deviceId,
@@ -64,7 +64,7 @@ class PassiveFileStealer(Observer):
 
         self.peer.sendPDU(self.pduToSend)
 
-    def handleRequest(self, pdu: DeviceIORequestPDU):
+    def handleIORequest(self, pdu: DeviceIORequestPDU):
         """
         Sets the request in the list of requests in progress of the other end of the MITM.
         Also logs useful information.
@@ -78,7 +78,7 @@ class PassiveFileStealer(Observer):
         else:
             self.mitm_log.debug(f"Unparsed request: {MajorFunction(pdu.majorFunction).name}")
 
-    def handleResponse(self, pdu: DeviceIOResponsePDU):
+    def handleIOResponse(self, pdu: DeviceIOResponsePDU):
         """
         Based on the type of request the response is meant for, handle open files, closed files and read data.
         Also remove the associated request from the list of requests in progress.
@@ -87,7 +87,7 @@ class PassiveFileStealer(Observer):
             requestPDU = self.completionIdInProgress[pdu.completionId]
             if pdu.ioStatus >> 30 == IOOperationSeverity.STATUS_SEVERITY_ERROR:
                 self.mitm_log.warning("Received an IO Response with an error IO status: %(responsePdu)s "
-                                      "For request %(requestPdu)s", {"responsePdu": pdu.__repr__(), "requestPdu": requestPDU.__repr__()})
+                                      "For request %(requestPdu)s", {"responsePdu": pdu.__repr__(), "redequestPdu": requestPDU.__repr__()})
             if isinstance(requestPDU, DeviceReadRequestPDU):
                 self.mitm_log.debug(f"Read response received.")
                 self.handleReadResponse(pdu, requestPDU)
