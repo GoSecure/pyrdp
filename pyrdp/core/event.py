@@ -151,7 +151,7 @@ class EventEngine:
         elif propertyEvent:
             event = propertyEvent
         else:
-            event = EventEngine.Anything
+            event = FunctionEvent(EventEngine.Anything)
 
         self.events.append(event)
         await event.aioEvent.wait()
