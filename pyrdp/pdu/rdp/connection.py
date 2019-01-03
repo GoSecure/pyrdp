@@ -4,29 +4,18 @@
 # Licensed under the GPLv3 or later.
 #
 
-from typing import List
+from typing import Optional
 
-from pyrdp.enum import ConnectionDataType, ServerCertificateType
+from pyrdp.enum import ConnectionDataType, RDPVersion, ServerCertificateType, ChannelOption
+from pyrdp.enum.rdp import ClientCapabilityFlag, ColorDepth, EncryptionMethod, HighColorDepth, KeyboardType, \
+    SupportedColorDepth, ConnectionType, NegotiationProtocols, DesktopOrientation
 from pyrdp.pdu.pdu import PDU
 
 
-class ClientDataPDU(PDU):
-    def __init__(self, coreData, securityData, networkData, clusterData):
-        """
-        :type coreData: ClientCoreData
-        :type securityData: ClientSecurityData
-        :type networkData: ClientNetworkData
-        :type clusterData: ClientClusterData
-        """
-        PDU.__init__(self)
-        self.coreData = coreData
-        self.securityData = securityData
-        self.networkData = networkData
-        self.clusterData = clusterData
-
-
 class ClientCoreData:
-    def __init__(self, version, desktopWidth, desktopHeight, colorDepth, sasSequence, keyboardLayout, clientBuild, clientName, keyboardType, keyboardSubType, keyboardFunctionKey, imeFileName):
+    def __init__(self, version: RDPVersion, desktopWidth: int, desktopHeight: int, colorDepth: ColorDepth, sasSequence: int,
+                 keyboardLayout: int, clientBuild: int, clientName: bytes, keyboardType: KeyboardType, keyboardSubType: int,
+                 keyboardFunctionKey: int, imeFileName: bytes):
         self.header = ConnectionDataType.CLIENT_CORE
         self.version = version
         self.desktopWidth = desktopWidth
@@ -40,29 +29,64 @@ class ClientCoreData:
         self.keyboardSubType = keyboardSubType
         self.keyboardFunctionKey = keyboardFunctionKey
         self.imeFileName = imeFileName
-        self.postBeta2ColorDepth = None
-        self.clientProductId = None
-        self.serialNumber = None
-        self.highColorDepth = None
-        self.supportedColorDepths = None
-        self.earlyCapabilityFlags = None
-        self.clientDigProductId = None
-        self.connectionType = None
-        self.pad1octet = None
-        self.serverSelectedProtocol = None
-        self.desktopPhysicalWidth = None
-        self.desktopPhysicalHeight = None
-        self.desktopOrientation = None
-        self.desktopScaleFactor = None
-        self.deviceScaleFactor = None   
+        self.postBeta2ColorDepth: ColorDepth = None
+        self.clientProductId: bytes = None
+        self.serialNumber: int = None
+        self.highColorDepth: HighColorDepth = None
+        self.supportedColorDepths: SupportedColorDepth = None
+        self.earlyCapabilityFlags: ClientCapabilityFlag = None
+        self.clientDigProductId: bytes = None
+        self.connectionType: ConnectionType = None
+        self.serverSelectedProtocol: NegotiationProtocols = None
+        self.desktopPhysicalWidth: int = None
+        self.desktopPhysicalHeight: int = None
+        self.desktopOrientation: DesktopOrientation = None
+        self.desktopScaleFactor: int = None
+        self.deviceScaleFactor: int = None
+
+    @staticmethod
+    def generate(desktopWidth = 800, desktopHeight = 600):
+        """
+        Generate a ClientCoreData structure with default values
+        """
+        import socket
+
+        version = RDPVersion.RDP4
+        colorDepth = ColorDepth.RNS_UD_COLOR_8BPP
+        sasSequence = 0xAA03
+        keyboardLayout = 0
+        clientBuild = 2600
+        clientName = socket.gethostname()[: 15].encode("utf-16le").ljust(32, b"\x00")
+        keyboardType = KeyboardType.IBM_ENHANCED
+        keyboardSubType = 0
+        keyboardFunctionKey = 12
+        imeFileName = ("\x00" * 32).encode("utf-16le")
+
+        core = ClientCoreData(version, desktopWidth, desktopHeight, colorDepth, sasSequence, keyboardLayout, clientBuild, clientName, keyboardType, keyboardSubType, keyboardFunctionKey, imeFileName)
+        core.postBeta2ColorDepth = ColorDepth.RNS_UD_COLOR_8BPP
+        core.clientProductId = 1
+        core.serialNumber = 0
+        core.highColorDepth = HighColorDepth.HIGH_COLOR_16BPP
+        core.supportedColorDepths = SupportedColorDepth.RNS_UD_16BPP_SUPPORT
+        core.earlyCapabilityFlags = ClientCapabilityFlag.RNS_UD_CS_SUPPORT_ERRINFO_PDU
+        core.clientDigProductId = b"\x00" * 64
+
+        return core
 
 
 class ClientSecurityData:
-    def __init__(self, encryptionMethods, extEncryptionMethods):
+    def __init__(self, encryptionMethods: EncryptionMethod, extEncryptionMethods: EncryptionMethod):
         self.header = ConnectionDataType.CLIENT_SECURITY
         self.encryptionMethods = encryptionMethods
         # extEncryptionMethods is used only for the French locale (https://msdn.microsoft.com/en-us/library/cc240511.aspx)
         self.extEncryptionMethods = extEncryptionMethods
+
+    @staticmethod
+    def generate(encryptionMethods: EncryptionMethod, isFrenchLocale: bool = False):
+        if isFrenchLocale:
+            return ClientSecurityData(0, encryptionMethods)
+        else:
+            return ClientSecurityData(encryptionMethods, 0)
 
 
 class ClientChannelDefinition:
@@ -75,9 +99,35 @@ class ClientChannelDefinition:
 
 
 class ClientNetworkData:
-    def __init__(self, channelDefinitions):
+    def __init__(self, channelDefinitions: [ClientChannelDefinition]):
         self.header = ConnectionDataType.CLIENT_NETWORK
-        self.channelDefinitions: List[ClientChannelDefinition] = channelDefinitions
+        self.channelDefinitions = channelDefinitions
+
+    @staticmethod
+    def generate(clipboard = False, drive = False, sound = False):
+        definitions: [ClientChannelDefinition] = []
+
+        if clipboard:
+            definitions.append(ClientChannelDefinition(
+                "cliprdr",
+                ChannelOption.CHANNEL_OPTION_INITIALIZED
+                | ChannelOption.CHANNEL_OPTION_COMPRESS_RDP
+            ))
+
+        if drive:
+            definitions.append(ClientChannelDefinition(
+                "rdpdr",
+                ChannelOption.CHANNEL_OPTION_INITIALIZED
+                | ChannelOption.CHANNEL_OPTION_COMPRESS_RDP
+            ))
+
+        if sound:
+            definitions.append(ClientChannelDefinition(
+                "rdpsnd",
+                ChannelOption.CHANNEL_OPTION_INITIALIZED
+            ))
+
+        return ClientNetworkData(definitions)
 
 
 class ClientClusterData:
@@ -85,6 +135,24 @@ class ClientClusterData:
         self.header = ConnectionDataType.CLIENT_CLUSTER
         self.flags = flags
         self.redirectedSessionID = redirectedSessionID
+
+
+class ClientDataPDU(PDU):
+    def __init__(self, coreData: ClientCoreData, securityData: ClientSecurityData, networkData: ClientNetworkData, clusterData: Optional[ClientClusterData]):
+        PDU.__init__(self)
+        self.coreData = coreData
+        self.securityData = securityData
+        self.networkData = networkData
+        self.clusterData = clusterData
+
+    @staticmethod
+    def generate(desktopWidth = 800, desktopHeight = 600,
+                 encryptionMethods: EncryptionMethod = EncryptionMethod.ENCRYPTION_NONE, isFrenchLocale = False,
+                 clipboard = False, drive = False, sound = False):
+        core = ClientCoreData.generate(desktopWidth = desktopWidth, desktopHeight = desktopHeight)
+        security = ClientSecurityData.generate(encryptionMethods = encryptionMethods, isFrenchLocale = isFrenchLocale)
+        network = ClientNetworkData.generate(clipboard = clipboard, drive = drive, sound = sound)
+        return ClientDataPDU(core, security, network, None)
 
 
 class ServerDataPDU(PDU):
