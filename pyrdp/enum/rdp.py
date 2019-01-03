@@ -340,7 +340,7 @@ class ServerCertificateType(IntEnum):
     X509 = 2
 
 
-class NegotiationProtocols(IntEnum):
+class NegotiationProtocols(IntFlag):
     NONE = 0
     SSL = 0b00000001
     CRED_SSP = 0b00000010
