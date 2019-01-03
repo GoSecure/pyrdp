@@ -664,7 +664,7 @@ class PlayerMessageType(IntEnum):
     CLIENT_DATA = 7  # Contains the clientName
 
 
-class ChannelOption(IntEnum):
+class ChannelOption(IntFlag):
     """
     https://msdn.microsoft.com/en-us/library/cc240513.aspx
     """
