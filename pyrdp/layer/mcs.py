@@ -37,7 +37,7 @@ class MCSLayer(Layer):
 
     def sendConnectInitial(self, payload = b"", callingDomain = b"\x01", calledDomain = b"\x01", upward = True,
                            targetParams = MCSDomainParams.createTarget(34, 2), minParams = MCSDomainParams.createMinimum(), maxParams = MCSDomainParams.createMaximum()):
-        pdu = MCSConnectInitialPDU(self.callingDomain, self.calledDomain, self.upward, self.targetParams, self.minParams, self.maxParams, payload)
+        pdu = MCSConnectInitialPDU(callingDomain, calledDomain, upward, targetParams, minParams, maxParams, payload)
         self.sendPDU(pdu)
 
 
