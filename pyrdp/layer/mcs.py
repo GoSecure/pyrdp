@@ -28,12 +28,17 @@ class MCSLayer(Layer):
         pdu = self.mainParser.parse(data)
         self.pduReceived(pdu, self.hasNext)
 
-    def send(self, pdu: MCSPDU):
+    def sendPDU(self, pdu: MCSPDU):
         """
         Send a MCS PDU
         :param pdu: PDU to send
         """
         self.previous.send(self.mainParser.write(pdu))
+
+    def sendConnectInitial(self, payload = b"", callingDomain = b"\x01", calledDomain = b"\x01", upward = True,
+                           targetParams = MCSDomainParams.createTarget(34, 2), minParams = MCSDomainParams.createMinimum(), maxParams = MCSDomainParams.createMaximum()):
+        pdu = MCSConnectInitialPDU(self.callingDomain, self.calledDomain, self.upward, self.targetParams, self.minParams, self.maxParams, payload)
+        self.sendPDU(pdu)
 
 
 class MCSClientConnectionLayer(Layer):
@@ -61,4 +66,4 @@ class MCSClientConnectionLayer(Layer):
 
     def send(self, data):
         pdu = MCSConnectInitialPDU(self.callingDomain, self.calledDomain, self.upward, self.targetParams, self.minParams, self.maxParams, data)
-        self.mcs.send(pdu)
+        self.mcs.sendPDU(pdu)

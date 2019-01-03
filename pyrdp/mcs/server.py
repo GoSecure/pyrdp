@@ -106,7 +106,7 @@ class MCSServerRouter(MCSRouter, Subject):
         else:
             pdu = MCSAttachUserConfirmPDU(param, None)
 
-        self.mcs.send(pdu)
+        self.mcs.sendPDU(pdu)
 
     def onChannelJoinRequest(self, pdu: MCSSendDataRequestPDU):
         """
@@ -137,7 +137,7 @@ class MCSServerRouter(MCSRouter, Subject):
         channelIdField = channelID if result == MCSResult.RT_SUCCESSFUL else None
 
         pdu = MCSChannelJoinConfirmPDU(result, userID, channelID, channelIdField, b"")
-        self.mcs.send(pdu)
+        self.mcs.sendPDU(pdu)
 
     def onSendDataRequest(self, pdu: MCSSendDataRequestPDU):
         """

@@ -82,7 +82,7 @@ class MCSClientRouter(MCSRouter, Subject):
         """
         self.attachingUsers.append(user)
         pdu = MCSAttachUserRequestPDU()
-        self.mcs.send(pdu)
+        self.mcs.sendPDU(pdu)
     
     def joinChannel(self, userID, channelID):
         """
@@ -91,7 +91,7 @@ class MCSClientRouter(MCSRouter, Subject):
         :param channelID: the channel ID
         """
         pdu = MCSChannelJoinRequestPDU(userID, channelID, b"")
-        self.mcs.send(pdu)
+        self.mcs.sendPDU(pdu)
     
     # PDU handlers
 

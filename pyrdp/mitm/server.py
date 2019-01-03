@@ -276,7 +276,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         :type serverData: ServerDataPDU
         """
         if pdu.result != 0:
-            self.mcs.send(pdu)
+            self.mcs.sendPDU(pdu)
             return
 
         # Replace the server's public key with our own key so we can decrypt the incoming client random
@@ -311,7 +311,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         gcc = self.client.conferenceCreateResponse
         gcc = GCCConferenceCreateResponsePDU(gcc.nodeID, gcc.tag, gcc.result, rdpParser.write(self.serverData))
         pdu = MCSConnectResponsePDU(pdu.result, pdu.calledConnectID, pdu.domainParams, gccParser.write(gcc))
-        self.mcs.send(pdu)
+        self.mcs.sendPDU(pdu)
 
     def onAttachUserRequest(self, _):
         # MCS Attach User Request
@@ -520,7 +520,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         self.securityLayer.sendLicensing(data)
 
     def sendDisconnectProviderUltimatum(self, pdu):
-        self.mcs.send(pdu)
+        self.mcs.sendPDU(pdu)
 
     def onInputPDUReceived(self, pdu):
         # Unsure if still useful

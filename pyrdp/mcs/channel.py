@@ -50,7 +50,7 @@ class MCSChannel:
         :param data: the PDU's payload
         """
         pdu = MCSSendDataRequestPDU(self.userID, self.channelID, 0x70, data)
-        self.mcs.send(pdu)
+        self.mcs.sendPDU(pdu)
     
     def sendSendDataIndication(self, data):
         """
@@ -58,7 +58,7 @@ class MCSChannel:
         :param data: the PDU's payload
         """
         pdu = MCSSendDataIndicationPDU(self.userID, self.channelID, 0x70, data)
-        self.mcs.send(pdu)
+        self.mcs.sendPDU(pdu)
 
 
 class MCSClientChannel(MCSChannel, Layer):
