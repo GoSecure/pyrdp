@@ -3,7 +3,7 @@
 # Copyright (C) 2018 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-
+import socket
 from typing import Optional
 
 from pyrdp.enum import ConnectionDataType, RDPVersion, ServerCertificateType, ChannelOption
@@ -14,7 +14,7 @@ from pyrdp.pdu.pdu import PDU
 
 class ClientCoreData:
     def __init__(self, version: RDPVersion, desktopWidth: int, desktopHeight: int, colorDepth: ColorDepth, sasSequence: int,
-                 keyboardLayout: int, clientBuild: int, clientName: bytes, keyboardType: KeyboardType, keyboardSubType: int,
+                 keyboardLayout: int, clientBuild: int, clientName: str, keyboardType: KeyboardType, keyboardSubType: int,
                  keyboardFunctionKey: int, imeFileName: bytes):
         self.header = ConnectionDataType.CLIENT_CORE
         self.version = version
@@ -30,12 +30,12 @@ class ClientCoreData:
         self.keyboardFunctionKey = keyboardFunctionKey
         self.imeFileName = imeFileName
         self.postBeta2ColorDepth: ColorDepth = None
-        self.clientProductId: bytes = None
+        self.clientProductId: int = None
         self.serialNumber: int = None
         self.highColorDepth: HighColorDepth = None
         self.supportedColorDepths: SupportedColorDepth = None
         self.earlyCapabilityFlags: ClientCapabilityFlag = None
-        self.clientDigProductId: bytes = None
+        self.clientDigProductId: str = None
         self.connectionType: ConnectionType = None
         self.serverSelectedProtocol: NegotiationProtocols = None
         self.desktopPhysicalWidth: int = None
@@ -45,22 +45,20 @@ class ClientCoreData:
         self.deviceScaleFactor: int = None
 
     @staticmethod
-    def generate(desktopWidth = 800, desktopHeight = 600):
+    def generate(serverSelectedProtocol, desktopWidth = 800, desktopHeight = 600):
         """
         Generate a ClientCoreData structure with default values
         """
-        import socket
-
-        version = RDPVersion.RDP4
+        version = RDPVersion.RDP5
         colorDepth = ColorDepth.RNS_UD_COLOR_8BPP
         sasSequence = 0xAA03
         keyboardLayout = 0
         clientBuild = 2600
-        clientName = socket.gethostname()[: 15].encode("utf-16le").ljust(32, b"\x00")
+        clientName = socket.gethostname()[: 15]
         keyboardType = KeyboardType.IBM_ENHANCED
         keyboardSubType = 0
         keyboardFunctionKey = 12
-        imeFileName = ("\x00" * 32).encode("utf-16le")
+        imeFileName = b"\x00" * 64
 
         core = ClientCoreData(version, desktopWidth, desktopHeight, colorDepth, sasSequence, keyboardLayout, clientBuild, clientName, keyboardType, keyboardSubType, keyboardFunctionKey, imeFileName)
         core.postBeta2ColorDepth = ColorDepth.RNS_UD_COLOR_8BPP
@@ -69,7 +67,9 @@ class ClientCoreData:
         core.highColorDepth = HighColorDepth.HIGH_COLOR_16BPP
         core.supportedColorDepths = SupportedColorDepth.RNS_UD_16BPP_SUPPORT
         core.earlyCapabilityFlags = ClientCapabilityFlag.RNS_UD_CS_SUPPORT_ERRINFO_PDU
-        core.clientDigProductId = b"\x00" * 64
+        core.clientDigProductId = "\x00" * 32
+        core.connectionType = ConnectionType.CONNECTION_TYPE_UNKNOWN
+        core.serverSelectedProtocol = serverSelectedProtocol
 
         return core
 
@@ -146,10 +146,11 @@ class ClientDataPDU(PDU):
         self.clusterData = clusterData
 
     @staticmethod
-    def generate(desktopWidth = 800, desktopHeight = 600,
+    def generate(serverSelectedProtocol,
+                 desktopWidth = 800, desktopHeight = 600,
                  encryptionMethods: EncryptionMethod = EncryptionMethod.ENCRYPTION_NONE, isFrenchLocale = False,
                  clipboard = False, drive = False, sound = False):
-        core = ClientCoreData.generate(desktopWidth = desktopWidth, desktopHeight = desktopHeight)
+        core = ClientCoreData.generate(serverSelectedProtocol, desktopWidth = desktopWidth, desktopHeight = desktopHeight)
         security = ClientSecurityData.generate(encryptionMethods = encryptionMethods, isFrenchLocale = isFrenchLocale)
         network = ClientNetworkData.generate(clipboard = clipboard, drive = drive, sound = sound)
         return ClientDataPDU(core, security, network, None)
