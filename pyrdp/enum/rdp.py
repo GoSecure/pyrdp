@@ -4,7 +4,7 @@
 # Licensed under the GPLv3 or later.
 #
 
-from enum import IntEnum
+from enum import IntEnum, IntFlag
 
 
 class ClientInfoFlags:
@@ -303,7 +303,7 @@ class DesktopOrientation(IntEnum):
     ORIENTATION_PORTRAIT_FLIPPED = 270
 
 
-class EncryptionMethod(IntEnum):
+class EncryptionMethod(IntFlag):
     ENCRYPTION_NONE = 0x00
     ENCRYPTION_40BIT = 0x01
     ENCRYPTION_128BIT = 0x02
