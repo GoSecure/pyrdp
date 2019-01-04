@@ -5,6 +5,8 @@
 #
 
 from pyrdp.core import ObservedBy, Observer, Subject
+from pyrdp.layer import MCSLayer
+from pyrdp.mcs import MCSChannelFactory
 from pyrdp.mcs.router import MCSRouter
 from pyrdp.mcs.user import MCSUser
 from pyrdp.pdu import MCSAttachUserRequestPDU, MCSChannelJoinRequestPDU, MCSConnectResponsePDU, \
@@ -59,10 +61,7 @@ class MCSClientRouter(MCSRouter, Subject):
     ObservedBy: MCSClientConnectionObserver
     """
 
-    def __init__(self, mcs, factory):
-        """
-        :param factory: channel factory
-        """
+    def __init__(self, mcs: MCSLayer, factory: MCSChannelFactory):
         MCSRouter.__init__(self, mcs)
         Subject.__init__(self)
         self.factory = factory

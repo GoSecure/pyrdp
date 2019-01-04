@@ -259,12 +259,9 @@ class ServerConnectionParser(Parser):
             ConnectionDataType.SERVER_SECURITY: self.writeServerSecurityData,
         }
 
-    def parse(self, data):
+    def parse(self, data: bytes) -> ServerDataPDU:
         """
         Parse a Server Data PDU from bytes.
-        :param data: Server Data PDU data.
-        :type data: bytes
-        :return: RDPServerDataPDU
         """
         core = None
         security = None
