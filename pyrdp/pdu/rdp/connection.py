@@ -90,7 +90,7 @@ class ClientSecurityData:
 
 
 class ClientChannelDefinition:
-    def __init__(self, name, options):
+    def __init__(self, name: str, options: int):
         self.name = name
         self.options = options
     
@@ -178,7 +178,7 @@ class ServerCoreData:
 
 
 class ServerNetworkData:
-    def __init__(self, mcsChannelID, channels):
+    def __init__(self, mcsChannelID: int, channels: [int]):
         self.header = ConnectionDataType.SERVER_NETWORK
         self.mcsChannelID = mcsChannelID
         self.channels = channels
