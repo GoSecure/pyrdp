@@ -22,4 +22,4 @@ class PDU:
         self.payload = payload
 
     def __repr__(self):
-        return pprint.pformat(self.__dict__, width=2000, indent=4, compact=False)
+        return self.__class__.__name__ + pprint.pformat(self.__dict__, width=2000, indent=4, compact=False)
