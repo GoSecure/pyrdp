@@ -4,7 +4,7 @@
 # Licensed under the GPLv3 or later.
 #
 
-from enum import IntEnum
+from enum import IntEnum, IntFlag
 
 
 class ClientInfoFlags:
@@ -303,7 +303,7 @@ class DesktopOrientation(IntEnum):
     ORIENTATION_PORTRAIT_FLIPPED = 270
 
 
-class EncryptionMethod(IntEnum):
+class EncryptionMethod(IntFlag):
     ENCRYPTION_NONE = 0x00
     ENCRYPTION_40BIT = 0x01
     ENCRYPTION_128BIT = 0x02
@@ -340,7 +340,7 @@ class ServerCertificateType(IntEnum):
     X509 = 2
 
 
-class NegotiationProtocols(IntEnum):
+class NegotiationProtocols(IntFlag):
     NONE = 0
     SSL = 0b00000001
     CRED_SSP = 0b00000010
@@ -664,7 +664,7 @@ class PlayerMessageType(IntEnum):
     CLIENT_DATA = 7  # Contains the clientName
 
 
-class ChannelOption(IntEnum):
+class ChannelOption(IntFlag):
     """
     https://msdn.microsoft.com/en-us/library/cc240513.aspx
     """

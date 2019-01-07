@@ -113,7 +113,6 @@ class ClientConnectionParser(Parser):
             core.earlyCapabilityFlags = Uint16LE.unpack(stream)
             core.clientDigProductId = decodeUTF16LE(stream.read(64))
             core.connectionType = ConnectionType(Uint8.unpack(stream))
-            core.pad1octet = stream.read(1)
             core.serverSelectedProtocol = Uint32LE.unpack(stream)
             core.desktopPhysicalWidth = Uint32LE.unpack(stream)
             core.desktopPhysicalHeight = Uint32LE.unpack(stream)
@@ -260,12 +259,9 @@ class ServerConnectionParser(Parser):
             ConnectionDataType.SERVER_SECURITY: self.writeServerSecurityData,
         }
 
-    def parse(self, data):
+    def parse(self, data: bytes) -> ServerDataPDU:
         """
         Parse a Server Data PDU from bytes.
-        :param data: Server Data PDU data.
-        :type data: bytes
-        :return: RDPServerDataPDU
         """
         core = None
         security = None

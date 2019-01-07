@@ -6,7 +6,7 @@
 
 from typing import Optional
 
-from pyrdp.core import ObservedBy, Observer, Subject
+from pyrdp.core import ObservedBy, Observer, Subject, EventEngine
 from pyrdp.exceptions import UnknownPDUTypeError
 from pyrdp.parser import Parser
 from pyrdp.pdu import PDU
@@ -80,6 +80,7 @@ class Layer(Subject):
     """
     def __init__(self, mainParser: Optional[Parser]=None, hasNext=True):
         Subject.__init__(self)
+        self.eventEngine = EventEngine()
         self.hasNext = hasNext
         self.mainParser = mainParser
         self.previous: Layer = None
@@ -116,11 +117,20 @@ class Layer(Subject):
         :param forward: whether the PDU's payload should be forwarded to the next layer.
         :type forward: bool
         """
+        self.eventEngine.processObject(pdu)
+
         if self.observer is not None:
             self.observer.onPDUReceived(pdu)
         
         if forward and self.next is not None:
             self.next.recv(pdu.payload)
+
+    async def waitPDU(self, *args, **kwargs):
+        """
+        Wait for a PDU matching certain criteria (see EventEngine.wait)
+        :return: PDU
+        """
+        return await self.eventEngine.wait(*args, **kwargs)
 
     def recv(self, data: bytes):
         pdu = self.mainParser.parse(data)

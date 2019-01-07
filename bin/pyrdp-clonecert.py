@@ -6,6 +6,10 @@
 # Licensed under the GPLv3 or later.
 #
 
+import asyncio
+from twisted.internet import asyncioreactor
+asyncioreactor.install(asyncio.get_event_loop())
+
 import argparse
 import logging
 import sys

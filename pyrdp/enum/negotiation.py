@@ -11,6 +11,7 @@ class NegotiationRequestFlags(IntEnum):
     """
     Negotiation request flags.
     """
+    NONE = 0
     CORRELATION_INFO_PRESENT = 8
 
 class NegotiationType(IntEnum):

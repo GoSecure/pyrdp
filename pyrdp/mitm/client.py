@@ -215,7 +215,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.server.onAttachRefused(user, result)
 
     def onChannelJoinRequest(self, pdu: MCSChannelJoinRequestPDU):
-        self.mcs.send(pdu)
+        self.mcs.sendPDU(pdu)
 
     def buildChannel(self, mcs, userID, channelID):
         channelName = self.channelMap.get(channelID, None)
