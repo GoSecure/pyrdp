@@ -126,7 +126,7 @@ class PassiveFileStealer(Observer):
         self.pduToSend = createResponse
         if requestPDU.desiredAccess & (FileAccess.GENERIC_READ | FileAccess.FILE_READ_DATA) and \
            requestPDU.createOptions & CreateOption.FILE_NON_DIRECTORY_FILE != 0:
-            self.mitm_log.info("Opening file %(path)s as number %(number)d",
+            self.mitm_log.debug("Opening file %(path)s as number %(number)d",
                                {"path": decodeUTF16LE(requestPDU.path), "number": createResponse.fileId})
             self.openedFiles[createResponse.fileId] = requestPDU.path
 
@@ -135,7 +135,7 @@ class PassiveFileStealer(Observer):
         Clean everything and write the file to disk.
         """
         if requestPDU.fileId in self.openedFiles.keys():
-            self.mitm_log.info("Closing file: %(fileId)s.", {"fileId": requestPDU.fileId})
+            self.mitm_log.debug("Closing file: %(fileId)s.", {"fileId": requestPDU.fileId})
             path = self.bytesToPath(self.openedFiles[requestPDU.fileId])
             if path in self.finalFiles:
                 self.writeToDisk(path, self.finalFiles[path])
