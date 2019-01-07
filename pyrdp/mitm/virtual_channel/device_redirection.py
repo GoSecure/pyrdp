@@ -51,10 +51,7 @@ class PassiveFileStealer(Observer):
         elif isinstance(pdu, DeviceIOResponsePDU):
             self.handleIOResponse(pdu)
         elif isinstance(pdu, DeviceListAnnounceRequest):
-            [self.mitm_log.info("%(deviceName)s mapped with ID %(deviceId)d: %(deviceData)s",
-                                {"deviceName": device.deviceType.name, "deviceId": device.deviceId,
-                                 "deviceData": device.deviceData.decode(errors="backslashreplace")})
-             for device in pdu.deviceList]
+            self.handleDeviceListAnnounceRequest(pdu)
         elif isinstance(pdu, DeviceRedirectionServerCapabilitiesPDU):
             self.handleServerCapabilities(pdu)
         elif isinstance(pdu, DeviceRedirectionClientCapabilitiesPDU):
@@ -101,6 +98,12 @@ class PassiveFileStealer(Observer):
         else:
             self.mitm_log.error("Completion id %(completionId)d not in the completionId in progress list. "
                                 "This might mean that someone is sending corrupted data.", {"completionId": pdu.completionId})
+
+    def handleDeviceListAnnounceRequest(self, pdu: DeviceListAnnounceRequest):
+        for device in pdu.deviceList:
+            self.mitm_log.info("%(deviceName)s mapped with ID %(deviceId)d: %(deviceData)s",
+                               {"deviceName": device.deviceType.name, "deviceId": device.deviceId,
+                                "deviceData": device.deviceData.decode(errors="backslashreplace")})
 
     def handleReadResponse(self, pdu: DeviceIOResponsePDU, requestPDU: DeviceReadRequestPDU):
         """
