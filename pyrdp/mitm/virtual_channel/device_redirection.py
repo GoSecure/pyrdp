@@ -86,8 +86,8 @@ class PassiveFileStealer(Observer):
         if pdu.completionId in self.completionIdInProgress.keys():
             requestPDU = self.completionIdInProgress[pdu.completionId]
             if pdu.ioStatus >> 30 == IOOperationSeverity.STATUS_SEVERITY_ERROR:
-                self.mitm_log.warning("Received an IO Response with an error IO status: %(responsePdu)s "
-                                      "For request %(requestPdu)s", {"responsePdu": pdu.__repr__(), "redequestPdu": requestPDU.__repr__()})
+                self.mitm_log.warning("Received an IO Response with an error IO status: %(responsePdu)s "-
+                                      "For request %(requestPdu)s", {"responsePdu": pdu.__repr__(), "requestPdu": requestPDU.__repr__()})
             if isinstance(requestPDU, DeviceReadRequestPDU):
                 self.mitm_log.debug(f"Read response received.")
                 self.handleReadResponse(pdu, requestPDU)
