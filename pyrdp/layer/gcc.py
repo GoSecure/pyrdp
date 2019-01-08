@@ -4,27 +4,25 @@
 # Licensed under the GPLv3 or later.
 #
 
-from pyrdp.layer.layer import Layer
+from pyrdp.layer.layer import IntermediateLayer
 from pyrdp.parser import GCCParser
-from pyrdp.pdu import GCCConferenceCreateRequestPDU
+from pyrdp.pdu import GCCConferenceCreateRequestPDU, PDU
 
 
-class GCCClientConnectionLayer(Layer):
+class GCCClientConnectionLayer(IntermediateLayer):
     """
     GCC Layer for parsing GCC conference PDUs.
     """
-    def __init__(self, conferenceName, parser = GCCParser()):
+    def __init__(self, conferenceName: bytes, parser = GCCParser()):
         """
         :param conferenceName: the conference name
-        :type conferenceName: bytes
         """
-        Layer.__init__(self, parser, hasNext=True)
+        super().__init__(parser)
         self.conferenceName = conferenceName
 
-    def recv(self, data):
-        pdu = self.mainParser.parse(data)
-        self.pduReceived(pdu, self.hasNext)
-
-    def send(self, data):
+    def sendBytes(self, data):
         pdu = GCCConferenceCreateRequestPDU(self.conferenceName, data)
-        self.previous.send(self.mainParser.write(pdu))
+        self.sendPDU(pdu)
+
+    def shouldForward(self, pdu: PDU) -> bool:
+        return True

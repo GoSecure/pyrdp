@@ -9,6 +9,7 @@ from pyrdp.layer.buffered import BufferedLayer
 from pyrdp.layer.layer import LayerObserver
 from pyrdp.layer.rdp.data import RDPDataObserver
 from pyrdp.parser import SegmentationParser
+from pyrdp.pdu import PDU
 from pyrdp.pdu.rdp.fastpath import FastPathPDU
 
 
@@ -20,7 +21,7 @@ class FastPathObserver(RDPDataObserver, LayerObserver):
     def onPDUReceived(self, pdu: FastPathPDU):
         self.dispatchPDU(pdu)
 
-    def getPDUType(self, pdu):
+    def getPDUType(self, pdu: FastPathPDU):
         # The PDU type is stored in the last 3 bits
         return pdu.header & 0b11100000
 
@@ -32,7 +33,7 @@ class FastPathLayer(BufferedLayer):
     """
 
     def __init__(self, parser: SegmentationParser):
-        BufferedLayer.__init__(self, parser)
+        super().__init__(parser)
 
-    def send(self, data: bytes):
-        raise NotImplementedError("FastPathLayer does not implement the send method. Use sendPDU instead.")
+    def shouldForward(self, pdu: FastPathPDU) -> bool:
+        return False

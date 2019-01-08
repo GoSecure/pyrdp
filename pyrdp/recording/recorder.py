@@ -8,9 +8,10 @@ import time
 from typing import BinaryIO, Dict, List, Optional
 
 from pyrdp.enum import ParserMode, PlayerMessageType
-from pyrdp.layer import Layer, PlayerMessageLayer, TPKTLayer
+from pyrdp.layer import IntermediateLayer, Layer, PlayerMessageLayer, TPKTLayer
+from pyrdp.layer.layer import LayerChainItem
 from pyrdp.logging import log
-from pyrdp.parser import ClipboardParser, Parser, BasicFastPathParser, ClientInfoParser, SlowPathParser
+from pyrdp.parser import BasicFastPathParser, ClientInfoParser, ClipboardParser, Parser, SlowPathParser
 from pyrdp.parser.rdp.connection import ClientConnectionParser
 from pyrdp.pdu import PDU
 
@@ -22,7 +23,7 @@ class Recorder:
     receive binary data and handle them as they wish. They perform the actual recording.
     """
 
-    def __init__(self, transportLayers: List[Layer]):
+    def __init__(self, transportLayers: List[IntermediateLayer]):
         self.parsers: Dict[PlayerMessageType, Parser] = {
             PlayerMessageType.FAST_PATH_INPUT: BasicFastPathParser(ParserMode.CLIENT),
             PlayerMessageType.FAST_PATH_OUTPUT: BasicFastPathParser(ParserMode.SERVER),
@@ -37,11 +38,11 @@ class Recorder:
         for transportLayer in transportLayers:
             self.addTransportLayer(transportLayer)
 
-    def addTransportLayer(self, transportLayer: Layer):
+    def addTransportLayer(self, transportLayer: IntermediateLayer):
         tpktLayer = TPKTLayer()
         messageLayer = PlayerMessageLayer()
 
-        Layer.chain(transportLayer, tpktLayer, messageLayer)
+        LayerChainItem.chain(transportLayer, tpktLayer, messageLayer)
         self.topLayers.append(messageLayer)
 
     def setParser(self, messageType: PlayerMessageType, parser: Parser):
@@ -68,7 +69,7 @@ class Recorder:
         return time.time()
 
 
-class FileLayer(Layer):
+class FileLayer(IntermediateLayer):
     """
     Layer that saves RDP events to a file for later replay.
     """
@@ -77,10 +78,11 @@ class FileLayer(Layer):
         """
         :type fileHandle: BinaryIO
         """
-        Layer.__init__(self)
+        # RED FLAG: Shouldn't be passing None to this.
+        super().__init__(None)
         self.file_descriptor: BinaryIO = fileHandle
 
-    def send(self, data: bytes):
+    def sendBytes(self, data: bytes):
         """
         Save data to the file.
         """
@@ -90,8 +92,11 @@ class FileLayer(Layer):
         else:
             log.error("Recording file handle closed, cannot write message: %(message)s", {"message": data})
 
+    def shouldForward(self, pdu: PDU) -> bool:
+        return True
 
-class SocketLayer(Layer):
+
+class SocketLayer(IntermediateLayer):
     """
     Layer that sends RDP events to a network socket for live play.
     """
@@ -104,10 +109,9 @@ class SocketLayer(Layer):
         self.socket = socket
         self.isConnected = True
 
-    def send(self, data):
+    def sendBytes(self, data: bytes):
         """
         Send data through the socket
-        :type data: bytes
         """
         if self.isConnected:
             try:
@@ -116,3 +120,6 @@ class SocketLayer(Layer):
             except Exception as e:
                 log.error("Cant send data over the network socket: %(data)s", {"data": e})
                 self.isConnected = False
+
+    def shouldForward(self, pdu: PDU) -> bool:
+        return True

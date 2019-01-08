@@ -9,8 +9,11 @@ import asyncio
 from twisted.internet.protocol import connectionDone, Protocol
 
 from pyrdp.core import getLoggerPassFilters, ObservedBy
-from pyrdp.layer.layer import Layer, LayerObserver
+from pyrdp.core.ssl import ServerTLSContext
+from pyrdp.layer.layer import IntermediateLayer, LayerObserver
 from pyrdp.logging import log, LOGGER_NAMES
+from pyrdp.parser.tcp import TCPParser
+from pyrdp.pdu import PDU
 
 
 class TCPObserver(LayerObserver):
@@ -29,15 +32,16 @@ class TCPObserver(LayerObserver):
 
 
 @ObservedBy(TCPObserver)
-class TwistedTCPLayer(Protocol, Layer):
+class TwistedTCPLayer(IntermediateLayer, Protocol):
     """
     Twisted protocol class and first layer in a stack.
     ObservedBy: TCPObserver
     Never notifies observers about PDUs because there isn't really a TCP PDU type per se.
     TCP observers are notified when a connection is made.
     """
+
     def __init__(self):
-        Layer.__init__(self, None)
+        super().__init__(TCPParser())
         self.connectedEvent = asyncio.Event()
         self.logSSLRequired = False
 
@@ -67,44 +71,44 @@ class TwistedTCPLayer(Protocol, Layer):
         """
         self.transport.abortConnection()
 
-    def dataReceived(self, data):
+    def dataReceived(self, data: bytes):
         """
-        When a PSH TCP packet is received, call the next layer to receive the data.
-        :param data: The byte stream (without the TCP header)
-        :type data: bytes
+        Called whenever data is received.
+        :param data: bytes received.
         """
         try:
             if self.logSSLRequired:
                 self.logSSLParameters()
                 self.logSSLRequired = False
 
-            self.next.recv(data)
+            self.recv(data)
         except KeyboardInterrupt:
             raise
         except Exception as e:
             getLoggerPassFilters(LOGGER_NAMES.PYRDP_EXCEPTIONS).exception(e)
             raise
 
-    def send(self, data):
+    def sendBytes(self, data: bytes):
         """
-        Send a TCP packet (or more than one if needed)
-        :param data: The data to send
-        :type data: bytes
+        Send raw TCP bytes.
+        :param data: bytes to send.
         """
         self.transport.write(data)
 
     def startTLS(self, tlsContext):
         """
-        Tell Twisted to make the TLS handshake so that all further communications are encrypted.
+        Perform a TLS handshake so that all further communications are encrypted.
         :param tlsContext: Twisted TLS Context object (like DefaultOpenSSLContextFactory)
-        :type tlsContext: ServerTLSContext
         """
         self.logSSLRequired = True
         self.transport.startTLS(tlsContext)
 
+    def shouldForward(self, pdu: PDU) -> bool:
+        return True
+
 
 @ObservedBy(TCPObserver)
-class AsyncIOTCPLayer(asyncio.Protocol, Layer):
+class AsyncIOTCPLayer(IntermediateLayer, asyncio.Protocol):
     """
     AsyncIO protocol class and first layer in a stack.
     ObservedBy: TCPObserver
@@ -113,13 +117,11 @@ class AsyncIOTCPLayer(asyncio.Protocol, Layer):
     """
 
     def __init__(self):
-        asyncio.Protocol.__init__(self)
-        Layer.__init__(self)
+        super().__init__(TCPParser())
         self.connectedEvent = asyncio.Event()
-        self.logSSLRequired = False
-        self.transport = None
+        self.transport: asyncio.Transport = None
 
-    def connection_made(self, transport):
+    def connection_made(self, transport: asyncio.BaseTransport):
         """
         When the TCP handshake is completed, notify the observer.
         """
@@ -139,28 +141,26 @@ class AsyncIOTCPLayer(asyncio.Protocol, Layer):
         """
         self.transport.abort()
 
-    def data_received(self, data):
+    def data_received(self, data: bytes):
         """
-        When a PSH TCP packet is received, call the next layer to receive the data.
-        :param data: The data that was received
-        :type data: bytes
+        Called whenever data is received.
+        :param data: bytes received.
         """
-        try:
-            if self.logSSLRequired:
-                self.logSSLParameters()
-                self.logSSLRequired = False
 
-            self.next.recv(data)
+        try:
+            self.recv(data)
         except KeyboardInterrupt:
             raise
         except Exception as e:
             getLoggerPassFilters(LOGGER_NAMES.PYRDP_EXCEPTIONS).exception(e)
             raise
 
-    def send(self, data):
+    def sendBytes(self, data: bytes):
         """
-        Send a TCP packet (or more than one if needed)
-        :param data: The data to send
-        :type data: bytes
+        Send raw TCP bytes.
+        :param data: bytes to send.
         """
         self.transport.write(data)
+
+    def shouldForward(self, pdu: PDU) -> bool:
+        return True

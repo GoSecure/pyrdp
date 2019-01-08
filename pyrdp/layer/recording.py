@@ -9,6 +9,7 @@ from io import BytesIO
 from pyrdp.core import ObservedBy, Uint64LE, Uint8
 from pyrdp.enum import PlayerMessageType
 from pyrdp.layer.layer import Layer, LayerRoutedObserver
+from pyrdp.parser.recording import PlayerMessageParser
 from pyrdp.pdu import PlayerMessagePDU
 
 
@@ -54,23 +55,9 @@ class PlayerMessageLayer(Layer):
     """
 
     def __init__(self):
-        Layer.__init__(self)
-
-    def recv(self, data: bytes):
-        """
-        Parses data to make a RDPPlayerMessagePDU and calls the observer with it.
-        """
-        stream = BytesIO(data)
-        type = PlayerMessageType(Uint8.unpack(stream))
-        timestamp = Uint64LE.unpack(stream)
-        payload = stream.read()
-        pdu = PlayerMessagePDU(type, timestamp, payload)
-        self.pduReceived(pdu, forward=False)
+        super().__init__(PlayerMessageParser())
 
     def sendMessage(self, data: bytes, messageType: PlayerMessageType, timeStamp: int):
-        stream = BytesIO()
-        Uint8.pack(messageType, stream)
-        Uint64LE.pack(timeStamp, stream)
-        stream.write(data)
-        self.previous.send(stream.getvalue())
+        pdu = PlayerMessagePDU(messageType, timeStamp, data)
+        self.sendPDU(pdu)
 

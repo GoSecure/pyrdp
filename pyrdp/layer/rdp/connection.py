@@ -6,6 +6,7 @@
 
 from pyrdp.layer.layer import Layer
 from pyrdp.parser import ClientConnectionParser, ServerConnectionParser
+from pyrdp.pdu.rdp.connection import ClientDataPDU
 
 
 class ClientConnectionLayer(Layer):
@@ -17,13 +18,14 @@ class ClientConnectionLayer(Layer):
         :param sendParser: parser to use when sending client PDUs.
         :param recvParser: parser to use when receiving server PDUs.
         """
-        Layer.__init__(self, None, hasNext=True)
+        # RED FLAG: Shouldn't be passing None to this.
+        super().__init__(None)
         self.sendParser = sendParser
         self.recvParser = recvParser
 
     def recv(self, data):
         pdu = self.recvParser.parse(data)
-        self.pduReceived(pdu, self.hasNext)
+        self.pduReceived(pdu)
 
-    def send(self, pdu):
-        self.previous.send(self.sendParser.write(pdu))
+    def sendPDU(self, pdu: ClientDataPDU):
+        self.previous.sendBytes(self.sendParser.write(pdu))

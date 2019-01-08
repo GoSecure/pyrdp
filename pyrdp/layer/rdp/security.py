@@ -5,42 +5,39 @@
 #
 
 from binascii import hexlify
+from typing import Union
 
 from pyrdp.core import ObservedBy
 from pyrdp.enum import EncryptionMethod, SecurityFlags
-from pyrdp.layer.layer import Layer, LayerObserver
+from pyrdp.layer.layer import IntermediateLayer, LayerObserver
 from pyrdp.logging import log
-from pyrdp.parser import Parser, BasicSecurityParser, ClientInfoParser, FIPSSecurityParser, \
-    SignedSecurityParser
-from pyrdp.pdu import ClientInfoPDU, SecurityExchangePDU, SecurityPDU
-from pyrdp.security import RC4Crypter
+from pyrdp.parser import BasicSecurityParser, ClientInfoParser, FIPSSecurityParser, Parser, SignedSecurityParser
+from pyrdp.pdu import ClientInfoPDU, PDU, SecurityExchangePDU, SecurityPDU
+from pyrdp.security import RC4Crypter, RC4CrypterProxy
 
 
 class SecurityObserver(LayerObserver):
-    def onSecurityExchangeReceived(self, pdu):
+    def onSecurityExchangeReceived(self, pdu: SecurityExchangePDU):
         """
         Called when a Security Exchange PDU is received.
-        :type pdu: SecurityExchangePDU
         """
         pass
 
-    def onClientInfoReceived(self, data):
+    def onClientInfoReceived(self, data: bytes):
         """
         Called when client info data is received.
-        :type data: bytes
         """
         pass
 
-    def onLicensingDataReceived(self, data):
+    def onLicensingDataReceived(self, data: bytes):
         """
         Called when licensing data is received.
-        :type data: bytes
         """
         pass
 
 
 @ObservedBy(SecurityObserver)
-class SecurityLayer(Layer):
+class SecurityLayer(IntermediateLayer):
     """
     Layer for security related traffic.
     """
@@ -48,19 +45,14 @@ class SecurityLayer(Layer):
     def __init__(self, parser: BasicSecurityParser):
         """
         :param parser: the parser to use for security traffic.
-        :type parser: Parser
         """
-        Layer.__init__(self, parser, hasNext=True)
-        self.mainParser = parser
+        super().__init__(parser)
         self.clientInfoParser = ClientInfoParser()
 
     @staticmethod
-    def create(encryptionMethod, crypter):
+    def create(encryptionMethod: EncryptionMethod, crypter: Union[RC4Crypter, RC4CrypterProxy]) -> 'SecurityLayer':
         """
         Create a security layer using the chosen encryption method and crypter.
-        :type encryptionMethod: EncryptionMethod
-        :type crypter: RC4Crypter | RC4CrypterProxy
-        :return: RDPSecurityLayer
         """
         if encryptionMethod in [EncryptionMethod.ENCRYPTION_40BIT, EncryptionMethod.ENCRYPTION_56BIT, EncryptionMethod.ENCRYPTION_128BIT]:
             parser = SignedSecurityParser(crypter)
@@ -69,8 +61,9 @@ class SecurityLayer(Layer):
             parser = FIPSSecurityParser(crypter)
             return SecurityLayer(parser)
 
-    def recv(self, data):
-        pdu = self.mainParser.parse(data)
+    def recv(self, data: bytes):
+        pdu: SecurityPDU = self.mainParser.parse(data)
+
         try:
             self.dispatchPDU(pdu)
         except KeyboardInterrupt:
@@ -79,15 +72,12 @@ class SecurityLayer(Layer):
             if isinstance(pdu, SecurityExchangePDU):
                 log.error("Exception occurred when receiving Security Exchange. Data: %(securityExchangeData)s",
                           {"securityExchangeData": hexlify(data)})
-            else:
-                log.error("Exception occurred when receiving: %(data)s", {"data": hexlify(pdu.payload).decode()})
             raise
 
-    def dispatchPDU(self, pdu):
+    def dispatchPDU(self, pdu: SecurityPDU):
         """
         Send the PDU to the proper object depending on its type.
         :param pdu: the pdu.
-        :type pdu: PDU.
         """
         if pdu.header & SecurityFlags.SEC_EXCHANGE_PKT != 0:
             if self.observer:
@@ -99,40 +89,38 @@ class SecurityLayer(Layer):
             if self.observer:
                 self.observer.onLicensingDataReceived(pdu.payload)
         else:
-            self.pduReceived(pdu, self.hasNext)
+            self.pduReceived(pdu)
 
-    def send(self, data: bytes, header=0):
+    def sendBytes(self, data: bytes, header = 0):
         pdu = SecurityPDU(header, data)
-        data = self.mainParser.write(pdu)
-        self.previous.send(data)
+        self.sendPDU(pdu)
 
-    def sendSecurityExchange(self, clientRandom):
+    def sendSecurityExchange(self, clientRandom: bytes):
         """
         Send a security exchange PDU through the layer.
         :param clientRandom: the client random data.
-        :type clientRandom: bytes
         """
         pdu = SecurityExchangePDU(SecurityFlags.SEC_EXCHANGE_PKT, clientRandom + b"\x00" * 8)
         data = self.mainParser.writeSecurityExchange(pdu)
-        self.previous.send(data)
+        self.previous.sendBytes(data)
 
-    def sendClientInfo(self, pdu):
+    def sendClientInfo(self, pdu: ClientInfoPDU):
         """
         Send a client info PDU.
-        :type pdu: ClientInfoPDU
         """
         data = self.clientInfoParser.write(pdu)
         pdu = SecurityPDU(SecurityFlags.SEC_INFO_PKT, data)
-        data = self.mainParser.write(pdu)
-        self.previous.send(data)
+        self.sendPDU(pdu)
 
-    def sendLicensing(self, data):
+    def sendLicensing(self, data: bytes):
         """
         Send raw licensing data.
-        :type data: bytes
         """
         pdu = SecurityPDU(SecurityFlags.SEC_LICENSE_PKT, data)
-        self.previous.send(self.mainParser.write(pdu))
+        self.sendPDU(pdu)
+
+    def shouldForward(self, pdu: PDU) -> bool:
+        return True
 
 
 class TLSSecurityLayer(SecurityLayer):
@@ -143,17 +131,17 @@ class TLSSecurityLayer(SecurityLayer):
     """
 
     def __init__(self, parser = BasicSecurityParser()):
-        SecurityLayer.__init__(self, parser)
+        super().__init__(parser)
         self.securityHeaderExpected = False
 
-    def recv(self, data):
+    def recv(self, data: bytes):
         if not self.securityHeaderExpected:
             self.next.recv(data)
         else:
             SecurityLayer.recv(self, data)
 
-    def send(self, data, header = 0):
+    def sendBytes(self, data: bytes, header = 0):
         if not self.securityHeaderExpected:
-            self.previous.send(data)
+            self.previous.sendBytes(data)
         else:
-            SecurityLayer.send(self, data, header)
+            SecurityLayer.sendBytes(self, data, header)

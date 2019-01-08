@@ -7,7 +7,11 @@
 #
 
 import asyncio
+
 from twisted.internet import asyncioreactor
+
+from pyrdp.layer.layer import LayerChainItem
+
 asyncioreactor.install(asyncio.get_event_loop())
 
 import argparse
@@ -16,13 +20,13 @@ import sys
 
 import OpenSSL
 from twisted.application.reactors import Reactor
-from twisted.internet import reactor, ssl
+from twisted.internet import reactor
 from twisted.internet.endpoints import HostnameEndpoint
 from twisted.internet.protocol import ClientFactory
 
 from pyrdp.core.ssl import ClientTLSContext
 from pyrdp.enum import NegotiationProtocols
-from pyrdp.layer import Layer, TPKTLayer, TwistedTCPLayer, X224Layer
+from pyrdp.layer import TPKTLayer, TwistedTCPLayer, X224Layer
 from pyrdp.logging import log
 from pyrdp.parser.rdp.negotiation import NegotiationRequestParser
 from pyrdp.pdu.rdp.negotiation import NegotiationRequestPDU
@@ -56,7 +60,7 @@ class CertFetcher(ClientFactory):
         self.tpkt = TPKTLayer()
         self.x224 = X224Layer()
 
-        Layer.chain(self.tcp, self.tpkt, self.x224)
+        LayerChainItem.chain(self.tcp, self.tpkt, self.x224)
         self.tcp.createObserver(onConnection=self.sendConnectionRequest)
         self.x224.createObserver(onConnectionConfirm=lambda _: self.startTLS())
 

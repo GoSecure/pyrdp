@@ -4,9 +4,9 @@
 # Licensed under the GPLv3 or later.
 #
 
-from pyrdp.layer.layer import Layer
+from pyrdp.layer.layer import IntermediateLayer, Layer
 from pyrdp.parser import MCSParser
-from pyrdp.pdu import MCSConnectInitialPDU, MCSDomainParams, MCSPDU
+from pyrdp.pdu import MCSConnectInitialPDU, MCSDomainParams, PDU
 
 
 class MCSLayer(Layer):
@@ -17,23 +17,7 @@ class MCSLayer(Layer):
     """
 
     def __init__(self, parser = MCSParser()):
-        Layer.__init__(self, parser, hasNext=False)
-
-    def recv(self, data):
-        """
-        Receive MCS data
-        :param data: raw MCS layer bytes
-        :type data: bytes
-        """
-        pdu = self.mainParser.parse(data)
-        self.pduReceived(pdu, self.hasNext)
-
-    def sendPDU(self, pdu: MCSPDU):
-        """
-        Send a MCS PDU
-        :param pdu: PDU to send
-        """
-        self.previous.send(self.mainParser.write(pdu))
+        super().__init__(parser)
 
     def sendConnectInitial(self, payload = b"", callingDomain = b"\x01", calledDomain = b"\x01", upward = True,
                            targetParams = MCSDomainParams.createTarget(34, 2), minParams = MCSDomainParams.createMinimum(), maxParams = MCSDomainParams.createMaximum()):
@@ -41,7 +25,7 @@ class MCSLayer(Layer):
         self.sendPDU(pdu)
 
 
-class MCSClientConnectionLayer(Layer):
+class MCSClientConnectionLayer(IntermediateLayer):
     """
     A layer to make it more simple to send MCS Connect Initial PDUs. Every parameter other than the payload is saved
     in this layer.
@@ -52,7 +36,7 @@ class MCSClientConnectionLayer(Layer):
         :param mcs: the MCS layer.
         :type mcs: MCSLayer
         """
-        Layer.__init__(self)
+        super().__init__(None)
         self.mcs = mcs
         self.callingDomain = b"\x01"
         self.calledDomain = b"\x01"
@@ -62,8 +46,11 @@ class MCSClientConnectionLayer(Layer):
         self.maxParams = MCSDomainParams.createMaximum()
 
     def recv(self, pdu):
-        self.pduReceived(pdu, True)
+        self.pduReceived(pdu)
 
-    def send(self, data):
+    def sendBytes(self, data):
         pdu = MCSConnectInitialPDU(self.callingDomain, self.calledDomain, self.upward, self.targetParams, self.minParams, self.maxParams, data)
         self.mcs.sendPDU(pdu)
+
+    def shouldForward(self, pdu: PDU) -> bool:
+        return True

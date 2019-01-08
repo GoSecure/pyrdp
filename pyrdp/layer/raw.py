@@ -4,18 +4,18 @@
 # Licensed under the GPLv3 or later.
 #
 
-from pyrdp.layer.layer import Layer
+from pyrdp.layer.layer import IntermediateLayer
+from pyrdp.parser.RawParser import RawParser
 from pyrdp.pdu import PDU
 
 
-class RawLayer(Layer):
+class RawLayer(IntermediateLayer):
     """
     Simple layer that uses raw PDUs and always forwards data.
     """
 
-    def recv(self, data):
-        pdu = PDU(data)
-        self.pduReceived(pdu, True)
+    def __init__(self):
+        super().__init__(RawParser())
 
-    def send(self, data):
-        self.previous.send(data)
+    def shouldForward(self, pdu: PDU) -> bool:
+        return True

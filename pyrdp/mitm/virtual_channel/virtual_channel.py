@@ -31,4 +31,4 @@ class MITMVirtualChannelObserver(Observer):
         :param data: data to send.
         :type data: bytes
         """
-        self.layer.send(data)
+        self.layer.sendBytes(data)

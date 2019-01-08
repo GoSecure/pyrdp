@@ -6,97 +6,66 @@
 
 from abc import ABCMeta, abstractmethod
 
-from pyrdp.layer import Layer
+from pyrdp.layer import MCSLayer
+from pyrdp.layer.layer import LayerChainItem
 from pyrdp.pdu import MCSSendDataIndicationPDU, MCSSendDataRequestPDU
 
 
-class MCSChannelFactory:
-    """
-    Base factory class used when a user joins a new channel
-    """
-    __metaclass__ = ABCMeta
-
-    @abstractmethod
-    def buildChannel(self, mcs, userID, channelID):
-        """
-        Called when a user joins a new channel
-        :param mcs: the MCS layer
-        :param userID: the user ID
-        :param channelID: the channel ID
-        :return: An MCSChannel object
-        """
-        pass
-
-
-class MCSChannel:
+class MCSChannel(LayerChainItem):
     """
     Base class for MCS channels
     A new MCS channel is actually created for every (userID, channelID) pair
     """
-    
-    def __init__(self, mcs, userID, channelID):
+
+    def __init__(self, mcs: MCSLayer, userID: int, channelID: int):
         """
         :param mcs: the MCS layer
         :param userID: the user ID for this channel
         :param channelID: the channel ID for this channel
         """
+        super().__init__()
         self.mcs = mcs
         self.userID = userID
         self.channelID = channelID
-    
-    def sendSendDataRequest(self, data):
-        """
-        Send a Send Data Request PDU from this channel
-        :param data: the PDU's payload
-        """
+
+    def recv(self, data: bytes):
+        if self.next is not None:
+            self.next.recv(data)
+
+
+class MCSClientChannel(MCSChannel):
+    """
+    MCSChannel class and layer for clients.
+    Sends SendDataRequest PDUs when sendBytes is called.
+    """
+
+    def sendBytes(self, data: bytes):
         pdu = MCSSendDataRequestPDU(self.userID, self.channelID, 0x70, data)
         self.mcs.sendPDU(pdu)
-    
-    def sendSendDataIndication(self, data):
-        """
-        Send a Send Data Indication PDU from this channel
-        :param data: the PDU's payload
-        """
+
+
+class MCSServerChannel(MCSChannel):
+    """
+    MCSChannel class and layer for servers.
+    Sends SendDataIndication PDUs when sendBytes is called.
+    """
+
+    def sendBytes(self, data: bytes):
         pdu = MCSSendDataIndicationPDU(self.userID, self.channelID, 0x70, data)
         self.mcs.sendPDU(pdu)
 
 
-class MCSClientChannel(MCSChannel, Layer):
+class MCSChannelFactory(metaclass = ABCMeta):
     """
-    MCSChannel class and layer for clients.
-    Sends SendDataRequest PDUs when send is called.
+    Base factory class used when a user joins a new channel
     """
 
-    def __init__(self, mcs, userID, channelID):
-        MCSChannel.__init__(self, mcs, userID, channelID)
-        Layer.__init__(self)
-    
-    def recvSendDataIndication(self, pdu):
+    @abstractmethod
+    def buildChannel(self, mcs: 'MCSLayer', userID: int, channelID: int) -> MCSChannel:
         """
-        Called when a Send Data Indication PDU is received
+        Called when a user joins a new channel
+        :param mcs: the MCS layer
+        :param userID: the user ID
+        :param channelID: the channel ID
         """
-        self.pduReceived(pdu, True)
-
-    def send(self, data):
-        self.sendSendDataRequest(data)
-
-
-class MCSServerChannel(MCSChannel, Layer):
-    """
-    MCSChannel class and layer for servers.
-    Sends SendDataIndication PDUs when send is called.
-    """
-
-    def __init__(self, mcs, userID, channelID):
-        MCSChannel.__init__(self, mcs, userID, channelID)
-        Layer.__init__(self)
         pass
-    
-    def recvSendDataRequest(self, pdu):
-        """
-        Called when a Send Data Request PDU is received
-        """
-        self.pduReceived(pdu, True)
-    
-    def send(self, data):
-        self.sendSendDataIndication(data)

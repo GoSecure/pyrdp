@@ -151,8 +151,7 @@ class PassiveFileStealer(Observer):
         """
         Write and send the PDU to the upper layers
         """
-        data = self.deviceRedirectionParser.write(pdu)
-        self.layer.send(data)
+        self.layer.sendPDU(pdu)
 
     def writeToDisk(self, path: str, stream: BytesIO):
         """

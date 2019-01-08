@@ -83,7 +83,7 @@ class SlowPathLayer(Layer):
     """
 
     def __init__(self, parser = SlowPathParser()):
-        Layer.__init__(self, parser, hasNext=False)
+        Layer.__init__(self, parser)
 
     def recv(self, data):
         try:
@@ -93,11 +93,7 @@ class SlowPathLayer(Layer):
             if self.observer:
                 self.observer.onUnparsedData(data)
         else:
-            self.pduReceived(pdu, self.hasNext)
+            self.pduReceived(pdu)
 
-    def sendPDU(self, pdu):
-        data = self.mainParser.write(pdu)
-        self.previous.send(data)
-
-    def sendData(self, data):
-        self.previous.send(data)
+    def sendBytes(self, data):
+        self.previous.sendBytes(data)

@@ -20,8 +20,10 @@ from pyrdp.enum import CapabilityType, ClientCapabilityFlag, EncryptionLevel, En
     VirtualChannelName
 from pyrdp.enum.negotiation import NegotiationType
 from pyrdp.enum.rdp import HighColorDepth, SupportedColorDepth
-from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, Layer, MCSLayer, RawLayer, SecurityLayer, \
-    SegmentationLayer, SlowPathLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
+from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, MCSLayer, \
+    RawLayer, SecurityLayer, SegmentationLayer, SlowPathLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, \
+    VirtualChannelLayer, X224Layer
+from pyrdp.layer.layer import LayerChainItem
 from pyrdp.logging import ConnectionMetadataFilter, LOGGER_NAMES, RC4LoggingObserver
 from pyrdp.mcs import MCSChannelFactory, MCSServerChannel, MCSUserObserver
 from pyrdp.mitm.client import MITMClient
@@ -110,7 +112,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
 
         self.tcp.setNext(self.segmentation)
         self.segmentation.attachLayer(SegmentationPDUType.TPKT, self.tpkt)
-        Layer.chain(self.tpkt, self.x224, self.mcs)
+        LayerChainItem.chain(self.tpkt, self.x224, self.mcs)
 
         if recordHost is not None and recordPort is not None:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -364,7 +366,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         securityLayer = self.createSecurityLayer()
         rawLayer = RawLayer()
 
-        Layer.chain(channel, securityLayer, rawLayer)
+        LayerChainItem.chain(channel, securityLayer, rawLayer)
 
         peer = self.client.getChannelObserver(channelID)
         observer = MITMVirtualChannelObserver(rawLayer)
@@ -386,7 +388,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         virtualChannelLayer = VirtualChannelLayer()
         clipboardLayer = ClipboardLayer()
 
-        Layer.chain(channel, securityLayer, virtualChannelLayer, clipboardLayer)
+        LayerChainItem.chain(channel, securityLayer, virtualChannelLayer, clipboardLayer)
 
         # Create and link the MITM Observer for the server side to the clipboard layer.
         # Also link both MITM Observers (client and server) so they can send traffic the other way.
@@ -412,7 +414,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         virtualChannelLayer = VirtualChannelLayer(activateShowProtocolFlag=False)
         deviceRedirectionLayer = DeviceRedirectionLayer()
 
-        Layer.chain(channel, securityLayer, virtualChannelLayer, deviceRedirectionLayer)
+        LayerChainItem.chain(channel, securityLayer, virtualChannelLayer, deviceRedirectionLayer)
 
         # Create and link the MITM Observer for the server side to the device redirection layer.
         # Also link both MITM Observers (client and server) so they can send traffic the other way.
@@ -448,7 +450,7 @@ class MITMServer(MCSUserObserver, MCSChannelFactory):
         self.fastPathLayer.addObserver(RecordingFastPathObserver(self.recorder, PlayerMessageType.FAST_PATH_INPUT))
 
         channel = MCSServerChannel(mcs, userID, channelID)
-        Layer.chain(channel, self.securityLayer, self.slowPathLayer)
+        LayerChainItem.chain(channel, self.securityLayer, self.slowPathLayer)
 
         self.segmentation.attachLayer(SegmentationPDUType.FAST_PATH, self.fastPathLayer)
 

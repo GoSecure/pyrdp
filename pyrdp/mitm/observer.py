@@ -38,7 +38,7 @@ class MITMChannelObserver(Observer):
 
     def sendData(self, data):
         self.log.debug("Sending data: %(arg1)s", {"arg1": hexlify(data)})
-        self.layer.sendData(data)
+        self.layer.sendBytes(data)
 
     def getEffectiveType(self, pdu):
         return NotImplementedError("getEffectiveType must be overridden")

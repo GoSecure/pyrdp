@@ -7,15 +7,15 @@
 from socket import socket
 from typing import BinaryIO, Dict
 
-from pyrdp.enum.negotiation import NegotiationType
-
 from pyrdp.core import getLoggerPassFilters
 from pyrdp.core.ssl import ClientTLSContext
 from pyrdp.enum import ClientCapabilityFlag, ClientInfoFlags, ParserMode, PlayerMessageType, SegmentationPDUType, \
     VirtualChannelName
+from pyrdp.enum.negotiation import NegotiationType
 from pyrdp.layer import ClientConnectionLayer, ClipboardLayer, DeviceRedirectionLayer, FastPathLayer, \
-    GCCClientConnectionLayer, Layer, MCSClientConnectionLayer, MCSLayer, RawLayer, SecurityLayer, SegmentationLayer, \
-    SlowPathLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
+    GCCClientConnectionLayer, MCSClientConnectionLayer, MCSLayer, RawLayer, SecurityLayer, \
+    SegmentationLayer, SlowPathLayer, TLSSecurityLayer, TPKTLayer, TwistedTCPLayer, VirtualChannelLayer, X224Layer
+from pyrdp.layer.layer import LayerChainItem
 from pyrdp.logging import LOGGER_NAMES, RC4LoggingObserver
 from pyrdp.mcs import MCSChannelFactory, MCSClientChannel, MCSClientRouter, MCSUserObserver
 from pyrdp.mitm.observer import MITMFastPathObserver, MITMSlowPathObserver
@@ -88,8 +88,8 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.tcp.setNext(self.segmentation)
         self.segmentation.attachLayer(SegmentationPDUType.TPKT, self.tpkt)
 
-        Layer.chain(self.tpkt, self.x224, self.mcs)
-        Layer.chain(self.mcsConnect, self.gccConnect, self.rdpConnect)
+        LayerChainItem.chain(self.tpkt, self.x224, self.mcs)
+        LayerChainItem.chain(self.mcsConnect, self.gccConnect, self.rdpConnect)
 
         record_layers = [FileLayer(fileHandle)]
 
@@ -165,7 +165,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
             self.channelDefinitions = clientData.networkData.channelDefinitions
 
         self.gccConnect.conferenceName = gccConferenceCreateRequest.conferenceName
-        self.rdpConnect.send(clientData)
+        self.rdpConnect.sendPDU(clientData)
 
     def onConnectResponse(self, pdu):
         """
@@ -247,7 +247,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         securityLayer = self.createSecurityLayer()
         rawLayer = RawLayer()
 
-        Layer.chain(channel, securityLayer, rawLayer)
+        LayerChainItem.chain(channel, securityLayer, rawLayer)
 
         observer = MITMVirtualChannelObserver(rawLayer)
         rawLayer.addObserver(observer)
@@ -268,7 +268,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         virtualChannelLayer = VirtualChannelLayer()
         clipboardLayer = ClipboardLayer()
 
-        Layer.chain(channel, securityLayer, virtualChannelLayer, clipboardLayer)
+        LayerChainItem.chain(channel, securityLayer, virtualChannelLayer, clipboardLayer)
 
         # Create and link the MITM Observer for the client side to the clipboard layer.
         activeClipboardObserver = ActiveClipboardStealer(clipboardLayer, self.recorder, self.log)
@@ -291,7 +291,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         virtualChannelLayer = VirtualChannelLayer(activateShowProtocolFlag=False)
         deviceRedirectionLayer = DeviceRedirectionLayer()
 
-        Layer.chain(channel, securityLayer, virtualChannelLayer, deviceRedirectionLayer)
+        LayerChainItem.chain(channel, securityLayer, virtualChannelLayer, deviceRedirectionLayer)
 
         # Create and link the MITM Observer for the client side to the device redirection layer.
         self.deviceRedirectionObserver = PassiveFileStealerClient(deviceRedirectionLayer, self.recorder, self.log)
@@ -318,7 +318,7 @@ class MITMClient(MCSChannelFactory, MCSUserObserver):
         self.fastPathLayer.addObserver(RecordingFastPathObserver(self.recorder, PlayerMessageType.FAST_PATH_OUTPUT))
 
         channel = MCSClientChannel(mcs, userID, channelID)
-        Layer.chain(channel, self.securityLayer, self.slowPathLayer)
+        LayerChainItem.chain(channel, self.securityLayer, self.slowPathLayer)
 
         self.segmentation.attachLayer(SegmentationPDUType.FAST_PATH, self.fastPathLayer)
 

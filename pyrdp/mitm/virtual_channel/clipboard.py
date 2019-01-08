@@ -50,10 +50,10 @@ class PassiveClipboardStealer(Observer):
         For the other PDUs, just transfer it.
         """
         if not isinstance(pdu, FormatDataResponsePDU):
-            self.layer.send(self.clipboardParser.write(pdu))
+            self.layer.sendPDU(pdu)
         else:
             if self.forwardNextDataResponse:
-                self.layer.send(self.clipboardParser.write(pdu))
+                self.layer.sendPDU(pdu)
             if isinstance(pdu, FormatDataResponsePDU):
                 self.clipboard_log.info("%(clipboardData)s", {"clipboardData": hexlify(pdu.requestedFormatData).decode()})
                 self.recorder.record(pdu, PlayerMessageType.CLIPBOARD_DATA)

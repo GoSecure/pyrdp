@@ -3,27 +3,25 @@
 # Copyright (C) 2018 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-
-from pyrdp.layer.layer import Layer
+from pyrdp.layer.layer import IntermediateLayer
 from pyrdp.parser import SegmentationParser
 
 
-class BufferedLayer(Layer):
+class BufferedLayer(IntermediateLayer):
     """
-    Abstract class for layers which might need reassembly.
+    Base class for Layers that can receive PDUs spread across multiple calls to recv.
     """
 
     def __init__(self, parser: SegmentationParser):
-        Layer.__init__(self, parser, hasNext=True)
+        super().__init__(parser)
         self.buffer = b""
 
-    def getDataLengthRequired(self):
+    def getDataLengthRequired(self) -> int:
         """
         Get the minimum amount that must be read next.
         This does not have to be the actual size of the PDU: if you return 1 twice in a row, you will read 1 byte twice
         in a row.
         This should always return 0 if the buffer is empty.
-        :return: int
         """
         if self.buffer == b"":
             return 0
@@ -35,7 +33,11 @@ class BufferedLayer(Layer):
 
         return pduLength - len(self.buffer)
 
-    def recv(self, data):
+    def recv(self, data: bytes):
+        """
+        Buffer data until we have a complete PDU, then parse the PDU and process it.
+        :param data: received bytes.
+        """
         data = self.buffer + data
 
         while len(data) > 0:
@@ -49,14 +51,4 @@ class BufferedLayer(Layer):
                 self.buffer = b""
 
                 pdu = self.mainParser.parse(pduData)
-                self.pduReceived(pdu, self.hasNext)
-
-    def sendPDU(self, pdu):
-        data = self.mainParser.write(pdu)
-        self.previous.send(data)
-
-    def sendData(self, data):
-        self.previous.send(data)
-
-    def send(self, data):
-        raise NotImplementedError("send must be overridden")
+                self.pduReceived(pdu)
