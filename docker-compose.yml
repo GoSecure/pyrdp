@@ -1,0 +1,20 @@
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2018 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
+version: "3"
+services:
+  pyrdp:
+    build: .
+    environment: 
+      - DISPLAY 
+    network_mode: "host"
+    volumes:
+      #The path before the ':' is the location of where the log files will be put on the
+      #host side.
+      - ./pyrdp_log:/pyRDPcontainer/bin/log
+    # Place the command you need here:
+    # ex: pyrdp-player.py
+    command: ["pyrdp-player.py"]
