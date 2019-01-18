@@ -65,6 +65,12 @@ sudo python3 setup.py install
 
 This should install all the dependencies required to run PyRDP.
 
+### Installing with Docker-compose
+PyRDP can be installed in a container using Docker-compose with this command :
+```
+sudo docker-compose up
+```
+
 ### Installing on Windows
 If you want to install PyRDP on Windows, note that `setup.py` will try to compile `ext/rle.c`, so you will need to have
 a C compiler installed. You will also need to generate a private key and certificate to run the MITM.

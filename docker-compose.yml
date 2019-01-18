@@ -14,7 +14,7 @@ services:
     volumes:
       #The path before the ':' is the location of where the log files will be put on the
       #host side.
-      - ./pyrdp_log:/pyRDPcontainer/bin/log
-    # Place the command you need here:
-    # ex: pyrdp-player.py
-    command: ["pyrdp-player.py"]
+     - ./pyrdp_log:/home/developer/log
+     #Place the command you need here:
+     #ex: pyrdp-player.py
+    command: ["pyrdp-mitm.py"]
