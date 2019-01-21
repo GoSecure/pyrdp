@@ -19,6 +19,7 @@ target machine.
 ## Table of Contents
 - [Supported Systems](#supported-systems)
 - [Installing](#installing)
+    * [Installing with Docker](#installing-with-docker)
     * [Installing on Windows](#installing-on-windows)
 - [Using the PyRDP MITM](#using-the-pyrdp-mitm)
     * [Specifying the private key and certificate](#specifying-the-private-key-and-certificate)
@@ -65,11 +66,24 @@ sudo python3 setup.py install
 
 This should install all the dependencies required to run PyRDP.
 
-### Installing with Docker-compose
-PyRDP can be installed in a container using Docker-compose with this command :
+### Installing with Docker
+PyRDP can be installed in a container. First of all, create the image by executing this command at the root of pyRDP (where Dockerfile is located):
 ```
-sudo docker-compose up
+sudo docker build -t pyrpd .
 ```
+Afterwards, you can execute the following command to run the container. 
+```
+sudo docker run  <image id or name> <command i.e: pyrdp-mitm.py>
+```
+To store the log files, be sure that your destination directory is owned by a user with a UID of 1000, otherwise you will get a permission denied error. If you're the only user on the system, you should not be worried about this. Add the following option to the previous command:
+```
+-v <destination of the log files on the host side>:/home/developer/log
+```
+Using the player will require you to export the DISPLAY environment variable from the host to the docker (this redirects the GUI of the player to the host screen), expose the host network and stop Qt from using the MITM-SHM X11 Shared Memory Extension. To do so, add those options to the run command and uncomment the suitable line in the Dockerfile:
+```
+-e DISPLAY=$DISPLAY --net=host
+```
+Keep in mind that exposing the host network to the docker can compromise the isolation between your container and the host. If you plan on using the player, X11 forwarding using an ssh connection would be a more secure way.
 
 ### Installing on Windows
 If you want to install PyRDP on Windows, note that `setup.py` will try to compile `ext/rle.c`, so you will need to have
