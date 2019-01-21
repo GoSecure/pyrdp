@@ -128,7 +128,7 @@ def main():
     parser.add_argument("-n", "--nla", help="For NLA client authentication (need to provide credentials)", action="store_true")
     parser.add_argument("-u", "--username", help="Username that will replace the client's username", default=None)
     parser.add_argument("-p", "--password", help="Password that will replace the client's password", default=None)
-    parser.add_argument("-L", "--log-level", help="Log level", default="INFO", choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"], nargs="?")
+    parser.add_argument("-L", "--log-level", help="Log level", default="INFO", choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"])
     parser.add_argument("-s", "--sensor-id", help="Sensor ID (to differentiate multiple instances of the MITM where logs are aggregated at one place)", default="PyRDP")
 
     args = parser.parse_args()
