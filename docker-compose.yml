@@ -18,7 +18,7 @@ services:
     #network_mode: "host"
     volumes:
       #The path before the ':' is the destination of the log on the host side.
-     - ./pyrdp_log:/home/developer/log
+     - ./pyrdp_log:/home/pyrdp/log
      #Place the command you want to execute here:
      #ex: pyrdp-player.py
     command: ["pyrdp-player.py"]
