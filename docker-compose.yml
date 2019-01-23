@@ -3,22 +3,22 @@
 # Copyright (C) 2019 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-#This is an example of how you could use pyRDP with docker-compose.
+# This is an example of how you could use pyRDP with docker-compose.
 
 version: "3"
 services:
   pyrdp:
     build: .
-    #Uncomment this section only if you want to run the player.
-    #This will allow the GUI of the player to be displayed on the host screen.
+    # Uncomment this section only if you want to run the player.
+    # This will allow the GUI of the player to be displayed on the host screen.
     #environment: 
     #  - DISPLAY
-    #This will expose the host network to the docker. Keep in mind this could be dangerous if you deploy
-    #the tool for a honeypot on the internet.
+    # This will expose the host network to the docker. Keep in mind this could be dangerous if you deploy
+    # the tool for a honeypot on the internet.
     #network_mode: "host"
     volumes:
-      #The path before the ':' is the destination of the log on the host side.
+      # The path before the ':' is the destination of the log on the host side.
      - ./pyrdp_log:/home/pyrdp/log
-     #Place the command you want to execute here:
-     #ex: pyrdp-player.py
+     # Place the command you want to execute here:
+     # ex: pyrdp-player.py
     command: ["pyrdp-player.py"]
