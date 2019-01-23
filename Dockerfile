@@ -5,9 +5,7 @@
 #
 
 FROM ubuntu:18.04
-# Uncomment the following option only if you run the player.
-# The purpose of this is to stop Qt from using the MITM-SHM X11 Shared Memory Extension.
-#ENV QT_X11_NO_MITSHM=1
+
 RUN apt-get update
 
 # Install Dependencies
