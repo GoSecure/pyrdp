@@ -10,10 +10,12 @@ services:
   pyrdp:
     build: .
     # Uncomment this section only if you want to run the player.
-    # This will allow the GUI of the player to be displayed on the host screen.
+    # This allows the GUI of the player to be displayed on the host screen and
+    # stops Qt from using the MITM-SHM X11 Shared Memory Extension.
     #environment: 
     #  - DISPLAY
-    # This will expose the host network to the docker. Keep in mind this could be dangerous if you deploy
+    #  - QT_X11_NO_MITSHM=1
+    # This exposes the host's network to the docker. Keep in mind this could be dangerous if you deploy
     # the tool for a honeypot on the internet.
     #network_mode: "host"
     volumes:
