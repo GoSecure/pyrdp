@@ -73,8 +73,10 @@ docker build -t pyrdp .
 ```
 Afterwards, you can execute the following command to run the container. 
 ```
-docker run  <image id or name> <command i.e: pyrdp-mitm.py>
+docker run pyrdp pyrdp-mitm.py 192.168.1.10
 ```
+For more information about the diffrent commands and arguments, please refer to these sections: [Using the PyRDP MITM](#using-the-pyrdp-mitm), [Using the PyRDP Player](#using-the-pyrdp-player), [Using the PyRDP Certificate Cloner](#using-the-pyrdp-certificate-cloner).
+
 To store the log files, be sure that your destination directory is owned by a user with a UID of 1000, otherwise you will get a permission denied error. If you're the only user on the system, you should not worry about this. Add the following option to the previous command:
 ```
 -v <destination of the log files on the host side>:/home/pyrdp/log
