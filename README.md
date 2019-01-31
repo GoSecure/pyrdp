@@ -77,13 +77,13 @@ docker run pyrdp pyrdp-mitm.py 192.168.1.10
 ```
 For more information about the diffrent commands and arguments, please refer to these sections: [Using the PyRDP MITM](#using-the-pyrdp-mitm), [Using the PyRDP Player](#using-the-pyrdp-player), [Using the PyRDP Certificate Cloner](#using-the-pyrdp-certificate-cloner).
 
-To store the log files, be sure that your destination directory is owned by a user with a UID of 1000, otherwise you will get a permission denied error. If you're the only user on the system, you should not worry about this. Add the following option to the previous command:
+To store the log files, be sure that your destination directory is owned by a user with a UID of 1000, otherwise you will get a permission denied error. If you're the only user on the system, you should not worry about this. Add the -v option to the previous command:
 ```
--v <destination of the log files on the host side>:/home/pyrdp/log
+docker run pyrdp pyrdp-mitm.py 192.168.1.10 -v /home/developer/logs:/home/pyrdp/log
 ```
-Using the player will require you to export the DISPLAY environment variable from the host to the docker (this redirects the GUI of the player to the host screen), expose the host's network and stop Qt from using the MITM-SHM X11 Shared Memory Extension. To do so, add those options to the run command :
+Using the player will require you to export the DISPLAY environment variable from the host to the docker (this redirects the GUI of the player to the host screen), expose the host's network and stop Qt from using the MITM-SHM X11 Shared Memory Extension. To do so, add the -e and --net options to the run command:
 ```
--e DISPLAY=$DISPLAY -e QT_X11_NO_MITSHM=1  --net=host
+docker run pyrdp pyrdp-player.py 192.168.1.10 -e DISPLAY=$DISPLAY -e QT_X11_NO_MITSHM=1 --net=host
 ```
 Keep in mind that exposing the host's network to the docker can compromise the isolation between your container and the host. If you plan on using the player, X11 forwarding using an SSH connection would be a more secure way.
 
