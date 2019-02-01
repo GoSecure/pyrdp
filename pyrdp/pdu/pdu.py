@@ -4,8 +4,6 @@
 # Licensed under the GPLv3 or later.
 #
 
-import pprint
-
 
 class PDU:
     """
@@ -18,8 +16,13 @@ class PDU:
         :param payload: The PDU's payload data
         :type payload: bytes
         """
-
         self.payload = payload
 
     def __repr__(self):
-        return self.__class__.__name__ + pprint.pformat(self.__dict__, width=2000, indent=4, compact=False)
+        properties = dict(self.__dict__)
+
+        if len(self.payload) > 200:
+            properties["payload"] = "<LONG PAYLOAD>"
+
+        representation = self.__class__.__name__ + str(properties)
+        return representation
