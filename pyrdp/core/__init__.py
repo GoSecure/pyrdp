@@ -12,6 +12,7 @@ from pyrdp.core.packing import Int16BE, Int16LE, Int32BE, Int32LE, Int8, Uint16B
 from pyrdp.core.stream import ByteStream, StrictStream
 from pyrdp.core.subject import ObservedBy, Subject
 from pyrdp.core.timer import Timer
+from pyrdp.core.twisted import AwaitableClientFactory
 
 import asyncio
 import typing
