@@ -12,6 +12,7 @@ pyrdp.egg-info/
 *.log
 out/
 log/
+pyrdp_output/
 .idea/
 .vscode
 *.log
