@@ -5,7 +5,8 @@
 #
 
 import time
-from typing import BinaryIO, Dict, List, Optional
+from pathlib import Path
+from typing import BinaryIO, Dict, List, Optional, Union
 
 from pyrdp.enum import ParserMode, PlayerMessageType
 from pyrdp.layer import IntermediateLayer, Layer, PlayerMessageLayer, TPKTLayer
@@ -51,6 +52,7 @@ class Recorder:
         """
         self.parsers[messageType] = parser
 
+
     def record(self, pdu: Optional[PDU], messageType: PlayerMessageType):
         """
         Encapsulate the pdu properly, then record the data
@@ -74,13 +76,10 @@ class FileLayer(IntermediateLayer):
     Layer that saves RDP events to a file for later replay.
     """
 
-    def __init__(self, fileHandle):
-        """
-        :type fileHandle: BinaryIO
-        """
+    def __init__(self, fileName: Union[str, Path]):
         # RED FLAG: Shouldn't be passing None to this.
         super().__init__(None)
-        self.file_descriptor: BinaryIO = fileHandle
+        self.file_descriptor = open(str(fileName), "wb")
 
     def sendBytes(self, data: bytes):
         """

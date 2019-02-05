@@ -17,7 +17,11 @@ class SensorFilter(Filter):
         self.sensorID = sensorID
 
     def filter(self, record: LogRecord) -> bool:
-        record.args.update({"sensor": self.sensorID})
+        if record.args == ():
+            record.args = {}
+        elif isinstance(record.args, dict):
+            record.args.update({"sensor": self.sensorID})
+
         return True
 
 

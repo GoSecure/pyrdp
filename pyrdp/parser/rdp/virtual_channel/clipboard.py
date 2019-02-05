@@ -23,12 +23,14 @@ class ClipboardParser(Parser):
         msgFlags = Uint16LE.unpack(stream)
         dataLen = Uint32LE.unpack(stream)
         payload = stream.read(dataLen)
+
         if msgType == ClipboardMessageType.CB_FORMAT_DATA_RESPONSE:
             clipboardPDU = self.parseFormatDataResponse(payload, msgFlags)
         elif msgType == ClipboardMessageType.CB_FORMAT_LIST:
             clipboardPDU = self.parseFormatList(payload, msgFlags)
         else:
             clipboardPDU = ClipboardPDU(ClipboardMessageType(msgType), msgFlags, payload)
+
         return clipboardPDU
 
     def parseFormatDataResponse(self, payload, msgFlags):
@@ -40,14 +42,18 @@ class ClipboardParser(Parser):
 
         stream = BytesIO(payload)
         formats = {}
+
         while stream.tell() < len(stream.getvalue()):
             formatId = Uint32LE.unpack(stream)
             formatName = b""
             lastChar = b""
+
             while lastChar != b"\x00\x00":
                 lastChar = stream.read(2)
                 formatName += lastChar
+
             formats[formatId] = LongFormatName(formatId, formatName)
+
         return FormatListPDU(formats, msgFlags)
 
     def write(self, pdu):

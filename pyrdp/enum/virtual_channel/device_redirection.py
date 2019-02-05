@@ -15,7 +15,7 @@ class DeviceRedirectionComponent(IntEnum):
     RDPDR_CTYP_PRN = 0x5052
 
 
-class DeviceRedirectionPacketId(IntEnum):
+class DeviceRedirectionPacketID(IntEnum):
     """
     https://msdn.microsoft.com/en-us/library/cc241324.aspx
     """
@@ -133,7 +133,7 @@ class DeviceType(IntEnum):
     RDPDR_DTYP_SMARTCARD = 0x00000020
 
 
-class CapabilityType(IntEnum):
+class RDPDRCapabilityType(IntEnum):
     """
     https://msdn.microsoft.com/en-us/library/cc241325.aspx
     """

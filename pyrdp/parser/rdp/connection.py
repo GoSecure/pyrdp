@@ -423,8 +423,12 @@ class ServerConnectionParser(Parser):
         """
         stream.write(Uint32LE.pack(data.version))
 
-        if data.clientRequestedProtocols is not None:
-            stream.write(Uint32LE.pack(data.clientRequestedProtocols))
+        requestedProtocols = data.clientRequestedProtocols
+
+        if requestedProtocols is None:
+            requestedProtocols = 0
+
+        stream.write(Uint32LE.pack(requestedProtocols))
 
         if data.earlyCapabilityFlags is not None:
             stream.write(Uint32LE.pack(data.earlyCapabilityFlags))

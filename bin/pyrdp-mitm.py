@@ -6,16 +6,20 @@
 # Licensed under the GPLv3 or later.
 #
 
-import asyncio
-from twisted.internet import asyncioreactor
-asyncioreactor.install(asyncio.get_event_loop())
-
 import argparse
+import asyncio
 import logging
 import logging.handlers
 import os
+import random
 import sys
-from typing import Optional
+from pathlib import Path
+
+from twisted.internet import asyncioreactor
+
+asyncioreactor.install(asyncio.get_event_loop())
+
+from pyrdp.mitm import MITMConfig, RDPMITM
 
 import appdirs
 import names
@@ -24,36 +28,21 @@ from twisted.internet.protocol import ServerFactory
 
 from pyrdp.core import getLoggerPassFilters
 from pyrdp.logging import JSONFormatter, log, LOGGER_NAMES, SensorFilter
-from pyrdp.mitm import MITMServer
 
 
 class MITMServerFactory(ServerFactory):
-    def __init__(self, targetHost: str, targetPort: int, privateKeyFileName: str, certificateFileName: str,
-                 destination_ip: str, destination_port: int, username: Optional[str], password: Optional[str]):
+    def __init__(self, config: MITMConfig):
         """
-        :param targetHost: The IP that points to the RDP server
-        :param targetPort: The port that points to the RDP server
-        :param privateKeyFileName: The private key to use for SSL
-        :param certificateFileName: The certificate to use for SSL
-        :param destination_ip: The IP to which send RDP traffic (for live player).
-        :param destination_port: The port to which send RDP traffic (for live player).
-        :param username: The replacement username to use to connect users instead of the one they provided.
-        :param password: The replacement password to use to connect users instead of the one they provided.
+        :param config: the MITM configuration
         """
-        self.password = password
-        self.username = username
-        self.targetHost = targetHost
-        self.targetPort = targetPort
-        self.privateKeyFileName = privateKeyFileName
-        self.certificateFileName = certificateFileName
-        self.destination_ip = destination_ip
-        self.destination_port = destination_port
+        self.config = config
 
     def buildProtocol(self, addr):
-        server = MITMServer(names.get_first_name(), self.targetHost, self.targetPort, self.certificateFileName,
-                            self.privateKeyFileName, self.destination_ip, self.destination_port,
-                            self.username, self.password)
-        return server.getProtocol()
+        sessionId = f"{names.get_first_name()}{random.randrange(100000,999999)}"
+        logger = getLoggerPassFilters(f"{LOGGER_NAMES.MITM_CONNECTIONS}.{sessionId}")
+        mitm = RDPMITM(logger, self.config)
+
+        return mitm.getProtocol()
 
 
 def getSSLPaths():
@@ -74,7 +63,7 @@ def generateCertificate(keyPath, certificatePath):
 
 def prepare_loggers(logLevel, sensorID):
     """
-        Sets up the "mitm" and the "mitm.connections" loggers.
+    Sets up the "mitm" and the "mitm.connections" loggers.
     """
     log.prepare_pyrdp_logger(logLevel)
     log.prepare_ssl_session_logger()
@@ -120,7 +109,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("target", help="IP:port of the target RDP machine (ex: 192.168.1.10:3390)")
     parser.add_argument("-l", "--listen", help="Port number to listen on (default: 3389)", default=3389)
-    parser.add_argument("-o", "--output", help="Output folder for replay files")
+    parser.add_argument("-o", "--output", help="Output folder for replay files", default="pyrdp_output")
     parser.add_argument("-i", "--destination-ip", help="Destination IP address of the PyRDP player.If not specified, RDP events are not sent over the network.")
     parser.add_argument("-d", "--destination-port", help="Listening port of the PyRDP player (default: 3000).", default=3000)
     parser.add_argument("-k", "--private-key", help="Path to private key (for SSL)")
@@ -136,7 +125,6 @@ def main():
     logLevel = getattr(logging, args.log_level)
 
     prepare_loggers(logLevel, args.sensor_id)
-    os.makedirs("out", exist_ok=True)
     mitm_log = getLoggerPassFilters(LOGGER_NAMES.MITM)
 
     target = args.target
@@ -151,17 +139,29 @@ def main():
         sys.exit(1)
     elif args.private_key is None:
         key, certificate = getSSLPaths()
-        handleKeyAndCertificates(certificate, key, mitm_log)
+        handleKeyAndCertificate(certificate, key, mitm_log)
     else:
         key, certificate = args.private_key, args.certificate
+
     listenPort = int(args.listen)
-    reactor.listenTCP(listenPort, MITMServerFactory(targetHost, targetPort, key, certificate, args.destination_ip, int(args.destination_port),
-                                                    args.username, args.password))
+
+    config = MITMConfig()
+    config.targetHost = targetHost
+    config.targetPort = targetPort
+    config.privateKeyFileName = key
+    config.certificateFileName = certificate
+    config.attackerHost = args.destination_ip
+    config.attackerPort = int(args.destination_port)
+    config.replacementUsername = args.username
+    config.replacementPassword = args.password
+    config.outDir = Path(args.output)
+
+    reactor.listenTCP(listenPort, MITMServerFactory(config))
     mitm_log.info("MITM Server listening on port %(port)d", {"port": listenPort})
     reactor.run()
 
 
-def handleKeyAndCertificates(certificate, key, mitm_log):
+def handleKeyAndCertificate(certificate, key, mitm_log):
     if os.path.exists(key) and os.path.exists(certificate):
         mitm_log.info("Using existing private key: %(privateKey)s", {"privateKey": key})
         mitm_log.info("Using existing certificate: %(certificate)s", {"certificate": certificate})

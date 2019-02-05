@@ -23,7 +23,3 @@ class VirtualChannelPDUFlag(IntEnum):
     CompressionTypeMask = 0x000F0000
 
 
-class VirtualChannelName:
-    CLIPBOARD = "cliprdr"
-    DEVICE_REDIRECTION = "rdpdr"
-    DYNAMIC_CHANNEL = "drdynvc"

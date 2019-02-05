@@ -11,7 +11,7 @@ from pyrdp.core import ObservedBy
 from pyrdp.enum import EncryptionMethod, SecurityFlags
 from pyrdp.layer.layer import IntermediateLayer, LayerObserver
 from pyrdp.logging import log
-from pyrdp.parser import BasicSecurityParser, ClientInfoParser, FIPSSecurityParser, Parser, SignedSecurityParser
+from pyrdp.parser import BasicSecurityParser, ClientInfoParser, FIPSSecurityParser, SignedSecurityParser
 from pyrdp.pdu import ClientInfoPDU, PDU, SecurityExchangePDU, SecurityPDU
 from pyrdp.security import RC4Crypter, RC4CrypterProxy
 
@@ -136,7 +136,8 @@ class TLSSecurityLayer(SecurityLayer):
 
     def recv(self, data: bytes):
         if not self.securityHeaderExpected:
-            self.next.recv(data)
+            if self.next is not None:
+                self.next.recv(data)
         else:
             SecurityLayer.recv(self, data)
 

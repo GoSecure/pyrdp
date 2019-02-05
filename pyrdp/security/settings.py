@@ -4,11 +4,10 @@
 # Licensed under the GPLv3 or later.
 #
 
-from enum import IntEnum
-
 import Crypto.Random
 
 from pyrdp.core import ObservedBy, Observer, Subject
+from pyrdp.enum import EncryptionMethod
 from pyrdp.exceptions import StateError
 from pyrdp.security.crypto import RC4Crypter
 
@@ -18,11 +17,10 @@ class SecuritySettingsObserver(Observer):
     Observer class for SecuritySettings.
     """
 
-    def onCrypterGenerated(self, settings):
+    def onCrypterGenerated(self, settings: 'SecuritySettings'):
         """
         Called when the SecuritySettings crypter has been generated.
         :param settings: the security settings object.
-        :type settings: SecuritySettings
         """
         pass
 
@@ -33,34 +31,21 @@ class SecuritySettings(Subject):
     Class containing RDP standard security settings.
     """
 
-    class Mode(IntEnum):
-        """
-        SecuritySettings mode (client or server).
-        """
-        CLIENT = 0
-        SERVER = 1
-
-    def __init__(self, mode):
-        """
-        :param mode: the settings mode.
-        :type mode: SecuritySettings.Mode
-        """
+    def __init__(self):
         Subject.__init__(self)
-        self.mode = mode
         self.encryptionMethod = None
         self.clientRandom = None
         self.serverRandom = None
-        self.publicKey = None
-        self.crypter = None
+        self.serverPublicKey = None
+        self.clientCrypter = None
+        self.serverCrypter = None
 
-    def generateCrypter(self):
+    def generateCrypters(self):
         """
         Generate a crypter with the current settings.
         """
-        if self.mode == SecuritySettings.Mode.CLIENT:
-            self.crypter = RC4Crypter.generateClient(self.clientRandom, self.serverRandom, self.encryptionMethod)
-        else:
-            self.crypter = RC4Crypter.generateServer(self.clientRandom, self.serverRandom, self.encryptionMethod)
+        self.clientCrypter = RC4Crypter.generateClient(self.clientRandom, self.serverRandom, self.encryptionMethod)
+        self.serverCrypter = RC4Crypter.generateServer(self.clientRandom, self.serverRandom, self.encryptionMethod)
 
         if self.observer:
             self.observer.onCrypterGenerated(self)
@@ -77,57 +62,63 @@ class SecuritySettings(Subject):
         """
         self.setServerRandom(Crypto.Random.get_random_bytes(32))
 
-    def encryptClientRandom(self):
+    def encryptClientRandom(self) -> bytes:
         """
         Encrypt the client random using the public key.
-        :return: str
         """
         # Client random is stored as little-endian but crypto functions expect it to be in big-endian format.
-        return self.publicKey.encrypt(self.clientRandom[:: -1], 0)[0][:: -1]
+        return self.serverPublicKey.encrypt(self.clientRandom[:: -1], 0)[0][:: -1]
 
-    def serverSecurityReceived(self, security):
+    def setEncryptionMethod(self, encryptionMethod: EncryptionMethod):
         """
-        Called when a ServerSecurityData is received.
-        :param security: the RDP server's security data.
-        :type security: ServerSecurityData
+        Set the encryption method attribute.
+        :param encryptionMethod: the encryption method.
         """
-        self.encryptionMethod = security.encryptionMethod
+        self.encryptionMethod = encryptionMethod
 
-        if security.serverCertificate:
-            self.publicKey = security.serverCertificate.publicKey
+    def setServerPublicKey(self, serverPublicKey):
+        """
+        Set the server's public key.
+        :param serverPublicKey: the server's public key.
+        """
+        self.serverPublicKey = serverPublicKey
 
-        self.setServerRandom(security.serverRandom)
-
-    def setServerRandom(self, random):
+    def setServerRandom(self, random: bytes):
         """
         Set the serverRandom attribute.
         :param random: server random data.
-        :type random: bytes
         """
         self.serverRandom = random
 
         if self.clientRandom is not None and self.serverRandom is not None:
-            self.generateCrypter()
+            self.generateCrypters()
 
-    def setClientRandom(self, random):
+    def setClientRandom(self, random: bytes):
         """
         Set the clientRandom attribute.
         :param random: client random data.
-        :type random: bytes
         """
         self.clientRandom = random
 
         if self.clientRandom is not None and self.serverRandom is not None:
-            self.generateCrypter()
+            self.generateCrypters()
 
-    def getCrypter(self):
+    def getClientCrypter(self) -> RC4Crypter:
         """
-        Get the current crypter object.
-        :return: RC4Crypter
+        Get the client crypter.
         """
-        if self.crypter is None:
-            raise StateError("The crypter was not generated. The crypter will be generated when the server random is received.")
+        if self.clientCrypter is None:
+            raise StateError("The crypters were not generated. The crypters will be generated when both the client and server random are received.")
 
-        return self.crypter
+        return self.clientCrypter
+
+    def getServerCrypter(self) -> RC4Crypter:
+        """
+        Get the server crypter.
+        """
+        if self.serverCrypter is None:
+            raise StateError("The crypters were not generated. The crypters will be generated when both the client and server random are received.")
+
+        return self.serverCrypter
 
 

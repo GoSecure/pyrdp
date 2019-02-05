@@ -5,6 +5,7 @@
 #
 
 import asyncio
+from binascii import hexlify
 
 from twisted.internet.protocol import connectionDone, Protocol
 
@@ -69,7 +70,8 @@ class TwistedTCPLayer(IntermediateLayer, Protocol):
         """
         Close the TCP connection.
         """
-        self.transport.abortConnection()
+        if self.transport:
+            self.transport.abortConnection()
 
     def dataReceived(self, data: bytes):
         """
@@ -86,6 +88,7 @@ class TwistedTCPLayer(IntermediateLayer, Protocol):
             raise
         except Exception as e:
             getLoggerPassFilters(LOGGER_NAMES.PYRDP_EXCEPTIONS).exception(e)
+            getLoggerPassFilters(LOGGER_NAMES.PYRDP).error("Exception occurred when receiving: %s" % hexlify(data))
             raise
 
     def sendBytes(self, data: bytes):

@@ -53,7 +53,6 @@ class SlowPathObserver(RDPDataObserver, LayerStrictRoutedObserver):
         Called when a Demand Active PDU is received.
         Disable Virtual channel compression (unsupported for now).
         """
-        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].flags = VirtualChannelCompressionFlag.VCCAPS_NO_COMPR
         pass
 
     def onConfirmActive(self, pdu: ConfirmActivePDU):

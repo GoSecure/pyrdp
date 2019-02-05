@@ -131,7 +131,7 @@ class GCCParser(Parser):
         stream = BytesIO()
         stream.write(per.writeChoice(0))
         stream.write(per.writeObjectIdentifier(GCCParser.T124_02_98_OID))
-        stream.write(per.writeLength(len(pdu.payload) + 14))
+        stream.write(per.writeLength(0x2a))
         stream.write(per.writeChoice(pdu.header))
 
         self.writers[pdu.header](stream, pdu)

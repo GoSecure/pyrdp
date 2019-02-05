@@ -7,7 +7,7 @@
 from pyrdp.layer.buffered import BufferedLayer
 from pyrdp.layer.gcc import GCCClientConnectionLayer
 from pyrdp.layer.layer import Layer, LayerChainItem, IntermediateLayer, LayerObserver, LayerRoutedObserver, LayerStrictRoutedObserver
-from pyrdp.layer.mcs import MCSClientConnectionLayer, MCSLayer
+from pyrdp.layer.mcs import MCSClientConnectionLayer, MCSLayer, MCSObserver
 from pyrdp.layer.raw import RawLayer
 from pyrdp.layer.recording import PlayerMessageLayer, PlayerMessageObserver
 from pyrdp.layer.segmentation import SegmentationLayer, SegmentationObserver

@@ -38,7 +38,9 @@ from pyrdp.pdu.rdp.virtual_channel.clipboard import ClipboardPDU, FormatDataRequ
     FormatListPDU, FormatListResponsePDU, FormatName, LongFormatName, ServerMonitorReadyPDU, ShortFormatName
 from pyrdp.pdu.rdp.virtual_channel.device_redirection import DeviceAnnounce, DeviceCloseRequestPDU, \
     DeviceCloseResponsePDU, DeviceCreateRequestPDU, DeviceCreateResponsePDU, DeviceIORequestPDU, DeviceIOResponsePDU, \
-    DeviceListAnnounceRequest, DeviceReadRequestPDU, DeviceReadResponsePDU, DeviceRedirectionPDU
+    DeviceListAnnounceRequest, DeviceReadRequestPDU, DeviceReadResponsePDU, DeviceRedirectionCapabilitiesPDU, \
+    DeviceRedirectionCapability, DeviceRedirectionClientCapabilitiesPDU, DeviceRedirectionGeneralCapability, \
+    DeviceRedirectionPDU, DeviceRedirectionServerCapabilitiesPDU
 from pyrdp.pdu.rdp.virtual_channel.virtual_channel import VirtualChannelPDU
 from pyrdp.pdu.segmentation import SegmentationPDU
 from pyrdp.pdu.tpkt import TPKTPDU

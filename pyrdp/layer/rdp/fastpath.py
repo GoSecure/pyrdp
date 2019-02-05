@@ -7,19 +7,17 @@
 from pyrdp.core import ObservedBy
 from pyrdp.layer.buffered import BufferedLayer
 from pyrdp.layer.layer import LayerObserver
-from pyrdp.layer.rdp.data import RDPDataObserver
 from pyrdp.parser import SegmentationParser
-from pyrdp.pdu import PDU
-from pyrdp.pdu.rdp.fastpath import FastPathPDU
+from pyrdp.pdu import FastPathPDU
 
 
-class FastPathObserver(RDPDataObserver, LayerObserver):
+class FastPathObserver(LayerObserver):
     """
     Observer for fast-path PDUs.
     """
 
     def onPDUReceived(self, pdu: FastPathPDU):
-        self.dispatchPDU(pdu)
+        pass
 
     def getPDUType(self, pdu: FastPathPDU):
         # The PDU type is stored in the last 3 bits
