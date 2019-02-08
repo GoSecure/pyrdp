@@ -111,16 +111,15 @@ class SlowPathLogger(LoggingObserver, SlowPathObserver):
         self.log.debug("Received unparsed data: %(data)s", {"data": hexlify(data)})
 
     def logPDU(self, pdu):
-        self.log.debug("Received %(pdu)s", {"pdu": self.getEffectiveType(pdu)})
-
-    def getEffectiveType(self, pdu: SlowPathPDU):
         if hasattr(pdu.header, "subtype"):
             if hasattr(pdu, "errorInfo"):
-                return pdu.errorInfo
+                description = pdu.errorInfo
             else:
-                return pdu.header.subtype
+                description = pdu.header.subtype
         else:
-            return pdu.header.pduType
+            description = pdu.header.pduType
+
+        self.log.debug("Received %(description)s", {"description": description})
 
 
 class FastPathLogger(LoggingObserver, FastPathObserver):

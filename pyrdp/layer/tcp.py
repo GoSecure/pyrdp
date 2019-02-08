@@ -88,7 +88,7 @@ class TwistedTCPLayer(IntermediateLayer, Protocol):
             raise
         except Exception as e:
             getLoggerPassFilters(LOGGER_NAMES.PYRDP_EXCEPTIONS).exception(e)
-            getLoggerPassFilters(LOGGER_NAMES.PYRDP).error("Exception occurred when receiving: %s" % hexlify(data))
+            getLoggerPassFilters(LOGGER_NAMES.PYRDP).error("Exception occurred when receiving: %(data)s" , {"data": hexlify(data).decode()})
             raise
 
     def sendBytes(self, data: bytes):
