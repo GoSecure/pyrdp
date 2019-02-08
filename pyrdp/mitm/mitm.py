@@ -16,6 +16,7 @@ from pyrdp.core.ssl import ClientTLSContext, ServerTLSContext
 from pyrdp.enum import MCSChannelName, ParserMode, PlayerMessageType, SegmentationPDUType
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, LayerChainItem, RawLayer, TwistedTCPLayer, \
     VirtualChannelLayer
+from pyrdp.logging import RC4LoggingObserver
 from pyrdp.logging.observers import LayerLogger, MCSLogger, SecurityLogger, SlowPathLogger, X224Logger
 from pyrdp.mcs import MCSClientChannel, MCSServerChannel
 from pyrdp.mitm.ClipboardMITM import ActiveClipboardStealer
@@ -52,6 +53,9 @@ class RDPMITM:
 
         self.serverLog = getLoggerPassFilters(f"{self.log.name}.server")
         """Base logger for the server side"""
+
+        self.rc4Log = getLoggerPassFilters(f"{self.log.name}.rc4")
+        """Logger for RC4 secrets"""
 
         self.config = config
         """The MITM configuration"""
@@ -106,6 +110,8 @@ class RDPMITM:
         self.config.outDir.mkdir(parents=True, exist_ok=True)
         self.config.replayDir.mkdir(exist_ok=True)
         self.config.fileDir.mkdir(exist_ok=True)
+
+        self.state.securitySettings.addObserver(RC4LoggingObserver(self.rc4Log))
 
         date = datetime.datetime.now()
         replayFileName = "rdp_replay_{}_{}.pyrdp".format(date.strftime('%Y%m%d_%H-%M-%S'), date.microsecond // 1000)
