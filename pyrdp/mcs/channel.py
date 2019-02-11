@@ -53,19 +53,3 @@ class MCSServerChannel(MCSChannel):
     def sendBytes(self, data: bytes):
         pdu = MCSSendDataIndicationPDU(self.userID, self.channelID, 0x70, data)
         self.mcs.sendPDU(pdu)
-
-
-class MCSChannelFactory(metaclass = ABCMeta):
-    """
-    Base factory class used when a user joins a new channel
-    """
-
-    @abstractmethod
-    def buildChannel(self, mcs: 'MCSLayer', userID: int, channelID: int) -> MCSChannel:
-        """
-        Called when a user joins a new channel
-        :param mcs: the MCS layer
-        :param userID: the user ID
-        :param channelID: the channel ID
-        """
-        pass
