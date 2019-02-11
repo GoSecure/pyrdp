@@ -115,7 +115,7 @@ class RDPMITM:
 
         date = datetime.datetime.now()
         replayFileName = "rdp_replay_{}_{}.pyrdp".format(date.strftime('%Y%m%d_%H-%M-%S'), date.microsecond // 1000)
-        self.recorder.addTransportLayer(FileLayer(self.config.replayDir / replayFileName))
+        self.recorder.addTransport(FileLayer(self.config.replayDir / replayFileName))
 
     def getProtocol(self) -> Protocol:
         """
@@ -163,7 +163,7 @@ class RDPMITM:
 
             try:
                 await asyncio.wait_for(attackerFactory.connected.wait(), 1.0)
-                self.recorder.addTransportLayer(self.attacker)
+                self.recorder.addTransport(self.attacker)
             except asyncio.TimeoutError:
                 self.log.error("Failed to connect to recording host: timeout expired")
 

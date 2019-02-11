@@ -6,10 +6,10 @@
 
 import time
 from pathlib import Path
-from typing import BinaryIO, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from pyrdp.enum import ParserMode, PlayerMessageType
-from pyrdp.layer import IntermediateLayer, Layer, PlayerMessageLayer, TPKTLayer
+from pyrdp.layer import PlayerMessageLayer, TPKTLayer
 from pyrdp.layer.layer import LayerChainItem
 from pyrdp.logging import log
 from pyrdp.parser import BasicFastPathParser, ClientInfoParser, ClipboardParser, Parser, SlowPathParser
@@ -24,7 +24,7 @@ class Recorder:
     receive binary data and handle them as they wish. They perform the actual recording.
     """
 
-    def __init__(self, transportLayers: List[IntermediateLayer]):
+    def __init__(self, transports: List[LayerChainItem]):
         self.parsers: Dict[PlayerMessageType, Parser] = {
             PlayerMessageType.FAST_PATH_INPUT: BasicFastPathParser(ParserMode.CLIENT),
             PlayerMessageType.FAST_PATH_OUTPUT: BasicFastPathParser(ParserMode.SERVER),
@@ -36,10 +36,10 @@ class Recorder:
 
         self.topLayers = []
 
-        for transportLayer in transportLayers:
-            self.addTransportLayer(transportLayer)
+        for transport in transports:
+            self.addTransport(transport)
 
-    def addTransportLayer(self, transportLayer: IntermediateLayer):
+    def addTransport(self, transportLayer: LayerChainItem):
         tpktLayer = TPKTLayer()
         messageLayer = PlayerMessageLayer()
 
@@ -71,54 +71,22 @@ class Recorder:
         return time.time()
 
 
-class FileLayer(IntermediateLayer):
+class FileLayer(LayerChainItem):
     """
     Layer that saves RDP events to a file for later replay.
     """
 
     def __init__(self, fileName: Union[str, Path]):
-        # RED FLAG: Shouldn't be passing None to this.
-        super().__init__(None)
+        super().__init__()
         self.file_descriptor = open(str(fileName), "wb")
 
     def sendBytes(self, data: bytes):
         """
         Save data to the file.
+        :param data: data to write.
         """
 
         if not self.file_descriptor.closed:
             self.file_descriptor.write(data)
         else:
             log.error("Recording file handle closed, cannot write message: %(message)s", {"message": data})
-
-    def shouldForward(self, pdu: PDU) -> bool:
-        return True
-
-
-class SocketLayer(IntermediateLayer):
-    """
-    Layer that sends RDP events to a network socket for live play.
-    """
-
-    def __init__(self, socket):
-        """
-        :type socket: socket.socket
-        """
-        Layer.__init__(self)
-        self.socket = socket
-        self.isConnected = True
-
-    def sendBytes(self, data: bytes):
-        """
-        Send data through the socket
-        """
-        if self.isConnected:
-            try:
-                log.debug("sending %(arg1)s to %(arg2)s", {"arg1": data, "arg2": self.socket.getpeername()})
-                self.socket.send(data)
-            except Exception as e:
-                log.error("Cant send data over the network socket: %(data)s", {"data": e})
-                self.isConnected = False
-
-    def shouldForward(self, pdu: PDU) -> bool:
-        return True
