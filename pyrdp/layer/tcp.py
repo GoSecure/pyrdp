@@ -10,7 +10,6 @@ from binascii import hexlify
 from twisted.internet.protocol import connectionDone, Protocol
 
 from pyrdp.core import getLoggerPassFilters, ObservedBy
-from pyrdp.core.ssl import ServerTLSContext
 from pyrdp.layer.layer import IntermediateLayer, LayerObserver
 from pyrdp.logging import log, LOGGER_NAMES
 from pyrdp.parser.tcp import TCPParser

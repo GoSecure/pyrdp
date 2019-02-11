@@ -84,9 +84,9 @@ class ClientSecurityData:
     @staticmethod
     def generate(encryptionMethods: EncryptionMethod, isFrenchLocale: bool = False):
         if isFrenchLocale:
-            return ClientSecurityData(0, encryptionMethods)
+            return ClientSecurityData(EncryptionMethod.ENCRYPTION_NONE, encryptionMethods)
         else:
-            return ClientSecurityData(encryptionMethods, 0)
+            return ClientSecurityData(encryptionMethods, EncryptionMethod.ENCRYPTION_NONE)
 
 
 class ClientChannelDefinition:

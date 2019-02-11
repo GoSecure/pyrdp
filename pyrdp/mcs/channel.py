@@ -11,7 +11,7 @@ from pyrdp.layer.layer import LayerChainItem
 from pyrdp.pdu import MCSSendDataIndicationPDU, MCSSendDataRequestPDU
 
 
-class MCSChannel(LayerChainItem):
+class MCSChannel(LayerChainItem, metaclass=ABCMeta):
     """
     Base class for MCS channels
     A new MCS channel is actually created for every (userID, channelID) pair

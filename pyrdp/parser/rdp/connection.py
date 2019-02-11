@@ -12,7 +12,7 @@ from Crypto.Util.number import bytes_to_long, long_to_bytes
 
 from pyrdp.core import decodeUTF16LE, encodeUTF16LE, StrictStream, Uint16LE, Uint32LE, Uint8
 from pyrdp.enum import ColorDepth, ConnectionDataType, ConnectionType, DesktopOrientation, EncryptionLevel, \
-    EncryptionMethod, HighColorDepth, KeyboardType, RDPVersion, ServerCertificateType
+    EncryptionMethod, HighColorDepth, RDPVersion, ServerCertificateType
 from pyrdp.exceptions import ParsingError, UnknownPDUTypeError
 from pyrdp.parser.parser import Parser
 from pyrdp.pdu import ClientChannelDefinition, ClientClusterData, ClientCoreData, ClientDataPDU, ClientNetworkData, \

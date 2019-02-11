@@ -39,7 +39,7 @@ class ReplayThread(QThread):
 
     # We use the object type instead of int for this signal to prevent Python integers from being converted to 32-bit integers
     eventReached = pyqtSignal(object, name="Event reached")
-    clearNeeded = pyqtSignal()
+    clearNeeded = pyqtSignal(name="Clear needed")
 
     def __init__(self, file: BinaryIO):
         super().__init__(None)

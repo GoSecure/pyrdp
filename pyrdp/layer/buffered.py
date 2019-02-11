@@ -5,6 +5,7 @@
 #
 from pyrdp.layer.layer import IntermediateLayer
 from pyrdp.parser import SegmentationParser
+from pyrdp.pdu import PDU
 
 
 class BufferedLayer(IntermediateLayer):
@@ -52,3 +53,6 @@ class BufferedLayer(IntermediateLayer):
 
                 pdu = self.mainParser.parse(pduData)
                 self.pduReceived(pdu)
+
+    def shouldForward(self, pdu: PDU) -> bool:
+        return True

@@ -9,7 +9,7 @@ from queue import Queue
 from PyQt4.QtCore import pyqtSignal
 from PyQt4.QtGui import qApp
 
-from pyrdp.layer import AsyncIOTCPLayer, PlayerMessageLayer, TPKTLayer, Layer, IntermediateLayer
+from pyrdp.layer import AsyncIOTCPLayer, PlayerMessageLayer, TPKTLayer
 from pyrdp.layer.layer import LayerChainItem
 from pyrdp.player.BasePlayerWindow import BasePlayerWindow
 from pyrdp.player.event import PlayerMessageHandler

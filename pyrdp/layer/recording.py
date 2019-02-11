@@ -4,9 +4,7 @@
 # Licensed under the GPLv3 or later.
 #
 
-from io import BytesIO
-
-from pyrdp.core import ObservedBy, Uint64LE, Uint8
+from pyrdp.core import ObservedBy
 from pyrdp.enum import PlayerMessageType
 from pyrdp.layer.layer import Layer, LayerRoutedObserver
 from pyrdp.parser.recording import PlayerMessageParser

@@ -5,7 +5,7 @@
 #
 
 from pyrdp.core import ObservedBy
-from pyrdp.enum import CapabilityType, SlowPathPDUType, VirtualChannelCompressionFlag
+from pyrdp.enum import SlowPathPDUType
 from pyrdp.exceptions import UnknownPDUTypeError
 from pyrdp.layer.layer import Layer, LayerStrictRoutedObserver
 from pyrdp.layer.rdp.data import RDPDataObserver
