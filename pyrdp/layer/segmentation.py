@@ -3,13 +3,13 @@
 # Copyright (C) 2018 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+
 from typing import Dict
 
 from pyrdp.core import ObservedBy, Uint8
 from pyrdp.enum import SegmentationPDUType
 from pyrdp.layer.buffered import BufferedLayer
-from pyrdp.layer.layer import IntermediateLayer, LayerObserver
-from pyrdp.pdu import PDU
+from pyrdp.layer.layer import BaseLayer, LayerObserver
 
 
 class SegmentationObserver(LayerObserver):
@@ -18,15 +18,14 @@ class SegmentationObserver(LayerObserver):
 
 
 @ObservedBy(SegmentationObserver)
-class SegmentationLayer(IntermediateLayer):
+class SegmentationLayer(BaseLayer):
     """
     Layer to handle segmentation PDUs (e.g: TPKT and fast-path).
     Sends data to the proper BufferedLayer by checking the PDU's header.
     """
 
     def __init__(self):
-        # RED FLAG: shouldn't be passing None to this.
-        super().__init__(None)
+        super().__init__()
         self.layers: Dict[int, BufferedLayer] = {}
 
     def attachLayer(self, pduType: int, layer: BufferedLayer):
@@ -79,6 +78,3 @@ class SegmentationLayer(IntermediateLayer):
                 data = data[length :]
                 layer.recv(forwarded)
                 length = layer.getDataLengthRequired()
-
-    def shouldForward(self, pdu: PDU) -> bool:
-        return True

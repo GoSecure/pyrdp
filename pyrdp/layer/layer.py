@@ -84,22 +84,21 @@ class ByteSender(metaclass = ABCMeta):
 
 
 @ObservedBy(LayerObserver)
-class Layer(Subject):
+class BaseLayer(Subject):
     """
     A layer transforms bytes into PDUs by using a given parser.
     Parsed PDUs are processed by the event engine.
     Observers can be attached to be notified of incoming PDUs.
     ObservedBy: LayerObserver
     """
-    def __init__(self, mainParser: Parser):
+    def __init__(self):
         super().__init__()
-        self.mainParser = mainParser
         self.eventEngine = EventEngine()
         self.previous: ByteSender = None
 
     def setPrevious(self, previous: ByteSender):
         self.previous = previous
-    
+
     def pduReceived(self, pdu: PDU):
         """
         Call when a PDU is received to have it processed (notify the observer and pass it through the event engine).
@@ -109,6 +108,31 @@ class Layer(Subject):
 
         if self.observer is not None:
             self.observer.onPDUReceived(pdu)
+
+    def recv(self, data: bytes):
+        """
+        Parse received bytes to a PDU and process it.
+        :param data: bytes received.
+        """
+        raise NotImplementedError("recv must be overridden")
+
+    async def waitPDU(self, *args, **kwargs) -> PDU:
+        """
+        Wait for a PDU matching certain criteria (see EventEngine.wait).
+        """
+        return await self.eventEngine.wait(*args, **kwargs)
+
+
+class Layer(BaseLayer):
+    """
+    A layer transforms bytes into PDUs by using a given parser.
+    Parsed PDUs are processed by the event engine.
+    Observers can be attached to be notified of incoming PDUs.
+    ObservedBy: LayerObserver
+    """
+    def __init__(self, mainParser: Parser):
+        super().__init__()
+        self.mainParser = mainParser
 
     def recv(self, data: bytes):
         """
@@ -126,20 +150,14 @@ class Layer(Subject):
         data = self.mainParser.write(pdu)
         self.previous.sendBytes(data)
 
-    async def waitPDU(self, *args, **kwargs) -> PDU:
-        """
-        Wait for a PDU matching certain criteria (see EventEngine.wait).
-        """
-        return await self.eventEngine.wait(*args, **kwargs)
 
-
-class LayerChainItem(ByteSender):
+class LayerChainItem(ByteSender, metaclass=ABCMeta):
     def __init__(self):
         super().__init__()
-        self.next: Layer = None
+        self.next: BaseLayer = None
 
     @staticmethod
-    def chain(first: 'LayerChainItem', second: Union['Layer', 'LayerChainItem'], *layers: [Union['Layer', 'LayerChainItem']]):
+    def chain(first: 'LayerChainItem', second: Union['BaseLayer', 'LayerChainItem'], *layers: [Union['BaseLayer', 'LayerChainItem']]):
         """
         Chain a series of layers together by calling setNext iteratively.
         :param first: first layer in the chain.
@@ -153,7 +171,7 @@ class LayerChainItem(ByteSender):
             current.setNext(nextLayer)
             current = nextLayer
 
-    def setNext(self, layer: 'Layer'):
+    def setNext(self, layer: 'BaseLayer'):
         """
         Set the next layer in the protocol hierarchy (ex: IP's next layer would be TCP/UDP).
         :param layer: The next layer.
