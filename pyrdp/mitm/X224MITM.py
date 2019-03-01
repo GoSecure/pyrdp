@@ -5,7 +5,7 @@
 #
 
 import typing
-from logging import Logger
+from logging import LoggerAdapter
 
 from pyrdp.core import defer
 from pyrdp.enum import NegotiationProtocols, NegotiationType
@@ -17,7 +17,7 @@ from pyrdp.pdu import NegotiationRequestPDU, NegotiationResponsePDU, X224Connect
 
 
 class X224MITM:
-    def __init__(self, client: X224Layer, server: X224Layer, log: Logger, state: RDPMITMState, connector: typing.Coroutine, startTLSCallback: typing.Callable[[], None]):
+    def __init__(self, client: X224Layer, server: X224Layer, log: LoggerAdapter, state: RDPMITMState, connector: typing.Coroutine, startTLSCallback: typing.Callable[[], None]):
         """
 
         :param client: X224 layer for the client side

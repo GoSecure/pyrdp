@@ -3,10 +3,10 @@
 # Copyright (C) 2018 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+import logging
 
 from PyQt4.QtGui import QKeySequence, QShortcut, QTabWidget
 
-from pyrdp.core import getLoggerPassFilters
 from pyrdp.logging import LOGGER_NAMES
 
 
@@ -22,7 +22,7 @@ class BasePlayerWindow(QTabWidget):
         self.maxTabCount = maxTabCount
         self.setTabsClosable(True)
         self.tabCloseRequested.connect(self.onTabClosed)
-        self.log = getLoggerPassFilters(LOGGER_NAMES.LIVEPLAYER)
+        self.log = logging.getLogger(LOGGER_NAMES.PLAYER)
 
     def closeCurrentTab(self):
         if self.count() > 0:

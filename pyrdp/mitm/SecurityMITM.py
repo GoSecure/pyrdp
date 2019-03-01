@@ -4,7 +4,7 @@
 # Licensed under the GPLv3 or later.
 #
 
-from logging import Logger
+from logging import LoggerAdapter
 
 from pyrdp.core import decodeUTF16LE
 from pyrdp.enum import ClientInfoFlags, PlayerMessageType
@@ -21,7 +21,7 @@ class SecurityMITM:
     MITM component for the security layer.
     """
 
-    def __init__(self, client: SecurityLayer, server: SecurityLayer, log: Logger, config: MITMConfig, state: RDPMITMState, recorder: Recorder):
+    def __init__(self, client: SecurityLayer, server: SecurityLayer, log: LoggerAdapter, config: MITMConfig, state: RDPMITMState, recorder: Recorder):
         """
         :param client: security layer for the client side
         :param server: security layer for the server side

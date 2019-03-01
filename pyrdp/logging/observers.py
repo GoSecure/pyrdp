@@ -5,7 +5,7 @@
 #
 
 from binascii import hexlify
-from logging import Logger
+from logging import LoggerAdapter
 
 from pyrdp.enum import MCSPDUType, X224PDUType
 from pyrdp.layer import FastPathObserver, LayerObserver, MCSObserver, SecurityObserver, SlowPathObserver, X224Observer
@@ -18,7 +18,7 @@ class LoggingObserver:
     """
     Base class for logging observers. Logs the string representation of PDUs.
     """
-    def __init__(self, log: Logger, *args, **kwargs):
+    def __init__(self, log: LoggerAdapter, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.log = log
 
@@ -30,7 +30,7 @@ class X224Logger(LoggingObserver, X224Observer):
     """
     Logging observer for X224 layers.
     """
-    def __init__(self, log: Logger):
+    def __init__(self, log: LoggerAdapter):
         super().__init__(log)
         self.log = log
 
@@ -47,7 +47,7 @@ class MCSLogger(LoggingObserver, MCSObserver):
     """
     Logging observer for MCS layers.
     """
-    def __init__(self, log: Logger):
+    def __init__(self, log: LoggerAdapter):
         super().__init__(log)
         self.log = log
 
@@ -82,7 +82,7 @@ class SecurityLogger(LoggingObserver, SecurityObserver):
     """
     Logging observer for security layers.
     """
-    def __init__(self, log: Logger):
+    def __init__(self, log: LoggerAdapter):
         super().__init__(log)
         self.log = log
 
@@ -101,7 +101,7 @@ class SlowPathLogger(LoggingObserver, SlowPathObserver):
     """
     Logging observer for slow-path layers.
     """
-    def __init__(self, log: Logger):
+    def __init__(self, log: LoggerAdapter):
         super().__init__(log)
 
     def onPDUReceived(self, pdu: SlowPathPDU):
@@ -126,7 +126,7 @@ class FastPathLogger(LoggingObserver, FastPathObserver):
     """
     Logging observer for fast-path layers.
     """
-    def __init__(self, log: Logger):
+    def __init__(self, log: LoggerAdapter):
         super().__init__(log)
 
     def onPDUReceived(self, pdu: FastPathPDU):
@@ -137,7 +137,7 @@ class LayerLogger(LoggingObserver, LayerObserver):
     """
     Generic logging observer for all layer types.
     """
-    def __init__(self, log: Logger):
+    def __init__(self, log: LoggerAdapter):
         super().__init__(log)
 
     def onPDUReceived(self, pdu):

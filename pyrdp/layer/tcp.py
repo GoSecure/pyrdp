@@ -5,13 +5,14 @@
 #
 
 import asyncio
+import logging
 from binascii import hexlify
 
 from twisted.internet.protocol import connectionDone, Protocol
 
-from pyrdp.core import getLoggerPassFilters, ObservedBy
+from pyrdp.core import ObservedBy
 from pyrdp.layer.layer import IntermediateLayer, LayerObserver
-from pyrdp.logging import log, LOGGER_NAMES
+from pyrdp.logging import LOGGER_NAMES, getSSLLogger
 from pyrdp.parser.tcp import TCPParser
 from pyrdp.pdu import PDU
 
@@ -49,8 +50,7 @@ class TwistedTCPLayer(IntermediateLayer, Protocol):
         """
         Log the SSL parameters of the connection in a format suitable for decryption by Wireshark.
         """
-        log.get_ssl_logger().info(self.transport.protocol._tlsConnection.client_random(),
-                                  self.transport.protocol._tlsConnection.master_key())
+        getSSLLogger().info(self.transport.protocol._tlsConnection.client_random(), self.transport.protocol._tlsConnection.master_key())
 
     def connectionMade(self):
         """
@@ -86,8 +86,9 @@ class TwistedTCPLayer(IntermediateLayer, Protocol):
         except KeyboardInterrupt:
             raise
         except Exception as e:
-            getLoggerPassFilters(LOGGER_NAMES.PYRDP_EXCEPTIONS).exception(e)
-            getLoggerPassFilters(LOGGER_NAMES.PYRDP).error("Exception occurred when receiving: %(data)s" , {"data": hexlify(data).decode()})
+            log = logging.getLogger(LOGGER_NAMES.PYRDP)
+            log.exception(e)
+            log.error("Exception occurred when receiving: %(data)s" , {"data": hexlify(data).decode()})
             raise
 
     def sendBytes(self, data: bytes):
@@ -154,7 +155,7 @@ class AsyncIOTCPLayer(IntermediateLayer, asyncio.Protocol):
         except KeyboardInterrupt:
             raise
         except Exception as e:
-            getLoggerPassFilters(LOGGER_NAMES.PYRDP_EXCEPTIONS).exception(e)
+            logging.getLogger(LOGGER_NAMES.PYRDP).exception(e)
             raise
 
     def sendBytes(self, data: bytes):

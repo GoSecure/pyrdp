@@ -7,7 +7,7 @@
 import datetime
 import hashlib
 import json
-from logging import Logger
+from logging import LoggerAdapter
 from pathlib import Path
 from typing import BinaryIO, Dict
 
@@ -100,7 +100,7 @@ class FileProxy:
     Proxy object that waits until a file is accessed before creating it.
     """
 
-    def __init__(self, path: Path, mode: str, mapping: FileMapping, log: Logger):
+    def __init__(self, path: Path, mode: str, mapping: FileMapping, log: LoggerAdapter):
         """
         :param path: path of the file
         :param mode: file opening mode
@@ -145,7 +145,7 @@ class DeviceRedirectionMITM:
     MITM component for the device redirection channel.
     """
 
-    def __init__(self, client: DeviceRedirectionLayer, server: DeviceRedirectionLayer, log: Logger, config: MITMConfig):
+    def __init__(self, client: DeviceRedirectionLayer, server: DeviceRedirectionLayer, log: LoggerAdapter, config: MITMConfig):
         """
         :param client: device redirection layer for the client side
         :param server: device redirection layer for the server side

@@ -6,17 +6,17 @@
 
 import asyncio
 import datetime
-from logging import Logger
 
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol
 
-from pyrdp.core import AwaitableClientFactory, getLoggerPassFilters
+from pyrdp.core import AwaitableClientFactory
 from pyrdp.core.ssl import ClientTLSContext, ServerTLSContext
 from pyrdp.enum import MCSChannelName, ParserMode, PlayerMessageType, SegmentationPDUType
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, LayerChainItem, RawLayer, TwistedTCPLayer, \
     VirtualChannelLayer
 from pyrdp.logging import RC4LoggingObserver
+from pyrdp.logging.adapters import SessionLogger
 from pyrdp.logging.observers import FastPathLogger, LayerLogger, MCSLogger, SecurityLogger, SlowPathLogger, X224Logger
 from pyrdp.mcs import MCSClientChannel, MCSServerChannel
 from pyrdp.mitm.ClipboardMITM import ActiveClipboardStealer
@@ -39,7 +39,7 @@ class RDPMITM:
     Main MITM class. The job of this class is to orchestrate the components for all the protocols.
     """
 
-    def __init__(self, log: Logger, config: MITMConfig):
+    def __init__(self, log: SessionLogger, config: MITMConfig):
         """
         :param log: base logger to use for the connection
         :param config: the MITM configuration
@@ -48,13 +48,13 @@ class RDPMITM:
         self.log = log
         """Base logger for the connection"""
 
-        self.clientLog = getLoggerPassFilters(f"{self.log.name}.client")
+        self.clientLog = log.createChild("client")
         """Base logger for the client side"""
 
-        self.serverLog = getLoggerPassFilters(f"{self.log.name}.server")
+        self.serverLog = log.createChild("server")
         """Base logger for the server side"""
 
-        self.rc4Log = getLoggerPassFilters(f"{self.log.name}.rc4")
+        self.rc4Log = log.createChild("rc4")
         """Logger for RC4 secrets"""
 
         self.config = config
@@ -123,26 +123,26 @@ class RDPMITM:
         """
         return self.client.tcp
 
-    def getLog(self, name: str) -> Logger:
+    def getLog(self, name: str) -> SessionLogger:
         """
         Get a sub-logger from the base logger
         :param name: name of the sub-logger
         """
-        return getLoggerPassFilters(f"{self.log.name}.{name}")
+        return self.log.createChild(name)
 
-    def getClientLog(self, name: str) -> Logger:
+    def getClientLog(self, name: str) -> SessionLogger:
         """
         Get a sub-logger from the client logger
         :param name: name of the sub-logger
         """
-        return getLoggerPassFilters(f"{self.clientLog.name}.{name}")
+        return self.clientLog.createChild(name)
 
-    def getServerLog(self, name: str) -> Logger:
+    def getServerLog(self, name: str) -> SessionLogger:
         """
         Get a sub-logger from the server logger
         :param name: name of the sub-logger
         """
-        return getLoggerPassFilters(f"{self.serverLog.name}.{name}")
+        return self.serverLog.createChild(name)
 
 
 

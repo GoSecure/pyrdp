@@ -6,8 +6,13 @@
 # Licensed under the GPLv3 or later.
 #
 
-import argparse
 import asyncio
+
+from twisted.internet import asyncioreactor
+
+asyncioreactor.install(asyncio.get_event_loop())
+
+import argparse
 import logging
 import logging.handlers
 import os
@@ -15,22 +20,20 @@ import random
 import sys
 from pathlib import Path
 
-from twisted.internet import asyncioreactor
-
-asyncioreactor.install(asyncio.get_event_loop())
-
-from pyrdp.mitm import MITMConfig, RDPMITM
-
 import appdirs
 import names
 from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
 
-from pyrdp.core import getLoggerPassFilters
-from pyrdp.logging import JSONFormatter, log, LOGGER_NAMES, SensorFilter
+from pyrdp.logging import JSONFormatter, log, LOGGER_NAMES, SessionLogger, VariableFormatter
+from pyrdp.mitm import MITMConfig, RDPMITM
 
 
 class MITMServerFactory(ServerFactory):
+    """
+    Server factory for the RDP man-in-the-middle that generates a unique session ID for every connection.
+    """
+
     def __init__(self, config: MITMConfig):
         """
         :param config: the MITM configuration
@@ -38,11 +41,41 @@ class MITMServerFactory(ServerFactory):
         self.config = config
 
     def buildProtocol(self, addr):
-        sessionId = f"{names.get_first_name()}{random.randrange(100000,999999)}"
-        logger = getLoggerPassFilters(f"{LOGGER_NAMES.MITM_CONNECTIONS}.{sessionId}")
+        sessionID = f"{names.get_first_name()}{random.randrange(100000,999999)}"
+        logger = logging.getLogger(LOGGER_NAMES.MITM_CONNECTIONS)
+        logger = SessionLogger(logger, sessionID)
         mitm = RDPMITM(logger, self.config)
 
         return mitm.getProtocol()
+
+
+def prepareLoggers(logLevel: int, sensorID: str, outDir: Path):
+    logDir = outDir / "logs"
+    logDir.mkdir(exist_ok = True)
+
+    formatter = VariableFormatter("[{asctime}] - {levelname} - {sessionID} - {name} - {message}", style = "{", defaultVariables = {
+        "sessionID": "GLOBAL"
+    })
+
+    streamHandler = logging.StreamHandler()
+    streamHandler.setFormatter(formatter)
+
+    logFileHandler = logging.handlers.TimedRotatingFileHandler(logDir / "mitm.log", when = "D")
+    logFileHandler.setFormatter(formatter)
+
+    jsonFileHandler = logging.FileHandler(logDir / "mitm.json")
+    jsonFileHandler.setFormatter(JSONFormatter({"sensor": sensorID}))
+    jsonFileHandler.setLevel(logging.INFO)
+
+    rootLogger = logging.getLogger(LOGGER_NAMES.PYRDP)
+    rootLogger.addHandler(streamHandler)
+    rootLogger.addHandler(logFileHandler)
+    rootLogger.setLevel(logLevel)
+
+    connectionsLogger = logging.getLogger(LOGGER_NAMES.MITM_CONNECTIONS)
+    connectionsLogger.addHandler(jsonFileHandler)
+
+    log.prepareSSLLogger(logDir / "ssl.log")
 
 
 def getSSLPaths():
@@ -57,59 +90,44 @@ def getSSLPaths():
 
 
 def generateCertificate(keyPath, certificatePath):
+    """
+    Generate an RSA private key and certificate with default values.
+    :param keyPath: path where the private key should be saved.
+    :param certificatePath: path where the certificate should be saved.
+    :return: True if generation was successful
+    """
+
     result = os.system("openssl req -newkey rsa:2048 -nodes -keyout %s -x509 -days 365 -out %s -subj '/CN=www.example.com/O=PYRDP/C=US' 2>/dev/null" % (keyPath, certificatePath))
     return result == 0
 
 
-def prepare_loggers(logLevel, sensorID):
+def handleKeyAndCertificate(certificate, key):
     """
-    Sets up the "mitm" and the "mitm.connections" loggers.
+    Handle the certificate and key arguments that were given on the command line.
+    :param certificate: path to the TLS certificate.
+    :param key: path to the TLS private key.
     """
-    log.prepare_pyrdp_logger(logLevel)
-    log.prepare_ssl_session_logger()
 
-    if not os.path.exists("log"):
-        os.makedirs("log")
+    logger = logging.getLogger(LOGGER_NAMES.PYRDP)
 
-    mitm_logger = getLoggerPassFilters(LOGGER_NAMES.MITM)
-    mitm_logger.setLevel(logLevel)
+    if os.path.exists(key) and os.path.exists(certificate):
+        logger.info("Using existing private key: %(privateKey)s", {"privateKey": key})
+        logger.info("Using existing certificate: %(certificate)s", {"certificate": certificate})
+    else:
+        logger.info("Generating a private key and certificate for SSL connections")
 
-    mitm_connections_logger = getLoggerPassFilters(LOGGER_NAMES.MITM_CONNECTIONS)
-    mitm_connections_logger.setLevel(logLevel)
-
-    formatter = log.get_formatter()
-
-    stream_handler = logging.StreamHandler()
-    file_handler = logging.handlers.TimedRotatingFileHandler("log/mitm.log", when="D")
-    stream_handler.setFormatter(formatter)
-    file_handler.setFormatter(formatter)
-    mitm_logger.addHandler(stream_handler)
-    mitm_logger.addHandler(file_handler)
-
-    # Make sure that the library writes to the file as well
-    pyrdp_logger = log.get_logger()
-    pyrdp_logger.addHandler(file_handler)
-
-    exceptions_logger = getLoggerPassFilters(LOGGER_NAMES.PYRDP_EXCEPTIONS)
-    exceptions_logger.propagate = False
-    exceptions_logger.addHandler(file_handler)
-
-    jsonFormatter = JSONFormatter()
-    jsonFileHandler = logging.FileHandler("log/mitm.json")
-    sensorFilter = SensorFilter(sensorID)
-
-    jsonFileHandler.setFormatter(jsonFormatter)
-    jsonFileHandler.setLevel(logging.INFO)
-    jsonFileHandler.addFilter(sensorFilter)
-
-    getLoggerPassFilters(LOGGER_NAMES.MITM_CONNECTIONS).addHandler(jsonFileHandler)
+        if generateCertificate(key, certificate):
+            logger.info("Private key path: %(privateKeyPath)s", {"privateKeyPath": key})
+            logger.info("Certificate path: %(certificatePath)s", {"certificatePath": certificate})
+        else:
+            logger.error("Generation failed. Please provide the private key and certificate with -k and -c")
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("target", help="IP:port of the target RDP machine (ex: 192.168.1.10:3390)")
     parser.add_argument("-l", "--listen", help="Port number to listen on (default: 3389)", default=3389)
-    parser.add_argument("-o", "--output", help="Output folder for replay files", default="pyrdp_output")
+    parser.add_argument("-o", "--output", help="Output folder", default="pyrdp_output")
     parser.add_argument("-i", "--destination-ip", help="Destination IP address of the PyRDP player.If not specified, RDP events are not sent over the network.")
     parser.add_argument("-d", "--destination-port", help="Listening port of the PyRDP player (default: 3000).", default=3000)
     parser.add_argument("-k", "--private-key", help="Path to private key (for SSL)")
@@ -121,25 +139,29 @@ def main():
     parser.add_argument("-s", "--sensor-id", help="Sensor ID (to differentiate multiple instances of the MITM where logs are aggregated at one place)", default="PyRDP")
 
     args = parser.parse_args()
+    outDir = Path(args.output)
+    outDir.mkdir(exist_ok = True)
 
     logLevel = getattr(logging, args.log_level)
 
-    prepare_loggers(logLevel, args.sensor_id)
-    mitm_log = getLoggerPassFilters(LOGGER_NAMES.MITM)
+    prepareLoggers(logLevel, args.sensor_id, outDir)
+    pyrdpLogger = logging.getLogger(LOGGER_NAMES.MITM)
 
     target = args.target
+
     if ":" in target:
         targetHost = target[: target.index(":")]
         targetPort = int(target[target.index(":") + 1:])
     else:
         targetHost = target
         targetPort = 3389
+
     if (args.private_key is None) != (args.certificate is None):
-        mitm_log.error("You must provide both the private key and the certificate")
+        pyrdpLogger.error("You must provide both the private key and the certificate")
         sys.exit(1)
     elif args.private_key is None:
         key, certificate = getSSLPaths()
-        handleKeyAndCertificate(certificate, key, mitm_log)
+        handleKeyAndCertificate(certificate, key)
     else:
         key, certificate = args.private_key, args.certificate
 
@@ -154,25 +176,11 @@ def main():
     config.attackerPort = int(args.destination_port)
     config.replacementUsername = args.username
     config.replacementPassword = args.password
-    config.outDir = Path(args.output)
+    config.outDir = outDir
 
     reactor.listenTCP(listenPort, MITMServerFactory(config))
-    mitm_log.info("MITM Server listening on port %(port)d", {"port": listenPort})
+    pyrdpLogger.info("MITM Server listening on port %(port)d", {"port": listenPort})
     reactor.run()
-
-
-def handleKeyAndCertificate(certificate, key, mitm_log):
-    if os.path.exists(key) and os.path.exists(certificate):
-        mitm_log.info("Using existing private key: %(privateKey)s", {"privateKey": key})
-        mitm_log.info("Using existing certificate: %(certificate)s", {"certificate": certificate})
-    else:
-        mitm_log.info("Generating a private key and certificate for SSL connections")
-
-        if generateCertificate(key, certificate):
-            mitm_log.info("Private key path: %(privateKeyPath)s", {"privateKeyPath": key})
-            mitm_log.info("Certificate path: %(certificatePath)s", {"certificatePath": certificate})
-        else:
-            mitm_log.error("Generation failed. Please provide the private key and certificate with -k and -c")
 
 
 if __name__ == "__main__":

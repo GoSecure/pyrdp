@@ -3,11 +3,11 @@
 # Copyright (C) 2018 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+import logging
 
 from PyQt4.QtCore import pyqtSignal, Qt
 from PyQt4.QtGui import QHBoxLayout, QLabel, QSizePolicy, QSlider, QSpacerItem, QVBoxLayout, QWidget
 
-from pyrdp.core import getLoggerPassFilters
 from pyrdp.layer import PlayerMessageLayer, TPKTLayer
 from pyrdp.logging import LOGGER_NAMES
 from pyrdp.player.BasePlayerWindow import BasePlayerWindow
@@ -117,7 +117,7 @@ class ControlBar(QWidget):
     def __init__(self, duration: float, parent: QWidget = None):
         QWidget.__init__(self, parent)
 
-        self.log = getLoggerPassFilters(LOGGER_NAMES.LIVEPLAYER)
+        self.log = logging.getLogger(LOGGER_NAMES.PLAYER)
 
         self.button = PlayPauseButton()
         self.button.setMaximumWidth(100)

@@ -10,8 +10,6 @@ import asyncio
 
 from twisted.internet import asyncioreactor
 
-from pyrdp.layer.layer import LayerChainItem
-
 asyncioreactor.install(asyncio.get_event_loop())
 
 import argparse
@@ -26,13 +24,17 @@ from twisted.internet.protocol import ClientFactory
 
 from pyrdp.core.ssl import ClientTLSContext
 from pyrdp.enum import NegotiationProtocols
-from pyrdp.layer import TPKTLayer, TwistedTCPLayer, X224Layer
-from pyrdp.logging import log
+from pyrdp.layer import TPKTLayer, TwistedTCPLayer, X224Layer, LayerChainItem
+from pyrdp.logging import LOGGER_NAMES
 from pyrdp.parser.rdp.negotiation import NegotiationRequestParser
 from pyrdp.pdu.rdp.negotiation import NegotiationRequestPDU
 
 
 class TCPCertFetchingLayer(TwistedTCPLayer):
+    """
+    TCP layer that saves the TLS certificate after startTLS is complete, then shuts down Twisted.
+    """
+
     def __init__(self):
         super().__init__()
         self.cert: OpenSSL.crypto.X509 = None
@@ -53,9 +55,15 @@ class TCPCertFetchingLayer(TwistedTCPLayer):
 
 
 class CertFetcher(ClientFactory):
-    def __init__(self, reactor: Reactor, log: logging.Logger):
-        self.reactor = reactor
-        self.log = log
+    """
+    Client factory that orchestrates the certificate fetching.
+    """
+
+    def __init__(self, _reactor: Reactor, host: str, port: int):
+        self.reactor = _reactor
+        self.host = host
+        self.port = port
+        self.log = logging.getLogger(f"{LOGGER_NAMES.PYRDP}.clonecert")
         self.tcp = TCPCertFetchingLayer()
         self.tpkt = TPKTLayer()
         self.x224 = X224Layer()
@@ -68,7 +76,7 @@ class CertFetcher(ClientFactory):
         return self.tcp
 
     def fetch(self):
-        endpoint = HostnameEndpoint(reactor, arguments.host, arguments.port)
+        endpoint = HostnameEndpoint(reactor, self.host, self.port)
         endpoint.connect(self)
         self.reactor.run()
 
@@ -87,7 +95,18 @@ class CertFetcher(ClientFactory):
         self.tcp.startTLS(ClientTLSContext())
 
 
-if __name__ == "__main__":
+def prepareLoggers(logLevel: int):
+    formatter = logging.Formatter("[{asctime}] - {levelname} - {name} - {message}", style = "{")
+
+    streamHandler = logging.StreamHandler()
+    streamHandler.setFormatter(formatter)
+
+    pyrdpLogger = logging.getLogger(LOGGER_NAMES.PYRDP)
+    pyrdpLogger.addHandler(streamHandler)
+    pyrdpLogger.setLevel(logLevel)
+
+
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("host", help="RDP host to clone")
     parser.add_argument("out_file", help="Output certificate file name")
@@ -117,16 +136,10 @@ if __name__ == "__main__":
         key = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM, keyBytes)
 
     logLevel = getattr(logging, arguments.log_level)
-    log.prepare_pyrdp_logger(logLevel)
-    log.prepare_ssl_session_logger()
+    prepareLoggers(logLevel)
+    clonerLog = logging.getLogger(f"{LOGGER_NAMES.PYRDP}.clonecert")
 
-    handler = logging.StreamHandler()
-    handler.setFormatter(log.get_formatter())
-    clonerLog = logging.getLogger("cloner")
-    clonerLog.addHandler(handler)
-    clonerLog.setLevel(arguments.log_level)
-
-    cloner = CertFetcher(reactor, clonerLog)
+    cloner = CertFetcher(reactor, arguments.host, arguments.port)
     cert = cloner.fetch()
 
     if not key:
@@ -141,9 +154,6 @@ if __name__ == "__main__":
 
     cert.set_pubkey(key)
     cert.sign(key, cert.get_signature_algorithm().decode())
-
-    certBytes = OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)
-    certString = certBytes.decode()
 
     clonerLog.info("Saving certificate to %(certPath)r", {"certPath": arguments.out_file})
 
@@ -163,3 +173,7 @@ if __name__ == "__main__":
         except IOError as e:
             print(f"Output key: {e}", file=sys.stderr)
             sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

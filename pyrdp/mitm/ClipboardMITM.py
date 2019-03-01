@@ -4,7 +4,7 @@
 # Licensed under the GPLv3 or later.
 #
 
-from logging import Logger
+from logging import LoggerAdapter
 
 from pyrdp.core import decodeUTF16LE
 from pyrdp.enum import ClipboardFormatNumber, ClipboardMessageFlags, ClipboardMessageType, PlayerMessageType
@@ -18,7 +18,7 @@ class PassiveClipboardStealer:
     MITM component for the clipboard layer. Logs clipboard data when it is pasted.
     """
 
-    def __init__(self, client: ClipboardLayer, server: ClipboardLayer, log: Logger, recorder: Recorder):
+    def __init__(self, client: ClipboardLayer, server: ClipboardLayer, log: LoggerAdapter, recorder: Recorder):
         """
         :param client: clipboard layer for the client side
         :param server: clipboard layer for the server side
@@ -79,7 +79,7 @@ class ActiveClipboardStealer(PassiveClipboardStealer):
     clipboard is updated.
     """
 
-    def __init__(self, client: ClipboardLayer, server: ClipboardLayer, log: Logger, recorder: Recorder):
+    def __init__(self, client: ClipboardLayer, server: ClipboardLayer, log: LoggerAdapter, recorder: Recorder):
         super().__init__(client, server, log, recorder)
 
     def handlePDU(self, pdu: ClipboardPDU, destination: ClipboardLayer):
