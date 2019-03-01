@@ -107,9 +107,6 @@ class SlowPathLogger(LoggingObserver, SlowPathObserver):
     def onPDUReceived(self, pdu: SlowPathPDU):
         self.logPDU(pdu)
 
-    def onUnparsedData(self, data: bytes):
-        self.log.debug("Received unparsed data: %(data)s", {"data": hexlify(data)})
-
     def logPDU(self, pdu):
         if hasattr(pdu.header, "subtype"):
             if hasattr(pdu, "errorInfo"):

@@ -6,15 +6,12 @@
 
 from pyrdp.core import ObservedBy
 from pyrdp.enum import SlowPathPDUType
-from pyrdp.exceptions import UnknownPDUTypeError
 from pyrdp.layer.layer import Layer, LayerStrictRoutedObserver
-from pyrdp.layer.rdp.data import RDPDataObserver
-from pyrdp.logging import log
 from pyrdp.parser import SlowPathParser
 from pyrdp.pdu import ConfirmActivePDU, DemandActivePDU, SlowPathPDU
 
 
-class SlowPathObserver(RDPDataObserver, LayerStrictRoutedObserver):
+class SlowPathObserver(LayerStrictRoutedObserver):
     """
     Observer for slow-path PDUs.
     """
@@ -30,10 +27,29 @@ class SlowPathObserver(RDPDataObserver, LayerStrictRoutedObserver):
 
         self.dataHandlers = {}
         self.defaultDataHandler = None
-        self.unparsedDataHandler = None
 
     def getPDUType(self, pdu: SlowPathPDU):
+        """
+        Get the PDU type for a given PDU.
+        :param pdu: the PDU.
+        """
         return pdu.header.subtype
+
+    def setDataHandler(self, type, handler):
+        """
+        Set a handler for a particular data PDU type.
+        :type type: RDPSlowPathPDUType
+        :type handler: callable object
+        """
+        self.dataHandlers[type] = handler
+
+    def setDefaultDataHandler(self, handler):
+        """
+        Set the default handler.
+        The default handler is called when a Data PDU is received that is not associated with a handler.
+        :type handler: callable object
+        """
+        self.defaultDataHandler = handler
 
     def onPDUReceived(self, pdu: SlowPathPDU):
         if pdu.header.pduType in self.handlers:
@@ -47,6 +63,18 @@ class SlowPathObserver(RDPDataObserver, LayerStrictRoutedObserver):
         :param pdu: the pdu.
         """
         self.dispatchPDU(pdu)
+
+    def dispatchPDU(self, pdu: SlowPathPDU):
+        """
+        Call the proper handler depending on the PDU's type.
+        :param pdu: the PDU that was received.
+        """
+        type = self.getPDUType(pdu)
+
+        if type in self.dataHandlers:
+            self.dataHandlers[type](pdu)
+        elif self.defaultDataHandler:
+            self.defaultDataHandler(pdu)
 
     def onDemandActive(self, pdu: DemandActivePDU):
         """
@@ -83,16 +111,6 @@ class SlowPathLayer(Layer):
 
     def __init__(self, parser = SlowPathParser()):
         Layer.__init__(self, parser)
-
-    def recv(self, data):
-        try:
-            pdu = self.mainParser.parse(data)
-        except UnknownPDUTypeError as e:
-            log.debug(str(e))
-            if self.observer:
-                self.observer.onUnparsedData(data)
-        else:
-            self.pduReceived(pdu)
 
     def sendBytes(self, data):
         self.previous.sendBytes(data)

@@ -24,13 +24,11 @@ class SlowPathMITM:
 
         self.clientObserver = self.client.createObserver(
             onPDUReceived = self.onClientPDUReceived,
-            onUnparsedData = self.onClientUnparsedData,
             onConfirmActive = self.onConfirmActive
         )
 
         self.serverObserver = self.server.createObserver(
             onPDUReceived=self.onServerPDUReceived,
-            onUnparsedData=self.onServerUnparsedData,
             onDemandActive=self.onDemandActive,
         )
 
@@ -38,15 +36,9 @@ class SlowPathMITM:
         SlowPathObserver.onPDUReceived(self.clientObserver, pdu)
         self.server.sendPDU(pdu)
 
-    def onClientUnparsedData(self, data):
-        self.server.sendBytes(data)
-
     def onServerPDUReceived(self, pdu: SlowPathPDU):
         SlowPathObserver.onPDUReceived(self.serverObserver, pdu)
         self.client.sendPDU(pdu)
-
-    def onServerUnparsedData(self, data):
-        self.client.sendBytes(data)
 
     def onConfirmActive(self, pdu: ConfirmActivePDU):
         """
