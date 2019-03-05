@@ -112,7 +112,7 @@ def handleKeyAndCertificate(key: str, certificate: str):
     :param certificate: path to the TLS certificate.
     """
 
-    logger = logging.getLogger(LOGGER_NAMES.PYRDP)
+    logger = logging.getLogger(LOGGER_NAMES.MITM)
 
     if os.path.exists(key) and os.path.exists(certificate):
         logger.info("Using existing private key: %(privateKey)s", {"privateKey": key})
@@ -125,6 +125,11 @@ def handleKeyAndCertificate(key: str, certificate: str):
             logger.info("Certificate path: %(certificatePath)s", {"certificatePath": certificate})
         else:
             logger.error("Generation failed. Please provide the private key and certificate with -k and -c")
+
+
+def logConfiguration(config: MITMConfig):
+    logging.getLogger(LOGGER_NAMES.MITM).info("Target: %(target)s:%(port)d", {"target": config.targetHost, "port": config.targetPort})
+    logging.getLogger(LOGGER_NAMES.MITM).info("Output directory: %(outputDirectory)s", {"outputDirectory": config.outDir.absolute()})
 
 
 def main():
@@ -182,10 +187,14 @@ def main():
     config.replacementPassword = args.password
     config.outDir = outDir
 
+    logConfiguration(config)
+
     reactor.listenTCP(listenPort, MITMServerFactory(config))
     pyrdpLogger.info("MITM Server listening on port %(port)d", {"port": listenPort})
     reactor.run()
 
+    pyrdpLogger.info("MITM terminated")
+    logConfiguration(config)
 
 if __name__ == "__main__":
     main()
