@@ -13,5 +13,5 @@ class DynamicChannelLayer(Layer):
     Layer to receive and send DynamicChannel channel (drdynvc) packets.
     """
 
-    def __init__(self, parser=DynamicChannelParser()):
-        super().__init__(parser, hasNext=False)
+    def __init__(self, parser = DynamicChannelParser()):
+        super().__init__(parser)

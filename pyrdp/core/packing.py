@@ -8,6 +8,8 @@ import struct
 
 
 class Integer:
+    FORMAT = ""
+
     @classmethod
     def unpack(cls, data):
         """

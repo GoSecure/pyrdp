@@ -9,7 +9,8 @@ from queue import Queue
 from PyQt4.QtCore import pyqtSignal
 from PyQt4.QtGui import qApp
 
-from pyrdp.layer import AsyncIOTCPLayer, PlayerMessageLayer, TPKTLayer, Layer
+from pyrdp.layer import AsyncIOTCPLayer, PlayerMessageLayer, TPKTLayer
+from pyrdp.layer.layer import LayerChainItem
 from pyrdp.player.BasePlayerWindow import BasePlayerWindow
 from pyrdp.player.event import PlayerMessageHandler
 from pyrdp.player.RDPConnectionTab import RDPConnectionTab
@@ -67,7 +68,7 @@ class LivePlayerTab(RDPConnectionTab):
         self.message = PlayerMessageLayer()
         self.eventHandler = PlayerMessageHandler(self.widget, self.text)
 
-        Layer.chain(self.tcp, self.tpkt, self.message)
+        LayerChainItem.chain(self.tcp, self.tpkt, self.message)
         self.message.addObserver(self.eventHandler)
 
     def getProtocol(self):

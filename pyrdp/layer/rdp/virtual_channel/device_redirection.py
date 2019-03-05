@@ -14,4 +14,4 @@ class DeviceRedirectionLayer(Layer):
     """
 
     def __init__(self, parser = DeviceRedirectionParser()):
-        super().__init__(parser, hasNext=False)
+        super().__init__(parser)

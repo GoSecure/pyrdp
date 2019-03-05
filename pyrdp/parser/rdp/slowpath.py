@@ -9,14 +9,13 @@ from typing import List
 
 from pyrdp.core import Uint16LE, Uint32LE, Uint8
 from pyrdp.enum import CapabilityType, ErrorInfo, SlowPathDataType, SlowPathPDUType
-from pyrdp.exceptions import UnknownPDUTypeError
 from pyrdp.parser.parser import Parser
 from pyrdp.parser.rdp.input import SlowPathInputParser
 from pyrdp.parser.rdp.pointer import PointerEventParser
 from pyrdp.pdu import BitmapCapability, Capability, ConfirmActivePDU, ControlPDU, DemandActivePDU, GeneralCapability, \
     GlyphCacheCapability, InputPDU, MultifragmentUpdateCapability, OffscreenBitmapCacheCapability, OrderCapability, PDU, \
     PlaySoundPDU, PointerCapability, PointerPDU, SetErrorInfoPDU, ShareControlHeader, ShareDataHeader, SlowPathPDU, \
-    SuppressOutputPDU, SynchronizePDU, UpdatePDU, VirtualChannelCapability
+    SlowPathUnparsedPDU, SuppressOutputPDU, SynchronizePDU, UpdatePDU, VirtualChannelCapability
 from pyrdp.pdu.rdp.capability import SurfaceCommandsCapability
 
 
@@ -60,7 +59,7 @@ class SlowPathParser(Parser):
         header = self.parseShareControlHeader(stream)
 
         if header.pduType not in self.parsers:
-            raise UnknownPDUTypeError("Trying to parse unknown slow-path PDU type: %s" % header.pduType, header.pduType)
+            return SlowPathUnparsedPDU(header, stream.read())
 
         return self.parsers[header.pduType](stream, header)
 
@@ -68,7 +67,7 @@ class SlowPathParser(Parser):
         header = self.parseShareDataHeader(stream, header)
 
         if header.subtype not in self.dataParsers:
-            raise UnknownPDUTypeError("Trying to parse unknown slow-path data type: %s" % header.subtype, header.subtype)
+            return SlowPathUnparsedPDU(header, stream.read())
 
         return self.dataParsers[header.subtype](stream, header)
 
@@ -89,7 +88,8 @@ class SlowPathParser(Parser):
             headerWriter = self.writeShareDataHeader
             self.writeData(substream, pdu)
         else:
-            raise UnknownPDUTypeError("Trying to write unknown slow-path PDU type: %s" % pdu.header.pduType, pdu.header.pduType)
+            headerWriter = self.writeShareControlHeader
+            substream.write(pdu.payload)
 
         substream = substream.getvalue()
         headerWriter(stream, pdu.header, len(substream))
@@ -98,9 +98,9 @@ class SlowPathParser(Parser):
 
     def writeData(self, stream: BytesIO, pdu):
         if pdu.header.subtype not in self.dataWriters:
-            raise UnknownPDUTypeError("Trying to write unknown slow-path data type: %s" % pdu.header.subtype, pdu.header.subtype)
-
-        self.dataWriters[pdu.header.subtype](stream, pdu)
+            stream.write(pdu.payload)
+        else:
+            self.dataWriters[pdu.header.subtype](stream, pdu)
 
     def parseShareControlHeader(self, stream: BytesIO):
         length = Uint16LE.unpack(stream)

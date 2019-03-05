@@ -35,9 +35,18 @@ class SlowPathPDU(PDU):
     Base class for slow-path PDUs
     """
 
-    def __init__(self, header: ShareControlHeader):
-        super().__init__()
+    def __init__(self, header: ShareControlHeader, payload: bytes = b""):
+        super().__init__(payload)
         self.header = header
+
+
+class SlowPathUnparsedPDU(SlowPathPDU):
+    """
+    Class for slow-path PDUs with unimplemented parsing
+    """
+
+    def __init__(self, header: ShareControlHeader, payload: bytes):
+        super().__init__(header, payload)
 
 
 class DemandActivePDU(SlowPathPDU):

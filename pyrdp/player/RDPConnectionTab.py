@@ -3,11 +3,11 @@
 # Copyright (C) 2018 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+import logging
 
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QScrollArea, QTextEdit, QVBoxLayout, QWidget
 
-from pyrdp.core import getLoggerPassFilters
 from pyrdp.logging import LOGGER_NAMES
 
 
@@ -28,7 +28,7 @@ class RDPConnectionTab(QWidget):
         self.text = QTextEdit()
         self.text.setReadOnly(True)
         self.text.setMinimumHeight(150)
-        self.log = getLoggerPassFilters(LOGGER_NAMES.LIVEPLAYER)
+        self.log = logging.getLogger(LOGGER_NAMES.PLAYER)
 
         scrollViewer = QScrollArea()
         scrollViewer.setWidget(self.widget)

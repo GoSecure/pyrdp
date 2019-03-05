@@ -131,7 +131,10 @@ class GCCParser(Parser):
         stream = BytesIO()
         stream.write(per.writeChoice(0))
         stream.write(per.writeObjectIdentifier(GCCParser.T124_02_98_OID))
-        stream.write(per.writeLength(len(pdu.payload) + 14))
+
+        # Normally this should be len(pdu.payload) + 14, but Windows seems to always send 0x2a. This value is also
+        # accepted by Wireshark.
+        stream.write(per.writeLength(0x2a))
         stream.write(per.writeChoice(pdu.header))
 
         self.writers[pdu.header](stream, pdu)

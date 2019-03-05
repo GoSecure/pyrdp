@@ -10,25 +10,22 @@ from pyrdp.pdu.pdu import PDU
 
 class X224PDU(PDU):
     """
-    X.224 (T.125) PDU base class. Every X.224 PDU has a length, a header (PDU type) and a payload.
+    X.224 (T.125) PDU base class.
     """
 
-    def __init__(self, length, header, payload):
+    def __init__(self, header: X224PDUType, payload: bytes):
         """
-        :type length: int
-        :param header: The PDU type
-        :type payload: bytes
+        :param header: The PDU type.
         """
 
-        PDU.__init__(self, payload)
-        self.length = length
+        super().__init__(payload)
         self.header = header
 
 
 class X224ConnectionRequestPDU(X224PDU):
 
-    def __init__(self, credit, destination, source, options, payload):
-        X224PDU.__init__(self, len(payload) + 6, X224PDUType.X224_TPDU_CONNECTION_REQUEST, payload)
+    def __init__(self, credit: int, destination: int, source: int, options: int, payload: bytes):
+        super().__init__(X224PDUType.X224_TPDU_CONNECTION_REQUEST, payload)
         self.credit = credit
         self.destination = destination
         self.source = source
@@ -37,8 +34,8 @@ class X224ConnectionRequestPDU(X224PDU):
 
 class X224ConnectionConfirmPDU(X224PDU):
 
-    def __init__(self, credit, destination, source, options, payload):
-        X224PDU.__init__(self, len(payload) + 6, X224PDUType.X224_TPDU_CONNECTION_CONFIRM, payload)
+    def __init__(self, credit: int, destination: int, source: int, options: int, payload: bytes):
+        super().__init__(X224PDUType.X224_TPDU_CONNECTION_CONFIRM, payload)
         self.credit = credit
         self.destination = destination
         self.source = source
@@ -47,8 +44,8 @@ class X224ConnectionConfirmPDU(X224PDU):
 
 class X224DisconnectRequestPDU(X224PDU):
 
-    def __init__(self, destination, source, reason, payload):
-        X224PDU.__init__(self, len(payload) + 6, X224PDUType.X224_TPDU_DISCONNECT_REQUEST, payload)
+    def __init__(self, destination: int, source: int, reason: int, payload: bytes):
+        super().__init__(X224PDUType.X224_TPDU_DISCONNECT_REQUEST, payload)
         self.destination = destination
         self.source = source
         self.reason = reason
@@ -56,20 +53,20 @@ class X224DisconnectRequestPDU(X224PDU):
 
 class X224DataPDU(X224PDU):
 
-    def __init__(self, roa, eot, payload):
+    def __init__(self, roa: bool, eot: bool, payload: bytes):
         """
-        @param roa: request of acknowledgement (this is False unless agreed upon during connection)
-        @param eot: end of transmission (True if this is the last packet in a sequence)
-        @param payload: the data payload
+        :param roa: request of acknowledgement (this is False unless agreed upon during connection).
+        :param eot: end of transmission (True if this is the last packet in a sequence).
+        :param payload: the data bytes.
         """
-        X224PDU.__init__(self, 2, X224PDUType.X224_TPDU_DATA, payload)
+        super().__init__(X224PDUType.X224_TPDU_DATA, payload)
         self.roa = roa
         self.eot = eot
 
 
 class X224ErrorPDU(X224PDU):
 
-    def __init__(self, destination, cause, payload=b""):
-        X224PDU.__init__(self, len(payload) + 4, X224PDUType.X224_TPDU_ERROR, payload)
+    def __init__(self, destination: int, cause: int, payload: bytes = b""):
+        super().__init__(X224PDUType.X224_TPDU_ERROR, payload)
         self.destination = destination
         self.cause = cause

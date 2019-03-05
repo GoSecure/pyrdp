@@ -4,14 +4,14 @@
 # Licensed under the GPLv3 or later.
 #
 
-from pyrdp.logging import log
 from pyrdp.enum import VirtualChannelPDUFlag
-from pyrdp.layer.layer import Layer
+from pyrdp.layer.layer import IntermediateLayer
+from pyrdp.logging import log
 from pyrdp.parser import VirtualChannelParser
-from pyrdp.pdu import VirtualChannelPDU
+from pyrdp.pdu import PDU, VirtualChannelPDU
 
 
-class VirtualChannelLayer(Layer):
+class VirtualChannelLayer(IntermediateLayer):
     """
     Layer that handles the virtual channel layer of the RDP protocol:
     https://msdn.microsoft.com/en-us/library/cc240548.aspx
@@ -21,7 +21,7 @@ class VirtualChannelLayer(Layer):
         """
         :param activateShowProtocolFlag: True if the channelFlagShowProtocol must be set (depends on virtual channels)
         """
-        Layer.__init__(self, parser, hasNext=True)
+        super().__init__(parser)
         self.activateShowProtocolFlag = activateShowProtocolFlag
         self.pduBuffer = b""
 
@@ -40,18 +40,23 @@ class VirtualChannelLayer(Layer):
         if flags & VirtualChannelPDUFlag.CHANNEL_FLAG_LAST:
             # Reassembly done, change the payload of the virtualChannelPDU for processing by the observer.
             virtualChannelPDU.payload = self.pduBuffer
-            self.pduReceived(virtualChannelPDU, self.hasNext)
+            self.pduReceived(virtualChannelPDU)
 
-    def send(self, payload):
+    def sendBytes(self, payload: bytes):
         """
         Send payload on the upper layer by encapsulating it in a VirtualChannelPDU.
-        :type payload: bytes
         """
         flags = VirtualChannelPDUFlag.CHANNEL_FLAG_FIRST | VirtualChannelPDUFlag.CHANNEL_FLAG_LAST
+
         if self.activateShowProtocolFlag:
             flags |= VirtualChannelPDUFlag.CHANNEL_FLAG_SHOW_PROTOCOL
+
         virtualChannelPDU = VirtualChannelPDU(len(payload), flags, payload)
         rawVirtualChannelPDUsList = self.mainParser.write(virtualChannelPDU)
+
         # Since a virtualChannelPDU may need to be sent using several packets
         for data in rawVirtualChannelPDUsList:
-            self.previous.send(data)
+            self.previous.sendBytes(data)
+
+    def shouldForward(self, pdu: PDU) -> bool:
+        return True

@@ -40,3 +40,10 @@ class MCSChannelID(IntEnum):
     MCS Channel ID definitions.
     """
     USERCHANNEL_BASE = 1001
+
+
+class MCSChannelName:
+    IO = "I/O"
+    CLIPBOARD = "cliprdr"
+    DEVICE_REDIRECTION = "rdpdr"
+    DYNAMIC_CHANNEL = "drdynvc"

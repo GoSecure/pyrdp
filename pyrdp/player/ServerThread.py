@@ -10,6 +10,8 @@ from typing import Callable
 
 from PyQt4.QtCore import QThread
 
+from pyrdp.logging import LOGGER_NAMES
+
 
 class ServerThread(QThread):
     """
@@ -34,7 +36,7 @@ class ServerThread(QThread):
         server = self.loop.create_server(self.protocolFactory, host=self.host, port=self.port)
         server = self.loop.run_until_complete(server)
 
-        logging.info("Listening on %(listenHost)s:%(listenPort)d", {"listenHost": self.host, "listenPort": self.port})
+        logging.getLogger(LOGGER_NAMES.PLAYER).info("Listening for connections on %(listenHost)s:%(listenPort)d", {"listenHost": self.host, "listenPort": self.port})
         self.loop.run_forever()
 
     def stop(self):

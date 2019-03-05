@@ -12,6 +12,7 @@ class Subject:
     Base class for objects that can have observers.
     """
     def __init__(self):
+        super().__init__()
         self.observer = CompositeObserver()
 
     def addObserver(self, observer: Observer):

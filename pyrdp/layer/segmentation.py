@@ -4,12 +4,12 @@
 # Licensed under the GPLv3 or later.
 #
 
-from collections import namedtuple
+from typing import Dict
 
 from pyrdp.core import ObservedBy, Uint8
 from pyrdp.enum import SegmentationPDUType
 from pyrdp.layer.buffered import BufferedLayer
-from pyrdp.layer.layer import Layer, LayerObserver
+from pyrdp.layer.layer import BaseLayer, LayerObserver
 
 
 class SegmentationObserver(LayerObserver):
@@ -17,39 +17,30 @@ class SegmentationObserver(LayerObserver):
         pass
 
 
-
-SegmentationProxy = namedtuple("SegmentationProxy", "send")
-
-
-
 @ObservedBy(SegmentationObserver)
-class SegmentationLayer(Layer):
+class SegmentationLayer(BaseLayer):
     """
     Layer to handle segmentation PDUs (e.g: TPKT and fast-path).
     Sends data to the proper BufferedLayer by checking the PDU's header.
     """
 
     def __init__(self):
-        Layer.__init__(self)
-        self.fastPathLayer = None
-        self.layers = {}
+        super().__init__()
+        self.layers: Dict[int, BufferedLayer] = {}
 
-    def attachLayer(self, type, layer):
+    def attachLayer(self, pduType: int, layer: BufferedLayer):
         """
         Set the layer used for a type of segmentation PDU.
-        :param type: the PDU type.
-        :type type: int
+        :param pduType: the PDU type.
         :param layer: the layer to use.
-        :type layer: BufferedLayer
         """
         # The segmentation layer is bypassed when sending data.
         layer.previous = self.previous
-        self.layers[type] = layer
+        self.layers[pduType] = layer
 
-    def recv(self, data):
+    def recv(self, data: bytes):
         """
         Forward data to the proper layer depending on the PDU type.qq
-        :type data: bytes
         """
 
         while len(data) > 0:

@@ -4,8 +4,6 @@
 # Licensed under the GPLv3 or later.
 #
 
-import pprint
-
 from pyrdp.enum import MCSPDUType
 from pyrdp.pdu.pdu import PDU
 
@@ -14,12 +12,7 @@ class MCSPDU(PDU):
     """
     Base class for MCS (T.125) PDUs (not actually a PDU). Every MCS PDU has a PDU type (header) and a payload.
     """
-    def __init__(self, pduType, payload):
-        """
-        :type pduType: MCSPDUType
-        :type payload: bytes
-        """
-
+    def __init__(self, pduType: MCSPDUType, payload: bytes):
         PDU.__init__(self, payload)
         self.header = pduType
 
@@ -124,6 +117,3 @@ class MCSDomainParams(PDU):
     @staticmethod
     def createMaximum():
         return MCSDomainParams(65535, 64535, 65535, 1, 0, 1, 65535, 2)
-
-    def __repr__(self):
-        return pprint.pformat(vars(self))

@@ -11,7 +11,7 @@ from pyrdp.security import SecuritySettingsObserver
 
 
 class RC4LoggingObserver(SecuritySettingsObserver):
-    def __init__(self, log: logging.Logger):
+    def __init__(self, log: logging.LoggerAdapter):
         super().__init__()
         self.log = log
 

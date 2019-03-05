@@ -15,4 +15,4 @@ class ClipboardLayer(Layer):
     """
 
     def __init__(self, parser = ClipboardParser()):
-        Layer.__init__(self, parser, hasNext=False)
+        super().__init__(parser)

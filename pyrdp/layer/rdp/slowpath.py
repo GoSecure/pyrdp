@@ -3,18 +3,16 @@
 # Copyright (C) 2018 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+from typing import Callable
 
 from pyrdp.core import ObservedBy
-from pyrdp.enum import CapabilityType, SlowPathPDUType, VirtualChannelCompressionFlag
-from pyrdp.exceptions import UnknownPDUTypeError
+from pyrdp.enum import SlowPathPDUType, SlowPathDataType
 from pyrdp.layer.layer import Layer, LayerStrictRoutedObserver
-from pyrdp.layer.rdp.data import RDPDataObserver
-from pyrdp.logging import log
 from pyrdp.parser import SlowPathParser
 from pyrdp.pdu import ConfirmActivePDU, DemandActivePDU, SlowPathPDU
 
 
-class SlowPathObserver(RDPDataObserver, LayerStrictRoutedObserver):
+class SlowPathObserver(LayerStrictRoutedObserver):
     """
     Observer for slow-path PDUs.
     """
@@ -30,10 +28,21 @@ class SlowPathObserver(RDPDataObserver, LayerStrictRoutedObserver):
 
         self.dataHandlers = {}
         self.defaultDataHandler = None
-        self.unparsedDataHandler = None
 
-    def getPDUType(self, pdu: SlowPathPDU):
-        return pdu.header.subtype
+    def setDataHandler(self, type: SlowPathDataType, handler: Callable[[SlowPathPDU], None]):
+        """
+        Set a handler for a particular data PDU type.
+        :param type: PDU type for this handler.
+        :param handler: the callback.
+        """
+        self.dataHandlers[type] = handler
+
+    def setDefaultDataHandler(self, handler: Callable[[SlowPathPDU], None]):
+        """
+        Set the default handler.
+        The default handler is called when a Data PDU is received that is not associated with a handler.
+        """
+        self.defaultDataHandler = handler
 
     def onPDUReceived(self, pdu: SlowPathPDU):
         if pdu.header.pduType in self.handlers:
@@ -48,12 +57,23 @@ class SlowPathObserver(RDPDataObserver, LayerStrictRoutedObserver):
         """
         self.dispatchPDU(pdu)
 
+    def dispatchPDU(self, pdu: SlowPathPDU):
+        """
+        Call the proper handler depending on the PDU's subtype.
+        :param pdu: the PDU that was received.
+        """
+        subtype = pdu.header.subtype
+
+        if subtype in self.dataHandlers:
+            self.dataHandlers[subtype](pdu)
+        elif self.defaultDataHandler:
+            self.defaultDataHandler(pdu)
+
     def onDemandActive(self, pdu: DemandActivePDU):
         """
         Called when a Demand Active PDU is received.
         Disable Virtual channel compression (unsupported for now).
         """
-        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].flags = VirtualChannelCompressionFlag.VCCAPS_NO_COMPR
         pass
 
     def onConfirmActive(self, pdu: ConfirmActivePDU):
@@ -83,21 +103,7 @@ class SlowPathLayer(Layer):
     """
 
     def __init__(self, parser = SlowPathParser()):
-        Layer.__init__(self, parser, hasNext=False)
+        Layer.__init__(self, parser)
 
-    def recv(self, data):
-        try:
-            pdu = self.mainParser.parse(data)
-        except UnknownPDUTypeError as e:
-            log.debug(str(e))
-            if self.observer:
-                self.observer.onUnparsedData(data)
-        else:
-            self.pduReceived(pdu, self.hasNext)
-
-    def sendPDU(self, pdu):
-        data = self.mainParser.write(pdu)
-        self.previous.send(data)
-
-    def sendData(self, data):
-        self.previous.send(data)
+    def sendBytes(self, data):
+        self.previous.sendBytes(data)

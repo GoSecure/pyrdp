@@ -33,12 +33,15 @@ from pyrdp.pdu.rdp.pointer import Point, PointerCacheEvent, PointerColorEvent, P
 from pyrdp.pdu.rdp.recording import PlayerMessagePDU
 from pyrdp.pdu.rdp.security import SecurityExchangePDU, SecurityPDU
 from pyrdp.pdu.rdp.slowpath import ConfirmActivePDU, ControlPDU, DemandActivePDU, InputPDU, PlaySoundPDU, PointerPDU, \
-    SetErrorInfoPDU, ShareControlHeader, ShareDataHeader, SlowPathPDU, SuppressOutputPDU, SynchronizePDU, UpdatePDU
+    SetErrorInfoPDU, ShareControlHeader, ShareDataHeader, SlowPathPDU, SlowPathUnparsedPDU, SuppressOutputPDU, \
+    SynchronizePDU, UpdatePDU
 from pyrdp.pdu.rdp.virtual_channel.clipboard import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU, \
     FormatListPDU, FormatListResponsePDU, FormatName, LongFormatName, ServerMonitorReadyPDU, ShortFormatName
 from pyrdp.pdu.rdp.virtual_channel.device_redirection import DeviceAnnounce, DeviceCloseRequestPDU, \
     DeviceCloseResponsePDU, DeviceCreateRequestPDU, DeviceCreateResponsePDU, DeviceIORequestPDU, DeviceIOResponsePDU, \
-    DeviceListAnnounceRequest, DeviceReadRequestPDU, DeviceReadResponsePDU, DeviceRedirectionPDU
+    DeviceListAnnounceRequest, DeviceReadRequestPDU, DeviceReadResponsePDU, DeviceRedirectionCapabilitiesPDU, \
+    DeviceRedirectionCapability, DeviceRedirectionClientCapabilitiesPDU, DeviceRedirectionGeneralCapability, \
+    DeviceRedirectionPDU, DeviceRedirectionServerCapabilitiesPDU
 from pyrdp.pdu.rdp.virtual_channel.virtual_channel import VirtualChannelPDU
 from pyrdp.pdu.segmentation import SegmentationPDU
 from pyrdp.pdu.tpkt import TPKTPDU

@@ -397,6 +397,7 @@ class MCSParser(Parser):
         """
         Encode a Channel Join Confirm PDU
         :param stream: The destination stream to write into.
+        :param pdu: the confirmation PDU.
         """
         stream.write(per.writeEnumeration(pdu.result))
         stream.write(Uint16BE.pack(pdu.initiator - MCSChannelID.USERCHANNEL_BASE))

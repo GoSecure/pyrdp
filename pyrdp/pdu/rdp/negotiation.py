@@ -39,7 +39,7 @@ class NegotiationResponsePDU(PDU):
     Second PDU of the RDP connection sequence. Sent by the server.
     Important information is the chosen encryption method.
     """
-    def __init__(self, type: int, flags: Optional[int], selectedProtocols: Optional[NegotiationProtocols]):
+    def __init__(self, type: Optional[int], flags: Optional[int], selectedProtocols: Optional[NegotiationProtocols]):
         """
         :param flags: response flags.
         :param selectedProtocols: transport protocol chosen by the server.

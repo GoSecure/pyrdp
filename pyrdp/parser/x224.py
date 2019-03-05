@@ -157,11 +157,18 @@ class X224Parser(Parser):
         """
 
         stream = BytesIO()
-        stream.write(Uint8.pack(pdu.length))
 
-        if pdu.header not in self.writers:
+
+        if pdu.header == X224PDUType.X224_TPDU_DATA:
+            length = 2
+        elif pdu.header in [X224PDUType.X224_TPDU_CONNECTION_REQUEST, X224PDUType.X224_TPDU_CONNECTION_CONFIRM, X224PDUType.X224_TPDU_DISCONNECT_REQUEST]:
+            length = len(pdu.payload) + 6
+        elif pdu.header == X224PDUType.X224_TPDU_ERROR:
+            length = len(pdu.payload) + 4
+        else:
             raise UnknownPDUTypeError("Trying to write unknown X224 PDU type: %s" % (pdu.header if pdu.header in X224PDUType else hex(pdu.header)), pdu.header)
 
+        stream.write(Uint8.pack(length))
         self.writers[pdu.header](stream, pdu)
         stream.write(pdu.payload)
         return stream.getvalue()
