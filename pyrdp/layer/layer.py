@@ -80,17 +80,19 @@ class ByteSender(metaclass = ABCMeta):
 
     @abstractmethod
     def sendBytes(self, data: bytes):
-        raise NotImplementedError("sendBytes must be overridden")
+        pass
 
 
 @ObservedBy(LayerObserver)
 class BaseLayer(Subject):
     """
-    A layer transforms bytes into PDUs by using a given parser.
+    Transforms bytes into PDUs. This is the most basic interface for layers. This is mostly for layers that
+    don't use parsers to handle the data they receive (see SegmentationLayer).
     Parsed PDUs are processed by the event engine.
     Observers can be attached to be notified of incoming PDUs.
     ObservedBy: LayerObserver
     """
+
     def __init__(self):
         super().__init__()
         self.eventEngine = EventEngine()
@@ -183,6 +185,9 @@ class LayerChainItem(ByteSender, metaclass=ABCMeta):
 class IntermediateLayer(Layer, LayerChainItem):
     """
     Layer that usually forwards some or all PDUs to another layer.
+    This is mostly for layers that are not "endpoint" layers (i.e: they only process part of the data).
+    TPKTLayer is an example of an IntermediateLayer.
+    SlowPathLayer is an example of an "endpoint" layer that doesn't forward anything.
     """
 
     def __init__(self, mainParser: Parser):
@@ -198,4 +203,9 @@ class IntermediateLayer(Layer, LayerChainItem):
         self.previous.sendBytes(data)
 
     def shouldForward(self, pdu: PDU) -> bool:
+        """
+        Determine if a PDU should be forwarded to the next layer or not.
+        :param pdu: the PDU.
+        :return: True if the PDU should be forwarded.
+        """
         raise NotImplementedError("shouldForward must be overridden")

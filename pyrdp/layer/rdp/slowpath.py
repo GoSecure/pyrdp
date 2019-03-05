@@ -3,9 +3,10 @@
 # Copyright (C) 2018 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+from typing import Callable
 
 from pyrdp.core import ObservedBy
-from pyrdp.enum import SlowPathPDUType
+from pyrdp.enum import SlowPathPDUType, SlowPathDataType
 from pyrdp.layer.layer import Layer, LayerStrictRoutedObserver
 from pyrdp.parser import SlowPathParser
 from pyrdp.pdu import ConfirmActivePDU, DemandActivePDU, SlowPathPDU
@@ -28,26 +29,18 @@ class SlowPathObserver(LayerStrictRoutedObserver):
         self.dataHandlers = {}
         self.defaultDataHandler = None
 
-    def getPDUType(self, pdu: SlowPathPDU):
-        """
-        Get the PDU type for a given PDU.
-        :param pdu: the PDU.
-        """
-        return pdu.header.subtype
-
-    def setDataHandler(self, type, handler):
+    def setDataHandler(self, type: SlowPathDataType, handler: Callable[[SlowPathPDU], None]):
         """
         Set a handler for a particular data PDU type.
-        :type type: RDPSlowPathPDUType
-        :type handler: callable object
+        :param type: PDU type for this handler.
+        :param handler: the callback.
         """
         self.dataHandlers[type] = handler
 
-    def setDefaultDataHandler(self, handler):
+    def setDefaultDataHandler(self, handler: Callable[[SlowPathPDU], None]):
         """
         Set the default handler.
         The default handler is called when a Data PDU is received that is not associated with a handler.
-        :type handler: callable object
         """
         self.defaultDataHandler = handler
 
@@ -66,13 +59,13 @@ class SlowPathObserver(LayerStrictRoutedObserver):
 
     def dispatchPDU(self, pdu: SlowPathPDU):
         """
-        Call the proper handler depending on the PDU's type.
+        Call the proper handler depending on the PDU's subtype.
         :param pdu: the PDU that was received.
         """
-        type = self.getPDUType(pdu)
+        subtype = pdu.header.subtype
 
-        if type in self.dataHandlers:
-            self.dataHandlers[type](pdu)
+        if subtype in self.dataHandlers:
+            self.dataHandlers[subtype](pdu)
         elif self.defaultDataHandler:
             self.defaultDataHandler(pdu)
 

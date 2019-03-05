@@ -78,7 +78,11 @@ def prepareLoggers(logLevel: int, sensorID: str, outDir: Path):
     log.prepareSSLLogger(logDir / "ssl.log")
 
 
-def getSSLPaths():
+def getSSLPaths() -> (str, str):
+    """
+    Get the path to the TLS key and certificate in pyrdp's config directory.
+    :return: the path to the key and the path to the certificate.
+    """
     config = appdirs.user_config_dir("pyrdp", "pyrdp")
 
     if not os.path.exists(config):
@@ -89,7 +93,7 @@ def getSSLPaths():
     return key, certificate
 
 
-def generateCertificate(keyPath, certificatePath):
+def generateCertificate(keyPath: str, certificatePath: str) -> bool:
     """
     Generate an RSA private key and certificate with default values.
     :param keyPath: path where the private key should be saved.
@@ -101,11 +105,11 @@ def generateCertificate(keyPath, certificatePath):
     return result == 0
 
 
-def handleKeyAndCertificate(certificate, key):
+def handleKeyAndCertificate(key: str, certificate: str):
     """
     Handle the certificate and key arguments that were given on the command line.
-    :param certificate: path to the TLS certificate.
     :param key: path to the TLS private key.
+    :param certificate: path to the TLS certificate.
     """
 
     logger = logging.getLogger(LOGGER_NAMES.PYRDP)
@@ -161,7 +165,7 @@ def main():
         sys.exit(1)
     elif args.private_key is None:
         key, certificate = getSSLPaths()
-        handleKeyAndCertificate(certificate, key)
+        handleKeyAndCertificate(key, certificate)
     else:
         key, certificate = args.private_key, args.certificate
 

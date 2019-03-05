@@ -20,6 +20,13 @@ from pyrdp.recording import Recorder
 
 
 class MCSMITM:
+    """
+    This is the MITM component for the MCS layer.
+    This component removes a number of flags in the connection sequence to avoid using RDP features that are not
+    implemented. It also takes care of the RDP channel map and initializes the security settings. It relies on an
+    external callback for building MCS channels when a join request is accepted.
+    """
+
     def __init__(self, client: MCSLayer, server: MCSLayer, state: RDPMITMState, recorder: Recorder, buildChannelCallback: Callable[[MCSServerChannel, MCSClientChannel], None]):
         """
         :param client: MCS layer for the client side

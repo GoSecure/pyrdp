@@ -19,10 +19,6 @@ class FastPathObserver(LayerObserver):
     def onPDUReceived(self, pdu: FastPathPDU):
         pass
 
-    def getPDUType(self, pdu: FastPathPDU):
-        # The PDU type is stored in the last 3 bits
-        return pdu.header & 0b11100000
-
 
 @ObservedBy(FastPathObserver)
 class FastPathLayer(BufferedLayer):
