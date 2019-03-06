@@ -18,7 +18,7 @@ import logging
 import logging.handlers
 import sys
 
-from PyQt4.QtGui import QApplication
+from PySide2.QtWidgets import QApplication
 
 from pyrdp.logging import LOGGER_NAMES, NotifyHandler
 from pyrdp.player import MainWindow

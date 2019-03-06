@@ -4,7 +4,8 @@
 # Licensed under the GPLv3 or later.
 #
 
-from PyQt4.QtGui import QPushButton, QWidget, QIcon
+from PySide2.QtWidgets import QPushButton, QWidget
+from PySide2.QtGui import QIcon
 
 
 class PlayPauseButton(QPushButton):

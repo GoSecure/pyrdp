@@ -12,7 +12,7 @@ from multiprocessing import Queue
 from time import sleep
 from typing import BinaryIO
 
-from PyQt4.QtCore import pyqtSignal, QThread
+from PySide2.QtCore import Signal, QThread
 
 from pyrdp.core import Timer
 from pyrdp.layer import PlayerMessageLayer, TPKTLayer
@@ -35,14 +35,14 @@ class ReplayThread(QThread):
     Thread that runs in the background for every replay. Constantly checks time to see which events should be played.
     """
 
-    timeUpdated = pyqtSignal(float, name="Time changed")
+    timeUpdated = Signal(float)
 
     # We use the object type instead of int for this signal to prevent Python integers from being converted to 32-bit integers
-    eventReached = pyqtSignal(object, name="Event reached")
-    clearNeeded = pyqtSignal(name="Clear needed")
+    eventReached = Signal(object)
+    clearNeeded = Signal()
 
     def __init__(self, file: BinaryIO):
-        super().__init__(None)
+        super().__init__()
 
         self.queue = Queue()
         self.lastSeekTime = 0

@@ -5,8 +5,8 @@
 #
 import logging
 
-from PyQt4.QtCore import pyqtSignal, Qt
-from PyQt4.QtGui import QHBoxLayout, QLabel, QSizePolicy, QSlider, QSpacerItem, QVBoxLayout, QWidget
+from PySide2.QtCore import Qt, Signal
+from PySide2.QtWidgets import QApplication, QHBoxLayout, QLabel, QSizePolicy, QSlider, QSpacerItem, QVBoxLayout, QWidget
 
 from pyrdp.layer import PlayerMessageLayer, TPKTLayer
 from pyrdp.logging import LOGGER_NAMES
@@ -23,8 +23,8 @@ class ReplayWindow(BasePlayerWindow):
     Class for managing replay tabs.
     """
 
-    def __init__(self):
-        BasePlayerWindow.__init__(self)
+    def __init__(self, parent: QWidget = None):
+        super().__init__(parent)
 
     def openFile(self, fileName: str):
         """
@@ -41,16 +41,19 @@ class ReplayTab(RDPConnectionTab):
     Tab that displays a RDP Connection that is being replayed from a file.
     """
 
-    def __init__(self, fileName: str):
+    def __init__(self, fileName: str, parent: QWidget = None):
         """
         :param fileName: name of the file to read.
+        :param parent: parent widget.
         """
         self.viewer = QRemoteDesktop(800, 600)
-        RDPConnectionTab.__init__(self, self.viewer)
+        super().__init__(self.viewer, parent)
+        QApplication.instance().aboutToQuit.connect(self.onClose)
 
         self.fileName = fileName
         self.file = open(self.fileName, "rb")
         self.eventHandler = PlayerMessageHandler(self.widget, self.text)
+
         self.thread = ReplayThread(self.file)
         self.thread.eventReached.connect(self.readEvent)
         self.thread.timeUpdated.connect(self.onTimeUpdated)
@@ -103,19 +106,20 @@ class ReplayTab(RDPConnectionTab):
 
     def onClose(self):
         self.thread.close()
+        self.thread.wait()
 
 
 class ControlBar(QWidget):
     """
     Widget that contains the play/pause button, the progress bar and the speed slider.
     """
-    play = pyqtSignal(name="Play")
-    pause = pyqtSignal(name="Pause")
-    seek = pyqtSignal(float, name="Time changed")
-    speedChanged = pyqtSignal(int, name="Speed changed")
+    play = Signal()
+    pause = Signal()
+    seek = Signal(float)
+    speedChanged = Signal(int)
 
     def __init__(self, duration: float, parent: QWidget = None):
-        QWidget.__init__(self, parent)
+        super().__init__(parent)
 
         self.log = logging.getLogger(LOGGER_NAMES.PLAYER)
 

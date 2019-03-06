@@ -4,7 +4,7 @@
 # Licensed under the GPLv3 or later.
 #
 
-from PyQt4.QtGui import QMainWindow, QTabWidget, QAction, QFileDialog
+from PySide2.QtWidgets import QMainWindow, QTabWidget, QAction, QFileDialog
 
 from pyrdp.player.live import LivePlayerWindow
 from pyrdp.player.replay import ReplayWindow
@@ -21,7 +21,7 @@ class MainWindow(QMainWindow):
         :param port: port to bind to when listening for live connections.
         :param filesToRead: replay files to open.
         """
-        QMainWindow.__init__(self)
+        super().__init__()
 
         self.liveWindow = LivePlayerWindow(bind_address, port)
         self.replayWindow = ReplayWindow()
@@ -44,7 +44,7 @@ class MainWindow(QMainWindow):
             self.replayWindow.openFile(fileName)
 
     def onOpenFile(self):
-        fileName = QFileDialog.getOpenFileName(self, "Open File")
+        fileName, _ = QFileDialog.getOpenFileName(self, "Open File")
 
         if fileName:
             self.replayWindow.openFile(fileName)

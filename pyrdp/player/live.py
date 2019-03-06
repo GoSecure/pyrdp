@@ -6,8 +6,8 @@
 
 from queue import Queue
 
-from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtGui import qApp
+from PySide2.QtCore import Signal
+from PySide2.QtWidgets import QApplication, QWidget
 
 from pyrdp.layer import AsyncIOTCPLayer, PlayerMessageLayer, TPKTLayer
 from pyrdp.layer.layer import LayerChainItem
@@ -22,11 +22,11 @@ class LivePlayerWindow(BasePlayerWindow):
     """
     Class that holds logic for live player (network RDP connections as they happen) tabs.
     """
-    connectionReceived = pyqtSignal(name="Connection received")
+    connectionReceived = Signal()
 
-    def __init__(self, address, port):
-        BasePlayerWindow.__init__(self)
-        qApp.aboutToQuit.connect(self.onClose)
+    def __init__(self, address, port, parent: QWidget = None):
+        super().__init__(parent)
+        QApplication.instance().aboutToQuit.connect(self.onClose)
 
         self.server = ServerThread(address, port, self.onConnection)
         self.server.start()
@@ -59,10 +59,10 @@ class LivePlayerTab(RDPConnectionTab):
     Tab playing a live RDP connection as data is being received over the network.
     """
 
-    connectionClosed = pyqtSignal(object, name="Close")
+    connectionClosed = Signal(object)
 
-    def __init__(self):
-        RDPConnectionTab.__init__(self, QRemoteDesktop(1024, 768))
+    def __init__(self, parent: QWidget = None):
+        super().__init__(QRemoteDesktop(1024, 768), parent)
         self.tcp = AsyncIOTCPLayer()
         self.tpkt = TPKTLayer()
         self.message = PlayerMessageLayer()

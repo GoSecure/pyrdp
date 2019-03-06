@@ -5,7 +5,8 @@
 #
 import logging
 
-from PyQt4.QtGui import QKeySequence, QShortcut, QTabWidget
+from PySide2.QtGui import QKeySequence
+from PySide2.QtWidgets import QShortcut, QTabWidget, QWidget
 
 from pyrdp.logging import LOGGER_NAMES
 
@@ -16,8 +17,8 @@ class BasePlayerWindow(QTabWidget):
     regardless of their origin (network or file).
     """
 
-    def __init__(self, maxTabCount=250):
-        QTabWidget.__init__(self)
+    def __init__(self, parent: QWidget = None, maxTabCount = 250):
+        super().__init__(parent)
         self.closeTabShortcut = QShortcut(QKeySequence("Ctrl+W"), self, self.closeCurrentTab)
         self.maxTabCount = maxTabCount
         self.setTabsClosable(True)

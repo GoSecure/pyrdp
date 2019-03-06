@@ -5,10 +5,11 @@
 #
 import logging
 
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QScrollArea, QTextEdit, QVBoxLayout, QWidget
+from PySide2.QtCore import Qt
+from PySide2.QtWidgets import QScrollArea, QTextEdit, QVBoxLayout, QWidget
 
 from pyrdp.logging import LOGGER_NAMES
+from pyrdp.ui import QRemoteDesktop
 
 
 class RDPConnectionTab(QWidget):
@@ -17,11 +18,12 @@ class RDPConnectionTab(QWidget):
     (network or file)
     """
 
-    def __init__(self, viewer):
+    def __init__(self, viewer: QRemoteDesktop, parent: QWidget = None):
         """
-        :type viewer: QWidget
+        :param viewer: the RDP viewer widget
+        :param parent: the parent widget
         """
-        QWidget.__init__(self, None, Qt.WindowFlags())
+        super().__init__(parent, Qt.WindowFlags())
         self.widget = viewer
 
         self.writeInCaps = False

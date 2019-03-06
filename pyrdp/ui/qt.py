@@ -23,43 +23,43 @@ Qt specific code
 
 QRemoteDesktop is a widget use for render in rdpy
 """
+
 from io import BytesIO
 
 import rle
-from PyQt4 import QtGui
-from PyQt4.QtCore import QPoint
-from PyQt4.QtGui import QColor
+from PySide2.QtCore import QEvent, QPoint
+from PySide2.QtGui import QColor, QImage, QMatrix, QPainter
+from PySide2.QtWidgets import QWidget
 
 from pyrdp.logging import log
 
 
-def RDPBitmapToQtImage(width, height, bitsPerPixel, isCompressed, data):
+def RDPBitmapToQtImage(width: int, height: int, bitsPerPixel: int, isCompressed: bool, data: bytes):
     """
-    @summary: Bitmap transformation to Qt object
-    @param width: width of bitmap
-    @param height: height of bitmap
-    @param bitsPerPixel: number of bit per pixel
-    @param isCompressed: use RLE compression
-    @param data: bitmap data
+    Bitmap transformation to Qt object
+    :param width: width of bitmap
+    :param height: height of bitmap
+    :param bitsPerPixel: number of bit per pixel
+    :param isCompressed: use RLE compression
+    :param data: bitmap data
     """
     image = None
-    #allocate
     
     if bitsPerPixel == 15:
         if isCompressed:
             buf = bytearray(width * height * 2)
             rle.bitmap_decompress(buf, width, height, data, 2)
-            image = QtGui.QImage(buf, width, height, QtGui.QImage.Format_RGB555)
+            image = QImage(buf, width, height, QImage.Format_RGB555)
         else:
-            image = QtGui.QImage(data, width, height, QtGui.QImage.Format_RGB555).transformed(QtGui.QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
+            image = QImage(data, width, height, QImage.Format_RGB555).transformed(QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
     
     elif bitsPerPixel == 16:
         if isCompressed:
             buf = bytearray(width * height * 2)
             rle.bitmap_decompress(buf, width, height, data, 2)
-            image = QtGui.QImage(buf, width, height, QtGui.QImage.Format_RGB16)
+            image = QImage(buf, width, height, QImage.Format_RGB16)
         else:
-            image = QtGui.QImage(data, width, height, QtGui.QImage.Format_RGB16).transformed(QtGui.QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
+            image = QImage(data, width, height, QImage.Format_RGB16).transformed(QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
     
     elif bitsPerPixel == 24:
         if isCompressed:
@@ -75,33 +75,33 @@ def RDPBitmapToQtImage(width, height, bitsPerPixel, isCompressed, data):
                 buf[buf2.tell() - 3] = pixel[2]
                 buf[buf2.tell() - 1] = pixel[0]
 
-            image = QtGui.QImage(buf, width, height, QtGui.QImage.Format_RGB888)
+            image = QImage(buf, width, height, QImage.Format_RGB888)
         else:
-            image = QtGui.QImage(data, width, height, QtGui.QImage.Format_RGB888).transformed(QtGui.QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
+            image = QImage(data, width, height, QImage.Format_RGB888).transformed(QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
             
     elif bitsPerPixel == 32:
         if isCompressed:
             buf = bytearray(width * height * 4)
             rle.bitmap_decompress(buf, width, height, data, 4)
-            image = QtGui.QImage(buf, width, height, QtGui.QImage.Format_RGB32)
+            image = QImage(buf, width, height, QImage.Format_RGB32)
         else:
-            image = QtGui.QImage(data, width, height, QtGui.QImage.Format_RGB32).transformed(QtGui.QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
+            image = QImage(data, width, height, QImage.Format_RGB32).transformed(QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
     elif bitsPerPixel == 8:
         if isCompressed:
             buf = bytearray(width * height * 1)
             rle.bitmap_decompress(buf, width, height, data, 1)
             buf2 = convert8bppTo16bpp(buf)
-            image = QtGui.QImage(buf2, width, height, QtGui.QImage.Format_RGB16)
+            image = QImage(buf2, width, height, QImage.Format_RGB16)
         else:
             buf2 = convert8bppTo16bpp(data)
-            image = QtGui.QImage(buf2, width, height, QtGui.QImage.Format_RGB16).transformed(QtGui.QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
+            image = QImage(buf2, width, height, QImage.Format_RGB16).transformed(QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
     else:
         log.error("Receive image in bad format")
-        image = QtGui.QImage(width, height, QtGui.QImage.Format_RGB32)
+        image = QImage(width, height, QImage.Format_RGB32)
     return image
 
 
-def convert8bppTo16bpp(buf):
+def convert8bppTo16bpp(buf: bytes):
     """
     WARNING: The actual 8bpp images work by using a color palette, which this method does not use.
     This method instead tries to transform indices into colors. This results in a weird looking image,
@@ -120,65 +120,69 @@ def convert8bppTo16bpp(buf):
     return buf2
 
 
-class QRemoteDesktop(QtGui.QWidget):
+class QRemoteDesktop(QWidget):
     """
-    @summary: Qt display widget
+    Qt RDP display widget
     """
-    def __init__(self, width, height):
+    def __init__(self, width: int, height: int, parent: QWidget = None):
         """
-        @param width: {int} width of widget
-        @param height: {int} height of widget
+        :param width: width of widget
+        :param height: height of widget
+        :param parent: parent widget
         """
-        super(QRemoteDesktop, self).__init__()
+        super().__init__(parent)
         #set correct size
         self.resize(width, height)
         #bind mouse event
         self.setMouseTracking(True)
         #buffer image
-        self._buffer = QtGui.QImage(width, height, QtGui.QImage.Format_RGB32)
-        self.mouseX = width / 2
-        self.mouseY = height / 2
+        self._buffer = QImage(width, height, QImage.Format_RGB32)
+        self.mouseX = width // 2
+        self.mouseY = height // 2
 
 
-    def notifyImage(self, x, y, qimage, width, height):
+    def notifyImage(self, x: int, y: int, qimage: QImage, width: int, height: int):
         """
-        @summary: Draw an image on the buffer.
-        @param x: x position of new image
-        @param y: y position of new image
-        @param qimage: new QImage
+        Draw an image on the buffer.
+        :param x: x position of the new image
+        :param y: y position of the new image
+        :param qimage: new QImage
+        :param width: width of the new image
+        :param height: height of the new image
         """
+
         #fill buffer image
-        with QtGui.QPainter(self._buffer) as qp:
-            qp.drawImage(x, y, qimage, 0, 0, width, height)
+        qp = QPainter(self._buffer)
+        qp.drawImage(x, y, qimage, 0, 0, width, height)
+
         #force update
         self.update()
 
-    def setMousePosition(self, x, y):
+    def setMousePosition(self, x: int, y: int):
         self.mouseX = x
         self.mouseY = y
         self.update()
 
-    def resize(self, width, height):
+    def resize(self, width: int, height: int):
         """
-        @summary: override resize function
-        @param width: {int} width of widget
-        @param height: {int} height of widget
+        Resize widget
+        :param width: new width of the widget
+        :param height: new height of the widget
         """
-        self._buffer = QtGui.QImage(width, height, QtGui.QImage.Format_RGB32)
-        QtGui.QWidget.resize(self, width, height)
+        self._buffer = QImage(width, height, QImage.Format_RGB32)
+        super().resize(width, height)
         
-    def paintEvent(self, e):
+    def paintEvent(self, e: QEvent):
         """
-        @summary: Call when Qt renderer engine estimate that is needed
-        @param e: QEvent
+        Call when Qt renderer engine estimate that is needed
+        :param e: the event
         """
-        #draw in widget
-        with QtGui.QPainter(self) as qp:
-            qp.drawImage(0, 0, self._buffer)
-            qp.setBrush(QColor.fromRgb(255, 255, 0, 180))
-            qp.drawEllipse(QPoint(self.mouseX, self.mouseY), 5, 5)
+        qp = QPainter(self)
+        qp.drawImage(0, 0, self._buffer)
+        qp.setBrush(QColor.fromRgb(255, 255, 0, 180))
+        qp.drawEllipse(QPoint(self.mouseX, self.mouseY), 5, 5)
 
     def clear(self):
-        self._buffer = QtGui.QImage(self._buffer.width(), self._buffer.height(), QtGui.QImage.Format_RGB32)
+        self._buffer = QImage(self._buffer.width(), self._buffer.height(), QImage.Format_RGB32)
         self.setMousePosition(self._buffer.width() // 2, self._buffer.height() // 2)
         self.repaint()

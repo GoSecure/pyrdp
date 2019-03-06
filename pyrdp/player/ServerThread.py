@@ -8,7 +8,7 @@ import asyncio
 import logging
 from typing import Callable
 
-from PyQt4.QtCore import QThread
+from PySide2.QtCore import QThread
 
 from pyrdp.logging import LOGGER_NAMES
 
@@ -24,7 +24,7 @@ class ServerThread(QThread):
         :param port: port to listen on.
         :param protocolFactory: asyncio protocol factory.
         """
-        QThread.__init__(self)
+        super().__init__()
         self.host = host
         self.port = port
         self.protocolFactory = protocolFactory
@@ -34,7 +34,7 @@ class ServerThread(QThread):
         asyncio.set_event_loop(self.loop)
 
         server = self.loop.create_server(self.protocolFactory, host=self.host, port=self.port)
-        server = self.loop.run_until_complete(server)
+        self.loop.run_until_complete(server)
 
         logging.getLogger(LOGGER_NAMES.PLAYER).info("Listening for connections on %(listenHost)s:%(listenPort)d", {"listenHost": self.host, "listenPort": self.port})
         self.loop.run_forever()

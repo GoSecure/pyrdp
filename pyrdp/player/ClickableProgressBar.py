@@ -4,7 +4,8 @@
 # Licensed under the GPLv3 or later.
 #
 
-from PyQt4.QtGui import QWidget, QProgressBar, QMouseEvent
+from PySide2.QtWidgets import QWidget, QProgressBar
+from PySide2.QtGui import QMouseEvent
 
 
 class ClickableProgressBar(QProgressBar):

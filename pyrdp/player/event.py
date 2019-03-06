@@ -4,10 +4,9 @@
 # Licensed under the GPLv3 or later.
 #
 
-from typing import Optional
+from typing import Optional, Union
 
-from PyQt4 import QtGui
-from PyQt4.QtGui import QTextCursor
+from PySide2.QtGui import QTextCursor
 
 from pyrdp.core import decodeUTF16LE
 from pyrdp.core.scancode import scancodeToChar
@@ -29,7 +28,7 @@ class PlayerMessageHandler(PlayerMessageObserver):
     """
 
     def __init__(self, viewer, text):
-        PlayerMessageObserver.__init__(self)
+        super().__init__()
         self.viewer = viewer
         self.text = text
         self.writeInCaps = False
@@ -92,7 +91,7 @@ class PlayerMessageHandler(PlayerMessageObserver):
             self.writeInCaps = not self.writeInCaps
         elif isPressed:
             char = scancodeToChar(code)
-            self.text.moveCursor(QtGui.QTextCursor.End)
+            self.text.moveCursor(QTextCursor.End)
             self.text.insertPlainText(char if self.writeInCaps else char.lower())
 
     def onMousePosition(self, x: int, y: int):
@@ -136,7 +135,7 @@ class PlayerMessageHandler(PlayerMessageObserver):
 
     def onClipboardData(self, pdu: PlayerMessagePDU):
         formatDataResponsePDU: FormatDataResponsePDU = self.clipboardParser.parse(pdu.payload)
-        self.text.moveCursor(QtGui.QTextCursor.End)
+        self.text.moveCursor(QTextCursor.End)
         self.text.insertPlainText("\n=============\n")
         self.text.insertPlainText("CLIPBOARD DATA: {}".format(decodeUTF16LE(formatDataResponsePDU.requestedFormatData)))
         self.text.insertPlainText("\n=============\n")
@@ -146,15 +145,17 @@ class PlayerMessageHandler(PlayerMessageObserver):
         Prints the clientName on the screen
         """
         clientDataPDU = self.clientConnectionParser.parse(pdu.payload)
-        self.text.moveCursor(QtGui.QTextCursor.End)
+        self.text.moveCursor(QTextCursor.End)
         self.text.insertPlainText("--------------------\n")
         self.text.insertPlainText(f"HOST: {clientDataPDU.coreData.clientName.strip(chr(0))}\n")
 
-    def reassembleEvent(self, event: FastPathOutputUpdateEvent) -> Optional[FastPathBitmapEvent]:
+    def reassembleEvent(self, event: FastPathOutputUpdateEvent) -> Optional[Union[FastPathBitmapEvent, FastPathOutputUpdateEvent]]:
         """
         Handles FastPath event reassembly as described in
         https://msdn.microsoft.com/en-us/library/cc240622.aspx
         :param event: A potentially segmented fastpath output event
+        :return: a FastPathBitmapEvent if a complete PDU has been reassembled, otherwise None. If the event is not
+        fragmented, returns the original event.
         """
         fragmentationFlag = FastPathFragmentation((event.header & 0b00110000) >> 4)
         if fragmentationFlag == FastPathFragmentation.FASTPATH_FRAGMENT_SINGLE:
