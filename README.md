@@ -52,12 +52,6 @@ First, make sure to update setuptools so the setup script won't break:
 sudo pip3 install --upgrade setuptools
 ```
 
-If you want to run the player, you will also need PyQt4:
-
-```
-sudo apt install python3-pyqt4
-```
-
 You can now install PyRDP by running the setup script:
 
 ```
