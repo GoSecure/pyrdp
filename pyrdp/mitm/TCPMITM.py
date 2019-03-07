@@ -73,7 +73,9 @@ class TCPMITM:
         self.recorder.record(None, PlayerMessageType.CONNECTION_CLOSE)
         self.log.info("Client connection closed. %(reason)s", {"reason": reason.value})
         self.serverConnector.close()
-        self.server.disconnect()
+        self.server.disconnect(True)
+
+        # For the attacker, we want to make sure we don't abort the connection to make sure that the close event is sent
         self.attacker.disconnect()
         self.detach()
 
@@ -91,7 +93,9 @@ class TCPMITM:
 
         self.recorder.record(None, PlayerMessageType.CONNECTION_CLOSE)
         self.log.info("Server connection closed. %(reason)s", {"reason": reason.value})
-        self.client.disconnect()
+        self.client.disconnect(True)
+
+        # For the attacker, we want to make sure we don't abort the connection to make sure that the close event is sent
         self.attacker.disconnect()
         self.detach()
 

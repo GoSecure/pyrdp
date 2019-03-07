@@ -65,12 +65,17 @@ class TwistedTCPLayer(IntermediateLayer, Protocol):
         """
         self.observer.onDisconnection(reason)
 
-    def disconnect(self):
+    def disconnect(self, abort = False):
         """
         Close the TCP connection.
+        :param abort: True to force close the connection, False to end gracefully.
         """
+
         if self.transport:
-            self.transport.abortConnection()
+            if abort:
+                self.transport.abortConnection()
+            else:
+                self.transport.loseConnection()
 
     def dataReceived(self, data: bytes):
         """
@@ -138,11 +143,15 @@ class AsyncIOTCPLayer(IntermediateLayer, asyncio.Protocol):
         """
         self.observer.onDisconnection(exception)
 
-    def disconnect(self):
+    def disconnect(self, abort = False):
         """
         Close the TCP connection.
+        :param abort: True to force close the connection, False to end gracefully.
         """
-        self.transport.abort()
+        if abort:
+            self.transport.abort()
+        else:
+            self.transport.close()
 
     def data_received(self, data: bytes):
         """

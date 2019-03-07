@@ -78,4 +78,4 @@ class LivePlayerTab(RDPConnectionTab):
         self.connectionClosed.emit()
 
     def onClose(self):
-        self.tcp.disconnect()
+        self.tcp.disconnect(True)
