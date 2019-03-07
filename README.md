@@ -49,13 +49,13 @@ This tool has been tested to work on Python 3.6 on Linux (Ubuntu 18.04). It has 
 First, make sure to install the prerequisite packages
 
 ```
-sudo apt install libdbus-glib-1-dev
+sudo apt install libdbus-1-dev libdbus-glib-1-dev
 ```
 
-You can now install PyRDP by running the setup script:
+You can now install PyRDP by running the setup script with pip:
 
 ```
-sudo python3 setup.py install
+sudo pip3 install -e . 
 ```
 
 This should install all the dependencies required to run PyRDP.
