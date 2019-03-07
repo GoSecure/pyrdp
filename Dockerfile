@@ -10,13 +10,12 @@ RUN apt-get update
 
 # Install Dependencies
 RUN apt-get install python3 python3-pip -y
-RUN apt-get install notify-osd dbus-x11 python3-pyqt4 -y
-RUN pip3 install --upgrade setuptools cryptography
+RUN apt-get install notify-osd dbus-x11 libdbus-1-dev libdbus-glib-1-dev -y
 
 COPY . /pyrdp
 
 RUN cd /pyrdp \
-    && python3 setup.py install
+    && pip3 install -e . -U
 
 # Create user
 RUN useradd --create-home --home-dir /home/pyrdp pyrdp 
