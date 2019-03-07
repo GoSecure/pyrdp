@@ -73,11 +73,11 @@ For more information about the diffrent commands and arguments, please refer to 
 
 To store the log files, be sure that your destination directory is owned by a user with a UID of 1000, otherwise you will get a permission denied error. If you're the only user on the system, you should not worry about this. Add the -v option to the previous command:
 ```
-docker run pyrdp pyrdp-mitm.py 192.168.1.10 -v /home/developer/logs:/home/pyrdp/log
+docker run -v /home/developer/logs:/home/pyrdp/log pyrdp pyrdp-mitm.py 192.168.1.10
 ```
 Using the player will require you to export the DISPLAY environment variable from the host to the docker (this redirects the GUI of the player to the host screen), expose the host's network and stop Qt from using the MITM-SHM X11 Shared Memory Extension. To do so, add the -e and --net options to the run command:
 ```
-docker run pyrdp pyrdp-player.py 192.168.1.10 -e DISPLAY=$DISPLAY -e QT_X11_NO_MITSHM=1 --net=host
+docker run -e DISPLAY=$DISPLAY -e QT_X11_NO_MITSHM=1 --net=host pyrdp pyrdp-player.py
 ```
 Keep in mind that exposing the host's network to the docker can compromise the isolation between your container and the host. If you plan on using the player, X11 forwarding using an SSH connection would be a more secure way.
 
