@@ -224,7 +224,7 @@ class DeviceRedirectionMITM:
             self.log.info("%(deviceName)s mapped with ID %(deviceID)d: %(deviceData)s", {
                 "deviceName": device.deviceType.name,
                 "deviceID": device.deviceID,
-                "deviceData": device.deviceData.decode(errors="backslashreplace").rstrip("\x00")
+                "deviceData": device.preferredDosName.rstrip(b"\x00").decode()
             })
 
     def handleIORequest(self, pdu: DeviceIORequestPDU):
