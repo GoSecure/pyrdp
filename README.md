@@ -46,10 +46,10 @@ PyRDP should work on Python 3.6 and up.
 This tool has been tested to work on Python 3.6 on Linux (Ubuntu 18.04). It has not been tested on OSX and Windows.
 
 ## Installing
-First, make sure to update setuptools so the setup script won't break:
+First, make sure to install the prerequisite packages
 
 ```
-sudo pip3 install --upgrade setuptools
+sudo apt install libdbus-glib-1-dev
 ```
 
 You can now install PyRDP by running the setup script:
