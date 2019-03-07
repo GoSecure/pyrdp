@@ -55,7 +55,7 @@ sudo apt install libdbus-1-dev libdbus-glib-1-dev
 You can now install PyRDP by running the setup script with pip:
 
 ```
-sudo pip3 install -e . 
+sudo pip3 install -U -e . 
 ```
 
 This should install all the dependencies required to run PyRDP.
