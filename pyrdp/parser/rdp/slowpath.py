@@ -465,19 +465,25 @@ class SlowPathParser(Parser):
     def parseSuppressOutput(self, stream: BytesIO, header):
         allowDisplayUpdates = Uint8.unpack(stream)
         stream.read(3)
-        left = Uint16LE.unpack(stream)
-        top = Uint16LE.unpack(stream)
-        right = Uint16LE.unpack(stream)
-        bottom = Uint16LE.unpack(stream)
-        return SuppressOutputPDU(header, allowDisplayUpdates, left, top, right, bottom)
+
+        if allowDisplayUpdates == 1:
+            left = Uint16LE.unpack(stream)
+            top = Uint16LE.unpack(stream)
+            right = Uint16LE.unpack(stream)
+            bottom = Uint16LE.unpack(stream)
+            return SuppressOutputPDU(header, allowDisplayUpdates, left, top, right, bottom)
+        else:
+            return SuppressOutputPDU(header, allowDisplayUpdates, None, None, None, None)
 
     def writeSuppressOutput(self, stream: BytesIO, pdu):
         Uint8.pack(int(pdu.allowDisplayUpdates), stream)
         stream.write(b"\x00" * 3)
-        Uint16LE.pack(pdu.left, stream)
-        Uint16LE.pack(pdu.top, stream)
-        Uint16LE.pack(pdu.right, stream)
-        Uint16LE.pack(pdu.bottom, stream)
+
+        if pdu.allowDisplayUpdates:
+            Uint16LE.pack(pdu.left, stream)
+            Uint16LE.pack(pdu.top, stream)
+            Uint16LE.pack(pdu.right, stream)
+            Uint16LE.pack(pdu.bottom, stream)
 
     def parseUpdate(self, stream: BytesIO, header):
         updateType = Uint16LE.unpack(stream)

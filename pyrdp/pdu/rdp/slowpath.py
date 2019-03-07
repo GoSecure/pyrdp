@@ -4,7 +4,7 @@
 # Licensed under the GPLv3 or later.
 #
 
-from typing import Dict
+from typing import Dict, Optional
 
 from pyrdp.enum import CapabilityType, SlowPathUpdateType
 from pyrdp.pdu.pdu import PDU
@@ -123,7 +123,7 @@ class PointerPDU(SlowPathPDU):
 
 
 class SuppressOutputPDU(SlowPathPDU):
-    def __init__(self, header, allowDisplayUpdates, left, top, right, bottom):
+    def __init__(self, header, allowDisplayUpdates, left: Optional[int], top: Optional[int], right: Optional[int], bottom: Optional[int]):
 
         super().__init__(header)
         self.allowDisplayUpdates = bool(allowDisplayUpdates)
