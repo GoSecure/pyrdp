@@ -15,7 +15,7 @@ RUN apt-get install notify-osd dbus-x11 libdbus-1-dev libdbus-glib-1-dev -y
 COPY . /pyrdp
 
 RUN cd /pyrdp \
-    && pip3 install -e .
+    && pip3 install -e . -U
 
 # Create user
 RUN useradd --create-home --home-dir /home/pyrdp pyrdp 
