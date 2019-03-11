@@ -309,7 +309,7 @@ class DeviceRedirectionParser(Parser):
 
     def writeDeviceReadRequest(self, pdu: DeviceReadRequestPDU, stream: BytesIO):
         Uint32LE.pack(pdu.length, stream)
-        Uint32LE.pack(pdu.offset, stream)
+        Uint64LE.pack(pdu.offset, stream)
         stream.write(b"\x00" * 20)  # Padding
 
 
