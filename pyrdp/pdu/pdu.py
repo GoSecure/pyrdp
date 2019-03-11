@@ -23,7 +23,7 @@ class PDU:
         properties = dict(self.__dict__)
 
         if len(self.payload) > PDU.REPR_PAYLOAD_CUTOFF_LENGTH:
-            properties["payload"] = properties["payload"][: PDU.REPR_PAYLOAD_CUTOFF_LENGTH] + "<LONG PAYLOAD>"
+            properties["payload"] = properties["payload"][: PDU.REPR_PAYLOAD_CUTOFF_LENGTH] + b"<LONG PAYLOAD>"
 
         representation = self.__class__.__name__ + str(properties)
         return representation
