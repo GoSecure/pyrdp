@@ -59,6 +59,7 @@ def prepareLoggers(logLevel: int, sensorID: str, outDir: Path):
 
     streamHandler = logging.StreamHandler()
     streamHandler.setFormatter(formatter)
+    streamHandler.setLevel(logLevel)
 
     logFileHandler = logging.handlers.TimedRotatingFileHandler(logDir / "mitm.log", when = "D")
     logFileHandler.setFormatter(formatter)
@@ -70,7 +71,7 @@ def prepareLoggers(logLevel: int, sensorID: str, outDir: Path):
     rootLogger = logging.getLogger(LOGGER_NAMES.PYRDP)
     rootLogger.addHandler(streamHandler)
     rootLogger.addHandler(logFileHandler)
-    rootLogger.setLevel(logLevel)
+    rootLogger.setLevel(logging.DEBUG)
 
     connectionsLogger = logging.getLogger(LOGGER_NAMES.MITM_CONNECTIONS)
     connectionsLogger.addHandler(jsonFileHandler)
@@ -144,7 +145,7 @@ def main():
     parser.add_argument("-n", "--nla", help="For NLA client authentication (need to provide credentials)", action="store_true")
     parser.add_argument("-u", "--username", help="Username that will replace the client's username", default=None)
     parser.add_argument("-p", "--password", help="Password that will replace the client's password", default=None)
-    parser.add_argument("-L", "--log-level", help="Log level", default="INFO", choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"])
+    parser.add_argument("-L", "--log-level", help="Console logging level. Logs saved to file are always verbose.", default="INFO", choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"])
     parser.add_argument("-s", "--sensor-id", help="Sensor ID (to differentiate multiple instances of the MITM where logs are aggregated at one place)", default="PyRDP")
 
     args = parser.parse_args()
