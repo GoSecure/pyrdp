@@ -7,6 +7,34 @@
 from logging import Filter, LogRecord
 
 
+class LoggerNameFilter(Filter):
+    """
+    Filter object that filters on logger names and supports wildcards (*).
+    """
+
+    def __init__(self, name: str):
+        super().__init__(name)
+
+    def filter(self, record: LogRecord):
+        if self.name == "":
+            return True
+
+        filterParts = self.name.split(".")
+        loggerParts = record.name.split(".")
+
+        if len(filterParts) > len(loggerParts):
+            return False
+
+        for index in range(len(filterParts)):
+            filterPart = filterParts[index]
+            logPart = loggerParts[index]
+
+            if filterPart != logPart and filterPart != "*":
+                return False
+
+        return True
+
+
 class SensorFilter(Filter):
     """
     Filter that adds the sensor id to the logrecord's arguments.

@@ -25,7 +25,7 @@ import names
 from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
 
-from pyrdp.logging import JSONFormatter, log, LOGGER_NAMES, SessionLogger, VariableFormatter
+from pyrdp.logging import JSONFormatter, log, LOGGER_NAMES, LoggerNameFilter, SessionLogger, VariableFormatter
 from pyrdp.mitm import MITMConfig, RDPMITM
 
 
@@ -49,7 +49,13 @@ class MITMServerFactory(ServerFactory):
         return mitm.getProtocol()
 
 
-def prepareLoggers(logLevel: int, sensorID: str, outDir: Path):
+def prepareLoggers(logLevel: int, logFilter: str, sensorID: str, outDir: Path):
+    """
+    :param logLevel: log level for the stream handler.
+    :param logFilter: logger name to filter on.
+    :param sensorID: ID to differentiate between instances of this program in the JSON log.
+    :param outDir: output directory.
+    """
     logDir = outDir / "logs"
     logDir.mkdir(exist_ok = True)
 
@@ -60,6 +66,7 @@ def prepareLoggers(logLevel: int, sensorID: str, outDir: Path):
     streamHandler = logging.StreamHandler()
     streamHandler.setFormatter(formatter)
     streamHandler.setLevel(logLevel)
+    streamHandler.addFilter(LoggerNameFilter(logFilter))
 
     logFileHandler = logging.handlers.TimedRotatingFileHandler(logDir / "mitm.log", when = "D")
     logFileHandler.setFormatter(formatter)
@@ -146,6 +153,7 @@ def main():
     parser.add_argument("-u", "--username", help="Username that will replace the client's username", default=None)
     parser.add_argument("-p", "--password", help="Password that will replace the client's password", default=None)
     parser.add_argument("-L", "--log-level", help="Console logging level. Logs saved to file are always verbose.", default="INFO", choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"])
+    parser.add_argument("-F", "--log-filter", help="Only show logs from this logger name (accepts '*' wildcards)", default="")
     parser.add_argument("-s", "--sensor-id", help="Sensor ID (to differentiate multiple instances of the MITM where logs are aggregated at one place)", default="PyRDP")
 
     args = parser.parse_args()
@@ -154,7 +162,7 @@ def main():
 
     logLevel = getattr(logging, args.log_level)
 
-    prepareLoggers(logLevel, args.sensor_id, outDir)
+    prepareLoggers(logLevel, args.log_filter, args.sensor_id, outDir)
     pyrdpLogger = logging.getLogger(LOGGER_NAMES.MITM)
 
     target = args.target
