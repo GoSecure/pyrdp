@@ -132,6 +132,21 @@ class DeviceType(IntEnum):
     RDPDR_DTYP_FILESYSTEM = 0x00000008
     RDPDR_DTYP_SMARTCARD = 0x00000020
 
+    @staticmethod
+    def getPrettyName(deviceType: 'DeviceType'):
+        if deviceType == DeviceType.RDPDR_DTYP_FILESYSTEM:
+            return "Filesystem"
+        elif deviceType == DeviceType.RDPDR_DTYP_SMARTCARD:
+            return "Smart card"
+        elif deviceType == DeviceType.RDPDR_DTYP_PRINT:
+            return "Printer"
+        elif deviceType == DeviceType.RDPDR_DTYP_PARALLEL:
+            return "Parallel port"
+        elif deviceType == DeviceType.RDPDR_DTYP_SERIAL:
+            return "Serial port"
+        else:
+            return str(deviceType)
+
 
 class RDPDRCapabilityType(IntEnum):
     """

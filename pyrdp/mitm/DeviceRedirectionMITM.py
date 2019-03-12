@@ -14,7 +14,7 @@ from typing import BinaryIO, Dict
 import names
 
 from pyrdp.core import decodeUTF16LE
-from pyrdp.enum import CreateOption, FileAccess, IOOperationSeverity
+from pyrdp.enum import CreateOption, DeviceType, FileAccess, IOOperationSeverity
 from pyrdp.layer import DeviceRedirectionLayer
 from pyrdp.mitm.config import MITMConfig
 from pyrdp.parser import DeviceRedirectionParser
@@ -222,7 +222,7 @@ class DeviceRedirectionMITM:
 
         for device in pdu.deviceList:
             self.log.info("%(deviceName)s mapped with ID %(deviceID)d: %(deviceData)s", {
-                "deviceName": device.deviceType.name,
+                "deviceName": DeviceType.getPrettyName(device.deviceType),
                 "deviceID": device.deviceID,
                 "deviceData": device.preferredDosName.rstrip(b"\x00").decode()
             })
