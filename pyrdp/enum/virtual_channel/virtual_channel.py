@@ -4,10 +4,10 @@
 # Licensed under the GPLv3 or later.
 #
 
-from enum import IntEnum
+from enum import IntFlag
 
 
-class VirtualChannelPDUFlag(IntEnum):
+class VirtualChannelPDUFlag(IntFlag):
     """
     https://msdn.microsoft.com/en-us/library/cc240553.aspx
     """
