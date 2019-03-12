@@ -4,19 +4,15 @@
 # Licensed under the GPLv3 or later.
 #
 
-import os
 import queue
-from collections import defaultdict
 from enum import IntEnum
 from multiprocessing import Queue
 from time import sleep
-from typing import BinaryIO
 
 from PySide2.QtCore import Signal, QThread
 
 from pyrdp.core import Timer
-from pyrdp.layer import PlayerMessageLayer, TPKTLayer
-from pyrdp.pdu import PlayerMessagePDU
+from pyrdp.player.Replay import Replay
 
 
 class ReplayThreadEvent(IntEnum):
@@ -41,65 +37,19 @@ class ReplayThread(QThread):
     eventReached = Signal(object)
     clearNeeded = Signal()
 
-    def __init__(self, file: BinaryIO):
+    def __init__(self, replay: Replay):
         super().__init__()
 
         self.queue = Queue()
         self.lastSeekTime = 0
         self.requestedSpeed = 1
-
-        events = defaultdict(list)
-        startingPosition = file.tell()
-
-        file.seek(0, os.SEEK_END)
-        size = file.tell()
-
-        # Take note of the position of each event and its timestamp
-        file.seek(0)
-        currentMessagePosition = 0
-
-        tpkt = TPKTLayer()
-        player = PlayerMessageLayer()
-        tpkt.setNext(player)
-
-        def registerEvent(pdu: PlayerMessagePDU):
-            events[pdu.timestamp].append(currentMessagePosition)
-
-        player.createObserver(onPDUReceived = registerEvent)
-
-        while file.tell() < size:
-            data = file.read(4)
-            tpkt.recv(data)
-
-            data = file.read(tpkt.getDataLengthRequired())
-            tpkt.recv(data)
-            currentMessagePosition = file.tell()
-
-        file.seek(startingPosition)
-
-        # Use relative timestamps to simplify things
-        self.events = {}
-
-        if len(events) == 0:
-            self.duration = 0
-        else:
-            timestamps = sorted(events.keys())
-            startingTime = timestamps[0]
-
-            for timestamp in timestamps:
-                relative = timestamp - startingTime
-                self.events[relative] = events[timestamp]
-
-            self.duration = (timestamps[-1] - startingTime) / 1000.0
-
-    def getDuration(self):
-        return self.duration
+        self.replay = replay
 
     def run(self):
         step = 16 / 1000
         currentIndex = 0
         runThread = True
-        timestamps = sorted(self.events.keys())
+        timestamps = sorted(self.replay.events.keys())
         timer = Timer()
 
         while runThread:
@@ -132,7 +82,8 @@ class ReplayThread(QThread):
                 self.timeUpdated.emit(currentTime)
 
                 while currentIndex < len(timestamps) and timestamps[currentIndex] / 1000.0 <= currentTime:
-                    positions = self.events[timestamps[currentIndex]]
+                    nextTimestamp = timestamps[currentIndex]
+                    positions = self.replay.events[nextTimestamp]
 
                     for position in positions:
                         self.eventReached.emit(position)

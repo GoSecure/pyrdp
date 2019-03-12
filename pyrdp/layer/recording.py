@@ -6,6 +6,7 @@
 
 from pyrdp.core import ObservedBy
 from pyrdp.enum import PlayerMessageType
+from pyrdp.layer import BufferedLayer
 from pyrdp.layer.layer import Layer, LayerRoutedObserver
 from pyrdp.parser.recording import PlayerMessageParser
 from pyrdp.pdu import PlayerMessagePDU
@@ -46,14 +47,14 @@ class PlayerMessageObserver(LayerRoutedObserver):
 
 
 @ObservedBy(PlayerMessageObserver)
-class PlayerMessageLayer(Layer):
+class PlayerMessageLayer(BufferedLayer):
     """
     Layer to manage the encapsulation of Player metadata such as event timestamp and
     event type/origin (input, output).
     """
 
-    def __init__(self):
-        super().__init__(PlayerMessageParser())
+    def __init__(self, parser: PlayerMessageParser = PlayerMessageParser()):
+        super().__init__(parser)
 
     def sendMessage(self, data: bytes, messageType: PlayerMessageType, timeStamp: int):
         pdu = PlayerMessagePDU(messageType, timeStamp, data)

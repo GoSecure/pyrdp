@@ -7,7 +7,7 @@
 from PySide2.QtWidgets import QMainWindow, QTabWidget, QAction, QFileDialog
 
 from pyrdp.player.live import LivePlayerWindow
-from pyrdp.player.replay import ReplayWindow
+from pyrdp.player.ReplayWindow import ReplayWindow
 
 
 class MainWindow(QMainWindow):

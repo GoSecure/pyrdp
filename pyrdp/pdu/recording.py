@@ -15,6 +15,6 @@ class PlayerMessagePDU(PDU):
     """
 
     def __init__(self, header: PlayerMessageType, timestamp: int, payload: bytes):
-        self.header = header  # Uint8
+        self.header = header  # Uint16LE
         self.timestamp = timestamp  # Uint64LE
         PDU.__init__(self, payload)

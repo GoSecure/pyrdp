@@ -40,11 +40,10 @@ class Recorder:
             self.addTransport(transport)
 
     def addTransport(self, transportLayer: LayerChainItem):
-        tpktLayer = TPKTLayer()
-        messageLayer = PlayerMessageLayer()
+        player = PlayerMessageLayer()
 
-        LayerChainItem.chain(transportLayer, tpktLayer, messageLayer)
-        self.topLayers.append(messageLayer)
+        LayerChainItem.chain(transportLayer, player)
+        self.topLayers.append(player)
 
     def setParser(self, messageType: PlayerMessageType, parser: Parser):
         """

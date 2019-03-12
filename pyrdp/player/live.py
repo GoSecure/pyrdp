@@ -64,12 +64,11 @@ class LivePlayerTab(RDPConnectionTab):
     def __init__(self, parent: QWidget = None):
         super().__init__(QRemoteDesktop(1024, 768), parent)
         self.tcp = AsyncIOTCPLayer()
-        self.tpkt = TPKTLayer()
-        self.message = PlayerMessageLayer()
+        self.player = PlayerMessageLayer()
         self.eventHandler = PlayerMessageHandler(self.widget, self.text)
 
-        LayerChainItem.chain(self.tcp, self.tpkt, self.message)
-        self.message.addObserver(self.eventHandler)
+        LayerChainItem.chain(self.tcp, self.player)
+        self.player.addObserver(self.eventHandler)
 
     def getProtocol(self):
         return self.tcp
