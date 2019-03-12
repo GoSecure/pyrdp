@@ -30,7 +30,6 @@ from pyrdp.pdu.rdp.licensing import LicenseBinaryBlob, LicenseErrorAlertPDU, Lic
 from pyrdp.pdu.rdp.negotiation import NegotiationRequestPDU, NegotiationResponsePDU
 from pyrdp.pdu.rdp.pointer import Point, PointerCacheEvent, PointerColorEvent, PointerEvent, PointerNewEvent, \
     PointerPositionEvent, PointerSystemEvent
-from pyrdp.pdu.rdp.recording import PlayerMessagePDU
 from pyrdp.pdu.rdp.security import SecurityExchangePDU, SecurityPDU
 from pyrdp.pdu.rdp.slowpath import ConfirmActivePDU, ControlPDU, DemandActivePDU, InputPDU, PlaySoundPDU, PointerPDU, \
     SetErrorInfoPDU, ShareControlHeader, ShareDataHeader, SlowPathPDU, SlowPathUnparsedPDU, SuppressOutputPDU, \
@@ -43,6 +42,7 @@ from pyrdp.pdu.rdp.virtual_channel.device_redirection import DeviceAnnounce, Dev
     DeviceRedirectionCapability, DeviceRedirectionClientCapabilitiesPDU, DeviceRedirectionGeneralCapability, \
     DeviceRedirectionPDU, DeviceRedirectionServerCapabilitiesPDU
 from pyrdp.pdu.rdp.virtual_channel.virtual_channel import VirtualChannelPDU
+from pyrdp.pdu.recording import PlayerMessagePDU
 from pyrdp.pdu.segmentation import SegmentationPDU
 from pyrdp.pdu.tpkt import TPKTPDU
 from pyrdp.pdu.x224 import X224ConnectionConfirmPDU, X224ConnectionRequestPDU, X224DataPDU, X224DisconnectRequestPDU, \

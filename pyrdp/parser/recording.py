@@ -3,7 +3,7 @@ from io import BytesIO
 from pyrdp.core import Uint64LE, Uint8
 from pyrdp.enum import PlayerMessageType
 from pyrdp.parser import Parser
-from pyrdp.pdu.rdp.recording import PlayerMessagePDU
+from pyrdp.pdu import PlayerMessagePDU
 
 
 class PlayerMessageParser(Parser):
