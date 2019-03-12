@@ -12,10 +12,10 @@ from pyrdp.logging import LOGGER_NAMES
 from pyrdp.ui import QRemoteDesktop
 
 
-class RDPConnectionTab(QWidget):
+class BaseTab(QWidget):
     """
     Class that encapsulates logic for a tab that displays an RDP connection, regardless of its origin
-    (network or file)
+    (network or file).
     """
 
     def __init__(self, viewer: QRemoteDesktop, parent: QWidget = None):

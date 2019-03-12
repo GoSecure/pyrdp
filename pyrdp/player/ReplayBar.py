@@ -9,13 +9,13 @@ from PySide2.QtCore import Qt, Signal
 from PySide2.QtWidgets import QHBoxLayout, QLabel, QSizePolicy, QSlider, QSpacerItem, QVBoxLayout, QWidget
 
 from pyrdp.logging import LOGGER_NAMES
-from pyrdp.player.ClickableProgressBar import ClickableProgressBar
+from pyrdp.player.SeekBar import SeekBar
 from pyrdp.ui import PlayPauseButton
 
 
-class ControlBar(QWidget):
+class ReplayBar(QWidget):
     """
-    Widget that contains the play/pause button, the progress bar and the speed slider.
+    Widget that contains the play/pause button, the seek bar and the speed slider.
     """
     play = Signal()
     pause = Signal()
@@ -31,7 +31,7 @@ class ControlBar(QWidget):
         self.button.setMaximumWidth(100)
         self.button.clicked.connect(self.onButtonClicked)
 
-        self.timeSlider = ClickableProgressBar()
+        self.timeSlider = SeekBar()
         self.timeSlider.setMinimum(0)
         self.timeSlider.setMaximum(int(duration * 1000))
         self.timeSlider.valueChanged.connect(self.onSeek)

@@ -8,7 +8,7 @@ from PySide2.QtWidgets import QWidget, QProgressBar
 from PySide2.QtGui import QMouseEvent
 
 
-class ClickableProgressBar(QProgressBar):
+class SeekBar(QProgressBar):
     """
     Progress bar widget that can be clicked to set the current progress.
     """

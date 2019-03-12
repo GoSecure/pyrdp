@@ -13,7 +13,7 @@ from PySide2.QtCore import QThread
 from pyrdp.logging import LOGGER_NAMES
 
 
-class ServerThread(QThread):
+class LiveThread(QThread):
     """
     Thread for receiving live connection data.
     """

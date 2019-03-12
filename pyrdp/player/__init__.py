@@ -4,15 +4,16 @@
 # Licensed under the GPLv3 or later.
 #
 
-from pyrdp.player.BasePlayerWindow import BasePlayerWindow
-from pyrdp.player.ClickableProgressBar import ClickableProgressBar
-from pyrdp.player.ControlBar import ControlBar
-from pyrdp.player.event import PlayerMessageHandler
-from pyrdp.player.live import LivePlayerTab, LivePlayerWindow
-from pyrdp.player.player import MainWindow
-from pyrdp.player.RDPConnectionTab import RDPConnectionTab
+from pyrdp.player.BaseTab import BaseTab
+from pyrdp.player.BaseWindow import BaseWindow
+from pyrdp.player.LiveTab import LiveTab
+from pyrdp.player.LiveThread import LiveThread
+from pyrdp.player.LiveWindow import LiveWindow
+from pyrdp.player.MainWindow import MainWindow
+from pyrdp.player.PlayerMessageHandler import PlayerMessageHandler
 from pyrdp.player.Replay import Replay
+from pyrdp.player.ReplayBar import ReplayBar
 from pyrdp.player.ReplayTab import ReplayTab
 from pyrdp.player.ReplayThread import ReplayThread, ReplayThreadEvent
 from pyrdp.player.ReplayWindow import ReplayWindow
-from pyrdp.player.ServerThread import ServerThread
+from pyrdp.player.SeekBar import SeekBar

@@ -1,10 +1,10 @@
 from PySide2.QtWidgets import QWidget
 
-from pyrdp.player import BasePlayerWindow
+from pyrdp.player.BaseWindow import BaseWindow
 from pyrdp.player.ReplayTab import ReplayTab
 
 
-class ReplayWindow(BasePlayerWindow):
+class ReplayWindow(BaseWindow):
     """
     Class for managing replay tabs.
     """

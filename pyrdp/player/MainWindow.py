@@ -4,9 +4,9 @@
 # Licensed under the GPLv3 or later.
 #
 
-from PySide2.QtWidgets import QMainWindow, QTabWidget, QAction, QFileDialog
+from PySide2.QtWidgets import QAction, QFileDialog, QMainWindow, QTabWidget
 
-from pyrdp.player.live import LivePlayerWindow
+from pyrdp.player.LiveWindow import LiveWindow
 from pyrdp.player.ReplayWindow import ReplayWindow
 
 
@@ -23,7 +23,7 @@ class MainWindow(QMainWindow):
         """
         super().__init__()
 
-        self.liveWindow = LivePlayerWindow(bind_address, port)
+        self.liveWindow = LiveWindow(bind_address, port)
         self.replayWindow = ReplayWindow()
 
         self.tabManager = QTabWidget()

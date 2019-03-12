@@ -3,6 +3,7 @@
 # Copyright (C) 2018 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+
 import logging
 
 from PySide2.QtGui import QKeySequence
@@ -11,7 +12,7 @@ from PySide2.QtWidgets import QShortcut, QTabWidget, QWidget
 from pyrdp.logging import LOGGER_NAMES
 
 
-class BasePlayerWindow(QTabWidget):
+class BaseWindow(QTabWidget):
     """
     Class that encapsulates the common logic to manage a QtTabWidget to display RDP connections,
     regardless of their origin (network or file).

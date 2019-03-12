@@ -1,15 +1,15 @@
 from PySide2.QtWidgets import QApplication, QWidget
 
 from pyrdp.layer import PlayerMessageLayer
-from pyrdp.player.ControlBar import ControlBar
-from pyrdp.player.event import PlayerMessageHandler
-from pyrdp.player.RDPConnectionTab import RDPConnectionTab
+from pyrdp.player.ReplayBar import ReplayBar
+from pyrdp.player.PlayerMessageHandler import PlayerMessageHandler
+from pyrdp.player.BaseTab import BaseTab
 from pyrdp.player.Replay import Replay
 from pyrdp.player.ReplayThread import ReplayThread
 from pyrdp.ui import QRemoteDesktop
 
 
-class ReplayTab(RDPConnectionTab):
+class ReplayTab(BaseTab):
     """
     Tab that displays a RDP Connection that is being replayed from a file.
     """
@@ -34,7 +34,7 @@ class ReplayTab(RDPConnectionTab):
         self.thread.clearNeeded.connect(self.clear)
         self.thread.start()
 
-        self.controlBar = ControlBar(replay.duration)
+        self.controlBar = ReplayBar(replay.duration)
         self.controlBar.play.connect(self.thread.play)
         self.controlBar.pause.connect(self.thread.pause)
         self.controlBar.seek.connect(self.thread.seek)
