@@ -113,9 +113,10 @@ class RDPMITM:
 
         self.state.securitySettings.addObserver(RC4LoggingObserver(self.rc4Log))
 
-        date = datetime.datetime.now()
-        replayFileName = "rdp_replay_{}_{}.pyrdp".format(date.strftime('%Y%m%d_%H-%M-%S'), date.microsecond // 1000)
-        self.recorder.addTransport(FileLayer(self.config.replayDir / replayFileName))
+        if config.recordReplays:
+            date = datetime.datetime.now()
+            replayFileName = "rdp_replay_{}_{}.pyrdp".format(date.strftime('%Y%m%d_%H-%M-%S'), date.microsecond // 1000)
+            self.recorder.addTransport(FileLayer(self.config.replayDir / replayFileName))
 
     def getProtocol(self) -> Protocol:
         """

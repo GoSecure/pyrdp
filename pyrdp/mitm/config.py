@@ -41,6 +41,9 @@ class MITMConfig:
         self.outDir: Path = None
         """The output directory"""
 
+        self.recordReplays: bool = True
+        """Whether replays should be recorded or not"""
+
     @property
     def replayDir(self) -> Path:
         """

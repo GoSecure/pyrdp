@@ -155,6 +155,7 @@ def main():
     parser.add_argument("-L", "--log-level", help="Console logging level. Logs saved to file are always verbose.", default="INFO", choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"])
     parser.add_argument("-F", "--log-filter", help="Only show logs from this logger name (accepts '*' wildcards)", default="")
     parser.add_argument("-s", "--sensor-id", help="Sensor ID (to differentiate multiple instances of the MITM where logs are aggregated at one place)", default="PyRDP")
+    parser.add_argument("--no-replay", help="Disable replay recording", action="store_true")
 
     args = parser.parse_args()
     outDir = Path(args.output)
@@ -195,6 +196,7 @@ def main():
     config.replacementUsername = args.username
     config.replacementPassword = args.password
     config.outDir = outDir
+    config.recordReplays = not args.no_replay
 
     logConfiguration(config)
 
