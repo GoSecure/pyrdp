@@ -8,7 +8,10 @@
 
 import asyncio
 
+import OpenSSL
 from twisted.internet import asyncioreactor
+
+from pyrdp.core.ssl import ServerTLSContext
 
 asyncioreactor.install(asyncio.get_event_loop())
 
@@ -197,6 +200,18 @@ def main():
     config.replacementPassword = args.password
     config.outDir = outDir
     config.recordReplays = not args.no_replay
+
+    try:
+        # Check if OpenSSL accepts the private key and certificate.
+        ServerTLSContext(config.privateKeyFileName, config.certificateFileName)
+    except OpenSSL.SSL.Error as error:
+        log.error(
+            "An error occurred when creating the server TLS context. " +
+            "There may be a problem with your private key or certificate (e.g: signature algorithm too weak). " +
+            "Here is the exception: %s" % error
+        )
+
+        sys.exit(1)
 
     logConfiguration(config)
 
