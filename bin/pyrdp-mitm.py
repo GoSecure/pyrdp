@@ -208,7 +208,8 @@ def main():
         log.error(
             "An error occurred when creating the server TLS context. " +
             "There may be a problem with your private key or certificate (e.g: signature algorithm too weak). " +
-            "Here is the exception: %s" % error
+            "Here is the exception: %(error)s",
+            {"error": error}
         )
 
         sys.exit(1)
