@@ -32,7 +32,8 @@ class RC4:
         self.initialBytes = key
         self.currentBytes = key
         self.key = rc4.RC4Key(key)
-        self.operationCount = 0
+        self.cipherCount = 0
+        self.macCount = 0
     
     def encrypt(self, data):
         """
@@ -62,7 +63,7 @@ class RC4:
         :return: str
         """
         if salted:
-            return macSaltedData(self.macKey, data, self.operationCount)[: 8]
+            return macSaltedData(self.macKey, data, self.macCount)[: 8]
         else:
             return macData(self.macKey, data)[: 8]
     
@@ -83,12 +84,13 @@ class RC4:
         """
         Increment the operation count and update the key if necessary.
         """
-        self.operationCount += 1
+        self.cipherCount += 1
+        self.macCount += 1
 
-        if self.operationCount == 4096:
+        if self.cipherCount == 4096:
             self.currentBytes = updateKey(self.initialBytes, self.currentBytes, self.encryptionMethod)
             self.key = rc4.RC4Key(self.currentBytes)
-            self.operationCount = 0
+            self.cipherCount = 0
 
 class RC4Crypter:
     """
