@@ -60,7 +60,7 @@ class PassiveClipboardStealer:
 
             if pdu.msgFlags == ClipboardMessageFlags.CB_RESPONSE_OK:
                 clipboardData = self.decodeClipboardData(pdu.requestedFormatData)
-                self.log.info("%(clipboardData)s", {"clipboardData": clipboardData})
+                self.log.info("Clipboard data: %(clipboardData)r", {"clipboardData": clipboardData})
                 self.recorder.record(pdu, PlayerMessageType.CLIPBOARD_DATA)
 
             self.forwardNextDataResponse = True
