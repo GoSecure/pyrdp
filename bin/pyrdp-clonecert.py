@@ -152,8 +152,23 @@ def main():
                 "serverBits": cert.get_pubkey().bits()
             })
 
+    # Actual type is str, but this prevents warnings
+    digestAlgorithm: bytes = cert.get_signature_algorithm().decode()
+
+    if digestAlgorithm in ["md4", "md5"]:
+        defaultDigestAlgorithm = "sha256"
+
+        answer = input(
+            f"The digest algorithm used by the server ('{digestAlgorithm}') is too weak and will not work with the PyRDP MITM. " +
+            f"Do you want to change the digest algorithm to {defaultDigestAlgorithm}? [Y/n]"
+        )
+
+        if answer == "" or answer[0].upper() == "Y":
+            clonerLog.info(f"Digest algorithm changed from {digestAlgorithm} to {defaultDigestAlgorithm}")
+            digestAlgorithm = defaultDigestAlgorithm
+
     cert.set_pubkey(key)
-    cert.sign(key, cert.get_signature_algorithm().decode())
+    cert.sign(key, digestAlgorithm)
 
     clonerLog.info("Saving certificate to %(certPath)r", {"certPath": arguments.out_file})
 
