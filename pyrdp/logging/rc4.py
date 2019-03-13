@@ -16,6 +16,6 @@ class RC4LoggingObserver(SecuritySettingsObserver):
         self.log = log
 
     def onCrypterGenerated(self, settings):
-        self.log.info("RC4 client/server random: %(rc4ClientRandom)s %(rc4ServerRandom)s",
-                      {"rc4ClientRandom": hexlify(settings.clientRandom).decode(),
-                       "rc4ServerRandom": hexlify(settings.serverRandom).decode()})
+        self.log.debug("RC4 client/server random: %(rc4ClientRandom)s %(rc4ServerRandom)s",
+                       {"rc4ClientRandom": hexlify(settings.clientRandom).decode(),
+                        "rc4ServerRandom": hexlify(settings.serverRandom).decode()})
