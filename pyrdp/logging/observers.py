@@ -4,10 +4,9 @@
 # Licensed under the GPLv3 or later.
 #
 
-from binascii import hexlify
 from logging import LoggerAdapter
 
-from pyrdp.enum import MCSPDUType, X224PDUType
+from pyrdp.enum import ErrorInfo, MCSPDUType, X224PDUType
 from pyrdp.layer import FastPathObserver, LayerObserver, MCSObserver, SecurityObserver, SlowPathObserver, X224Observer
 from pyrdp.parser import ClientInfoParser
 from pyrdp.pdu import FastPathPDU, MCSAttachUserConfirmPDU, MCSChannelJoinConfirmPDU, MCSConnectResponsePDU, MCSPDU, \
@@ -111,6 +110,14 @@ class SlowPathLogger(LoggingObserver, SlowPathObserver):
         if hasattr(pdu.header, "subtype"):
             if hasattr(pdu, "errorInfo"):
                 description = pdu.errorInfo
+
+                if pdu.errorInfo != ErrorInfo.ERRINFO_NONE:
+                    errorInfoText = ErrorInfo.getText(pdu.errorInfo)
+
+                    if pdu.errorInfo in [ErrorInfo.ERRINFO_LOGOFF_BY_USER]:
+                        self.log.info("%(description)s", {"description": errorInfoText})
+                    else:
+                        self.log.error("RDP Error Info: %(description)s", {"description", errorInfoText})
             else:
                 description = pdu.header.subtype
         else:
