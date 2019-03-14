@@ -3,6 +3,7 @@
 # Copyright (C) 2018 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+
 from enum import IntEnum
 
 from pyrdp.exceptions import CrypterUnavailableError

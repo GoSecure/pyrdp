@@ -5,6 +5,7 @@
 #
 
 import Crypto.Random
+from Crypto.PublicKey import RSA
 
 from pyrdp.core import ObservedBy, Observer, Subject
 from pyrdp.enum import EncryptionMethod
@@ -76,7 +77,7 @@ class SecuritySettings(Subject):
         """
         self.encryptionMethod = encryptionMethod
 
-    def setServerPublicKey(self, serverPublicKey):
+    def setServerPublicKey(self, serverPublicKey: RSA.pubkey.pubkey):
         """
         Set the server's public key.
         :param serverPublicKey: the server's public key.
