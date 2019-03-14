@@ -21,10 +21,11 @@
 Basic Encoding Rules utility functions.
 ASN.1 standard.
 """
+
 from enum import IntEnum
+from typing import BinaryIO
 
 from pyrdp.core.packing import Uint8, Uint16BE, Uint32BE
-
 
 class PC(IntEnum):
     BER_PC_MASK = 0x20
@@ -49,7 +50,7 @@ class Tag(IntEnum):
     BER_TAG_SEQUENCE = 0x10
     BER_TAG_SEQUENCE_OF = 0x10
 
-def berPC(isConstruct):
+def berPC(isConstruct: bool):
     """
     Return BER_CONSTRUCT if true, BER_PRIMITIVE if false
     :param isConstruct: True if BER_CONSTRUCT expected
@@ -65,7 +66,7 @@ def readLength(s):
     Read length of BER structure
     Length is on 1, 2 or 3 bytes
     :param s: stream
-    :type s: file
+    :type s: BinaryIO
     :return: int
     """
 
@@ -98,7 +99,7 @@ def readUniversalTag(s, tag, isConstruct):
     """
     Unpack universal tag and return True if the proper tag was read.
     :param s: stream
-    :type s: file
+    :type s: BinaryIO
     :param tag: BER tag
     :type tag: Tag
     :param isConstruct: True if a construct is expected
@@ -123,7 +124,7 @@ def readApplicationTag(s, tag):
     """
     Unpack an application tag and return the length of the application packet.
     :param s: stream
-    :type s: file
+    :type s: BinaryIO
     :param tag: application tag.
     :type tag: Tag
     :return: int
@@ -160,7 +161,7 @@ def readBoolean(s):
     """
     Unpack a BER boolean
     :param s: stream
-    :type s: file
+    :type s: BinaryIO
     :return: bool
     """
     if not readUniversalTag(s, Tag.BER_TAG_BOOLEAN, False):
@@ -186,7 +187,7 @@ def readInteger(s):
     """
     Unpack a BER integer
     :param s: stream
-    :type s: file
+    :type s: BinaryIO
     :return: int
     """
     if not readUniversalTag(s, Tag.BER_TAG_INTEGER, False):
@@ -224,7 +225,7 @@ def readOctetString(s):
     """
     Unpack a BER octet string
     :param s: stream
-    :type s: file
+    :type s: BinaryIO
     :return: str
     """
     if not readUniversalTag(s, Tag.BER_TAG_OCTET_STRING, False):
@@ -245,7 +246,7 @@ def readEnumeration(s):
     """
     Unpack a BER enumeration value
     :param s: stream
-    :type s: file
+    :type s: BinaryIO
     :return: int
     """
     if not readUniversalTag(s, Tag.BER_TAG_ENUMERATED, False):
