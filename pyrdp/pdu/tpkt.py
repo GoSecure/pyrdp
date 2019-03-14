@@ -11,12 +11,9 @@ from pyrdp.pdu.segmentation import SegmentationPDU
 
 class TPKTPDU(SegmentationPDU):
 
-    def __init__(self, payload):
-        """
-        :type payload: bytes
-        """
+    def __init__(self, payload: bytes):
         PDU.__init__(self, payload)
         self.header = 3
 
-    def getSegmentationType(self):
+    def getSegmentationType(self) -> SegmentationPDUType:
         return SegmentationPDUType.TPKT

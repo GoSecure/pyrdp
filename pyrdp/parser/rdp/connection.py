@@ -5,6 +5,7 @@
 #
 
 import struct
+import typing
 from io import BytesIO
 
 from Crypto.PublicKey import RSA
@@ -25,6 +26,7 @@ class ClientConnectionParser(Parser):
     """
     def __init__(self):
         super().__init__()
+
         self.parsers = {
             ConnectionDataType.CLIENT_CORE: self.parseClientCoreData,
             ConnectionDataType.CLIENT_SECURITY: self.parseClientSecurityData,
@@ -68,7 +70,7 @@ class ClientConnectionParser(Parser):
 
         return ClientDataPDU(core, security, network, cluster)
 
-    def parseStructure(self, stream):
+    def parseStructure(self, stream: BytesIO) -> typing.Union[ClientCoreData, ClientNetworkData, ClientSecurityData, ClientClusterData]:
         header = Uint16LE.unpack(stream)
         length = Uint16LE.unpack(stream) - 4
         data = stream.read(length)
@@ -83,7 +85,7 @@ class ClientConnectionParser(Parser):
 
         return self.parsers[header](substream)
 
-    def parseClientCoreData(self, stream):
+    def parseClientCoreData(self, stream: BytesIO) -> ClientCoreData:
         stream = StrictStream(stream)
 
         # 128 bytes minimum (excluding header)
@@ -126,12 +128,12 @@ class ClientConnectionParser(Parser):
 
         return core
 
-    def parseClientSecurityData(self, stream):
+    def parseClientSecurityData(self, stream: BytesIO) -> ClientSecurityData:
         encryptionMethods = Uint32LE.unpack(stream)
         extEncryptionMethods = Uint32LE.unpack(stream)
         return ClientSecurityData(encryptionMethods, extEncryptionMethods)
 
-    def parseClientNetworkData(self, stream):
+    def parseClientNetworkData(self, stream: BytesIO) -> ClientNetworkData:
         channelCount = Uint32LE.unpack(stream)
         data = stream.getvalue()[4 :]
 
@@ -147,17 +149,15 @@ class ClientConnectionParser(Parser):
 
         return ClientNetworkData(channelDefinitions)
 
-    def parseClientClusterData(self, stream):
+    def parseClientClusterData(self, stream: BytesIO) -> ClientClusterData:
         flags = Uint32LE.unpack(stream)
         redirectedSessionID = Uint32LE.unpack(stream)
         return ClientClusterData(flags, redirectedSessionID)
 
-    def write(self, pdu):
+    def write(self, pdu: ClientDataPDU) -> bytes:
         """
         Encode a Client Data PDU to bytes.
         :param pdu: the Client Data PDU
-        :type pdu: ClientDataPDU
-        :return: str
         """
         stream = BytesIO()
 
@@ -175,7 +175,7 @@ class ClientConnectionParser(Parser):
 
         return stream.getvalue()
 
-    def writeStructure(self, stream, data):
+    def writeStructure(self, stream: BytesIO, data: typing.Union[ClientCoreData, ClientNetworkData, ClientSecurityData, ClientClusterData]):
         if data.header not in self.writers:
             raise UnknownPDUTypeError("Trying to write unknown Client Data structure %s" % data.header, data.header)
 
@@ -188,7 +188,7 @@ class ClientConnectionParser(Parser):
         stream.write(Uint16LE.pack(len(substream) + 4))
         stream.write(substream)
 
-    def writeClientCoreData(self, stream, core):
+    def writeClientCoreData(self, stream: BytesIO, core: ClientCoreData):
         stream.write(Uint32LE.pack(core.version))
         stream.write(Uint16LE.pack(core.desktopWidth))
         stream.write(Uint16LE.pack(core.desktopHeight))
@@ -222,11 +222,11 @@ class ClientConnectionParser(Parser):
             # We tried to write an optional field which was not present. Stop writing beyond this point.
             pass
 
-    def writeClientSecurityData(self, stream, security):
+    def writeClientSecurityData(self, stream: BytesIO, security: ClientSecurityData):
         stream.write(Uint32LE.pack(security.encryptionMethods))
         stream.write(Uint32LE.pack(security.extEncryptionMethods))
 
-    def writeClientNetworkData(self, stream, network):
+    def writeClientNetworkData(self, stream: BytesIO, network: ClientNetworkData):
         stream.write(Uint32LE.pack(len(network.channelDefinitions)))
 
         for channel in network.channelDefinitions:
@@ -236,7 +236,7 @@ class ClientConnectionParser(Parser):
             stream.write(channel.name.encode().ljust(8, b"\x00")[: 8])
             stream.write(Uint32LE.pack(channel.options))
 
-    def writeClientClusterData(self, stream, cluster):
+    def writeClientClusterData(self, stream: BytesIO, cluster: ClientClusterData):
         stream.write(Uint32LE.pack(cluster.flags))
         stream.write(Uint32LE.pack(cluster.redirectedSessionID))
 
@@ -284,7 +284,7 @@ class ServerConnectionParser(Parser):
 
         return ServerDataPDU(core, security, network)
 
-    def parseStructure(self, stream):
+    def parseStructure(self, stream: BytesIO) -> typing.Union[ServerCoreData, ServerSecurityData, ServerNetworkData]:
         header = Uint16LE.unpack(stream)
         length = Uint16LE.unpack(stream) - 4
         data = stream.read(length)
@@ -299,7 +299,7 @@ class ServerConnectionParser(Parser):
 
         return self.parsers[header](substream)
 
-    def parseServerCoreData(self, stream):
+    def parseServerCoreData(self, stream: BytesIO) -> ServerCoreData:
         stream = StrictStream(stream)
 
         clientRequestedProtocols = None
@@ -314,14 +314,14 @@ class ServerConnectionParser(Parser):
 
         return ServerCoreData(version, clientRequestedProtocols, earlyCapabilityFlags)
 
-    def parseServerNetworkData(self, stream):
+    def parseServerNetworkData(self, stream: BytesIO) -> ServerNetworkData:
         mcsChannelID = Uint16LE.unpack(stream)
         channelCount = Uint16LE.unpack(stream)
         channels = [Uint16LE.unpack(stream) for _ in range(channelCount)]
 
         return ServerNetworkData(mcsChannelID, channels)
 
-    def parseServerSecurityData(self, stream):
+    def parseServerSecurityData(self, stream: BytesIO) -> ServerSecurityData:
         stream = StrictStream(stream)
         encryptionMethod = EncryptionMethod(Uint32LE.unpack(stream))
         encryptionLevel = EncryptionLevel(Uint32LE.unpack(stream))
@@ -339,7 +339,7 @@ class ServerConnectionParser(Parser):
 
         return ServerSecurityData(encryptionMethod, encryptionLevel, serverRandom, serverCertificate)
 
-    def parseServerCertificate(self, data):
+    def parseServerCertificate(self, data: bytes) -> ProprietaryCertificate:
         stream = BytesIO(data)
         version = Uint32LE.unpack(stream)
 
@@ -348,7 +348,7 @@ class ServerConnectionParser(Parser):
         else:
             raise NotImplementedError("Unhandled certificate type")
 
-    def parseProprietaryCertificate(self, stream):
+    def parseProprietaryCertificate(self, stream: BytesIO) -> ProprietaryCertificate:
         signatureAlgorithmID = Uint32LE.unpack(stream)
         keyAlgorithmID = Uint32LE.unpack(stream)
         publicKeyType = Uint16LE.unpack(stream)
@@ -363,15 +363,15 @@ class ServerConnectionParser(Parser):
 
         return ProprietaryCertificate(signatureAlgorithmID, keyAlgorithmID, publicKeyType, publicKey, signatureType, signature, padding)
 
-    def parsePublicKey(self, data):
+    def parsePublicKey(self, data: bytes) -> RSA.pubkey.pubkey:
         stream = BytesIO(data)
-        magic = stream.read(4)
+        _magic = stream.read(4)
         keyLength = Uint32LE.unpack(stream)
-        bitLength = Uint32LE.unpack(stream)
-        dataLength = Uint32LE.unpack(stream)
+        _bitLength = Uint32LE.unpack(stream)
+        _dataLength = Uint32LE.unpack(stream)
         publicExponent = Uint32LE.unpack(stream)
         modulus = stream.read(keyLength - 8)
-        padding = stream.read(8)
+        _padding = stream.read(8)
 
         # Modulus must be reversed because bytes_to_long expects it to be in big endian format
         modulus = bytes_to_long(modulus[:: -1])
@@ -379,27 +379,25 @@ class ServerConnectionParser(Parser):
         publicKey = RSA.construct((modulus, publicExponent))
         return publicKey
 
-    def write(self, pdu):
+    def write(self, pdu: ServerDataPDU) -> bytes:
         """
         Encode a Server Data PDU to bytes
         :param pdu: the Server Data PDU
-        :type pdu: ServerDataPDU
-        :return: str
         """
         stream = BytesIO()
 
-        if pdu.core:
-            self.writeStructure(stream, pdu.core)
+        if pdu.coreData:
+            self.writeStructure(stream, pdu.coreData)
 
-        if pdu.security:
-            self.writeStructure(stream, pdu.security)
+        if pdu.securityData:
+            self.writeStructure(stream, pdu.securityData)
 
-        if pdu.network:
-            self.writeStructure(stream, pdu.network)
+        if pdu.networkData:
+            self.writeStructure(stream, pdu.networkData)
 
         return stream.getvalue()
 
-    def writeStructure(self, stream, data):
+    def writeStructure(self, stream: BytesIO, data: typing.Union[ServerCoreData, ServerSecurityData, ServerNetworkData]):
         """
         :param stream: BytesIO to write to
         :param data: The structure to write (ex: ServerCoreData)
@@ -416,11 +414,7 @@ class ServerConnectionParser(Parser):
         stream.write(Uint16LE.pack(len(substream) + 4))
         stream.write(substream)
 
-    def writeServerCoreData(self, stream, data):
-        """
-        :type stream: BytesIO
-        :type data: ServerCoreData
-        """
+    def writeServerCoreData(self, stream: BytesIO, data: ServerCoreData):
         stream.write(Uint32LE.pack(data.version))
 
         requestedProtocols = data.clientRequestedProtocols
@@ -439,16 +433,14 @@ class ServerConnectionParser(Parser):
         """
         stream.write(Uint16LE.pack(data.mcsChannelID))
         stream.write(Uint16LE.pack(len(data.channels)))
+
         for channel in data.channels:
             stream.write(Uint16LE.pack(channel))
+
         if len(data.channels) % 2 != 0:
             stream.write(Uint16LE.pack(0))  # Write 2 empty bytes so we keep a multiple of 4.
 
-    def writeServerSecurityData(self, stream, data):
-        """
-        :type stream: BytesIO
-        :type data: ServerSecurityData
-        """
+    def writeServerSecurityData(self, stream: BytesIO, data: ServerSecurityData):
         stream.write(Uint32LE.pack(data.encryptionMethod))
         stream.write(Uint32LE.pack(data.encryptionLevel))
         if data.serverRandom is not None:
@@ -459,7 +451,7 @@ class ServerConnectionParser(Parser):
             stream.write(data.serverRandom)
             stream.write(serverCertificate)
 
-    def writeServerCertificate(self, certificate):
+    def writeServerCertificate(self, certificate: ProprietaryCertificate) -> bytes:
         stream = BytesIO()
 
         if certificate.type == ServerCertificateType.PROPRIETARY:
@@ -470,7 +462,7 @@ class ServerConnectionParser(Parser):
 
         return stream.getvalue()
 
-    def writeProprietaryCertificate(self, stream, cert):
+    def writeProprietaryCertificate(self, stream: BytesIO, cert: ProprietaryCertificate):
         keyBytes = self.writePublicKey(cert.publicKey)
 
         Uint32LE.pack(cert.signatureAlgorithmID, stream)
@@ -483,7 +475,7 @@ class ServerConnectionParser(Parser):
         stream.write(cert.signature)
         stream.write(b"\x00" * 8)
 
-    def writePublicKey(self, publicKey):
+    def writePublicKey(self, publicKey: RSA.pubkey.pubkey) -> bytes:
         modulus = publicKey.n
         publicExponent = publicKey.e
 

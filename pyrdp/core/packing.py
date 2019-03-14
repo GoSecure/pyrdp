@@ -7,12 +7,14 @@
 import struct
 import typing
 
+from pyrdp.core.stream import StrictStream
+
 
 class Integer:
     FORMAT = ""
 
     @classmethod
-    def unpack(cls, data: typing.Union[bytes, typing.BinaryIO, int]) -> int:
+    def unpack(cls, data: typing.Union[bytes, typing.BinaryIO, StrictStream, int]) -> int:
         """
         Unpack an integer from its binary representation.
         :param data: data to unpack from.

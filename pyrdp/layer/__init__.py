@@ -5,7 +5,6 @@
 #
 
 from pyrdp.layer.buffered import BufferedLayer
-from pyrdp.layer.gcc import GCCClientConnectionLayer
 from pyrdp.layer.layer import Layer, LayerChainItem, IntermediateLayer, LayerObserver, LayerRoutedObserver, LayerStrictRoutedObserver
 from pyrdp.layer.mcs import MCSLayer, MCSObserver
 from pyrdp.layer.raw import RawLayer

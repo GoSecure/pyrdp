@@ -29,7 +29,7 @@ class ClipboardMessageFlags(IntEnum):
     """
     https://msdn.microsoft.com/en-us/library/cc241097.aspx
     """
-
+    NONE = 0
     CB_RESPONSE_OK = 0x0001
     CB_RESPONSE_FAIL = 0x0002
     CB_ASCII_NAMES = 0x0004

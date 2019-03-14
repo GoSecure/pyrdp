@@ -92,15 +92,18 @@ class ClipboardParser(Parser):
         :type pdu: FormatListPDU
         """
         substream = BytesIO()
+
         for format in pdu.formatList.values():
             Uint32LE.pack(format.formatId, substream)
             formatName = format.formatName
             lastChar = b""
             pos = 0
+
             while lastChar != b"\x00\x00":
                 lastChar = formatName[pos:pos + 2]
                 substream.write(lastChar)
                 pos += 2
+
         Uint32LE.pack(len(substream.getvalue()), stream)
         stream.write(substream.getvalue())
 

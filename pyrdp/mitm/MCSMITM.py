@@ -132,21 +132,21 @@ class MCSMITM:
             serverData = rdpParser.parse(gccPDU.payload)
 
             # Save security settings
-            self.state.securitySettings.setEncryptionMethod(serverData.security.encryptionMethod)
-            self.state.securitySettings.setServerRandom(serverData.security.serverRandom)
+            self.state.securitySettings.setEncryptionMethod(serverData.securityData.encryptionMethod)
+            self.state.securitySettings.setServerRandom(serverData.securityData.serverRandom)
 
-            if serverData.security.serverCertificate:
-                self.state.securitySettings.setServerPublicKey(serverData.security.serverCertificate.publicKey)
+            if serverData.securityData.serverCertificate:
+                self.state.securitySettings.setServerPublicKey(serverData.securityData.serverCertificate.publicKey)
 
             # Map channel names to IDs
-            self.state.channelMap[serverData.network.mcsChannelID] = MCSChannelName.IO
+            self.state.channelMap[serverData.networkData.mcsChannelID] = MCSChannelName.IO
 
-            for index in range(len(serverData.network.channels)):
-                channelID = serverData.network.channels[index]
+            for index in range(len(serverData.networkData.channels)):
+                channelID = serverData.networkData.channels[index]
                 self.state.channelMap[channelID] = self.state.channelDefinitions[index].name
 
             # Replace the server's public key with our own key so we can decrypt the incoming client random
-            cert = serverData.security.serverCertificate
+            cert = serverData.securityData.serverCertificate
             if cert:
                 cert = ProprietaryCertificate(
                     cert.signatureAlgorithmID,
@@ -160,16 +160,16 @@ class MCSMITM:
 
             # FIPS is not implemented so avoid using that
             security = ServerSecurityData(
-                serverData.security.encryptionMethod if serverData.security.encryptionMethod != EncryptionMethod.ENCRYPTION_FIPS else EncryptionMethod.ENCRYPTION_128BIT,
-                serverData.security.encryptionLevel if serverData.security.encryptionLevel != EncryptionLevel.ENCRYPTION_LEVEL_FIPS else EncryptionLevel.ENCRYPTION_LEVEL_HIGH,
-                serverData.security.serverRandom,
+                serverData.securityData.encryptionMethod if serverData.securityData.encryptionMethod != EncryptionMethod.ENCRYPTION_FIPS else EncryptionMethod.ENCRYPTION_128BIT,
+                serverData.securityData.encryptionLevel if serverData.securityData.encryptionLevel != EncryptionLevel.ENCRYPTION_LEVEL_FIPS else EncryptionLevel.ENCRYPTION_LEVEL_HIGH,
+                serverData.securityData.serverRandom,
                 cert
             )
 
             # The clientRequestedProtocols field MUST be the same as the one received in the X224 Connection Request
-            serverData.core.clientRequestedProtocols = self.state.requestedProtocols
+            serverData.coreData.clientRequestedProtocols = self.state.requestedProtocols
 
-            modifiedServerData = ServerDataPDU(serverData.core, security, serverData.network)
+            modifiedServerData = ServerDataPDU(serverData.coreData, security, serverData.networkData)
             modifiedGCCPDU = GCCConferenceCreateResponsePDU(gccPDU.nodeID, gccPDU.tag, gccPDU.result, rdpParser.write(modifiedServerData))
             modifiedMCSPDU = MCSConnectResponsePDU(pdu.result, pdu.calledConnectID, pdu.domainParams, gccParser.write(modifiedGCCPDU))
 

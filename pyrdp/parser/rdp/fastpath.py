@@ -3,7 +3,7 @@
 # Copyright (C) 2018 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-
+import typing
 from binascii import hexlify
 from io import BytesIO
 
@@ -16,13 +16,14 @@ from pyrdp.parser.rdp.bitmap import BitmapParser
 from pyrdp.parser.rdp.security import BasicSecurityParser
 from pyrdp.pdu import FastPathBitmapEvent, FastPathEventRaw, FastPathMouseEvent, FastPathOrdersEvent, FastPathPDU, \
     FastPathScanCodeEvent, SecondaryDrawingOrder
-from pyrdp.pdu.rdp.fastpath import FastPathOutputUpdateEvent
-from pyrdp.security import RC4Crypter
+from pyrdp.pdu.rdp.fastpath import FastPathEvent, FastPathOutputEvent
+from pyrdp.security import RC4Crypter, RC4CrypterProxy
 
 
 class BasicFastPathParser(BasicSecurityParser):
-    def __init__(self, mode):
+    def __init__(self, mode: ParserMode):
         super().__init__()
+
         self.mode = mode
         input, output = FastPathInputParser(), FastPathOutputParser()
 
@@ -33,22 +34,12 @@ class BasicFastPathParser(BasicSecurityParser):
             self.readParser = input
             self.writeParser = output
 
-    def getPDULength(self, data):
+    def getPDULength(self, data: bytes) -> int:
         stream = BytesIO(data)
         stream.read(1)
         return self.parseLength(stream)
 
-    def getPDULengthWithSocket(self, socket):
-        """
-        Same as getPDULength, but with a network socket.
-        :type socket: socket.socket
-        """
-        data = socket.recv(1)
-        data2, length = self.parseLengthWithSocket(socket)
-        data += data2
-        return data, length
-
-    def isCompletePDU(self, data):
+    def isCompletePDU(self, data: bytes) -> bool:
         if len(data) == 1:
             return False
 
@@ -57,7 +48,7 @@ class BasicFastPathParser(BasicSecurityParser):
 
         return len(data) >= self.getPDULength(data)
 
-    def parse(self, data):
+    def parse(self, data: bytes) -> FastPathPDU:
         stream = BytesIO(data)
         header = Uint8.unpack(stream)
         eventCount = self.parseEventCount(header)
@@ -70,13 +61,13 @@ class BasicFastPathParser(BasicSecurityParser):
         events = self.parseEvents(data)
         return FastPathPDU(header, events)
 
-    def parseEventCount(self, header):
+    def parseEventCount(self, header: int) -> int:
         if self.mode == ParserMode.SERVER:
             return (header >> 2) & 0xf
         else:
             return 1
 
-    def parseLength(self, stream):
+    def parseLength(self, stream: BytesIO) -> int:
         length = Uint8.unpack(stream)
 
         if length & 0x80 != 0:
@@ -84,22 +75,7 @@ class BasicFastPathParser(BasicSecurityParser):
 
         return length
 
-    def parseLengthWithSocket(self, socket):
-        """
-        Same as parseLength, but with a network socket.
-        :type socket: socket.socket
-        """
-        data = socket.recv(1)
-        length = Uint8.unpack(data)
-
-        if length & 0x80 != 0:
-            data2 = socket.recv(1)
-            data += data2
-            length = ((length & 0x7f) << 8) | Uint8.unpack(data2)
-
-        return data, length
-
-    def parseEvents(self, data):
+    def parseEvents(self, data: bytes) -> [FastPathEvent]:
         events = []
 
         while len(data) > 0:
@@ -138,16 +114,16 @@ class BasicFastPathParser(BasicSecurityParser):
     def writePayload(self, stream: BytesIO, pdu: FastPathPDU):
         self.writeEvents(stream, pdu)
 
-    def writeLength(self, stream, pdu):
+    def writeLength(self, stream: BytesIO, pdu: FastPathPDU):
         length = self.calculatePDULength(pdu)
         Uint16BE.pack(length | 0x8000, stream)
 
-    def writeEvents(self, stream, pdu):
+    def writeEvents(self, stream: BytesIO, pdu: FastPathPDU):
         for event in pdu.events:
             eventData = self.writeParser.write(event)
             stream.write(eventData)
 
-    def calculatePDULength(self, pdu):
+    def calculatePDULength(self, pdu: FastPathPDU) -> int:
         # Header + length bytes
         length = 3
         length += sum(self.writeParser.getEventLength(event) for event in pdu.events)
@@ -157,22 +133,22 @@ class BasicFastPathParser(BasicSecurityParser):
 
         return length
 
-    def getHeaderFlags(self):
+    def getHeaderFlags(self) -> int:
         return 0
 
 
 class SignedFastPathParser(BasicFastPathParser):
-    def __init__(self, crypter, mode):
+    def __init__(self, crypter: RC4Crypter, mode: ParserMode):
         BasicFastPathParser.__init__(self, mode)
         self.crypter = crypter
         self.eventData = b""
 
-    def parse(self, data):
+    def parse(self, data: bytes) -> FastPathPDU:
         stream = BytesIO(data)
         header = Uint8.unpack(stream)
         eventCount = self.parseEventCount(header)
         pduLength = self.parseLength(stream)
-        signature = stream.read(8)
+        _signature = stream.read(8)
 
         if eventCount == 0:
             eventCount = Uint8.unpack(stream)
@@ -186,7 +162,7 @@ class SignedFastPathParser(BasicFastPathParser):
         events = self.parseEvents(data)
         return FastPathPDU(header, events)
 
-    def writeBody(self, stream, pdu):
+    def writeBody(self, stream: BytesIO, pdu: FastPathPDU):
         eventStream = BytesIO()
         self.writeEvents(eventStream, pdu)
         self.eventData = eventStream.getvalue()
@@ -195,33 +171,33 @@ class SignedFastPathParser(BasicFastPathParser):
         stream.write(signature)
         BasicFastPathParser.writeBody(self, stream, pdu)
 
-    def writePayload(self, stream, pdu):
+    def writePayload(self, stream: BytesIO, pdu: FastPathPDU):
         eventData = self.crypter.encrypt(self.eventData)
         self.crypter.addEncryption()
         self.eventData = b""
 
         stream.write(eventData)
 
-    def calculatePDULength(self, pdu):
+    def calculatePDULength(self, pdu: FastPathPDU) -> int:
         return BasicFastPathParser.calculatePDULength(self, pdu) + 8
 
-    def getHeaderFlags(self):
+    def getHeaderFlags(self) -> FastPathSecurityFlags:
         return FastPathSecurityFlags.FASTPATH_OUTPUT_ENCRYPTED | FastPathSecurityFlags.FASTPATH_OUTPUT_SECURE_CHECKSUM
 
 
 class FIPSFastPathParser(SignedFastPathParser):
-    def __init__(self, crypter, mode):
+    def __init__(self, crypter: RC4Crypter, mode: ParserMode):
         SignedFastPathParser.__init__(self, crypter, mode)
 
-    def parse(self, data):
+    def parse(self, data: bytes) -> FastPathPDU:
         stream = BytesIO(data)
         header = Uint8.unpack(stream)
         eventCount = self.parseEventCount(header)
         pduLength = self.parseLength(stream)
-        fipsLength = Uint16LE.unpack(stream)
-        version = Uint8.unpack(stream)
-        padLength = Uint8.unpack(stream)
-        signature = stream.read(8)
+        _fipsLength = Uint16LE.unpack(stream)
+        _version = Uint8.unpack(stream)
+        _padLength = Uint8.unpack(stream)
+        _signature = stream.read(8)
 
         if eventCount == 0:
             eventCount = Uint8.unpack(stream)
@@ -235,7 +211,7 @@ class FIPSFastPathParser(SignedFastPathParser):
         events = self.parseEvents(data)
         return FastPathPDU(header, events)
 
-    def writeBody(self, stream, pdu):
+    def writeBody(self, stream: BytesIO, pdu: FastPathPDU):
         bodyStream = BytesIO()
         SignedFastPathParser.writeBody(self, bodyStream, pdu)
         body = bodyStream.getvalue()
@@ -245,8 +221,8 @@ class FIPSFastPathParser(SignedFastPathParser):
         Uint8.pack(self.crypter.getPadLength(self.eventData), stream)
         stream.write(body)
 
-    def calculatePDULength(self, pdu):
-        return SignedFastPathParser.calculatePDULength(self, pdu) + 4
+    def calculatePDULength(self, pdu: FastPathPDU) -> int:
+        return super().calculatePDULength(pdu) + 4
 
 
 class FastPathInputParser(Parser):
@@ -259,7 +235,7 @@ class FastPathInputParser(Parser):
         FastPathInputType.FASTPATH_INPUT_EVENT_QOE_TIMESTAMP: 5,
     }
 
-    def getEventLength(self, data):
+    def getEventLength(self, data: bytes) -> int:
         if isinstance(data, FastPathEventRaw):
             return len(data.data)
         elif isinstance(data, bytes):
@@ -272,7 +248,7 @@ class FastPathInputParser(Parser):
             return FastPathInputParser.INPUT_EVENT_LENGTHS[FastPathInputType.FASTPATH_INPUT_EVENT_MOUSE]
         raise ValueError("Unsupported event type?")
 
-    def parse(self, data):
+    def parse(self, data: bytes) -> FastPathEvent:
         stream = BytesIO(data)
         eventHeader = Uint8.unpack(stream.read(1))
         eventCode = (eventHeader & 0b11100000) >> 5
@@ -283,17 +259,17 @@ class FastPathInputParser(Parser):
             return self.parseMouseEvent(data, eventHeader)
         return FastPathEventRaw(data)
 
-    def parseMouseEvent(self, data, eventHeader):
+    def parseMouseEvent(self, data: bytes, eventHeader: int) -> FastPathMouseEvent:
         pointerFlags = Uint16LE.unpack(data[1:3])
         mouseX = Uint16LE.unpack(data[3:5])
         mouseY = Uint16LE.unpack(data[5:7])
         return FastPathMouseEvent(eventHeader, pointerFlags, mouseX, mouseY)
 
-    def parseScanCode(self, eventFlags, eventHeader, stream):
+    def parseScanCode(self, eventFlags: int, eventHeader: int, stream: BytesIO) -> FastPathScanCodeEvent:
         scancode = Uint8.unpack(stream.read(1))
-        return FastPathScanCodeEvent(eventHeader, scancode, eventFlags)
+        return FastPathScanCodeEvent(eventHeader, scancode, eventFlags & 1 != 0)
 
-    def write(self, event):
+    def write(self, event: FastPathEvent) -> bytes:
         if isinstance(event, FastPathEventRaw):
             return event.data
         elif isinstance(event, FastPathScanCodeEvent):
@@ -302,13 +278,13 @@ class FastPathInputParser(Parser):
             return self.writeMouseEvent(event)
         raise ValueError("Invalid FastPath event: {}".format(event))
 
-    def writeScanCodeEvent(self, event):
+    def writeScanCodeEvent(self, event: FastPathScanCodeEvent) -> bytes:
         raw_data = BytesIO()
         Uint8.pack(event.rawHeaderByte, raw_data)
         Uint8.pack(event.scancode, raw_data)
         return raw_data.getvalue()
 
-    def writeMouseEvent(self, event):
+    def writeMouseEvent(self, event: FastPathMouseEvent) -> bytes:
         rawData = BytesIO()
         Uint8.pack(event.rawHeaderByte, rawData)
         Uint16LE.pack(event.pointerFlags, rawData)
@@ -322,8 +298,7 @@ class FastPathOutputParser(Parser):
         super().__init__()
         self.bitmapParser = BitmapParser()
 
-    def getEventLength(self, event: FastPathOutputUpdateEvent):
-
+    def getEventLength(self, event: FastPathOutputEvent) -> int:
         if isinstance(event, bytes):
             header = Uint8.unpack(event[0])
             if self.isCompressed(header):
@@ -340,7 +315,7 @@ class FastPathOutputParser(Parser):
             size += 2 + len(event.orderData)
         elif isinstance(event, FastPathBitmapEvent):
             size += len(event.payload)
-        elif isinstance(event, FastPathOutputUpdateEvent):
+        elif isinstance(event, FastPathOutputEvent):
             length = len(event.payload) + 3
             if event.compressionFlags is not None:
                 length += 1
@@ -348,10 +323,10 @@ class FastPathOutputParser(Parser):
 
         return size
 
-    def isCompressed(self, header):
-        return (header >> 6) & FastPathOutputCompressionType.FASTPATH_OUTPUT_COMPRESSION_USED
+    def isCompressed(self, header: int) -> bool:
+        return (header >> 6) & FastPathOutputCompressionType.FASTPATH_OUTPUT_COMPRESSION_USED != 0
 
-    def parse(self, data) -> FastPathOutputUpdateEvent:
+    def parse(self, data: bytes) -> FastPathOutputEvent:
         stream = BytesIO(data)
         header = Uint8.unpack(stream)
 
@@ -367,7 +342,7 @@ class FastPathOutputParser(Parser):
         if fragmentation:
             log.debug("Fragmentation is present in output fastpath event packets."
                       " Not parsing it and saving to FastPathOutputUpdateEvent.")
-            return FastPathOutputUpdateEvent(header, compressionFlags, payload=stream.read(size))
+            return FastPathOutputEvent(header, compressionFlags, payload=stream.read(size))
 
         if eventType == FastPathOutputType.FASTPATH_UPDATETYPE_BITMAP:
             return self.parseBitmapEventRaw(stream, header, compressionFlags, size)
@@ -375,40 +350,40 @@ class FastPathOutputParser(Parser):
             return self.parseOrdersEvent(stream, header, compressionFlags, size)
 
         read = stream.read(size)
-        return FastPathOutputUpdateEvent(header, compressionFlags, read)
+        return FastPathOutputEvent(header, compressionFlags, read)
 
-    def parseBitmapEventRaw(self, stream, header, compressionFlags, size):
+    def parseBitmapEventRaw(self, stream: BytesIO, header: int, compressionFlags: int, size: int) -> FastPathBitmapEvent:
         return FastPathBitmapEvent(header, compressionFlags, [], stream.read(size))
 
-    def parseBitmapEvent(self, fastPathBitmapEvent: FastPathOutputUpdateEvent) -> FastPathBitmapEvent:
-        """
-        :return: a FastPathBitmapEvent with bitmapUpdateData
-        """
+    def parseBitmapEvent(self, fastPathBitmapEvent: FastPathOutputEvent) -> FastPathBitmapEvent:
         rawBitmapUpdateData = fastPathBitmapEvent.payload
         stream = BytesIO(rawBitmapUpdateData)
         updateType = Uint16LE.unpack(stream.read(2))
         bitmapData = self.bitmapParser.parseBitmapUpdateData(stream.read())
 
-        return FastPathBitmapEvent(fastPathBitmapEvent.header, fastPathBitmapEvent.compressionFlags,
-                                   bitmapData, rawBitmapUpdateData)
+        return FastPathBitmapEvent(fastPathBitmapEvent.header, fastPathBitmapEvent.compressionFlags, bitmapData, rawBitmapUpdateData)
 
-    def writeBitmapEvent(self, stream, event: FastPathBitmapEvent):
+    def writeBitmapEvent(self, stream: BytesIO, event: FastPathBitmapEvent):
         stream.write(event.payload)
 
-    def parseOrdersEvent(self, stream, header, compressionFlags, size):
+    def parseOrdersEvent(self, stream: BytesIO, header: int, compressionFlags: int, size: int) -> FastPathOrdersEvent:
         orderCount = Uint16LE.unpack(stream)
         orderData = stream.read(size - 2)
+
         assert len(orderData) == size - 2
+
         ordersEvent = FastPathOrdersEvent(header, compressionFlags, orderCount, orderData)
         controlFlags = Uint8.unpack(orderData[0])
+
         if controlFlags & (DrawingOrderControlFlags.TS_SECONDARY | DrawingOrderControlFlags.TS_STANDARD)\
                 == (DrawingOrderControlFlags.TS_SECONDARY | DrawingOrderControlFlags.TS_STANDARD):
             ordersEvent.secondaryDrawingOrders = self.parseSecondaryDrawingOrder(orderData)
         elif controlFlags & DrawingOrderControlFlags.TS_SECONDARY:
             pass
+
         return ordersEvent
 
-    def parseSecondaryDrawingOrder(self, orderData):
+    def parseSecondaryDrawingOrder(self, orderData: bytes) -> SecondaryDrawingOrder:
         stream = BytesIO(orderData)
         controlFlags = Uint8.unpack(stream.read(1))
         orderLength = Uint16LE.unpack(stream.read(2))
@@ -420,7 +395,7 @@ class FastPathOutputParser(Parser):
         Uint16LE.pack(event.orderCount, stream)
         stream.write(event.orderData)
 
-    def write(self, event: FastPathOutputUpdateEvent):
+    def write(self, event: FastPathOutputEvent) -> bytes:
 
         stream = BytesIO()
         Uint8.pack(event.header, stream)
@@ -444,17 +419,16 @@ class FastPathOutputParser(Parser):
         return stream.getvalue()
 
 
-def createFastPathParser(tls, encryptionMethod, crypter, mode):
+def createFastPathParser(tls: bool,
+                         encryptionMethod: EncryptionMethod,
+                         crypter: typing.Union[RC4Crypter, RC4CrypterProxy],
+                         mode: ParserMode) -> typing.Union[BasicFastPathParser, SignedFastPathParser, FIPSFastPathParser]:
     """
     Create a fast-path parser based on which encryption method is used.
     :param tls: whether TLS is used or not.
-    :type tls: bool
     :param encryptionMethod: the encryption method.
-    :type encryptionMethod: EncryptionMethod
     :param crypter: the crypter for this connection.
-    :type crypter: RC4Crypter | RC4CrypterProxy
     :param mode: the fast-path parser mode.
-    :type mode: ParserMode
     """
     if tls:
         return BasicFastPathParser(mode)

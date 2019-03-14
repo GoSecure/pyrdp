@@ -159,7 +159,7 @@ def writeObjectIdentifier(oid: Tuple[int, int, int, int, int, int]) -> bytes:
     """
     return writeLength(5) + Uint8.pack((oid[0] << 4) & (oid[1] & 0x0f)) + b"".join(Uint8.pack(b) for b in oid[2 :])
 
-def readNumericString(s: BinaryIO, minValue: int) -> bytes:
+def readNumericString(s: BinaryIO, minValue: int) -> str:
     """
     Unpack a PER numeric string
     :param s: stream
@@ -169,15 +169,15 @@ def readNumericString(s: BinaryIO, minValue: int) -> bytes:
     length = (length + minValue + 1) // 2
     data = s.read(length)
 
-    result = b""
+    result = ""
     for b in data:
         c1 = (b >> 4) + 0x30
         c2 = (b & 0xf) + 0x30
-        result += bytes([c1, c2])
+        result += chr(c1) + chr(c2)
     
     return result
 
-def writeNumericString(string: bytes, minValue: int) -> bytes:
+def writeNumericString(string: str, minValue: int) -> bytes:
     """
     Pack a PER numeric string
     :param string: numeric string

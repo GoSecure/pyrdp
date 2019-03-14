@@ -53,12 +53,10 @@ class ClientInfoParser(Parser):
 
         return ClientInfoPDU(codePage, flags, domain, username, password, alternateShell, workingDir, extraInfo)
 
-    def write(self, pdu):
+    def write(self, pdu: ClientInfoPDU) -> bytes:
         """
         Encode a Client Info PDU to bytes.
         :param pdu: the Client Info PDU.
-        :type pdu: ClientInfoPDU
-        :return: str
         """
         stream = BytesIO()
         stream.write(Uint32LE.pack(pdu.codePage))

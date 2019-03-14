@@ -12,14 +12,13 @@ class PDU:
     """
     REPR_PAYLOAD_CUTOFF_LENGTH = 200
 
-    def __init__(self, payload=b""):
+    def __init__(self, payload: bytes = b""):
         """
         :param payload: The PDU's payload data
-        :type payload: bytes
         """
         self.payload = payload
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         properties = dict(self.__dict__)
 
         if len(self.payload) > PDU.REPR_PAYLOAD_CUTOFF_LENGTH:

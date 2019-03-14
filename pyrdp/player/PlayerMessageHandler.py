@@ -18,7 +18,7 @@ from pyrdp.parser import BasicFastPathParser, BitmapParser, ClientInfoParser, Cl
 from pyrdp.parser.rdp.connection import ClientConnectionParser
 from pyrdp.pdu import BitmapUpdateData, ConfirmActivePDU, FastPathBitmapEvent, FastPathMouseEvent, FastPathOrdersEvent, \
     FastPathScanCodeEvent, FormatDataResponsePDU, InputPDU, KeyboardEvent, MouseEvent, PlayerMessagePDU, UpdatePDU
-from pyrdp.pdu.rdp.fastpath import FastPathOutputUpdateEvent
+from pyrdp.pdu.rdp.fastpath import FastPathOutputEvent
 from pyrdp.ui import RDPBitmapToQtImage
 
 
@@ -149,7 +149,7 @@ class PlayerMessageHandler(PlayerMessageObserver):
         self.text.insertPlainText("--------------------\n")
         self.text.insertPlainText(f"HOST: {clientDataPDU.coreData.clientName.strip(chr(0))}\n")
 
-    def reassembleEvent(self, event: FastPathOutputUpdateEvent) -> Optional[Union[FastPathBitmapEvent, FastPathOutputUpdateEvent]]:
+    def reassembleEvent(self, event: FastPathOutputEvent) -> Optional[Union[FastPathBitmapEvent, FastPathOutputEvent]]:
         """
         Handles FastPath event reassembly as described in
         https://msdn.microsoft.com/en-us/library/cc240622.aspx

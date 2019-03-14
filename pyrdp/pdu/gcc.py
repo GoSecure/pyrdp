@@ -13,11 +13,10 @@ class GCCPDU(PDU):
     Base PDU class for GCC (T.124) PDUs. Every GCC PDU has a header and a payload.
     """
 
-    def __init__(self, header, payload):
+    def __init__(self, header: GCCPDUType, payload: bytes):
         """
-        :param header:
+        :param header: GCC PDU type.
         :param payload: GCC's payload (so probably some RDP connection data).
-        :type payload: bytes
         """
 
         PDU.__init__(self, payload)
@@ -25,13 +24,23 @@ class GCCPDU(PDU):
 
 
 class GCCConferenceCreateRequestPDU(GCCPDU):
-    def __init__(self, conferenceName, payload):
+    def __init__(self, conferenceName: str, payload: bytes):
+        """
+        :param conferenceName: the GCC conference name.
+        :param payload: GCC's payload (so probably some RDP connection data).
+        """
         GCCPDU.__init__(self, GCCPDUType.CREATE_CONFERENCE_REQUEST, payload)
         self.conferenceName = conferenceName
 
 
 class GCCConferenceCreateResponsePDU(GCCPDU):
-    def __init__(self, nodeID, tag, result, payload):
+    def __init__(self, nodeID: int, tag: int, result: int, payload: bytes):
+        """
+        :param nodeID: GCC node ID.
+        :param tag: GCC tag.
+        :param result: response result.
+        :param payload: GCC's payload (so probably some RDP connection data).
+        """
         GCCPDU.__init__(self, GCCPDUType.CREATE_CONFERENCE_RESPONSE, payload)
         self.nodeID = nodeID
         self.tag = tag

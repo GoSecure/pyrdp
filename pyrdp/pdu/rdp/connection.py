@@ -3,12 +3,15 @@
 # Copyright (C) 2018 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+
 import socket
 from typing import Optional
 
-from pyrdp.enum import ConnectionDataType, RDPVersion, ServerCertificateType, ChannelOption
-from pyrdp.enum.rdp import ClientCapabilityFlag, ColorDepth, EncryptionMethod, HighColorDepth, KeyboardType, \
-    SupportedColorDepth, ConnectionType, NegotiationProtocols, DesktopOrientation
+from Crypto.PublicKey import RSA
+
+from pyrdp.enum import ChannelOption, ConnectionDataType, RDPVersion, ServerCertificateType, EncryptionLevel
+from pyrdp.enum.rdp import ClientCapabilityFlag, ColorDepth, ConnectionType, DesktopOrientation, EncryptionMethod, \
+    HighColorDepth, KeyboardType, NegotiationProtocols, SupportedColorDepth
 from pyrdp.pdu.pdu import PDU
 
 
@@ -45,7 +48,7 @@ class ClientCoreData:
         self.deviceScaleFactor: int = None
 
     @staticmethod
-    def generate(serverSelectedProtocol, desktopWidth = 800, desktopHeight = 600):
+    def generate(serverSelectedProtocol: NegotiationProtocols, desktopWidth: int = 800, desktopHeight: int = 600) -> 'ClientCoreData':
         """
         Generate a ClientCoreData structure with default values
         """
@@ -82,7 +85,7 @@ class ClientSecurityData:
         self.extEncryptionMethods = extEncryptionMethods
 
     @staticmethod
-    def generate(encryptionMethods: EncryptionMethod, isFrenchLocale: bool = False):
+    def generate(encryptionMethods: EncryptionMethod, isFrenchLocale: bool = False) -> 'ClientSecurityData':
         if isFrenchLocale:
             return ClientSecurityData(EncryptionMethod.ENCRYPTION_NONE, encryptionMethods)
         else:
@@ -104,7 +107,7 @@ class ClientNetworkData:
         self.channelDefinitions = channelDefinitions
 
     @staticmethod
-    def generate(clipboard = False, drive = False, sound = False):
+    def generate(clipboard: bool = False, drive: bool = False, sound: bool = False) -> 'ClientNetworkData':
         definitions: [ClientChannelDefinition] = []
 
         if clipboard:
@@ -131,7 +134,7 @@ class ClientNetworkData:
 
 
 class ClientClusterData:
-    def __init__(self, flags, redirectedSessionID):
+    def __init__(self, flags: int, redirectedSessionID: int):
         self.header = ConnectionDataType.CLIENT_CLUSTER
         self.flags = flags
         self.redirectedSessionID = redirectedSessionID
@@ -146,31 +149,36 @@ class ClientDataPDU(PDU):
         self.clusterData = clusterData
 
     @staticmethod
-    def generate(serverSelectedProtocol,
-                 desktopWidth = 800, desktopHeight = 600,
-                 encryptionMethods: EncryptionMethod = EncryptionMethod.ENCRYPTION_NONE, isFrenchLocale = False,
-                 clipboard = False, drive = False, sound = False):
+    def generate(serverSelectedProtocol: NegotiationProtocols,
+                 desktopWidth: int = 800, desktopHeight: int = 600,
+                 encryptionMethods: EncryptionMethod = EncryptionMethod.ENCRYPTION_NONE, isFrenchLocale: bool = False,
+                 clipboard: bool = False, drive: bool = False, sound: bool = False) -> 'ClientDataPDU':
+
         core = ClientCoreData.generate(serverSelectedProtocol, desktopWidth = desktopWidth, desktopHeight = desktopHeight)
         security = ClientSecurityData.generate(encryptionMethods = encryptionMethods, isFrenchLocale = isFrenchLocale)
         network = ClientNetworkData.generate(clipboard = clipboard, drive = drive, sound = sound)
         return ClientDataPDU(core, security, network, None)
 
 
-class ServerDataPDU(PDU):
-    """
-    :type core: ServerCoreData
-    :type security: ServerSecurityData
-    :type network: ServerNetworkData
-    """
-    def __init__(self, core, security, network):
-        PDU.__init__(self)
-        self.core = core
-        self.security = security
-        self.network = network
+class ServerCertificate:
+    def __init__(self, certificateType: ServerCertificateType, publicKey: RSA.pubkey.pubkey, signature: bytes):
+        self.type = certificateType
+        self.publicKey = publicKey
+        self.signature = signature
+
+
+class ProprietaryCertificate(ServerCertificate):
+    def __init__(self, signatureAlgorithmID: int, keyAlgorithmID: int, publicKeyType: int, publicKey: RSA.pubkey.pubkey, signatureType: int, signature: bytes, padding: bytes):
+        ServerCertificate.__init__(self, ServerCertificateType.PROPRIETARY, publicKey, signature)
+        self.signatureAlgorithmID = signatureAlgorithmID
+        self.keyAlgorithmID = keyAlgorithmID
+        self.publicKeyType = publicKeyType
+        self.signatureType = signatureType
+        self.padding = padding
 
 
 class ServerCoreData:
-    def __init__(self, version, clientRequestedProtocols, earlyCapabilityFlags):
+    def __init__(self, version: int, clientRequestedProtocols: NegotiationProtocols, earlyCapabilityFlags: int):
         self.header = ConnectionDataType.SERVER_CORE
         self.version = version
         self.clientRequestedProtocols = clientRequestedProtocols
@@ -185,7 +193,7 @@ class ServerNetworkData:
 
 
 class ServerSecurityData:
-    def __init__(self, encryptionMethod, encryptionLevel, serverRandom, serverCertificate):
+    def __init__(self, encryptionMethod: EncryptionMethod, encryptionLevel: EncryptionLevel, serverRandom: bytes, serverCertificate: ServerCertificate):
         self.header = ConnectionDataType.SERVER_SECURITY
         self.encryptionMethod = encryptionMethod
         self.encryptionLevel = encryptionLevel
@@ -193,20 +201,11 @@ class ServerSecurityData:
         self.serverCertificate = serverCertificate
 
 
-class ServerCertificate:
-    def __init__(self, type, publicKey, signature):
-        self.type = type
-        self.publicKey = publicKey
-        self.signature = signature
-
-
-class ProprietaryCertificate(ServerCertificate):
-    def __init__(self, signatureAlgorithmID, keyAlgorithmID, publicKeyType, publicKey, signatureType, signature, padding):
-        ServerCertificate.__init__(self, ServerCertificateType.PROPRIETARY, publicKey, signature)
-        self.signatureAlgorithmID = signatureAlgorithmID
-        self.keyAlgorithmID = keyAlgorithmID
-        self.publicKeyType = publicKeyType
-        self.signatureType = signatureType
-        self.padding = padding
+class ServerDataPDU(PDU):
+    def __init__(self, core: ServerCoreData, security: ServerSecurityData, network: ServerNetworkData):
+        PDU.__init__(self)
+        self.coreData = core
+        self.securityData = security
+        self.networkData = network
 
 

@@ -4,16 +4,13 @@
 # Licensed under the GPLv3 or later.
 #
 
+from pyrdp.enum import SegmentationPDUType
 from pyrdp.pdu.pdu import PDU
 
 
 class SegmentationPDU(PDU):
-    def __init__(self, payload):
-        """
-        :type payload: bytes
-        """
+    def __init__(self, payload: bytes):
         PDU.__init__(self, payload)
 
-    def getSegmentationType(self):
+    def getSegmentationType(self) -> SegmentationPDUType:
         raise NotImplementedError("getType must be overridden")
-

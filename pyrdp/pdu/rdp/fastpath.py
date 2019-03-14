@@ -12,31 +12,31 @@ from pyrdp.pdu.rdp.bitmap import BitmapUpdateData
 from pyrdp.pdu.segmentation import SegmentationPDU
 
 
-class FastPathPDU(SegmentationPDU):
-    def __init__(self, header, events):
-        PDU.__init__(self)
-        self.header = header
-        self.events = events
-
-    def getSegmentationType(self):
-        return SegmentationPDUType.FAST_PATH
-
-    def __repr__(self):
-        return str([str(e.__class__) for e in self.events])
-
-
 class FastPathEvent(PDU):
     """
     Base class for RDP fast path event (not PDU, a PDU contains multiple events).
     Used for scan code events, mouse events or bitmap events.
     """
 
-    def __init__(self, payload=b""):
+    def __init__(self, payload: bytes = b""):
         super().__init__(payload)
 
 
+class FastPathPDU(SegmentationPDU):
+    def __init__(self, header: int, events: [FastPathEvent]):
+        PDU.__init__(self)
+        self.header = header
+        self.events = events
+
+    def getSegmentationType(self) -> SegmentationPDUType:
+        return SegmentationPDUType.FAST_PATH
+
+    def __repr__(self) -> str:
+        return str([str(e.__class__) for e in self.events])
+
+
 class FastPathEventRaw(FastPathEvent):
-    def __init__(self, data):
+    def __init__(self, data: bytes):
         super().__init__()
         self.data = data
 
@@ -46,11 +46,11 @@ class FastPathInputEvent(FastPathEvent):
         super().__init__()
 
 
-class FastPathOutputUpdateEvent(FastPathEvent):
+class FastPathOutputEvent(FastPathEvent):
     """
     https://msdn.microsoft.com/en-us/library/cc240622.aspx
     """
-    def __init__(self, header: int, compressionFlags: Optional[int], payload=b""):
+    def __init__(self, header: int, compressionFlags: Optional[int], payload: bytes = b""):
         super().__init__(payload)
         self.header = header
         self.compressionFlags = compressionFlags
@@ -58,12 +58,7 @@ class FastPathOutputUpdateEvent(FastPathEvent):
 
 class FastPathScanCodeEvent(FastPathInputEvent):
 
-    def __init__(self, rawHeaderByte, scancode, isReleased):
-        """
-        :type rawHeaderByte: bytes
-        :type scancode: bytes
-        :type isReleased: bool
-        """
+    def __init__(self, rawHeaderByte: int, scancode: int, isReleased: bool):
         FastPathEvent.__init__(self)
         self.rawHeaderByte = rawHeaderByte
         self.scancode = scancode
@@ -75,13 +70,7 @@ class FastPathMouseEvent(FastPathInputEvent):
     Mouse event (clicks, move, scroll, etc.)
     """
 
-    def __init__(self, rawHeaderByte, pointerFlags, mouseX, mouseY):
-        """
-        :type rawHeaderByte: int
-        :type pointerFlags: int
-        :type mouseX: int
-        :type mouseY: int
-        """
+    def __init__(self, rawHeaderByte: int, pointerFlags: int, mouseX: int, mouseY: int):
         FastPathEvent.__init__(self)
         self.rawHeaderByte = rawHeaderByte
         self.mouseY = mouseY
@@ -89,19 +78,17 @@ class FastPathMouseEvent(FastPathInputEvent):
         self.pointerFlags = pointerFlags
 
 
-class FastPathBitmapEvent(FastPathOutputUpdateEvent):
-    def __init__(self, header: int, compressionFlags: int, bitmapUpdateData: List[BitmapUpdateData],
-                 payload: bytes):
+class FastPathBitmapEvent(FastPathOutputEvent):
+    def __init__(self, header: int, compressionFlags: int, bitmapUpdateData: List[BitmapUpdateData], payload: bytes):
         super().__init__(header, compressionFlags, payload)
-        self.compressionFlags = compressionFlags
         self.bitmapUpdateData = bitmapUpdateData
 
 
-class FastPathOrdersEvent(FastPathOutputUpdateEvent):
+class FastPathOrdersEvent(FastPathOutputEvent):
     """
     https://msdn.microsoft.com/en-us/library/cc241573.aspx
     """
-    def __init__(self, header, compressionFlags, orderCount, orderData):
+    def __init__(self, header: int, compressionFlags: int, orderCount: int, orderData: bytes):
         super().__init__(header, compressionFlags)
         self.compressionFlags = compressionFlags
         self.orderCount = orderCount
@@ -113,7 +100,7 @@ class SecondaryDrawingOrder:
     """
     https://msdn.microsoft.com/en-us/library/cc241611.aspx
     """
-    def __init__(self, controlFlags, orderLength, extraFlags, orderType):
+    def __init__(self, controlFlags: int, orderLength: int, extraFlags: int, orderType: int):
         super().__init__()
         self.controlFlags = controlFlags
         self.orderLength = orderLength
