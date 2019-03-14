@@ -5,17 +5,18 @@
 #
 
 import struct
+import typing
 
 
 class Integer:
     FORMAT = ""
 
     @classmethod
-    def unpack(cls, data):
+    def unpack(cls, data: typing.Union[bytes, typing.BinaryIO, int]) -> int:
         """
+        Unpack an integer from its binary representation.
         :param data: data to unpack from.
-        :type data: bytes | file | io.BytesIO
-        :return: int
+        :return: the integer's value.
         """
         try:
             if isinstance(data, bytes):
@@ -30,13 +31,12 @@ class Integer:
             raise ValueError(str(e))
 
     @classmethod
-    def pack(cls, value, stream=None):
+    def pack(cls, value: int, stream: typing.Optional[typing.BinaryIO] = None) -> bytes:
         """
-        :param value: value to pack
-        :type value: int | str
-        :param stream: stream to pack to (optional)
-        :type stream: file | io.BytesIO | None
-        :return: str | None
+        Pack an integer to its binary representation.
+        :param value: value to pack.
+        :param stream: stream to pack to (optional).
+        :return: the bytes representing the integer.
         """
         bytes = struct.pack(cls.FORMAT, value)
 

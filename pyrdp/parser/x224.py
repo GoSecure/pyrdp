@@ -5,6 +5,7 @@
 #
 
 from io import BytesIO
+from typing import Tuple
 
 from pyrdp.core import Uint16BE, Uint16LE, Uint8
 from pyrdp.enum import X224PDUType
@@ -57,15 +58,13 @@ class X224Parser(Parser):
 
         return self.parsers[header](data, length)
 
-    def parseConnectionPDU(self, data, length, name):
+    def parseConnectionPDU(self, data: bytes, length: int, name: str) -> Tuple[int, int, int, bytes]:
         """
-        Parse the provided data to extract common information contained in Connection Request,
-        Connection Confirm and Disconnect Request PDUs.
-        :type data: bytes
-        :param length: Length of the Connection PDU
-        :param name: For debugging purposes: the name of the connection PDU (like "Connection Request")
-        :return: A tuple of the information we find in both connection PDUs:
-                (source, destination, options, payload)
+        Parse the provided data to extract common information contained in Connection Request, Connection Confirm and Disconnect Request PDUs.
+        :param data: bytes to parse.
+        :param length: Length of the Connection PDU.
+        :param name: For debugging purposes: the name of the connection PDU (like "Connection Request").
+        :return: A tuple of the information we find in both connection PDUs: (source, destination, options, payload)
         """
 
         if length < 6:
@@ -81,44 +80,40 @@ class X224Parser(Parser):
 
         return source, destination, options, payload
 
-    def parseConnectionRequest(self, data, length):
+    def parseConnectionRequest(self, data: bytes, length: int) -> X224ConnectionRequestPDU:
         """
         Parse a ConnectionRequest PDU from the raw bytes
-        :type data: bytes
+        :param data: bytes to parse.
         :param length: The length in bytes of the Connection Request PDU.
-        :return: X224ConnectionRequestPDU
         """
         credit = Uint8.unpack(data[1]) & 0xf
         destination, source, options, payload = self.parseConnectionPDU(data, length, "Connection Request")
         return X224ConnectionRequestPDU(credit, destination, source, options, payload)
 
-    def parseConnectionConfirm(self, data, length):
+    def parseConnectionConfirm(self, data: bytes, length: int) -> X224ConnectionConfirmPDU:
         """
         Parse a ConnectionConfirm PDU from the raw bytes
-        :type data: bytes
+        :param data: bytes to parse.
         :param length: The length in bytes of the Connection Confirm PDU.
-        :return: X224ConnectionConfirmPDU
         """
         credit = Uint8.unpack(data[1]) & 0xf
         destination, source, options, payload = self.parseConnectionPDU(data, length, "Connection Confirm")
         return X224ConnectionConfirmPDU(credit, destination, source, options, payload)
 
-    def parseDisconnectRequest(self, data, length):
+    def parseDisconnectRequest(self, data: bytes, length: int) -> X224DisconnectRequestPDU:
         """
         Parse a DisconnectRequest PDU from the raw bytes
-        :type data: bytes
+        :param data: bytes to parse.
         :param length: The length in bytes of the Disconnect Request PDU.
-        :return: X224DisconnectRequestPDU
         """
         destination, source, reason, payload = self.parseConnectionPDU(data, length, "Disconnect Request")
         return X224DisconnectRequestPDU(destination, source, reason, payload)
 
-    def parseData(self, data, length):
+    def parseData(self, data: bytes, length: int) -> X224DataPDU:
         """
         Parse a Data PDU from the raw bytes
-        :type data: bytes
+        :param data: bytes to parse.
         :param length: The length in bytes of the Data PDU.
-        :return: X224DataPDU
         """
 
         if length != 2:
@@ -130,12 +125,11 @@ class X224Parser(Parser):
 
         return X224DataPDU(code & 1 == 1, sequence & 0x80 == 0x80, payload)
 
-    def parseError(self, data, length):
+    def parseError(self, data: bytes, length: int) -> X224ErrorPDU:
         """
         Parse a Error PDU from the raw bytes
-        :type data: bytes
+        :param data: bytes to parse.
         :param length: The length in bytes of the Error PDU.
-        :return: X224ErrorPDU
         """
 
         if length < 4:
@@ -173,61 +167,46 @@ class X224Parser(Parser):
         stream.write(pdu.payload)
         return stream.getvalue()
 
-    def writeConnectionPDU(self, stream, header, destination, source, options):
+    def writeConnectionPDU(self, stream: BytesIO, header: X224PDUType, destination: int, source: int, options: int):
         """
         Write a connection PDU (connectionRequest/connectionConfirm/disconnectRequest) in the provided byte stream.
-        :type stream: BytesIO
-        :type header: X224PDUType
-        :type destination: int
-        :type source: int
-        :type options: int
         """
         stream.write(Uint8.pack(header))
         stream.write(Uint16BE.pack(destination))
         stream.write(Uint16BE.pack(source))
         stream.write(Uint8.pack(options))
 
-    def writeConnectionRequest(self, stream, pdu):
+    def writeConnectionRequest(self, stream: BytesIO, pdu: X224ConnectionRequestPDU):
         """
         Write a connection request PDU onto the provided stream
-        :type stream: BytesIO
-        :type pdu: X224ConnectionRequestPDU
         """
         header = (pdu.header << 4) | (pdu.credit & 0xf)
         self.writeConnectionPDU(stream, header, pdu.destination, pdu.source, pdu.options)
 
-    def writeConnectionConfirm(self, stream, pdu):
+    def writeConnectionConfirm(self, stream: BytesIO, pdu: X224ConnectionConfirmPDU):
         """
         Write a connection confirm PDU onto the provided stream
-        :type stream: BytesIO
-        :type pdu: X224ConnectionConfirmPDU
         """
         header = (pdu.header << 4) | (pdu.credit & 0xf)
         self.writeConnectionPDU(stream, header, pdu.destination, pdu.source, pdu.options)
 
-    def writeDisconnectRequest(self, stream, pdu):
+    def writeDisconnectRequest(self, stream: BytesIO, pdu: X224DisconnectRequestPDU):
         """
         Write a disconnect request PDU onto the provided stream
-        :type stream: BytesIO
-        :type pdu: X224DisconnectRequestPDU
         """
         self.writeConnectionPDU(stream, pdu.header, pdu.destination, pdu.source, pdu.reason)
 
-    def writeData(self, stream, pdu):
+    def writeData(self, stream: BytesIO, pdu: X224DataPDU):
         """
         Write a Data PDU onto the provided stream
-        :type stream: BytesIO
-        :type pdu: X224DataPDU
         """
         header = (pdu.header << 4) | int(pdu.roa)
         stream.write(Uint8.pack(header))
         stream.write(Uint8.pack(int(pdu.eot) << 7))
 
-    def writeError(self, stream, pdu):
+    def writeError(self, stream: BytesIO, pdu: X224ErrorPDU):
         """
         Write an error PDU onto the provided stream
-        :type stream: BytesIO
-        :type pdu: X224ErrorPDU
         """
         stream.write(Uint8.pack(pdu.header))
         stream.write(Uint16LE.pack(pdu.destination))

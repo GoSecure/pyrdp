@@ -50,7 +50,7 @@ class Tag(IntEnum):
     BER_TAG_SEQUENCE = 0x10
     BER_TAG_SEQUENCE_OF = 0x10
 
-def berPC(isConstruct: bool):
+def berPC(isConstruct: bool) -> PC:
     """
     Return BER_CONSTRUCT if true, BER_PRIMITIVE if false
     :param isConstruct: True if BER_CONSTRUCT expected
@@ -61,13 +61,11 @@ def berPC(isConstruct: bool):
     else:
         return PC.BER_PRIMITIVE
     
-def readLength(s):
+def readLength(s: BinaryIO) -> int:
     """
     Read length of BER structure
     Length is on 1, 2 or 3 bytes
     :param s: stream
-    :type s: BinaryIO
-    :return: int
     """
 
     byte = Uint8.unpack(s.read(1))
@@ -83,51 +81,39 @@ def readLength(s):
     else:
         return byte
 
-def writeLength(length):
+def writeLength(length: int) -> bytes:
     """
     Pack structure length as expected in BER specification
     :param length: structure length.
-    :type length: int
-    :return: str
     """
     if length > 0x7f:
         return Uint8.pack(0x82) + Uint16BE.pack(length)
     else:
         return Uint8.pack(length)
     
-def readUniversalTag(s, tag, isConstruct):
+def readUniversalTag(s: BinaryIO, tag: Tag, isConstruct: bool) -> bool:
     """
     Unpack universal tag and return True if the proper tag was read.
     :param s: stream
-    :type s: BinaryIO
     :param tag: BER tag
-    :type tag: Tag
     :param isConstruct: True if a construct is expected
-    :type isConstruct: bool
-    :return: bool
     """
     byte = Uint8.unpack(s.read(1))
     return byte == ((Class.BER_CLASS_UNIV | berPC(isConstruct)) | (Tag.BER_TAG_MASK & tag))
 
-def writeUniversalTag(tag, isConstruct):
+def writeUniversalTag(tag: Tag, isConstruct: bool) -> bytes:
     """
     Pack universal tag.
     :param tag: BER tag
-    :type tag: Tag
     :param isConstruct: True if the structure is a construct
-    :type isConstruct: bool
-    :return: str
     """
     return Uint8.pack((Class.BER_CLASS_UNIV | berPC(isConstruct)) | (Tag.BER_TAG_MASK & tag))
 
-def readApplicationTag(s, tag):
+def readApplicationTag(s: BinaryIO, tag: Tag) -> int:
     """
     Unpack an application tag and return the length of the application packet.
     :param s: stream
-    :type s: BinaryIO
     :param tag: application tag.
-    :type tag: Tag
-    :return: int
     """
     byte = Uint8.unpack(s.read(1))
     
@@ -144,25 +130,21 @@ def readApplicationTag(s, tag):
         
     return readLength(s)
 
-def writeApplicationTag(tag, size):
+def writeApplicationTag(tag: Tag, size: int) -> bytes:
     """
     Pack an application tag.
     :param tag: application tag.
-    :type tag: Tag
     :param size: the size of the application packet.
-    :type size: int
     """
     if tag > 30:
         return Uint8.pack((Class.BER_CLASS_APPL | PC.BER_CONSTRUCT) | Tag.BER_TAG_MASK) + Uint8.pack(tag) + writeLength(size)
     else:
         return Uint8.pack((Class.BER_CLASS_APPL | PC.BER_CONSTRUCT) | (Tag.BER_TAG_MASK & tag)) + writeLength(size)
     
-def readBoolean(s):
+def readBoolean(s: BinaryIO) -> bool:
     """
     Unpack a BER boolean
     :param s: stream
-    :type s: BinaryIO
-    :return: bool
     """
     if not readUniversalTag(s, Tag.BER_TAG_BOOLEAN, False):
         raise ValueError("Bad boolean tag")
@@ -174,21 +156,17 @@ def readBoolean(s):
     b = Uint8.unpack(s.read(1))
     return bool(b)
 
-def writeBoolean(value):
+def writeBoolean(value: bool) -> bytes:
     """
     Pack a BER boolean
-    :type value: bool
-    :return: str
     """
     boolean = Uint8.pack(0xff if value else 0)
     return writeUniversalTag(Tag.BER_TAG_BOOLEAN, False) + writeLength(1) + boolean
 
-def readInteger(s):
+def readInteger(s: BinaryIO) -> int:
     """
     Unpack a BER integer
     :param s: stream
-    :type s: BinaryIO
-    :return: int
     """
     if not readUniversalTag(s, Tag.BER_TAG_INTEGER, False):
         raise ValueError("Bad integer tag")
@@ -208,11 +186,9 @@ def readInteger(s):
     else:
         raise ValueError("Wrong integer size")
     
-def writeInteger(value):
+def writeInteger(value: int) -> bytes:
     """
     Pack a BER integer
-    :type value: int
-    :return: str
     """
     if value <= 0xff:
         return writeUniversalTag(Tag.BER_TAG_INTEGER, False) + writeLength(1) + Uint8.pack(value)
@@ -221,12 +197,10 @@ def writeInteger(value):
     else:
         return writeUniversalTag(Tag.BER_TAG_INTEGER, False) + writeLength(4) + Uint32BE.pack(value)
 
-def readOctetString(s):
+def readOctetString(s: BinaryIO) -> bytes:
     """
     Unpack a BER octet string
     :param s: stream
-    :type s: BinaryIO
-    :return: str
     """
     if not readUniversalTag(s, Tag.BER_TAG_OCTET_STRING, False):
         raise ValueError("Bad octet string tag")
@@ -234,20 +208,16 @@ def readOctetString(s):
     size = readLength(s)
     return s.read(size)
 
-def writeOctetString(value):
+def writeOctetString(value: bytes) -> bytes:
     """
     Pack a BER octet string
-    :type value: bytes
-    :return: str
     """
     return writeUniversalTag(Tag.BER_TAG_OCTET_STRING, False) + writeLength(len(value)) + value
 
-def readEnumeration(s):
+def readEnumeration(s: BinaryIO) -> int:
     """
     Unpack a BER enumeration value
     :param s: stream
-    :type s: BinaryIO
-    :return: int
     """
     if not readUniversalTag(s, Tag.BER_TAG_ENUMERATED, False):
         raise ValueError("Bad enumeration tag")
@@ -257,10 +227,8 @@ def readEnumeration(s):
     
     return Uint8.unpack(s.read(1))
 
-def writeEnumeration(value):
+def writeEnumeration(value: int) -> bytes:
     """
     Pack a BER enumeration value
-    :type value: int
-    :return: str
     """
     return writeUniversalTag(Tag.BER_TAG_ENUMERATED, False) + writeLength(1) + Uint8.pack(value)

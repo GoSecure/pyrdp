@@ -55,17 +55,15 @@ class CompositeObserver:
         for observer in self.observers:
             getattr(observer, item)(*args, **kwargs)
 
-    def addObserver(self, observer):
+    def addObserver(self, observer: Observer):
         """
         Add an observer to the composite.
-        :type observer: Observer
         """
         self.observers.append(observer)
 
-    def removeObserver(self, observer):
+    def removeObserver(self, observer: Observer):
         """
         Remove an observer from the composite.
-        :type observer: Observer
         """
         self.observers.remove(observer)
 

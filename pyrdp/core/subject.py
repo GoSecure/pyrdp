@@ -27,20 +27,17 @@ class Subject:
         """
         return self.observer.removeObserver(observer)
 
-def ObservedBy(ObserverClass):
+def ObservedBy(ObserverClass: type):
     """
     This decorator adds a `createObserver` method to a class that creates an
     observer object and forwards all keyword arguments to its constructor.
 
     :param ObserverClass: The observer class.
-    :type ObserverClass: type
     """
-    def setCreateObserverMethod(SubjectClass):
+    def setCreateObserverMethod(SubjectClass: type) -> type:
         """
         Add a createObserver method to a class.
         :param SubjectClass: the subject class.
-        :type SubjectClass: type
-        :return: SubjectClass
         """
 
         def createObserver(self, **kwargs):

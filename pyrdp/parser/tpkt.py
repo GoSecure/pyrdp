@@ -16,12 +16,10 @@ class TPKTParser(SegmentationParser):
     """
     Parser for TPKT traffic to read and write TPKT messages
     """
-    def isCompletePDU(self, data):
+    def isCompletePDU(self, data: bytes) -> bool:
         """
         Check if the PDU is fully contained in data.
         :param data: the data.
-        :type data: bytes
-        :return: bool
         """
         if len(data) < 4:
             return False
@@ -29,41 +27,27 @@ class TPKTParser(SegmentationParser):
         length = self.getPDULength(data)
         return len(data) >= length
 
-    def isTPKTPDU(self, data):
+    def isTPKTPDU(self, data: bytes) -> bool:
         """
         Check if the PDU in data is a TPKT PDU.
         :param data: the data.
-        :type data: bytes
-        :return: bool
         """
         return Uint8.unpack(data[0]) == 3
 
-    def getPDULength(self, data):
+    def getPDULength(self, data: bytes) -> int:
         """
         Get the length of the PDU contained in data.
         :param data: the PDU data.
-        :type data: bytes
-        :return: int
         """
         return Uint16BE.unpack(data[2 : 4])
 
-    def getPDULengthWithSocket(self, socket):
-        """
-        Same as getPDULength, but using a network socket.
-        :type socket: socket.socket
-        """
-        data = socket.recv(3)
-        return data, Uint16BE.unpack(data[1:])
-
-    def parse(self, data):
+    def parse(self, data: bytes) -> TPKTPDU:
         """
         Read the byte stream and return a TPKTPDU
-        :type data: bytes
-        :return: TPKTPDU
         """
 
-        version = Uint8.unpack(data[0 : 1])
-        padding = Uint8.unpack(data[1 : 2])  # Unused value
+        _version = Uint8.unpack(data[0 : 1])
+        _padding = Uint8.unpack(data[1 : 2])
         length = Uint16BE.unpack(data[2 : 4])
         payload = data[4 : length]
 
@@ -72,11 +56,9 @@ class TPKTParser(SegmentationParser):
 
         return TPKTPDU(payload)
 
-    def write(self, pdu):
+    def write(self, pdu: TPKTPDU) -> bytes:
         """
         Encode a TPKTPDU into bytes to send on the network.
-        :type pdu: TPKTPDU
-        :return: str
         """
 
         stream = BytesIO()

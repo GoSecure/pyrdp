@@ -21,113 +21,93 @@
 PER encoding / decoding functions
 """
 
+from typing import BinaryIO, Tuple
+
 from pyrdp.core.packing import Uint8, Uint16BE, Uint32BE
 
 
-def readLength(s):
+def readLength(s: BinaryIO) -> int:
     """
     Unpack a PER length indicator
     :param s: stream
-    :type s: file
-    :return: int
     """
     byte = Uint8.unpack(s.read(1))
-    size = 0
+
     if byte & 0x80:
         byte &= ~0x80
         return (byte << 8) + Uint8.unpack(s.read(1))
     else:
         return byte
 
-def writeLength(value):
+def writeLength(value: int) -> bytes:
     """
     Pack a PER length indicator
-    :type value: int
-    :return: str
     """
     if value > 0x7f:
         return Uint16BE.pack(value | 0x8000)
     else:
         return Uint8.pack(value)
     
-def readChoice(s):
+def readChoice(s: BinaryIO) -> int:
     """
     Unpack a PER choice
     :param s: stream
-    :type s: file
-    :return: int
     """
     return Uint8.unpack(s.read(1))
 
-def writeChoice(choice):
+def writeChoice(choice: int) -> bytes:
     """
     Pack a PER choice
     :param choice: choice value
-    :type choice: int
-    :return: str
     """
     return Uint8.pack(choice)
 
-def readSelection(s):
+def readSelection(s: BinaryIO) -> int:
     """
     Unpack a PER selection
     :param s: stream
-    :type s: file
-    :return: int
     """
     return Uint8.unpack(s.read(1))
 
-def writeSelection(selection):
+def writeSelection(selection: int) -> bytes:
     """
     Pack a PER selection
     :param selection: selection value
-    :type selection: int
-    :return: str
     """
     return Uint8.pack(selection)
 
-def readNumberOfSet(s):
+def readNumberOfSet(s: BinaryIO) -> int:
     """
     Unpack a PER NumberOfSet
     :param s: stream
-    :type s: file
-    :return: int
     """
     return Uint8.unpack(s.read(1))
 
-def writeNumberOfSet(numberOfSet):
+def writeNumberOfSet(numberOfSet: int) -> bytes:
     """
     Pack a PER NumberOfSet
     :param numberOfSet: NumberOfSet value
-    :type numberOfSet: int
-    :return: str
     """
     return Uint8.pack(numberOfSet)
 
-def readEnumeration(s):
+def readEnumeration(s: BinaryIO) -> int:
     """
     Unpack a PER enumeration format
     :param s: stream
-    :type s: file
-    :return: int
     """
     return Uint8.unpack(s.read(1))
 
-def writeEnumeration(enum):
+def writeEnumeration(enum: int) -> bytes:
     """
     Pack a PER enumeration
     :param enum: enumeration value
-    :type enum: int
-    :return: str
     """
     return Uint8.pack(enum)
 
-def readInteger(s):
+def readInteger(s: BinaryIO) -> int:
     """
     Unpack a PER integer
     :param s: stream
-    :type s: file
-    :return: int
     @raise InvalidValue: if the size of the integer is invalid
     """
     size = readLength(s)
@@ -141,11 +121,9 @@ def readInteger(s):
     else:
         raise ValueError("invalid integer size %d" % size)
 
-def writeInteger(value):
+def writeInteger(value: int) -> bytes:
     """
     Pack a PER integer
-    :type value: int
-    :return: str
     """
     if value <= 0xff:
         return writeLength(1) + Uint8.pack(value)
@@ -154,11 +132,10 @@ def writeInteger(value):
     else:
         return writeLength(4) + Uint32BE.pack(value)
 
-def readObjectIdentifier(s):
+def readObjectIdentifier(s: BinaryIO):
     """
     Unpack a PER object identifier (tuple of 6 integers)
     :param s: stream
-    :type s: file
     :return: (int, int, int, int, int, int)
     """
     size = readLength(s)
@@ -175,23 +152,18 @@ def readObjectIdentifier(s):
     a_oid[5] = Uint8.unpack(s.read(1))
     return tuple(a_oid)
 
-def writeObjectIdentifier(oid):
+def writeObjectIdentifier(oid: Tuple[int, int, int, int, int, int]) -> bytes:
     """
     Pack a PER object identifier
     :param oid: object identifier (tuple of 6 integers)
-    :type oid: (int, int, int, int, int, int)
-    :return: str
     """
     return writeLength(5) + Uint8.pack((oid[0] << 4) & (oid[1] & 0x0f)) + b"".join(Uint8.pack(b) for b in oid[2 :])
 
-def readNumericString(s, minValue):
+def readNumericString(s: BinaryIO, minValue: int) -> bytes:
     """
     Unpack a PER numeric string
     :param s: stream
-    :type s: file
     :param minValue: minimum string length
-    :type minValue: int
-    :return: str
     """
     length = readLength(s)
     length = (length + minValue + 1) // 2
@@ -199,21 +171,17 @@ def readNumericString(s, minValue):
 
     result = b""
     for b in data:
-        b = Uint8.unpack(b)
         c1 = (b >> 4) + 0x30
         c2 = (b & 0xf) + 0x30
         result += bytes([c1, c2])
     
     return result
 
-def writeNumericString(string, minValue):
+def writeNumericString(string: bytes, minValue: int) -> bytes:
     """
     Pack a PER numeric string
     :param string: numeric string
-    :type string: bytes
     :param minValue: minimum string length
-    :type minValue: int
-    :return: str
     """
     length = len(string)
     mlength = minValue
@@ -235,26 +203,20 @@ def writeNumericString(string, minValue):
     
     return writeLength(mlength) + result
 
-def readOctetStream(s, minValue = 0):
+def readOctetStream(s: BinaryIO, minValue: int = 0) -> bytes:
     """
     Unpack a PER octet stream
     :param s: stream
-    :type s: file
     :param minValue: minimum string length
-    :type minValue: int
-    :return: str
     """
     size = readLength(s) + minValue
     return s.read(size)
 
-def writeOctetStream(bytes, minValue = 0):
+def writeOctetStream(bytes: bytes, minValue: int = 0) -> bytes:
     """
     Pack a PER octet stream
     :param bytes: octet stream
-    :type bytes: bytes
     :param minValue: minimum string length
-    :type minValue: int
-    :return: str
     """
     length = len(bytes)
     mlength = minValue

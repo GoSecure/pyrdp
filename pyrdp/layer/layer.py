@@ -31,10 +31,9 @@ class LayerRoutedObserver(LayerObserver):
     """
     Layer observer that routes PDUs to methods by checking the PDU's header.
     """
-    def __init__(self, handlers, **kwargs):
+    def __init__(self, handlers: dict, **kwargs):
         """
         :param handlers: a dictionary of headers to method names
-        :type handlers: dict
         """
         LayerObserver.__init__(self, **kwargs)
         self.handlers = {}
@@ -59,10 +58,9 @@ class LayerStrictRoutedObserver(LayerRoutedObserver):
     """
     Layer observer that throws an exception when an unknown header is received.
     """
-    def __init__(self, handlers, **kwargs):
+    def __init__(self, handlers: dict, **kwargs):
         """
         :param handlers: a dictionary of headers to method names
-        :type handlers: dict
         """
         LayerRoutedObserver.__init__(self, handlers, **kwargs)
     

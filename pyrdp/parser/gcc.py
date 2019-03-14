@@ -52,7 +52,7 @@ class GCCParser(Parser):
         if oid != GCCParser.T124_02_98_OID:
             raise ParsingError("Invalid object identifier: %r, expected %r" % (oid, GCCParser.T124_02_98_OID))
 
-        length = per.readLength(stream)
+        _length = per.readLength(stream)
         header = per.readChoice(stream)
 
         if header not in self.parsers:
@@ -62,19 +62,18 @@ class GCCParser(Parser):
 
         return pdu
 
-    def parseConferenceCreateRequest(self, stream):
+    def parseConferenceCreateRequest(self, stream: BytesIO) -> GCCConferenceCreateRequestPDU:
         """
         Parse ConferenceCreateRequest data into a GCCPDU
         :param stream: byte stream containing the PDU data
-        :type stream: BytesIO
-        :return: GCCConferenceCreateRequestPDU
         """
-        property = per.readSelection(stream)
-        if property != 8:
-            raise ParsingError("Expected property to be 8 (conference name), got %d" % property)
+        prop = per.readSelection(stream)
+
+        if prop != 8:
+            raise ParsingError("Expected property to be 8 (conference name), got %d" % prop)
 
         conferenceName = per.readNumericString(stream, 1)
-        padding = stream.read(1)
+        stream.read(1)
 
         userDataCount = per.readNumberOfSet(stream)
         if userDataCount != 1:
@@ -91,12 +90,10 @@ class GCCParser(Parser):
         payload = per.readOctetStream(stream)
         return GCCConferenceCreateRequestPDU(conferenceName, payload)
 
-    def parseConferenceCreateResponse(self, stream):
+    def parseConferenceCreateResponse(self, stream: BytesIO) -> GCCConferenceCreateResponsePDU:
         """
         Parse ConferenceCreateResponse data into a GCCPDU
         :param stream: byte stream containing the PDU data
-        :type stream: BytesIO
-        :return: GCCConferenceCreateResponsePDU
         """
 
         nodeID = Uint16BE.unpack(stream.read(2)) + 1001
@@ -118,12 +115,10 @@ class GCCParser(Parser):
         payload = per.readOctetStream(stream)
         return GCCConferenceCreateResponsePDU(nodeID, tag, result, payload)
 
-    def write(self, pdu):
+    def write(self, pdu: GCCPDU) -> bytes:
         """
         Encode a GCC PDU to bytes.
         :param pdu: gcc PDU.
-        :type pdu: GCCPDU
-        :return: str
         """
         if pdu.header not in self.writers:
             raise UnknownPDUTypeError("Trying to write unknown GCC PDU type %s" % pdu.header, pdu.header)
@@ -140,12 +135,11 @@ class GCCParser(Parser):
         self.writers[pdu.header](stream, pdu)
         return stream.getvalue()
 
-    def writeConferenceCreateRequest(self, stream, pdu):
+    def writeConferenceCreateRequest(self, stream: BytesIO, pdu: GCCConferenceCreateRequestPDU):
         """
-        Read a GCCConferenceCreateRequestPDU and put its raw data into stream
-        :param stream: byte stream to put the ConferenceCreateRequest data in
-        :type stream: BytesIO
-        :type pdu: GCCConferenceCreateRequestPDU
+        Write a GCCConferenceCreateRequestPDU to a stream.
+        :param stream: byte stream to put the ConferenceCreateRequest data in.
+        :param pdu: the PDU to write.
         """
         stream.write(per.writeSelection(8))
         stream.write(per.writeNumericString(pdu.conferenceName, 1))
@@ -155,12 +149,11 @@ class GCCParser(Parser):
         stream.write(per.writeOctetStream(GCCParser.H221_CLIENT_KEY, 4))
         stream.write(per.writeOctetStream(pdu.payload))
 
-    def writeConferenceCreateResponse(self, stream, pdu):
+    def writeConferenceCreateResponse(self, stream: BytesIO, pdu: GCCConferenceCreateResponsePDU):
         """
-        Read a GCCConferenceCreateResponsePDU and put its raw data into stream
-        :param stream: byte stream to put the ConferenceCreateResponse data in
-        :type stream: BytesIO
-        :type pdu: GCCConferenceCreateResponsePDU
+        Write a GCCConferenceCreateResponsePDU to a stream.
+        :param stream: byte stream to put the ConferenceCreateResponse data in.
+        :param pdu: the PDU to write.
         """
 
         stream.write(Uint16BE.pack(GCCParser.NODE_ID - 1001))
