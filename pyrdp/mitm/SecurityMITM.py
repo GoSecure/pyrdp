@@ -7,7 +7,7 @@
 from logging import LoggerAdapter
 
 from pyrdp.core import decodeUTF16LE
-from pyrdp.enum import ClientInfoFlags, PlayerMessageType
+from pyrdp.enum import ClientInfoFlags, PlayerPDUType
 from pyrdp.layer import SecurityLayer
 from pyrdp.mitm.config import MITMConfig
 from pyrdp.mitm.state import RDPMITMState
@@ -75,7 +75,7 @@ class SecurityMITM:
             "clientAddress": clientAddress
         })
 
-        self.recorder.record(pdu, PlayerMessageType.CLIENT_INFO)
+        self.recorder.record(pdu, PlayerPDUType.CLIENT_INFO)
 
         # If set, replace the provided username and password to connect the user regardless of
         # the credentials they entered.

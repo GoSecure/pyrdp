@@ -7,8 +7,8 @@
 from PySide2.QtCore import Signal
 from PySide2.QtWidgets import QWidget
 
-from pyrdp.layer import AsyncIOTCPLayer, LayerChainItem, PlayerMessageLayer
-from pyrdp.player.PlayerMessageHandler import PlayerMessageHandler
+from pyrdp.layer import AsyncIOTCPLayer, LayerChainItem, PlayerLayer
+from pyrdp.player.PlayerHandler import PlayerHandler
 from pyrdp.player.BaseTab import BaseTab
 from pyrdp.ui import QRemoteDesktop
 
@@ -23,8 +23,8 @@ class LiveTab(BaseTab):
     def __init__(self, parent: QWidget = None):
         super().__init__(QRemoteDesktop(1024, 768), parent)
         self.tcp = AsyncIOTCPLayer()
-        self.player = PlayerMessageLayer()
-        self.eventHandler = PlayerMessageHandler(self.widget, self.text)
+        self.player = PlayerLayer()
+        self.eventHandler = PlayerHandler(self.widget, self.text)
 
         LayerChainItem.chain(self.tcp, self.player)
         self.player.addObserver(self.eventHandler)

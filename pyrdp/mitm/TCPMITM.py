@@ -7,7 +7,7 @@
 from logging import LoggerAdapter
 from typing import Coroutine
 
-from pyrdp.enum import PlayerMessageType
+from pyrdp.enum import PlayerPDUType
 from pyrdp.layer import TwistedTCPLayer
 from pyrdp.recording import Recorder
 
@@ -70,7 +70,7 @@ class TCPMITM:
         :param reason: reason for disconnection
         """
 
-        self.recorder.record(None, PlayerMessageType.CONNECTION_CLOSE)
+        self.recorder.record(None, PlayerPDUType.CONNECTION_CLOSE)
         self.log.info("Client connection closed. %(reason)s", {"reason": reason.value})
         self.serverConnector.close()
         self.server.disconnect(True)
@@ -91,7 +91,7 @@ class TCPMITM:
         :param reason: reason for disconnection
         """
 
-        self.recorder.record(None, PlayerMessageType.CONNECTION_CLOSE)
+        self.recorder.record(None, PlayerPDUType.CONNECTION_CLOSE)
         self.log.info("Server connection closed. %(reason)s", {"reason": reason.value})
         self.client.disconnect(True)
 

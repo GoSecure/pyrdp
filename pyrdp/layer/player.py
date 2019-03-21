@@ -5,57 +5,57 @@
 #
 
 from pyrdp.core import ObservedBy
-from pyrdp.enum import PlayerMessageType
+from pyrdp.enum import PlayerPDUType
 from pyrdp.layer import BufferedLayer, LayerRoutedObserver
-from pyrdp.parser import PlayerMessageParser
-from pyrdp.pdu import PlayerMessagePDU
+from pyrdp.parser import PlayerParser
+from pyrdp.pdu import PlayerPDU
 
 
-class PlayerMessageObserver(LayerRoutedObserver):
+class PlayerObserver(LayerRoutedObserver):
     def __init__(self, **kwargs):
         LayerRoutedObserver.__init__(self, {
-            PlayerMessageType.CONNECTION_CLOSE: "onConnectionClose",
-            PlayerMessageType.CLIENT_INFO: "onClientInfo",
-            PlayerMessageType.SLOW_PATH_PDU: "onSlowPathPDU",
-            PlayerMessageType.FAST_PATH_INPUT: "onInput",
-            PlayerMessageType.FAST_PATH_OUTPUT: "onOutput",
-            PlayerMessageType.CLIPBOARD_DATA: "onClipboardData",
-            PlayerMessageType.CLIENT_DATA: "onClientData"
+            PlayerPDUType.CONNECTION_CLOSE: "onConnectionClose",
+            PlayerPDUType.CLIENT_INFO: "onClientInfo",
+            PlayerPDUType.SLOW_PATH_PDU: "onSlowPathPDU",
+            PlayerPDUType.FAST_PATH_INPUT: "onInput",
+            PlayerPDUType.FAST_PATH_OUTPUT: "onOutput",
+            PlayerPDUType.CLIPBOARD_DATA: "onClipboardData",
+            PlayerPDUType.CLIENT_DATA: "onClientData"
         }, **kwargs)
 
-    def onConnectionClose(self, pdu: PlayerMessagePDU):
+    def onConnectionClose(self, pdu: PlayerPDU):
         raise NotImplementedError()
 
-    def onClientInfo(self, pdu: PlayerMessagePDU):
+    def onClientInfo(self, pdu: PlayerPDU):
         raise NotImplementedError()
 
-    def onSlowPathPDU(self, pdu: PlayerMessagePDU):
+    def onSlowPathPDU(self, pdu: PlayerPDU):
         raise NotImplementedError()
 
-    def onInput(self, pdu: PlayerMessagePDU):
+    def onInput(self, pdu: PlayerPDU):
         raise NotImplementedError()
 
-    def onOutput(self, pdu: PlayerMessagePDU):
+    def onOutput(self, pdu: PlayerPDU):
         raise NotImplementedError()
 
-    def onClipboardData(self, pdu: PlayerMessagePDU):
+    def onClipboardData(self, pdu: PlayerPDU):
         raise NotImplementedError()
 
-    def onClientData(self, pdu: PlayerMessagePDU):
+    def onClientData(self, pdu: PlayerPDU):
         raise NotImplementedError()
 
 
-@ObservedBy(PlayerMessageObserver)
-class PlayerMessageLayer(BufferedLayer):
+@ObservedBy(PlayerObserver)
+class PlayerLayer(BufferedLayer):
     """
     Layer to manage the encapsulation of Player metadata such as event timestamp and
     event type/origin (input, output).
     """
 
-    def __init__(self, parser: PlayerMessageParser = PlayerMessageParser()):
+    def __init__(self, parser: PlayerParser = PlayerParser()):
         super().__init__(parser)
 
-    def sendMessage(self, data: bytes, messageType: PlayerMessageType, timeStamp: int):
-        pdu = PlayerMessagePDU(messageType, timeStamp, data)
+    def sendMessage(self, data: bytes, messageType: PlayerPDUType, timeStamp: int):
+        pdu = PlayerPDU(messageType, timeStamp, data)
         self.sendPDU(pdu)
 

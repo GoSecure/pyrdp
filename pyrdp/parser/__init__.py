@@ -7,7 +7,7 @@
 from pyrdp.parser.gcc import GCCParser
 from pyrdp.parser.mcs import MCSParser
 from pyrdp.parser.parser import Parser
-from pyrdp.parser.player import PlayerMessageParser
+from pyrdp.parser.player import PlayerParser
 from pyrdp.parser.rdp.bitmap import BitmapParser
 from pyrdp.parser.rdp.client_info import ClientInfoParser
 from pyrdp.parser.rdp.connection import ClientConnectionParser, ServerConnectionParser

@@ -12,7 +12,7 @@ from twisted.internet.protocol import Protocol
 
 from pyrdp.core import AwaitableClientFactory
 from pyrdp.core.ssl import ClientTLSContext, ServerTLSContext
-from pyrdp.enum import MCSChannelName, ParserMode, PlayerMessageType, SegmentationPDUType
+from pyrdp.enum import MCSChannelName, ParserMode, PlayerPDUType, SegmentationPDUType
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, LayerChainItem, RawLayer, TwistedTCPLayer, \
     VirtualChannelLayer
 from pyrdp.logging import RC4LoggingObserver
@@ -218,11 +218,11 @@ class RDPMITM:
 
         self.client.security.addObserver(SecurityLogger(self.getClientLog("security")))
         self.client.fastPath.addObserver(FastPathLogger(self.getClientLog("fastpath")))
-        self.client.fastPath.addObserver(RecordingFastPathObserver(self.recorder, PlayerMessageType.FAST_PATH_INPUT))
+        self.client.fastPath.addObserver(RecordingFastPathObserver(self.recorder, PlayerPDUType.FAST_PATH_INPUT))
 
         self.server.security.addObserver(SecurityLogger(self.getServerLog("security")))
         self.server.fastPath.addObserver(FastPathLogger(self.getServerLog("fastpath")))
-        self.server.fastPath.addObserver(RecordingFastPathObserver(self.recorder, PlayerMessageType.FAST_PATH_OUTPUT))
+        self.server.fastPath.addObserver(RecordingFastPathObserver(self.recorder, PlayerPDUType.FAST_PATH_OUTPUT))
 
         self.security = SecurityMITM(self.client.security, self.server.security, self.getLog("security"), self.config, self.state, self.recorder)
         self.fastPath = FastPathMITM(self.client.fastPath, self.server.fastPath)

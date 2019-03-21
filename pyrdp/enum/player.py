@@ -1,7 +1,7 @@
 from enum import IntEnum
 
 
-class PlayerMessageType(IntEnum):
+class PlayerPDUType(IntEnum):
     """
     Types of events that we can encounter when replaying a RDP connection.
     """

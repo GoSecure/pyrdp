@@ -8,8 +8,8 @@ import time
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-from pyrdp.enum import ParserMode, PlayerMessageType
-from pyrdp.layer import LayerChainItem, PlayerMessageLayer
+from pyrdp.enum import ParserMode, PlayerPDUType
+from pyrdp.layer import LayerChainItem, PlayerLayer
 from pyrdp.logging import log
 from pyrdp.parser import BasicFastPathParser, ClientConnectionParser, ClientInfoParser, ClipboardParser, Parser, \
     SlowPathParser
@@ -24,13 +24,13 @@ class Recorder:
     """
 
     def __init__(self, transports: List[LayerChainItem]):
-        self.parsers: Dict[PlayerMessageType, Parser] = {
-            PlayerMessageType.FAST_PATH_INPUT: BasicFastPathParser(ParserMode.CLIENT),
-            PlayerMessageType.FAST_PATH_OUTPUT: BasicFastPathParser(ParserMode.SERVER),
-            PlayerMessageType.CLIENT_INFO: ClientInfoParser(),
-            PlayerMessageType.SLOW_PATH_PDU: SlowPathParser(),
-            PlayerMessageType.CLIPBOARD_DATA: ClipboardParser(),
-            PlayerMessageType.CLIENT_DATA: ClientConnectionParser(),
+        self.parsers: Dict[PlayerPDUType, Parser] = {
+            PlayerPDUType.FAST_PATH_INPUT: BasicFastPathParser(ParserMode.CLIENT),
+            PlayerPDUType.FAST_PATH_OUTPUT: BasicFastPathParser(ParserMode.SERVER),
+            PlayerPDUType.CLIENT_INFO: ClientInfoParser(),
+            PlayerPDUType.SLOW_PATH_PDU: SlowPathParser(),
+            PlayerPDUType.CLIPBOARD_DATA: ClipboardParser(),
+            PlayerPDUType.CLIENT_DATA: ClientConnectionParser(),
         }
 
         self.topLayers = []
@@ -39,18 +39,18 @@ class Recorder:
             self.addTransport(transport)
 
     def addTransport(self, transportLayer: LayerChainItem):
-        player = PlayerMessageLayer()
+        player = PlayerLayer()
         player.setPrevious(transportLayer)
         self.topLayers.append(player)
 
-    def setParser(self, messageType: PlayerMessageType, parser: Parser):
+    def setParser(self, messageType: PlayerPDUType, parser: Parser):
         """
         Set the parser to use for a given message type.
         """
         self.parsers[messageType] = parser
 
 
-    def record(self, pdu: Optional[PDU], messageType: PlayerMessageType):
+    def record(self, pdu: Optional[PDU], messageType: PlayerPDUType):
         """
         Encapsulate the pdu properly, then record the data
         """

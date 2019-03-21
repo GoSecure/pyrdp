@@ -1,8 +1,8 @@
 from PySide2.QtWidgets import QApplication, QWidget
 
-from pyrdp.layer import PlayerMessageLayer
+from pyrdp.layer import PlayerLayer
 from pyrdp.player.ReplayBar import ReplayBar
-from pyrdp.player.PlayerMessageHandler import PlayerMessageHandler
+from pyrdp.player.PlayerHandler import PlayerHandler
 from pyrdp.player.BaseTab import BaseTab
 from pyrdp.player.Replay import Replay
 from pyrdp.player.ReplayThread import ReplayThread
@@ -25,7 +25,7 @@ class ReplayTab(BaseTab):
 
         self.fileName = fileName
         self.file = open(self.fileName, "rb")
-        self.eventHandler = PlayerMessageHandler(self.widget, self.text)
+        self.eventHandler = PlayerHandler(self.widget, self.text)
 
         replay = Replay(self.file)
         self.thread = ReplayThread(replay)
@@ -43,7 +43,7 @@ class ReplayTab(BaseTab):
 
         self.layout().insertWidget(0, self.controlBar)
 
-        self.player = PlayerMessageLayer()
+        self.player = PlayerLayer()
         self.player.addObserver(self.eventHandler)
 
     def readEvent(self, position: int):

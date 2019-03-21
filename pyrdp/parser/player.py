@@ -1,23 +1,23 @@
 from io import BytesIO
 
 from pyrdp.core import Uint16LE, Uint64LE
-from pyrdp.enum import PlayerMessageType
+from pyrdp.enum import PlayerPDUType
 from pyrdp.parser.segmentation import SegmentationParser
-from pyrdp.pdu import PlayerMessagePDU
+from pyrdp.pdu import PlayerPDU
 
 
-class PlayerMessageParser(SegmentationParser):
-    def parse(self, data: bytes) -> PlayerMessagePDU:
+class PlayerParser(SegmentationParser):
+    def parse(self, data: bytes) -> PlayerPDU:
         stream = BytesIO(data)
 
         length = Uint64LE.unpack(stream)
-        type = PlayerMessageType(Uint16LE.unpack(stream))
+        type = PlayerPDUType(Uint16LE.unpack(stream))
         timestamp = Uint64LE.unpack(stream)
         payload = stream.read(length - 18)
 
-        return PlayerMessagePDU(type, timestamp, payload)
+        return PlayerPDU(type, timestamp, payload)
 
-    def write(self, pdu: PlayerMessagePDU) -> bytes:
+    def write(self, pdu: PlayerPDU) -> bytes:
         stream = BytesIO()
 
         # 18 bytes of header + the payload
