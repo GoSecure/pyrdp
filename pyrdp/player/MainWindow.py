@@ -47,4 +47,5 @@ class MainWindow(QMainWindow):
         fileName, _ = QFileDialog.getOpenFileName(self, "Open File")
 
         if fileName:
+            self.tabManager.setCurrentWidget(self.replayWindow)
             self.replayWindow.openFile(fileName)

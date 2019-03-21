@@ -39,6 +39,7 @@ class ReplayTab(BaseTab):
         self.controlBar.pause.connect(self.thread.pause)
         self.controlBar.seek.connect(self.thread.seek)
         self.controlBar.speedChanged.connect(self.thread.setSpeed)
+        self.controlBar.button.setDefault(True)
 
         self.layout().insertWidget(0, self.controlBar)
 
