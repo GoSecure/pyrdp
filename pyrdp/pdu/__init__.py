@@ -9,6 +9,7 @@ from pyrdp.pdu.mcs import MCSAttachUserConfirmPDU, MCSAttachUserRequestPDU, MCSC
     MCSChannelJoinRequestPDU, MCSConnectInitialPDU, MCSConnectResponsePDU, MCSDisconnectProviderUltimatumPDU, \
     MCSDomainParams, MCSErectDomainRequestPDU, MCSPDU, MCSSendDataIndicationPDU, MCSSendDataRequestPDU
 from pyrdp.pdu.pdu import PDU
+from pyrdp.pdu.player import PlayerMessagePDU
 from pyrdp.pdu.rdp.bitmap import BitmapUpdateData
 from pyrdp.pdu.rdp.capability import BitmapCacheHostSupportCapability, BitmapCacheV1Capability, BitmapCacheV2Capability, \
     BitmapCapability, BitmapCodec, BitmapCodecsCapability, BrushCapability, Capability, ClientCapsContainer, \
@@ -42,7 +43,6 @@ from pyrdp.pdu.rdp.virtual_channel.device_redirection import DeviceAnnounce, Dev
     DeviceRedirectionCapability, DeviceRedirectionClientCapabilitiesPDU, DeviceRedirectionGeneralCapability, \
     DeviceRedirectionPDU, DeviceRedirectionServerCapabilitiesPDU
 from pyrdp.pdu.rdp.virtual_channel.virtual_channel import VirtualChannelPDU
-from pyrdp.pdu.recording import PlayerMessagePDU
 from pyrdp.pdu.segmentation import SegmentationPDU
 from pyrdp.pdu.tpkt import TPKTPDU
 from pyrdp.pdu.x224 import X224ConnectionConfirmPDU, X224ConnectionRequestPDU, X224DataPDU, X224DisconnectRequestPDU, \
