@@ -2,7 +2,7 @@ from io import BytesIO
 
 from pyrdp.core import Uint16LE, Uint64LE
 from pyrdp.enum import PlayerMessageType
-from pyrdp.parser import SegmentationParser
+from pyrdp.parser.segmentation import SegmentationParser
 from pyrdp.pdu import PlayerMessagePDU
 
 
