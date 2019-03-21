@@ -27,8 +27,8 @@ class MainWindow(QMainWindow):
         self.replayWindow = ReplayWindow()
 
         self.tabManager = QTabWidget()
-        self.tabManager.addTab(self.replayWindow, "Replays")
         self.tabManager.addTab(self.liveWindow, "Live connections")
+        self.tabManager.addTab(self.replayWindow, "Replays")
         self.setCentralWidget(self.tabManager)
 
         openAction = QAction("Open...", self)
