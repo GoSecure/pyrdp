@@ -9,11 +9,10 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 from pyrdp.enum import ParserMode, PlayerMessageType
-from pyrdp.layer import PlayerMessageLayer, TPKTLayer
-from pyrdp.layer.layer import LayerChainItem
+from pyrdp.layer import LayerChainItem, PlayerMessageLayer
 from pyrdp.logging import log
-from pyrdp.parser import BasicFastPathParser, ClientInfoParser, ClipboardParser, Parser, SlowPathParser
-from pyrdp.parser.rdp.connection import ClientConnectionParser
+from pyrdp.parser import BasicFastPathParser, ClientConnectionParser, ClientInfoParser, ClipboardParser, Parser, \
+    SlowPathParser
 from pyrdp.pdu import PDU
 
 

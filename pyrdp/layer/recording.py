@@ -6,9 +6,8 @@
 
 from pyrdp.core import ObservedBy
 from pyrdp.enum import PlayerMessageType
-from pyrdp.layer import BufferedLayer
-from pyrdp.layer.layer import Layer, LayerRoutedObserver
-from pyrdp.parser.recording import PlayerMessageParser
+from pyrdp.layer import BufferedLayer, LayerRoutedObserver
+from pyrdp.parser import PlayerMessageParser
 from pyrdp.pdu import PlayerMessagePDU
 
 
