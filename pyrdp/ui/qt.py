@@ -171,7 +171,7 @@ class QRemoteDesktop(QWidget):
         """
         self._buffer = QImage(width, height, QImage.Format_RGB32)
         super().resize(width, height)
-        
+
     def paintEvent(self, e: QEvent):
         """
         Call when Qt renderer engine estimate that is needed

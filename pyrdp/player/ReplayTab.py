@@ -1,10 +1,10 @@
 from PySide2.QtWidgets import QApplication, QWidget
 
 from pyrdp.layer import PlayerLayer
-from pyrdp.player.ReplayBar import ReplayBar
-from pyrdp.player.PlayerHandler import PlayerHandler
 from pyrdp.player.BaseTab import BaseTab
+from pyrdp.player.PlayerHandler import PlayerHandler
 from pyrdp.player.Replay import Replay
+from pyrdp.player.ReplayBar import ReplayBar
 from pyrdp.player.ReplayThread import ReplayThread
 from pyrdp.ui import QRemoteDesktop
 
@@ -19,7 +19,7 @@ class ReplayTab(BaseTab):
         :param fileName: name of the file to read.
         :param parent: parent widget.
         """
-        self.viewer = QRemoteDesktop(800, 600)
+        self.viewer = QRemoteDesktop(800, 600, parent)
         super().__init__(self.viewer, parent)
         QApplication.instance().aboutToQuit.connect(self.onClose)
 
