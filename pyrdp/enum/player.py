@@ -13,3 +13,15 @@ class PlayerPDUType(IntEnum):
     CONNECTION_CLOSE = 5  # To advertise the end of the connection
     CLIPBOARD_DATA = 6  # To collect clipboard data
     CLIENT_DATA = 7  # Contains the clientName
+    MOUSE_MOVE = 8  # Mouse move event from the player
+    MOUSE_BUTTON = 9  # Mouse button event from the player
+    MOUSE_WHEEL = 10  # Mouse wheel event from the player
+
+
+class MouseButton(IntEnum):
+    """
+    Mouse button types
+    """
+    LEFT_BUTTON = 1
+    RIGHT_BUTTON = 2
+    MIDDLE_BUTTON = 3

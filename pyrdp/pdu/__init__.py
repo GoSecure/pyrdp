@@ -9,7 +9,7 @@ from pyrdp.pdu.mcs import MCSAttachUserConfirmPDU, MCSAttachUserRequestPDU, MCSC
     MCSChannelJoinRequestPDU, MCSConnectInitialPDU, MCSConnectResponsePDU, MCSDisconnectProviderUltimatumPDU, \
     MCSDomainParams, MCSErectDomainRequestPDU, MCSPDU, MCSSendDataIndicationPDU, MCSSendDataRequestPDU
 from pyrdp.pdu.pdu import PDU
-from pyrdp.pdu.player import PlayerPDU
+from pyrdp.pdu.player import PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerPDU
 from pyrdp.pdu.rdp.bitmap import BitmapUpdateData
 from pyrdp.pdu.rdp.capability import BitmapCacheHostSupportCapability, BitmapCacheV1Capability, BitmapCacheV2Capability, \
     BitmapCapability, BitmapCodec, BitmapCodecsCapability, BrushCapability, Capability, ClientCapsContainer, \

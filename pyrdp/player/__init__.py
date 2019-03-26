@@ -11,6 +11,7 @@ from pyrdp.player.LiveThread import LiveThread
 from pyrdp.player.LiveWindow import LiveWindow
 from pyrdp.player.MainWindow import MainWindow
 from pyrdp.player.PlayerHandler import PlayerHandler
+from pyrdp.player.PlayerLayerSet import AsyncIOTCPLayer, TwistedPlayerLayerSet
 from pyrdp.player.Replay import Replay
 from pyrdp.player.ReplayBar import ReplayBar
 from pyrdp.player.ReplayTab import ReplayTab
