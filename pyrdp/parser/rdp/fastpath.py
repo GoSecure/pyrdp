@@ -280,7 +280,7 @@ class FastPathInputParser(Parser):
 
     def writeScanCodeEvent(self, event: FastPathScanCodeEvent) -> bytes:
         raw_data = BytesIO()
-        Uint8.pack(event.rawHeaderByte, raw_data)
+        Uint8.pack(event.rawHeaderByte | int(event.isReleased), raw_data)
         Uint8.pack(event.scancode, raw_data)
         return raw_data.getvalue()
 
