@@ -4,7 +4,7 @@ from pyrdp.core import Int16LE, Uint16LE, Uint64LE, Uint8
 from pyrdp.enum import PlayerPDUType
 from pyrdp.enum.player import MouseButton
 from pyrdp.parser.segmentation import SegmentationParser
-from pyrdp.pdu import PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, PlayerPDU
+from pyrdp.pdu import PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, PlayerPDU
 
 
 class PlayerParser(SegmentationParser):
@@ -15,12 +15,14 @@ class PlayerParser(SegmentationParser):
             PlayerPDUType.MOUSE_MOVE: self.parseMouseMove,
             PlayerPDUType.MOUSE_BUTTON: self.parseMouseButton,
             PlayerPDUType.MOUSE_WHEEL: self.parseMouseWheel,
+            PlayerPDUType.KEYBOARD: self.parseKeyboard,
         }
 
         self.writers = {
             PlayerPDUType.MOUSE_MOVE: self.writeMouseMove,
             PlayerPDUType.MOUSE_BUTTON: self.writeMouseButton,
             PlayerPDUType.MOUSE_WHEEL: self.writeMouseWheel,
+            PlayerPDUType.KEYBOARD: self.writeKeyboard,
         }
 
     def getPDULength(self, data: bytes) -> int:
@@ -63,6 +65,7 @@ class PlayerParser(SegmentationParser):
 
         return stream.getvalue()
 
+
     def parseMousePosition(self, stream: BytesIO) -> (int, int):
         x = Uint16LE.unpack(stream)
         y = Uint16LE.unpack(stream)
@@ -100,3 +103,13 @@ class PlayerParser(SegmentationParser):
         self.writeMousePosition(pdu.x, pdu.y, stream)
         Int16LE.pack(pdu.delta, stream)
         Uint8.pack(int(pdu.horizontal), stream)
+
+
+    def parseKeyboard(self, stream: BytesIO, timestamp: int):
+        code = Uint16LE.unpack(stream)
+        released = bool(Uint8.unpack(stream))
+        return PlayerKeyboardPDU(timestamp, code, released)
+
+    def writeKeyboard(self, pdu: PlayerKeyboardPDU, stream: BytesIO):
+        Uint16LE.pack(pdu.code, stream)
+        Uint8.pack(int(pdu.released), stream)
