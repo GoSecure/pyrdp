@@ -43,3 +43,16 @@ class PlayerMouseButtonPDU(PlayerPDU):
         self.y = y
         self.button = button
         self.pressed = pressed
+
+
+class PlayerMouseWheelPDU(PlayerPDU):
+    """
+    PDU definition for mouse wheel events coming from the player.
+    """
+
+    def __init__(self, timestamp: int, x: int, y: int, delta: int, horizontal: bool):
+        super().__init__(PlayerPDUType.MOUSE_WHEEL, timestamp, b"")
+        self.x = x
+        self.y = y
+        self.delta = delta
+        self.horizontal = horizontal

@@ -1,15 +1,15 @@
 import logging
 import time
-from typing import Optional
+from typing import Optional, Union
 
 from PySide2.QtCore import Qt
-from PySide2.QtGui import QMouseEvent
+from PySide2.QtGui import QMouseEvent, QWheelEvent
 from PySide2.QtWidgets import QWidget
 
 from pyrdp.enum import MouseButton
 from pyrdp.layer import PlayerLayer
 from pyrdp.logging import LOGGER_NAMES
-from pyrdp.pdu import PlayerMouseButtonPDU, PlayerMouseMovePDU
+from pyrdp.pdu import PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU
 from pyrdp.ui import QRemoteDesktop
 
 
@@ -23,7 +23,7 @@ class RDPMITMWidget(QRemoteDesktop):
     def getTimetamp(self) -> int:
         return int(round(time.time() * 1000))
 
-    def getMousePosition(self, event: QMouseEvent) -> (int, int):
+    def getMousePosition(self, event: Union[QMouseEvent, QWheelEvent]) -> (int, int):
         return max(event.x(), 0), max(event.y(), 0)
 
     def mouseMoveEvent(self, event: QMouseEvent):
@@ -55,4 +55,14 @@ class RDPMITMWidget(QRemoteDesktop):
             return
 
         pdu = PlayerMouseButtonPDU(self.getTimetamp(), x, y, mapping[button], pressed)
+        self.layer.sendPDU(pdu)
+
+    def wheelEvent(self, event: QWheelEvent):
+        x, y = self.getMousePosition(event)
+        delta = event.delta()
+        horizontal = event.orientation() == Qt.Orientation.Horizontal
+
+        event.setAccepted(True)
+
+        pdu = PlayerMouseWheelPDU(self.getTimetamp(), x, y, delta, horizontal)
         self.layer.sendPDU(pdu)
