@@ -56,3 +56,14 @@ class PlayerMouseWheelPDU(PlayerPDU):
         self.y = y
         self.delta = delta
         self.horizontal = horizontal
+
+
+class PlayerKeyboardPDU(PlayerPDU):
+    """
+    PDU definition for keyboard events coming from the player.
+    """
+
+    def __init__(self, timestamp: int, code: int, released: bool):
+        super().__init__(PlayerPDUType.KEYBOARD, timestamp, b"")
+        self.code = code
+        self.released = released
