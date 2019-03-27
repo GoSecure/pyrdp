@@ -7,6 +7,7 @@
 from typing import Optional, Union
 
 from PySide2.QtGui import QTextCursor
+from PySide2.QtWidgets import QTextEdit
 
 from pyrdp.core import decodeUTF16LE
 from pyrdp.core.scancode import scancodeToChar
@@ -19,7 +20,7 @@ from pyrdp.parser.rdp.connection import ClientConnectionParser
 from pyrdp.pdu import BitmapUpdateData, ConfirmActivePDU, FastPathBitmapEvent, FastPathMouseEvent, FastPathOrdersEvent, \
     FastPathScanCodeEvent, FormatDataResponsePDU, InputPDU, KeyboardEvent, MouseEvent, PlayerPDU, UpdatePDU
 from pyrdp.pdu.rdp.fastpath import FastPathOutputEvent
-from pyrdp.ui import RDPBitmapToQtImage
+from pyrdp.ui import QRemoteDesktop, RDPBitmapToQtImage
 
 
 class PlayerHandler(PlayerObserver):
@@ -27,7 +28,7 @@ class PlayerHandler(PlayerObserver):
     Class to manage the display of the RDP player when reading events.
     """
 
-    def __init__(self, viewer, text):
+    def __init__(self, viewer: QRemoteDesktop, text: QTextEdit):
         super().__init__()
         self.viewer = viewer
         self.text = text
@@ -42,6 +43,10 @@ class PlayerHandler(PlayerObserver):
         self.clientConnectionParser = ClientConnectionParser()
 
         self.buffer = b""
+
+    def onPDUReceived(self, pdu: PlayerPDU):
+        parentMethod = super().onPDUReceived
+        self.viewer.mainThreadHook.emit(lambda: parentMethod(pdu))
 
     def onConnectionClose(self, pdu: PlayerPDU):
         self.text.moveCursor(QTextCursor.End)
