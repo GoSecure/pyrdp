@@ -5,7 +5,7 @@
 #
 
 from PySide2.QtCore import Qt
-from PySide2.QtWidgets import QAction, QFileDialog, QMainWindow, QTabWidget
+from PySide2.QtWidgets import QAction, QFileDialog, QMainWindow, QTabWidget, QInputDialog
 
 from pyrdp.player.LiveWindow import LiveWindow
 from pyrdp.player.ReplayWindow import ReplayWindow
@@ -42,10 +42,20 @@ class MainWindow(QMainWindow):
         windowsRAction.setStatusTip("Send a Windows+R key sequence")
         windowsRAction.triggered.connect(lambda: self.sendKeySequence([Qt.Key.Key_Meta, Qt.Key.Key_R]))
 
+        windowsLAction = QAction("Windows+L", self)
+        windowsLAction.setShortcut("Ctrl+Alt+L")
+        windowsLAction.setStatusTip("Send a Windows+L key sequence")
+        windowsLAction.triggered.connect(lambda: self.sendKeySequence([Qt.Key.Key_Meta, Qt.Key.Key_L]))
+
         windowsEAction = QAction("Windows+E", self)
         windowsEAction.setShortcut("Ctrl+Alt+E")
         windowsEAction.setStatusTip("Send a Windows+E key sequence")
         windowsEAction.triggered.connect(lambda: self.sendKeySequence([Qt.Key.Key_Meta, Qt.Key.Key_E]))
+
+        typeTextAction = QAction("Type text...", self)
+        typeTextAction.setShortcut("Ctrl+Alt+T")
+        typeTextAction.setStatusTip("Simulate typing on the keyboard")
+        typeTextAction.triggered.connect(self.sendText)
 
         menuBar = self.menuBar()
 
@@ -54,7 +64,9 @@ class MainWindow(QMainWindow):
 
         commandMenu = menuBar.addMenu("Command")
         commandMenu.addAction(windowsRAction)
+        commandMenu.addAction(windowsLAction)
         commandMenu.addAction(windowsEAction)
+        commandMenu.addAction(typeTextAction)
 
         for fileName in filesToRead:
             self.replayWindow.openFile(fileName)
@@ -69,3 +81,23 @@ class MainWindow(QMainWindow):
     def sendKeySequence(self, keys: [Qt.Key]):
         if self.tabManager.currentWidget() is self.liveWindow:
             self.liveWindow.sendKeySequence(keys)
+
+    def sendText(self):
+        if self.tabManager.currentWidget() is not self.liveWindow:
+            return
+
+        text, success = QInputDialog.getMultiLineText(self, "Type text...", "Text to type:")
+
+        if not success:
+            return
+
+        for c in text:
+            if c == " ":
+                self.liveWindow.sendKeySequence([Qt.Key.Key_Space])
+            elif c.isalnum():
+                keys = [getattr(Qt.Key, f"Key_{c.upper()}")]
+
+                if c.isupper():
+                    keys.insert(0, Qt.Key.Key_Shift)
+
+                self.liveWindow.sendKeySequence(keys)
