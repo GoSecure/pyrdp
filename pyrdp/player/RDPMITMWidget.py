@@ -160,7 +160,7 @@ class RDPMITMWidget(QRemoteDesktop):
         return max(event.x(), 0), max(event.y(), 0)
 
     def mouseMoveEvent(self, event: QMouseEvent):
-        if not self.handleEvents:
+        if not self.handleEvents or not self.hasFocus():
             return
 
         x, y = self.getMousePosition(event)
@@ -228,8 +228,14 @@ class RDPMITMWidget(QRemoteDesktop):
 
         return None
 
+    def isRightControl(self, event: QKeyEvent):
+        return event.key() == Qt.Key.Key_Control and event.nativeScanCode() > 50
+
     def keyPressEvent(self, event: QKeyEvent):
-        self.handleKeyEvent(event, False)
+        if not self.isRightControl(event):
+            self.handleKeyEvent(event, False)
+        else:
+            self.clearFocus()
 
     def keyReleaseEvent(self, event: QKeyEvent):
         self.handleKeyEvent(event, True)
