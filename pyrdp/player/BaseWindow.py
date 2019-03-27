@@ -6,8 +6,7 @@
 
 import logging
 
-from PySide2.QtGui import QKeySequence
-from PySide2.QtWidgets import QShortcut, QTabWidget, QWidget
+from PySide2.QtWidgets import QTabWidget, QWidget
 
 from pyrdp.logging import LOGGER_NAMES
 
@@ -20,15 +19,10 @@ class BaseWindow(QTabWidget):
 
     def __init__(self, parent: QWidget = None, maxTabCount = 250):
         super().__init__(parent)
-        self.closeTabShortcut = QShortcut(QKeySequence("Ctrl+W"), self, self.closeCurrentTab)
         self.maxTabCount = maxTabCount
         self.setTabsClosable(True)
         self.tabCloseRequested.connect(self.onTabClosed)
         self.log = logging.getLogger(LOGGER_NAMES.PLAYER)
-
-    def closeCurrentTab(self):
-        if self.count() > 0:
-            self.onTabClosed(self.currentIndex())
 
     def onTabClosed(self, index):
         """
