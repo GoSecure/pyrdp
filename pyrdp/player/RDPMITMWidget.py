@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Optional, Union
+from typing import Dict, List, Optional, Union
 
 from PySide2.QtCore import QEvent, QObject, Qt
 from PySide2.QtGui import QKeyEvent, QMouseEvent, QWheelEvent
@@ -10,6 +10,7 @@ from pyrdp.enum import MouseButton
 from pyrdp.layer import PlayerLayer
 from pyrdp.logging import LOGGER_NAMES
 from pyrdp.pdu import PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU
+from pyrdp.player.Sequencer import Sequencer
 from pyrdp.ui import QRemoteDesktop
 
 
@@ -138,6 +139,9 @@ class RDPMITMWidget(QRemoteDesktop):
         0x53: Qt.Key.Key_Period,
     }
 
+    EXTENDED_KEYS = [Qt.Key.Key_Meta, Qt.Key.Key_AltGr]
+    KEY_SEQUENCE_DELAY = 2000
+
 
     def __init__(self, width: int, height: int, layer: PlayerLayer, parent: Optional[QWidget] = None):
         super().__init__(width, height, parent = parent)
@@ -198,14 +202,14 @@ class RDPMITMWidget(QRemoteDesktop):
 
 
     # We need this to capture tab key events
-    def eventFilter(self, obj, event):
+    def eventFilter(self, obj: QObject, event: QEvent) -> bool:
         if event.type() == QEvent.KeyPress:
             self.keyPressEvent(event)
             return True
 
         return QObject.eventFilter(self, obj, event)
 
-    def findScanCode(self, event: QKeyEvent) -> Optional[int]:
+    def findScanCodeForEvent(self, event: QKeyEvent) -> Optional[int]:
         if event.modifiers() & Qt.KeypadModifier != 0:
             mapping = RDPMITMWidget.SCANCODE_MAPPING_NUMPAD
         else:
@@ -213,6 +217,9 @@ class RDPMITMWidget(QRemoteDesktop):
 
         key = event.key()
 
+        return self.findScanCodeForKey(key, mapping)
+
+    def findScanCodeForKey(self, key: Qt.Key, mapping: Dict[int, Union[Qt.Key, List[Qt.Key]]]) -> Optional[int]:
         for k, v in mapping.items():
             if isinstance(v, list) and key in v:
                 return k
@@ -228,10 +235,37 @@ class RDPMITMWidget(QRemoteDesktop):
         self.handleKeyEvent(event, True)
 
     def handleKeyEvent(self, event: QKeyEvent, released: bool):
-        scanCode = self.findScanCode(event)
+        scanCode = self.findScanCodeForEvent(event)
 
         if scanCode is not None:
             event.setAccepted(True)
 
-        pdu = PlayerKeyboardPDU(self.getTimetamp(), scanCode, released)
+        pdu = PlayerKeyboardPDU(self.getTimetamp(), scanCode, released, event.key() in RDPMITMWidget.EXTENDED_KEYS)
         self.layer.sendPDU(pdu)
+
+    def sendKeySequence(self, keys: [Qt.Key]):
+        pressPDUs = []
+        releasePDUs = []
+
+        for key in keys:
+            scanCode = self.findScanCodeForKey(key, RDPMITMWidget.SCANCODE_MAPPING)
+            isExtended = key in RDPMITMWidget.EXTENDED_KEYS
+
+            pdu = PlayerKeyboardPDU(self.getTimetamp(), scanCode, False, isExtended)
+            pressPDUs.append(pdu)
+
+            pdu = PlayerKeyboardPDU(self.getTimetamp(), scanCode, True, isExtended)
+            releasePDUs.append(pdu)
+
+        def press() -> int:
+            for pdu in pressPDUs:
+                self.layer.sendPDU(pdu)
+
+            return RDPMITMWidget.KEY_SEQUENCE_DELAY
+
+        def release():
+            for pdu in releasePDUs:
+                self.layer.sendPDU(pdu)
+
+        sequencer = Sequencer([press, release])
+        sequencer.run()

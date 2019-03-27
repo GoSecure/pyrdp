@@ -18,3 +18,4 @@ from pyrdp.player.ReplayTab import ReplayTab
 from pyrdp.player.ReplayThread import ReplayThread, ReplayThreadEvent
 from pyrdp.player.ReplayWindow import ReplayWindow
 from pyrdp.player.SeekBar import SeekBar
+from pyrdp.player.Sequencer import Sequencer

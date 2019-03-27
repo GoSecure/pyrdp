@@ -5,7 +5,7 @@
 #
 import asyncio
 
-from PySide2.QtCore import Signal
+from PySide2.QtCore import Signal, Qt
 from PySide2.QtWidgets import QWidget
 
 from pyrdp.player.BaseTab import BaseTab
@@ -41,3 +41,6 @@ class LiveTab(BaseTab):
 
     def onClose(self):
         self.layers.tcp.disconnect(True)
+
+    def sendKeySequence(self, keys: [Qt.Key]):
+        self.rdpWidget.sendKeySequence(keys)

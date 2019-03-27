@@ -105,11 +105,13 @@ class PlayerParser(SegmentationParser):
         Uint8.pack(int(pdu.horizontal), stream)
 
 
-    def parseKeyboard(self, stream: BytesIO, timestamp: int):
+    def parseKeyboard(self, stream: BytesIO, timestamp: int) -> PlayerKeyboardPDU:
         code = Uint16LE.unpack(stream)
         released = bool(Uint8.unpack(stream))
-        return PlayerKeyboardPDU(timestamp, code, released)
+        extended = bool(Uint8.unpack(stream))
+        return PlayerKeyboardPDU(timestamp, code, released, extended)
 
     def writeKeyboard(self, pdu: PlayerKeyboardPDU, stream: BytesIO):
         Uint16LE.pack(pdu.code, stream)
         Uint8.pack(int(pdu.released), stream)
+        Uint8.pack(int(pdu.extended), stream)

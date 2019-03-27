@@ -103,5 +103,5 @@ class AttackerMITM:
 
 
     def handleKeyboard(self, pdu: PlayerKeyboardPDU):
-        event = FastPathScanCodeEvent(0, pdu.code, pdu.released)
+        event = FastPathScanCodeEvent(2 if pdu.extended else 0, pdu.code, pdu.released)
         self.sendInputEvents([event])

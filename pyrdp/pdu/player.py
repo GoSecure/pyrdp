@@ -63,7 +63,8 @@ class PlayerKeyboardPDU(PlayerPDU):
     PDU definition for keyboard events coming from the player.
     """
 
-    def __init__(self, timestamp: int, code: int, released: bool):
+    def __init__(self, timestamp: int, code: int, released: bool, extended: bool):
         super().__init__(PlayerPDUType.KEYBOARD, timestamp, b"")
         self.code = code
         self.released = released
+        self.extended = extended
