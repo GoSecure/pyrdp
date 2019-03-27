@@ -140,7 +140,7 @@ class RDPMITMWidget(QRemoteDesktop):
     }
 
     EXTENDED_KEYS = [Qt.Key.Key_Meta, Qt.Key.Key_AltGr]
-    KEY_SEQUENCE_DELAY = 2000
+    KEY_SEQUENCE_DELAY = 0
 
 
     def __init__(self, width: int, height: int, layer: PlayerLayer, parent: Optional[QWidget] = None):
