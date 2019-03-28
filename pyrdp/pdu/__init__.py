@@ -9,7 +9,8 @@ from pyrdp.pdu.mcs import MCSAttachUserConfirmPDU, MCSAttachUserRequestPDU, MCSC
     MCSChannelJoinRequestPDU, MCSConnectInitialPDU, MCSConnectResponsePDU, MCSDisconnectProviderUltimatumPDU, \
     MCSDomainParams, MCSErectDomainRequestPDU, MCSPDU, MCSSendDataIndicationPDU, MCSSendDataRequestPDU
 from pyrdp.pdu.pdu import PDU
-from pyrdp.pdu.player import PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, PlayerPDU, PlayerTextPDU
+from pyrdp.pdu.player import PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, \
+    PlayerPDU, PlayerTextPDU
 from pyrdp.pdu.rdp.bitmap import BitmapUpdateData
 from pyrdp.pdu.rdp.capability import BitmapCacheHostSupportCapability, BitmapCacheV1Capability, BitmapCacheV2Capability, \
     BitmapCapability, BitmapCodec, BitmapCodecsCapability, BrushCapability, Capability, ClientCapsContainer, \
@@ -25,7 +26,7 @@ from pyrdp.pdu.rdp.connection import ClientChannelDefinition, ClientClusterData,
     ServerNetworkData, ServerSecurityData
 from pyrdp.pdu.rdp.fastpath import FastPathBitmapEvent, FastPathEvent, FastPathEventRaw, FastPathInputEvent, \
     FastPathMouseEvent, FastPathOrdersEvent, FastPathOutputEvent, FastPathOutputEvent, FastPathPDU, \
-    FastPathScanCodeEvent, SecondaryDrawingOrder
+    FastPathScanCodeEvent, FastPathUnicodeEvent, SecondaryDrawingOrder
 from pyrdp.pdu.rdp.input import ExtendedMouseEvent, KeyboardEvent, MouseEvent, SlowPathInput, SynchronizeEvent, \
     UnicodeKeyboardEvent, UnusedEvent
 from pyrdp.pdu.rdp.licensing import LicenseBinaryBlob, LicenseErrorAlertPDU, LicensingPDU

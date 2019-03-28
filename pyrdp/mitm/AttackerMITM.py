@@ -6,10 +6,10 @@
 
 from logging import LoggerAdapter
 
-from pyrdp.enum import FastPathInputType, KeyboardFlag, MouseButton, PlayerPDUType, PointerFlag
+from pyrdp.enum import FastPathInputType, MouseButton, PlayerPDUType, PointerFlag
 from pyrdp.layer import FastPathLayer, PlayerLayer
-from pyrdp.pdu import FastPathInputEvent, FastPathMouseEvent, FastPathPDU, FastPathScanCodeEvent, PlayerKeyboardPDU, \
-    PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, PlayerPDU
+from pyrdp.pdu import FastPathInputEvent, FastPathMouseEvent, FastPathPDU, FastPathScanCodeEvent, FastPathUnicodeEvent, \
+    PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, PlayerPDU, PlayerTextPDU
 from pyrdp.recording import Recorder
 
 
@@ -41,6 +41,7 @@ class AttackerMITM:
             PlayerPDUType.MOUSE_BUTTON: self.handleMouseButton,
             PlayerPDUType.MOUSE_WHEEL: self.handleMouseWheel,
             PlayerPDUType.KEYBOARD: self.handleKeyboard,
+            PlayerPDUType.TEXT: self.handleText,
         }
 
 
@@ -104,4 +105,9 @@ class AttackerMITM:
 
     def handleKeyboard(self, pdu: PlayerKeyboardPDU):
         event = FastPathScanCodeEvent(2 if pdu.extended else 0, pdu.code, pdu.released)
+        self.sendInputEvents([event])
+
+
+    def handleText(self, pdu: PlayerTextPDU):
+        event = FastPathUnicodeEvent(pdu.character, pdu.released)
         self.sendInputEvents([event])

@@ -91,13 +91,4 @@ class MainWindow(QMainWindow):
         if not success:
             return
 
-        for c in text:
-            if c == " ":
-                self.liveWindow.sendKeySequence([Qt.Key.Key_Space])
-            elif c.isalnum():
-                keys = [getattr(Qt.Key, f"Key_{c.upper()}")]
-
-                if c.isupper():
-                    keys.insert(0, Qt.Key.Key_Shift)
-
-                self.liveWindow.sendKeySequence(keys)
+        self.liveWindow.sendText(text)

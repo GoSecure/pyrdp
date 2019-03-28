@@ -49,3 +49,9 @@ class LiveWindow(BaseWindow):
 
         if tab is not None:
             tab.sendKeySequence(keys)
+
+    def sendText(self, text: str):
+        tab: LiveTab = self.currentWidget()
+
+        if tab is not None:
+            tab.sendText(text)

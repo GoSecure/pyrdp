@@ -1,3 +1,4 @@
+import functools
 import logging
 import time
 from typing import Dict, List, Optional, Union
@@ -9,7 +10,7 @@ from PySide2.QtWidgets import QWidget
 from pyrdp.enum import MouseButton
 from pyrdp.layer import PlayerLayer
 from pyrdp.logging import LOGGER_NAMES
-from pyrdp.pdu import PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU
+from pyrdp.pdu import PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, PlayerTextPDU
 from pyrdp.player.Sequencer import Sequencer
 from pyrdp.ui import QRemoteDesktop
 
@@ -274,4 +275,26 @@ class RDPMITMWidget(QRemoteDesktop):
                 self.layer.sendPDU(pdu)
 
         sequencer = Sequencer([press, release])
+        sequencer.run()
+
+    def sendText(self, text: str):
+        functions = []
+
+        def pressCharacter(character: str):
+            pdu = PlayerTextPDU(self.getTimetamp(), character, False)
+            print(c)
+            self.layer.sendPDU(pdu)
+            return RDPMITMWidget.KEY_SEQUENCE_DELAY
+
+        def releaseCharacter(character: str):
+            pdu = PlayerTextPDU(self.getTimetamp(), character, True)
+            self.layer.sendPDU(pdu)
+
+        for c in text:
+            press = functools.partial(pressCharacter, c)
+            release = functools.partial(releaseCharacter, c)
+            functions.append(press)
+            functions.append(release)
+
+        sequencer = Sequencer(functions)
         sequencer.run()

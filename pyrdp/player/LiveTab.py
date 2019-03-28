@@ -44,3 +44,6 @@ class LiveTab(BaseTab):
 
     def sendKeySequence(self, keys: [Qt.Key]):
         self.rdpWidget.sendKeySequence(keys)
+
+    def sendText(self, text: str):
+        self.rdpWidget.sendText(text)
