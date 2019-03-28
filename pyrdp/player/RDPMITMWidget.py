@@ -115,6 +115,8 @@ class RDPMITMWidget(QRemoteDesktop):
 
 
     def sendKeySequence(self, keys: [Qt.Key]):
+        self.setFocus()
+
         pressPDUs = []
         releasePDUs = []
 
@@ -143,6 +145,8 @@ class RDPMITMWidget(QRemoteDesktop):
 
 
     def sendText(self, text: str):
+        self.setFocus()
+
         functions = []
 
         def pressCharacter(character: str) -> int:
