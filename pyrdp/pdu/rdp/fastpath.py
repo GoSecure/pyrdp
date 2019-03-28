@@ -58,10 +58,10 @@ class FastPathOutputEvent(FastPathEvent):
 
 class FastPathScanCodeEvent(FastPathInputEvent):
 
-    def __init__(self, rawHeaderByte: int, scancode: int, isReleased: bool):
+    def __init__(self, rawHeaderByte: int, scanCode: int, isReleased: bool):
         super().__init__()
         self.rawHeaderByte = rawHeaderByte
-        self.scancode = scancode
+        self.scanCode = scanCode
         self.isReleased = isReleased
 
 

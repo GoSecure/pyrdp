@@ -75,7 +75,7 @@ class PlayerHandler(PlayerObserver):
         for event in pdu.events:
             if isinstance(event, FastPathScanCodeEvent):
                 log.debug("handling %(arg1)s", {"arg1": event})
-                self.onScanCode(event.scancode, event.isReleased, event.rawHeaderByte & 2 != 0)
+                self.onScanCode(event.scanCode, event.isReleased, event.rawHeaderByte & 2 != 0)
             elif isinstance(event, FastPathUnicodeEvent):
                 if not event.released:
                     self.onUnicode(event)

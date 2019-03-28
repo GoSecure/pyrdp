@@ -270,8 +270,8 @@ class FastPathInputParser(Parser):
 
 
     def parseScanCodeEvent(self, eventFlags: int, eventHeader: int, stream: BytesIO) -> FastPathScanCodeEvent:
-        scancode = Uint8.unpack(stream.read(1))
-        return FastPathScanCodeEvent(eventHeader, scancode, eventFlags & 1 != 0)
+        scanCode = Uint8.unpack(stream.read(1))
+        return FastPathScanCodeEvent(eventHeader, scanCode, eventFlags & 1 != 0)
 
 
     def parseMouseEvent(self, eventHeader: int, stream: BytesIO) -> FastPathMouseEvent:
@@ -309,7 +309,7 @@ class FastPathInputParser(Parser):
     def writeScanCodeEvent(self, event: FastPathScanCodeEvent) -> bytes:
         stream = BytesIO()
         Uint8.pack(event.rawHeaderByte | int(event.isReleased), stream)
-        Uint8.pack(event.scancode, stream)
+        Uint8.pack(event.scanCode, stream)
         return stream.getvalue()
 
 

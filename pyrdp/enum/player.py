@@ -6,7 +6,7 @@ class PlayerPDUType(IntEnum):
     Types of events that we can encounter when replaying a RDP connection.
     """
 
-    FAST_PATH_INPUT = 1  # Ex: scancode, mouse
+    FAST_PATH_INPUT = 1  # Ex: scan codes, mouse, etc.
     FAST_PATH_OUTPUT = 2  # Ex: image
     CLIENT_INFO = 3  # Creds on connection
     SLOW_PATH_PDU = 4  # For slow-path PDUs
