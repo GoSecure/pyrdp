@@ -14,12 +14,11 @@ from pyrdp.core.scancode import scancodeToChar
 from pyrdp.enum import BitmapFlags, CapabilityType, FastPathFragmentation, KeyboardFlag, ParserMode, SlowPathUpdateType
 from pyrdp.layer import PlayerObserver
 from pyrdp.logging import log
-from pyrdp.parser import BasicFastPathParser, BitmapParser, ClientInfoParser, ClipboardParser, FastPathOutputParser, \
-    SlowPathParser
-from pyrdp.parser.rdp.connection import ClientConnectionParser
+from pyrdp.parser import BasicFastPathParser, BitmapParser, ClientConnectionParser, ClientInfoParser, ClipboardParser, \
+    FastPathOutputParser, SlowPathParser
 from pyrdp.pdu import BitmapUpdateData, ConfirmActivePDU, FastPathBitmapEvent, FastPathMouseEvent, FastPathOrdersEvent, \
-    FastPathScanCodeEvent, FormatDataResponsePDU, InputPDU, KeyboardEvent, MouseEvent, PlayerPDU, UpdatePDU
-from pyrdp.pdu.rdp.fastpath import FastPathOutputEvent
+    FastPathOutputEvent, FastPathScanCodeEvent, FastPathUnicodeEvent, FormatDataResponsePDU, InputPDU, KeyboardEvent, \
+    MouseEvent, PlayerPDU, UpdatePDU
 from pyrdp.ui import QRemoteDesktop, RDPBitmapToQtImage
 
 
@@ -75,6 +74,8 @@ class PlayerHandler(PlayerObserver):
             if isinstance(event, FastPathScanCodeEvent):
                 log.debug("handling %(arg1)s", {"arg1": event})
                 self.onScanCode(event.scancode, not event.isReleased)
+            elif isinstance(event, FastPathUnicodeEvent) and not event.released:
+                self.onUnicode(event)
             elif isinstance(event, FastPathMouseEvent):
                 self.onMousePosition(event.mouseX, event.mouseY)
             else:
@@ -98,6 +99,10 @@ class PlayerHandler(PlayerObserver):
             char = scancodeToChar(code)
             self.text.moveCursor(QTextCursor.End)
             self.text.insertPlainText(char if self.writeInCaps else char.lower())
+
+    def onUnicode(self, event: FastPathUnicodeEvent):
+        self.text.moveCursor(QTextCursor.End)
+        self.text.insertPlainText(str(event.text))
 
     def onMousePosition(self, x: int, y: int):
         self.viewer.setMousePosition(x, y)

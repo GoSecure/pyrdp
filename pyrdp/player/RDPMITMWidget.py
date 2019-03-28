@@ -242,10 +242,17 @@ class RDPMITMWidget(QRemoteDesktop):
         self.handleKeyEvent(event, True)
 
     def handleKeyEvent(self, event: QKeyEvent, released: bool):
+        if event.text() != "" and ord(event.text()) >= 0x20:
+            pdu = PlayerTextPDU(self.getTimetamp(), event.text(), released)
+            self.layer.sendPDU(pdu)
+            return
+
         scanCode = self.findScanCodeForEvent(event)
 
         if scanCode is not None:
             event.setAccepted(True)
+        else:
+            return
 
         pdu = PlayerKeyboardPDU(self.getTimetamp(), scanCode, released, event.key() in RDPMITMWidget.EXTENDED_KEYS)
         self.layer.sendPDU(pdu)
