@@ -68,3 +68,14 @@ class PlayerKeyboardPDU(PlayerPDU):
         self.code = code
         self.released = released
         self.extended = extended
+
+
+class PlayerTextPDU(PlayerPDU):
+    """
+    PDU definition for text events coming from the player.
+    """
+
+    def __init__(self, timestamp: int, character: str, released: bool):
+        super().__init__(PlayerPDUType.TEXT, timestamp, b"")
+        self.character = character
+        self.released = released

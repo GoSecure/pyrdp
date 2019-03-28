@@ -17,6 +17,7 @@ class PlayerPDUType(IntEnum):
     MOUSE_BUTTON = 9  # Mouse button event from the player
     MOUSE_WHEEL = 10  # Mouse wheel event from the player
     KEYBOARD = 11  # Keyboard event from the player
+    TEXT = 12  # Text event from the player
 
 
 class MouseButton(IntEnum):
