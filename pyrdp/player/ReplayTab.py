@@ -41,7 +41,7 @@ class ReplayTab(BaseTab):
         self.controlBar.speedChanged.connect(self.thread.setSpeed)
         self.controlBar.button.setDefault(True)
 
-        self.layout().insertWidget(0, self.controlBar)
+        self.tabLayout.insertWidget(0, self.controlBar)
 
         self.player = PlayerLayer()
         self.player.addObserver(self.eventHandler)
