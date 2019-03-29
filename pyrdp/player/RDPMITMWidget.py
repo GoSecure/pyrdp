@@ -52,10 +52,12 @@ class RDPMITMWidget(QRemoteDesktop):
         self.layer.sendPDU(pdu)
 
     def mousePressEvent(self, event: QMouseEvent):
-        self.handleMouseButton(event, True)
+        if self.handleEvents:
+            self.handleMouseButton(event, True)
 
     def mouseReleaseEvent(self, event: QMouseEvent):
-        self.handleMouseButton(event, False)
+        if self.handleEvents:
+            self.handleMouseButton(event, False)
 
     def handleMouseButton(self, event: QMouseEvent, pressed: bool):
         x, y = self.getMousePosition(event)
@@ -75,6 +77,9 @@ class RDPMITMWidget(QRemoteDesktop):
 
 
     def wheelEvent(self, event: QWheelEvent):
+        if not self.handleEvents:
+            return
+
         x, y = self.getMousePosition(event)
         delta = event.delta()
         horizontal = event.orientation() == Qt.Orientation.Horizontal
@@ -87,7 +92,7 @@ class RDPMITMWidget(QRemoteDesktop):
 
     # We need this to capture tab key events
     def eventFilter(self, obj: QObject, event: QEvent) -> bool:
-        if event.type() == QEvent.KeyPress:
+        if self.handleEvents and event.type() == QEvent.KeyPress:
             self.keyPressEvent(event)
             return True
 
@@ -96,12 +101,14 @@ class RDPMITMWidget(QRemoteDesktop):
 
     def keyPressEvent(self, event: QKeyEvent):
         if not isRightControl(event):
-            self.handleKeyEvent(event, False)
+            if self.handleEvents:
+                self.handleKeyEvent(event, False)
         else:
             self.clearFocus()
 
     def keyReleaseEvent(self, event: QKeyEvent):
-        self.handleKeyEvent(event, True)
+        if self.handleEvents:
+            self.handleKeyEvent(event, True)
 
     def handleKeyEvent(self, event: QKeyEvent, released: bool):
         # After some testing, it seems like scan codes on Linux are 8 higher than their Windows version.
