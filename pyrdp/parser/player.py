@@ -1,10 +1,10 @@
 from io import BytesIO
 
-from pyrdp.core import Int16LE, Uint16LE, Uint64LE, Uint8
+from pyrdp.core import Int16LE, Uint16LE, Uint32LE, Uint64LE, Uint8
 from pyrdp.enum import MouseButton, PlayerPDUType
 from pyrdp.parser.segmentation import SegmentationParser
-from pyrdp.pdu import PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, \
-    PlayerMouseWheelPDU, PlayerPDU, PlayerTextPDU
+from pyrdp.pdu import Color, PlayerBitmapPDU, PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, \
+    PlayerMouseMovePDU, PlayerMouseWheelPDU, PlayerPDU, PlayerTextPDU
 
 
 class PlayerParser(SegmentationParser):
@@ -18,6 +18,7 @@ class PlayerParser(SegmentationParser):
             PlayerPDUType.KEYBOARD: self.parseKeyboard,
             PlayerPDUType.TEXT: self.parseText,
             PlayerPDUType.FORWARDING_STATE: self.parseForwardingState,
+            PlayerPDUType.BITMAP: self.parseBitmap,
         }
 
         self.writers = {
@@ -27,6 +28,7 @@ class PlayerParser(SegmentationParser):
             PlayerPDUType.KEYBOARD: self.writeKeyboard,
             PlayerPDUType.TEXT: self.writeText,
             PlayerPDUType.FORWARDING_STATE: self.writeForwardingState,
+            PlayerPDUType.BITMAP: self.writeBitmap,
         }
 
 
@@ -148,3 +150,30 @@ class PlayerParser(SegmentationParser):
     def writeForwardingState(self, pdu: PlayerForwardingStatePDU, stream: BytesIO):
         Uint8.pack(int(pdu.forwardInput), stream)
         Uint8.pack(int(pdu.forwardOutput), stream)
+
+
+    def parseColor(self, stream: BytesIO) -> Color:
+        r = Uint8.unpack(stream)
+        g = Uint8.unpack(stream)
+        b = Uint8.unpack(stream)
+        a = Uint8.unpack(stream)
+        return Color(r, g, b, a)
+
+    def writeColor(self, color: Color, stream: BytesIO):
+        Uint8.pack(color.r, stream)
+        Uint8.pack(color.g, stream)
+        Uint8.pack(color.b, stream)
+        Uint8.pack(color.a, stream)
+
+    def parseBitmap(self, stream: BytesIO, timestamp: int) -> PlayerBitmapPDU:
+        width = Uint32LE.unpack(stream)
+        height = Uint32LE.unpack(stream)
+        pixels = [self.parseColor(stream) for _ in range(width * height)]
+        return PlayerBitmapPDU(timestamp, width, height, pixels)
+
+    def writeBitmap(self, pdu: PlayerBitmapPDU, stream: BytesIO):
+        Uint32LE.pack(pdu.width, stream)
+        Uint32LE.pack(pdu.height, stream)
+
+        for color in pdu.pixels:
+            self.writeColor(color, stream)

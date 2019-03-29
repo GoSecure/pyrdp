@@ -90,3 +90,29 @@ class PlayerForwardingStatePDU(PlayerPDU):
         super().__init__(PlayerPDUType.FORWARDING_STATE, timestamp, b"")
         self.forwardInput = forwardInput
         self.forwardOutput = forwardOutput
+
+
+class Color:
+    def __init__(self, r: int, g: int, b: int, a: int):
+        self.r = r
+        self.g = g
+        self.b = b
+        self.a = a
+
+class PlayerBitmapPDU(PlayerPDU):
+    """
+    PDU definition for bitmap events.
+    """
+
+    def __init__(self, timestamp: int, width: int, height: int, pixels: [Color]):
+        """
+        :param timestamp: timestamp.
+        :param width: bitmap width.
+        :param height: bitmap height.
+        :param pixels: Array of colors organized in a left to right, top to bottom fashion: [(x0, y0), (x1, y0), ..., (x0, y1), (x1, y1)].
+        """
+
+        super().__init__(PlayerPDUType.BITMAP, timestamp, b"")
+        self.width = width
+        self.height = height
+        self.pixels = pixels
