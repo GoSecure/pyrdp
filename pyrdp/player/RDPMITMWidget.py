@@ -5,13 +5,14 @@ import time
 from typing import Optional, Union
 
 from PySide2.QtCore import QEvent, QObject, Qt
-from PySide2.QtGui import QKeyEvent, QMouseEvent, QWheelEvent
+from PySide2.QtGui import QFocusEvent, QKeyEvent, QMouseEvent, QWheelEvent
 from PySide2.QtWidgets import QWidget
 
 from pyrdp.enum import MouseButton
 from pyrdp.layer import PlayerLayer
 from pyrdp.logging import LOGGER_NAMES
-from pyrdp.pdu import PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, PlayerTextPDU
+from pyrdp.pdu import PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, \
+    PlayerMouseWheelPDU, PlayerTextPDU
 from pyrdp.player import keyboard
 from pyrdp.player.keyboard import isRightControl
 from pyrdp.player.Sequencer import Sequencer
@@ -167,3 +168,15 @@ class RDPMITMWidget(QRemoteDesktop):
 
         sequencer = Sequencer(functions)
         sequencer.run()
+
+
+    def focusInEvent(self, event: QFocusEvent):
+        # Disable event forwarding to hide the attacker's actions from the client
+        self.setForwardingState(False)
+
+    def focusOutEvent(self, event: QFocusEvent):
+        # Restore event forwarding once the attacker is done
+        self.setForwardingState(True)
+
+    def setForwardingState(self, shouldForward: bool):
+        self.layer.sendPDU(PlayerForwardingStatePDU(self.getTimetamp(), shouldForward, shouldForward))
