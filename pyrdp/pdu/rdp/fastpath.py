@@ -90,7 +90,7 @@ class FastPathUnicodeEvent(FastPathInputEvent):
 
 
 class FastPathBitmapEvent(FastPathOutputEvent):
-    def __init__(self, header: int, compressionFlags: int, bitmapUpdateData: List[BitmapUpdateData], payload: bytes):
+    def __init__(self, header: int, compressionFlags: Optional[int], bitmapUpdateData: List[BitmapUpdateData], payload: bytes):
         super().__init__(header, compressionFlags, payload)
         self.bitmapUpdateData = bitmapUpdateData
 
@@ -99,7 +99,7 @@ class FastPathOrdersEvent(FastPathOutputEvent):
     """
     https://msdn.microsoft.com/en-us/library/cc241573.aspx
     """
-    def __init__(self, header: int, compressionFlags: int, orderCount: int, orderData: bytes):
+    def __init__(self, header: int, compressionFlags: Optional[int], orderCount: int, orderData: bytes):
         super().__init__(header, compressionFlags)
         self.compressionFlags = compressionFlags
         self.orderCount = orderCount
