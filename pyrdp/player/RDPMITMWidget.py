@@ -177,13 +177,9 @@ class RDPMITMWidget(QRemoteDesktop):
         sequencer.run()
 
 
-    def focusInEvent(self, event: QFocusEvent):
-        # Disable event forwarding to hide the attacker's actions from the client
-        self.setForwardingState(False)
-
-    def focusOutEvent(self, event: QFocusEvent):
-        # Restore event forwarding once the attacker is done
-        self.setForwardingState(True)
+    def setControlState(self, controlled: bool):
+        self.handleEvents = controlled
+        self.setForwardingState(not controlled)
 
     def setForwardingState(self, shouldForward: bool):
         self.layer.sendPDU(PlayerForwardingStatePDU(self.getTimetamp(), shouldForward, shouldForward))

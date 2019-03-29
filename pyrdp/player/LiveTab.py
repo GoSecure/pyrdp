@@ -5,9 +5,10 @@
 #
 import asyncio
 
-from PySide2.QtCore import Signal, Qt
+from PySide2.QtCore import Qt, Signal
 from PySide2.QtWidgets import QWidget
 
+from pyrdp.player.AttackerBar import AttackerBar
 from pyrdp.player.BaseTab import BaseTab
 from pyrdp.player.PlayerHandler import PlayerHandler
 from pyrdp.player.PlayerLayerSet import AsyncIOPlayerLayerSet
@@ -29,9 +30,13 @@ class LiveTab(BaseTab):
         self.layers = layers
         self.rdpWidget = rdpWidget
         self.eventHandler = PlayerHandler(self.widget, self.text)
+        self.attackerBar = AttackerBar()
 
+        self.attackerBar.controlTaken.connect(lambda: self.rdpWidget.setControlState(True))
+        self.attackerBar.controlReleased.connect(lambda: self.rdpWidget.setControlState(False))
+
+        self.tabLayout.insertWidget(0, self.attackerBar)
         self.layers.player.addObserver(self.eventHandler)
-        self.rdpWidget.handleEvents = True
 
     def getProtocol(self) -> asyncio.Protocol:
         return self.layers.tcp
