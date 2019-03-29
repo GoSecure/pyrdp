@@ -32,3 +32,17 @@ class BitmapParser:
                                                flags, bitmapData))
 
         return bitmapUpdates
+
+    def writeBitmapUpdateData(self, bitmap: BitmapUpdateData) -> bytes:
+        stream = BytesIO()
+        Uint16LE.pack(bitmap.destLeft, stream)
+        Uint16LE.pack(bitmap.destTop, stream)
+        Uint16LE.pack(bitmap.destRight, stream)
+        Uint16LE.pack(bitmap.destBottom, stream)
+        Uint16LE.pack(bitmap.width, stream)
+        Uint16LE.pack(bitmap.heigth, stream)
+        Uint16LE.pack(bitmap.bitsPerPixel, stream)
+        Uint16LE.pack(bitmap.flags, stream)
+        Uint16LE.pack(len(bitmap.bitmapData), stream)
+        stream.write(bitmap.bitmapData)
+        return stream.getvalue()
