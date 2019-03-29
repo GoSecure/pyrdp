@@ -10,7 +10,8 @@ from pyrdp.enum import FastPathInputType, MouseButton, PlayerPDUType, PointerFla
 from pyrdp.layer import FastPathLayer, PlayerLayer
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.pdu import FastPathInputEvent, FastPathMouseEvent, FastPathPDU, FastPathScanCodeEvent, FastPathUnicodeEvent, \
-    PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, PlayerPDU, PlayerTextPDU
+    PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, \
+    PlayerPDU, PlayerTextPDU
 from pyrdp.recording import Recorder
 
 
@@ -44,6 +45,7 @@ class AttackerMITM:
             PlayerPDUType.MOUSE_WHEEL: self.handleMouseWheel,
             PlayerPDUType.KEYBOARD: self.handleKeyboard,
             PlayerPDUType.TEXT: self.handleText,
+            PlayerPDUType.FORWARDING_STATE: self.handleForwardingState,
         }
 
 
@@ -113,3 +115,8 @@ class AttackerMITM:
     def handleText(self, pdu: PlayerTextPDU):
         event = FastPathUnicodeEvent(pdu.character, pdu.released)
         self.sendInputEvents([event])
+
+
+    def handleForwardingState(self, pdu: PlayerForwardingStatePDU):
+        self.state.forwardInput = pdu.forwardInput
+        self.state.forwardOutput = pdu.forwardOutput
