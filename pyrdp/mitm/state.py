@@ -45,6 +45,12 @@ class RDPMITMState:
         }
         """Crypters for the client and server side"""
 
+        self.forwardInput = True
+        """Whether input from the client should be forwarded to the server"""
+
+        self.forwardOutput = True
+        """Whether output from the server should be forwarded to the client"""
+
         self.securitySettings.addObserver(self.crypters[ParserMode.CLIENT])
         self.securitySettings.addObserver(self.crypters[ParserMode.SERVER])
 
