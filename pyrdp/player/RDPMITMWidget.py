@@ -5,14 +5,14 @@ import time
 from typing import Optional, Union
 
 from PySide2.QtCore import QEvent, QObject, Qt
-from PySide2.QtGui import QFocusEvent, QKeyEvent, QMouseEvent, QWheelEvent
+from PySide2.QtGui import QKeyEvent, QMouseEvent, QWheelEvent
 from PySide2.QtWidgets import QWidget
 
 from pyrdp.enum import MouseButton
 from pyrdp.layer import PlayerLayer
 from pyrdp.logging import LOGGER_NAMES
-from pyrdp.pdu import PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, \
-    PlayerMouseWheelPDU, PlayerTextPDU
+from pyrdp.pdu import Color, PlayerBitmapPDU, PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, \
+    PlayerMouseMovePDU, PlayerMouseWheelPDU, PlayerTextPDU
 from pyrdp.player import keyboard
 from pyrdp.player.keyboard import isRightControl
 from pyrdp.player.Sequencer import Sequencer
@@ -181,5 +181,21 @@ class RDPMITMWidget(QRemoteDesktop):
         self.handleEvents = controlled
         self.setForwardingState(not controlled)
 
+        if not controlled:
+            self.sendCurrentScreen()
+
     def setForwardingState(self, shouldForward: bool):
         self.layer.sendPDU(PlayerForwardingStatePDU(self.getTimetamp(), shouldForward, shouldForward))
+
+    def sendCurrentScreen(self):
+        width = self._buffer.width()
+        height = self._buffer.height()
+        pixels = []
+
+        for y in range(height):
+            for x in range(width):
+                color = self._buffer.pixelColor(x, y)
+                pixels.append(Color(color.red(), color.green(), color.blue(), color.alpha()))
+
+        pdu = PlayerBitmapPDU(self.getTimetamp(), width, height, pixels)
+        self.layer.sendPDU(pdu)
