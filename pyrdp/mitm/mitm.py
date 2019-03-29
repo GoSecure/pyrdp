@@ -235,7 +235,7 @@ class RDPMITM:
 
         self.security = SecurityMITM(self.client.security, self.server.security, self.getLog("security"), self.config, self.state, self.recorder)
         self.fastPath = FastPathMITM(self.client.fastPath, self.server.fastPath, self.state)
-        self.attacker = AttackerMITM(self.server.fastPath, self.player.player, self.log, self.state, self.recorder)
+        self.attacker = AttackerMITM(self.client.fastPath, self.server.fastPath, self.player.player, self.log, self.state, self.recorder)
 
         LayerChainItem.chain(client, self.client.security, self.client.slowPath)
         LayerChainItem.chain(server, self.server.security, self.server.slowPath)

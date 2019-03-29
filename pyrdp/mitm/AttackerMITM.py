@@ -3,14 +3,17 @@
 # Copyright (C) 2019 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-
+from io import BytesIO
 from logging import LoggerAdapter
 
-from pyrdp.enum import FastPathInputType, MouseButton, PlayerPDUType, PointerFlag
+from pyrdp.core import Uint8
+from pyrdp.enum import FastPathInputType, FastPathOutputType, MouseButton, PlayerPDUType, PointerFlag
 from pyrdp.layer import FastPathLayer, PlayerLayer
 from pyrdp.mitm.MITMRecorder import MITMRecorder
 from pyrdp.mitm.state import RDPMITMState
-from pyrdp.pdu import FastPathInputEvent, FastPathMouseEvent, FastPathPDU, FastPathScanCodeEvent, FastPathUnicodeEvent, \
+from pyrdp.parser import BitmapParser
+from pyrdp.pdu import BitmapUpdateData, FastPathBitmapEvent, FastPathInputEvent, FastPathMouseEvent, \
+    FastPathOutputEvent, FastPathPDU, FastPathScanCodeEvent, FastPathUnicodeEvent, PlayerBitmapPDU, \
     PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, \
     PlayerPDU, PlayerTextPDU
 
@@ -21,14 +24,17 @@ class AttackerMITM:
     received to the format expected by RDP.
     """
 
-    def __init__(self, server: FastPathLayer, attacker: PlayerLayer, log: LoggerAdapter, state: RDPMITMState, recorder: MITMRecorder):
+    def __init__(self, client: FastPathLayer, server: FastPathLayer, attacker: PlayerLayer, log: LoggerAdapter, state: RDPMITMState, recorder: MITMRecorder):
         """
+        :param client: fast-path layer for the client side
         :param server: fast-path layer for the server side
         :param attacker: player layer for the attacker side
         :param log: logger for this component
+        :param log: state of the MITM
         :param recorder: recorder for this connection
         """
 
+        self.client = client
         self.server = server
         self.attacker = attacker
         self.log = log
@@ -46,6 +52,7 @@ class AttackerMITM:
             PlayerPDUType.KEYBOARD: self.handleKeyboard,
             PlayerPDUType.TEXT: self.handleText,
             PlayerPDUType.FORWARDING_STATE: self.handleForwardingState,
+            PlayerPDUType.BITMAP: self.handleBitmap,
         }
 
 
@@ -58,6 +65,10 @@ class AttackerMITM:
         pdu = FastPathPDU(0, events)
         self.recorder.record(pdu, PlayerPDUType.FAST_PATH_INPUT, True)
         self.server.sendPDU(pdu)
+
+    def sendOutputEvents(self, events: [FastPathOutputEvent]):
+        pdu = FastPathPDU(0, events)
+        self.client.sendPDU(pdu)
 
 
     def handleMouseMove(self, pdu: PlayerMouseMovePDU):
@@ -120,3 +131,28 @@ class AttackerMITM:
     def handleForwardingState(self, pdu: PlayerForwardingStatePDU):
         self.state.forwardInput = pdu.forwardInput
         self.state.forwardOutput = pdu.forwardOutput
+
+
+    def handleBitmap(self, pdu: PlayerBitmapPDU):
+        bpp = 32
+        flags = 0
+
+        # We need to send data across multiple events because we only have 16 bits to write an event's size.
+        # Due to coder laziness, we're just gonna do one event per row for now.
+
+        # RDP expects bitmap data in bottom-up, left-to-right
+        # See: https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/84a3d4d2-5523-4e49-9a48-33952c559485
+        for y in range(pdu.height - 1, -1, -1):
+            stream = BytesIO()
+
+            for x in range(pdu.width):
+                pixel = pdu.pixels[y * pdu.width + x]
+                Uint8.pack(pixel.b, stream)
+                Uint8.pack(pixel.g, stream)
+                Uint8.pack(pixel.r, stream)
+                Uint8.pack(pixel.a, stream)
+
+            bitmap = BitmapUpdateData(0, y, pdu.width, y + 1, pdu.width, 1, bpp, flags, stream.getvalue())
+            bitmapData = BitmapParser().writeBitmapUpdateData([bitmap])
+            event = FastPathBitmapEvent(FastPathOutputType.FASTPATH_UPDATETYPE_BITMAP, None, [], bitmapData)
+            self.sendOutputEvents([event])
