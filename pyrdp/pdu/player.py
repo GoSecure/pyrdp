@@ -79,3 +79,14 @@ class PlayerTextPDU(PlayerPDU):
         super().__init__(PlayerPDUType.TEXT, timestamp, b"")
         self.character = character
         self.released = released
+
+
+class PlayerForwardingStatePDU(PlayerPDU):
+    """
+    PDU definition for changing the state of I/O forwarding.
+    """
+
+    def __init__(self, timestamp: int, forwardInput: bool, forwardOutput: bool):
+        super().__init__(PlayerPDUType.FORWARDING_STATE, timestamp, b"")
+        self.forwardInput = forwardInput
+        self.forwardOutput = forwardOutput

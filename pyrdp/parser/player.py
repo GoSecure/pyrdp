@@ -3,8 +3,8 @@ from io import BytesIO
 from pyrdp.core import Int16LE, Uint16LE, Uint64LE, Uint8
 from pyrdp.enum import MouseButton, PlayerPDUType
 from pyrdp.parser.segmentation import SegmentationParser
-from pyrdp.pdu import PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, PlayerPDU, \
-    PlayerTextPDU
+from pyrdp.pdu import PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, \
+    PlayerMouseWheelPDU, PlayerPDU, PlayerTextPDU
 
 
 class PlayerParser(SegmentationParser):
@@ -17,6 +17,7 @@ class PlayerParser(SegmentationParser):
             PlayerPDUType.MOUSE_WHEEL: self.parseMouseWheel,
             PlayerPDUType.KEYBOARD: self.parseKeyboard,
             PlayerPDUType.TEXT: self.parseText,
+            PlayerPDUType.FORWARDING_STATE: self.parseForwardingState,
         }
 
         self.writers = {
@@ -25,6 +26,7 @@ class PlayerParser(SegmentationParser):
             PlayerPDUType.MOUSE_WHEEL: self.writeMouseWheel,
             PlayerPDUType.KEYBOARD: self.writeKeyboard,
             PlayerPDUType.TEXT: self.writeText,
+            PlayerPDUType.FORWARDING_STATE: self.writeForwardingState,
         }
 
 
@@ -124,7 +126,7 @@ class PlayerParser(SegmentationParser):
         Uint8.pack(int(pdu.extended), stream)
 
 
-    def parseText(self, stream:  BytesIO, timestamp: int) -> PlayerTextPDU:
+    def parseText(self, stream: BytesIO, timestamp: int) -> PlayerTextPDU:
         length = Uint8.unpack(stream)
         character = stream.read(length).decode()
         released = Uint8.unpack(stream)
@@ -136,3 +138,13 @@ class PlayerParser(SegmentationParser):
         Uint8.pack(len(encoded), stream)
         stream.write(encoded)
         Uint8.pack(int(pdu.released), stream)
+
+
+    def parseForwardingState(self, stream: BytesIO, timestamp: int) -> PlayerForwardingStatePDU:
+        forwardInput = bool(Uint8.unpack(stream))
+        forwardOutput = bool(Uint8.unpack(stream))
+        return PlayerForwardingStatePDU(timestamp, forwardInput, forwardOutput)
+
+    def writeForwardingState(self, pdu: PlayerForwardingStatePDU, stream: BytesIO):
+        Uint8.pack(int(pdu.forwardInput), stream)
+        Uint8.pack(int(pdu.forwardOutput), stream)

@@ -18,6 +18,7 @@ class PlayerPDUType(IntEnum):
     MOUSE_WHEEL = 10  # Mouse wheel event from the player
     KEYBOARD = 11  # Keyboard event from the player
     TEXT = 12  # Text event from the player
+    FORWARDING_STATE = 13  # Event from the player to change the state of I/O forwarding
 
 
 class MouseButton(IntEnum):
