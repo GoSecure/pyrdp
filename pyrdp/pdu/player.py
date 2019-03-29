@@ -116,3 +116,9 @@ class PlayerBitmapPDU(PlayerPDU):
         self.width = width
         self.height = height
         self.pixels = pixels
+
+    def __repr__(self):
+        properties = dict(self.__dict__)
+        properties["pixels"] = f"[Color * {len(self.pixels)}]"
+        representation = self.__class__.__name__ + str(properties)
+        return representation
