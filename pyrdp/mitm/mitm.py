@@ -25,6 +25,7 @@ from pyrdp.mitm.DeviceRedirectionMITM import DeviceRedirectionMITM
 from pyrdp.mitm.FastPathMITM import FastPathMITM
 from pyrdp.mitm.layerset import RDPLayerSet
 from pyrdp.mitm.MCSMITM import MCSMITM
+from pyrdp.mitm.MITMRecorder import MITMRecorder
 from pyrdp.mitm.SecurityMITM import SecurityMITM
 from pyrdp.mitm.SlowPathMITM import SlowPathMITM
 from pyrdp.mitm.state import RDPMITMState
@@ -32,7 +33,7 @@ from pyrdp.mitm.TCPMITM import TCPMITM
 from pyrdp.mitm.VirtualChannelMITM import VirtualChannelMITM
 from pyrdp.mitm.X224MITM import X224MITM
 from pyrdp.player import TwistedPlayerLayerSet
-from pyrdp.recording import FileLayer, Recorder, RecordingFastPathObserver, RecordingSlowPathObserver
+from pyrdp.recording import FileLayer, RecordingFastPathObserver, RecordingSlowPathObserver
 
 
 class RDPMITM:
@@ -76,7 +77,7 @@ class RDPMITM:
         self.player = TwistedPlayerLayerSet()
         """Layers on the attacker side"""
 
-        self.recorder = Recorder([])
+        self.recorder = MITMRecorder([], self.state)
         """Recorder for this connection"""
 
         self.channelMITMs = {}

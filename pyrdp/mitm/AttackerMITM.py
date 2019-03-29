@@ -8,11 +8,11 @@ from logging import LoggerAdapter
 
 from pyrdp.enum import FastPathInputType, MouseButton, PlayerPDUType, PointerFlag
 from pyrdp.layer import FastPathLayer, PlayerLayer
+from pyrdp.mitm.MITMRecorder import MITMRecorder
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.pdu import FastPathInputEvent, FastPathMouseEvent, FastPathPDU, FastPathScanCodeEvent, FastPathUnicodeEvent, \
     PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, \
     PlayerPDU, PlayerTextPDU
-from pyrdp.recording import Recorder
 
 
 class AttackerMITM:
@@ -21,7 +21,7 @@ class AttackerMITM:
     received to the format expected by RDP.
     """
 
-    def __init__(self, server: FastPathLayer, attacker: PlayerLayer, log: LoggerAdapter, state: RDPMITMState, recorder: Recorder):
+    def __init__(self, server: FastPathLayer, attacker: PlayerLayer, log: LoggerAdapter, state: RDPMITMState, recorder: MITMRecorder):
         """
         :param server: fast-path layer for the server side
         :param attacker: player layer for the attacker side
@@ -56,7 +56,7 @@ class AttackerMITM:
 
     def sendInputEvents(self, events: [FastPathInputEvent]):
         pdu = FastPathPDU(0, events)
-        self.recorder.record(pdu, PlayerPDUType.FAST_PATH_INPUT)
+        self.recorder.record(pdu, PlayerPDUType.FAST_PATH_INPUT, True)
         self.server.sendPDU(pdu)
 
 
