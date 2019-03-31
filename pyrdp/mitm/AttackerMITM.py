@@ -3,11 +3,9 @@
 # Copyright (C) 2019 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-from io import BytesIO
 from logging import LoggerAdapter
 
-from pyrdp.core import Uint8
-from pyrdp.enum import FastPathInputType, FastPathOutputType, MouseButton, PlayerPDUType, PointerFlag
+from pyrdp.enum import FastPathInputType, FastPathOutputType, MouseButton, PlayerPDUType, PointerFlag, ScanCodeTuple
 from pyrdp.layer import FastPathLayer, PlayerLayer
 from pyrdp.mitm.MITMRecorder import MITMRecorder
 from pyrdp.mitm.state import RDPMITMState
@@ -70,6 +68,16 @@ class AttackerMITM:
         pdu = FastPathPDU(0, events)
         self.client.sendPDU(pdu)
 
+    def sendKeys(self, keys: [ScanCodeTuple]):
+        for released in [False, True]:
+            for key in keys:
+                self.handleKeyboard(PlayerKeyboardPDU(0, key.code, released, key.extended))
+
+    def sendText(self, text: str):
+        for c in text:
+            for released in [False, True]:
+                self.handleText(PlayerTextPDU(0, c, released))
+
 
     def handleMouseMove(self, pdu: PlayerMouseMovePDU):
         eventHeader = FastPathInputType.FASTPATH_INPUT_EVENT_MOUSE << 5
@@ -121,7 +129,6 @@ class AttackerMITM:
     def handleKeyboard(self, pdu: PlayerKeyboardPDU):
         event = FastPathScanCodeEvent(2 if pdu.extended else 0, pdu.code, pdu.released)
         self.sendInputEvents([event])
-
 
     def handleText(self, pdu: PlayerTextPDU):
         event = FastPathUnicodeEvent(pdu.character, pdu.released)
