@@ -168,12 +168,10 @@ class PlayerParser(SegmentationParser):
     def parseBitmap(self, stream: BytesIO, timestamp: int) -> PlayerBitmapPDU:
         width = Uint32LE.unpack(stream)
         height = Uint32LE.unpack(stream)
-        pixels = [self.parseColor(stream) for _ in range(width * height)]
+        pixels = stream.read(width * height * 4)
         return PlayerBitmapPDU(timestamp, width, height, pixels)
 
     def writeBitmap(self, pdu: PlayerBitmapPDU, stream: BytesIO):
         Uint32LE.pack(pdu.width, stream)
         Uint32LE.pack(pdu.height, stream)
-
-        for color in pdu.pixels:
-            self.writeColor(color, stream)
+        stream.write(pdu.pixels)

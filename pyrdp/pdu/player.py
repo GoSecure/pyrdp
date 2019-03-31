@@ -104,7 +104,7 @@ class PlayerBitmapPDU(PlayerPDU):
     PDU definition for bitmap events.
     """
 
-    def __init__(self, timestamp: int, width: int, height: int, pixels: [Color]):
+    def __init__(self, timestamp: int, width: int, height: int, pixels: bytes):
         """
         :param timestamp: timestamp.
         :param width: bitmap width.

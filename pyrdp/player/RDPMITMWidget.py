@@ -190,12 +190,5 @@ class RDPMITMWidget(QRemoteDesktop):
     def sendCurrentScreen(self):
         width = self._buffer.width()
         height = self._buffer.height()
-        pixels = []
-
-        for y in range(height):
-            for x in range(width):
-                color = self._buffer.pixelColor(x, y)
-                pixels.append(Color(color.red(), color.green(), color.blue(), color.alpha()))
-
-        pdu = PlayerBitmapPDU(self.getTimetamp(), width, height, pixels)
+        pdu = PlayerBitmapPDU(self.getTimetamp(), width, height, self._buffer.bits())
         self.layer.sendPDU(pdu)

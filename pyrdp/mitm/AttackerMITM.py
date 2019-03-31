@@ -137,22 +137,11 @@ class AttackerMITM:
         bpp = 32
         flags = 0
 
-        # We need to send data across multiple events because we only have 16 bits to write an event's size.
-        # Due to coder laziness, we're just gonna do one event per row for now.
-
         # RDP expects bitmap data in bottom-up, left-to-right
         # See: https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/84a3d4d2-5523-4e49-9a48-33952c559485
-        for y in range(pdu.height - 1, -1, -1):
-            stream = BytesIO()
-
-            for x in range(pdu.width):
-                pixel = pdu.pixels[y * pdu.width + x]
-                Uint8.pack(pixel.b, stream)
-                Uint8.pack(pixel.g, stream)
-                Uint8.pack(pixel.r, stream)
-                Uint8.pack(pixel.a, stream)
-
-            bitmap = BitmapUpdateData(0, y, pdu.width, y + 1, pdu.width, 1, bpp, flags, stream.getvalue())
+        for y in range(pdu.height):
+            pixels = pdu.pixels[y * pdu.width * 4 : (y + 1) * pdu.width * 4]
+            bitmap = BitmapUpdateData(0, y, pdu.width, y + 1, pdu.width, 1, bpp, flags, pixels)
             bitmapData = BitmapParser().writeBitmapUpdateData([bitmap])
             event = FastPathBitmapEvent(FastPathOutputType.FASTPATH_UPDATETYPE_BITMAP, None, [], bitmapData)
             self.sendOutputEvents([event])
