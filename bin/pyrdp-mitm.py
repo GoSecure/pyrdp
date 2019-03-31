@@ -7,6 +7,7 @@
 #
 
 import asyncio
+from base64 import b64encode
 
 import OpenSSL
 from twisted.internet import asyncioreactor
@@ -159,6 +160,8 @@ def main():
     parser.add_argument("-F", "--log-filter", help="Only show logs from this logger name (accepts '*' wildcards)", default="")
     parser.add_argument("-s", "--sensor-id", help="Sensor ID (to differentiate multiple instances of the MITM where logs are aggregated at one place)", default="PyRDP")
     parser.add_argument("--payload", help="Command to run automatically upon connection", default=None)
+    parser.add_argument("--payload-powershell", help="PowerShell command to run automatically upon connection", default=None)
+    parser.add_argument("--payload-powershell-file", help="PowerShell script to run automatically upon connection (as -EncodedCommand)", default=None)
     parser.add_argument("--payload-delay", help="Time to wait after a new connection before sending the payload, in milliseconds", default=None)
     parser.add_argument("--no-replay", help="Disable replay recording", action="store_true")
 
@@ -204,9 +207,39 @@ def main():
     config.recordReplays = not args.no_replay
 
 
+    payload = None
+    powershell = None
+
+    if int(args.payload is not None) + int(args.payload_powershell is not None) + int(args.payload_powershell_file is not None) > 1:
+        pyrdpLogger.error("Only one of --payload, --payload-powershell and --payload-powershell-file may be supplied.")
+        sys.exit(1)
+
     if args.payload is not None:
+        payload = args.payload
+        pyrdpLogger.info("Using payload: %(payload)s", {"payload": args.payload})
+    elif args.payload_powershell is not None:
+        powershell = args.payload_powershell
+        pyrdpLogger.info("Using powershell payload: %(payload)s", {"payload": args.payload_powershell})
+    elif args.payload_powershell_file is not None:
+        if not os.path.exists(args.payload_powershell_file):
+            pyrdpLogger.error("Powershell file %(path)s does not exist.", {"path": args.payload_powershell_file})
+            sys.exit(1)
+
+        try:
+            with open(args.payload_powershell_file, "r") as f:
+                powershell = f.read()
+        except IOError as e:
+            pyrdpLogger.error("Error when trying to read powershell file: %(error)s", {"error": e})
+            sys.exit(1)
+
+        pyrdpLogger.info("Using payload from powershell file: %(path)s", {"path": args.payload_powershell_file})
+
+    if powershell is not None:
+        payload = "powershell -EncodedCommand " + b64encode(powershell.encode("utf-16le")).decode()
+
+    if payload is not None:
         if args.payload_delay is None:
-            pyrdpLogger.error("--payload-delay must be provided if --payload is provided")
+            pyrdpLogger.error("--payload-delay must be provided if a payload is provided.")
             sys.exit(1)
 
         try:
@@ -222,7 +255,9 @@ def main():
         if config.payloadDelay < 1000:
             pyrdpLogger.warning("You have provided a payload delay of less than 1 second. We recommend you use a slightly longer delay to make sure it runs properly.")
 
-        config.payload = args.payload
+        config.payload = payload
+    elif args.payload_delay is not None:
+        pyrdpLogger.error("--payload-delay was provided but no payload was set.")
 
 
     try:
