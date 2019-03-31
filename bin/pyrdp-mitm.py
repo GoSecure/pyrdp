@@ -258,6 +258,7 @@ def main():
         config.payload = payload
     elif args.payload_delay is not None:
         pyrdpLogger.error("--payload-delay was provided but no payload was set.")
+        sys.exit(1)
 
 
     try:
