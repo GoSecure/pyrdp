@@ -11,11 +11,11 @@ from PySide2.QtWidgets import QWidget
 from pyrdp.enum import MouseButton
 from pyrdp.layer import PlayerLayer
 from pyrdp.logging import LOGGER_NAMES
-from pyrdp.pdu import Color, PlayerBitmapPDU, PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, \
+from pyrdp.pdu import PlayerBitmapPDU, PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, \
     PlayerMouseMovePDU, PlayerMouseWheelPDU, PlayerTextPDU
 from pyrdp.player import keyboard
 from pyrdp.player.keyboard import isRightControl
-from pyrdp.player.Sequencer import Sequencer
+from pyrdp.player.QTimerSequencer import QTimerSequencer
 from pyrdp.ui import QRemoteDesktop
 
 
@@ -148,7 +148,7 @@ class RDPMITMWidget(QRemoteDesktop):
             for pdu in releasePDUs:
                 self.layer.sendPDU(pdu)
 
-        sequencer = Sequencer([press, release])
+        sequencer = QTimerSequencer([press, release])
         sequencer.run()
 
 
@@ -173,7 +173,7 @@ class RDPMITMWidget(QRemoteDesktop):
             functions.append(press)
             functions.append(release)
 
-        sequencer = Sequencer(functions)
+        sequencer = QTimerSequencer(functions)
         sequencer.run()
 
 

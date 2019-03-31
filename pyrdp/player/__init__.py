@@ -11,11 +11,11 @@ from pyrdp.player.LiveThread import LiveThread
 from pyrdp.player.LiveWindow import LiveWindow
 from pyrdp.player.MainWindow import MainWindow
 from pyrdp.player.PlayerHandler import PlayerHandler
-from pyrdp.player.PlayerLayerSet import AsyncIOTCPLayer, TwistedPlayerLayerSet
+from pyrdp.player.PlayerLayerSet import AsyncIOPlayerLayerSet, TwistedPlayerLayerSet
+from pyrdp.player.QTimerSequencer import QTimerSequencer
 from pyrdp.player.Replay import Replay
 from pyrdp.player.ReplayBar import ReplayBar
 from pyrdp.player.ReplayTab import ReplayTab
 from pyrdp.player.ReplayThread import ReplayThread, ReplayThreadEvent
 from pyrdp.player.ReplayWindow import ReplayWindow
 from pyrdp.player.SeekBar import SeekBar
-from pyrdp.player.Sequencer import Sequencer
