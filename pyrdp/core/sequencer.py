@@ -32,6 +32,7 @@ class Sequencer(metaclass = ABCMeta):
 
             if wait is not None and wait > 0:
                 self.wait(wait)
+                break
 
     @abstractmethod
     def wait(self, waitTime: int):
