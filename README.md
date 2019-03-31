@@ -205,3 +205,4 @@ PyRDP uses code from the following open-source software:
 - [rdesktop](https://github.com/rdesktop/rdesktop) for bitmap decompression.
 - [rdpy](https://github.com/citronneur/rdpy) for RC4 keys, the bitmap decompression bindings and the base GUI code for
 the PyRDP player.
+- [FreeRDP](https://github.com/FreeRDP/FreeRDP) for the scan code enumeration.
