@@ -163,6 +163,7 @@ def main():
     parser.add_argument("--payload-powershell", help="PowerShell command to run automatically upon connection", default=None)
     parser.add_argument("--payload-powershell-file", help="PowerShell script to run automatically upon connection (as -EncodedCommand)", default=None)
     parser.add_argument("--payload-delay", help="Time to wait after a new connection before sending the payload, in milliseconds", default=None)
+    parser.add_argument("--payload-duration", help="Amount of time the payload should take to complete, in milliseconds", default=None)
     parser.add_argument("--no-replay", help="Disable replay recording", action="store_true")
 
     args = parser.parse_args()
@@ -242,6 +243,11 @@ def main():
             pyrdpLogger.error("--payload-delay must be provided if a payload is provided.")
             sys.exit(1)
 
+        if args.payload_duration is None:
+            pyrdpLogger.error("--payload-duration must be provided if a payload is provided.")
+            sys.exit(1)
+
+
         try:
             config.payloadDelay = int(args.payload_delay)
         except ValueError:
@@ -254,6 +260,18 @@ def main():
 
         if config.payloadDelay < 1000:
             pyrdpLogger.warning("You have provided a payload delay of less than 1 second. We recommend you use a slightly longer delay to make sure it runs properly.")
+
+
+        try:
+            config.payloadDuration = int(args.payload_duration)
+        except ValueError:
+            pyrdpLogger.error("Invalid payload duration. Payload duration must be an integral number of milliseconds.")
+            sys.exit(1)
+
+        if config.payloadDuration < 0:
+            pyrdpLogger.error("Payload duration must not be negative.")
+            sys.exit(1)
+
 
         config.payload = payload
     elif args.payload_delay is not None:

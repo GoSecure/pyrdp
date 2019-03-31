@@ -50,6 +50,9 @@ class MITMConfig:
         self.payloadDelay: int = None
         """Delay before sending payload automatically, in milliseconds"""
 
+        self.payloadDuration: int = None
+        """Amount of time the payload should take to complete, in milliseconds"""
+
     @property
     def replayDir(self) -> Path:
         """
