@@ -158,6 +158,8 @@ def main():
     parser.add_argument("-L", "--log-level", help="Console logging level. Logs saved to file are always verbose.", default="INFO", choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"])
     parser.add_argument("-F", "--log-filter", help="Only show logs from this logger name (accepts '*' wildcards)", default="")
     parser.add_argument("-s", "--sensor-id", help="Sensor ID (to differentiate multiple instances of the MITM where logs are aggregated at one place)", default="PyRDP")
+    parser.add_argument("--payload", help="Command to run automatically upon connection", default=None)
+    parser.add_argument("--payload-delay", help="Time to wait after a new connection before sending the payload, in milliseconds", default=None)
     parser.add_argument("--no-replay", help="Disable replay recording", action="store_true")
 
     args = parser.parse_args()
@@ -200,6 +202,28 @@ def main():
     config.replacementPassword = args.password
     config.outDir = outDir
     config.recordReplays = not args.no_replay
+
+
+    if args.payload is not None:
+        if args.payload_delay is None:
+            pyrdpLogger.error("--payload-delay must be provided if --payload is provided")
+            sys.exit(1)
+
+        try:
+            config.payloadDelay = int(args.payload_delay)
+        except ValueError:
+            pyrdpLogger.error("Invalid payload delay. Payload delay must be an integral number of milliseconds.")
+            sys.exit(1)
+
+        if config.payloadDelay < 0:
+            pyrdpLogger.error("Payload delay must not be negative.")
+            sys.exit(1)
+
+        if config.payloadDelay < 1000:
+            pyrdpLogger.warning("You have provided a payload delay of less than 1 second. We recommend you use a slightly longer delay to make sure it runs properly.")
+
+        config.payload = args.payload
+
 
     try:
         # Check if OpenSSL accepts the private key and certificate.

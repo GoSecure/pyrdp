@@ -44,6 +44,12 @@ class MITMConfig:
         self.recordReplays: bool = True
         """Whether replays should be recorded or not"""
 
+        self.payload: str = ""
+        """Payload to send automatically upon connection"""
+
+        self.payloadDelay: int = None
+        """Delay before sending payload automatically, in milliseconds"""
+
     @property
     def replayDir(self) -> Path:
         """
