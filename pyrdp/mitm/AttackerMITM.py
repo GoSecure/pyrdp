@@ -4,19 +4,21 @@
 # Licensed under the GPLv3 or later.
 #
 from logging import LoggerAdapter
+from typing import Dict
 
 from pyrdp.enum import FastPathInputType, FastPathOutputType, MouseButton, PlayerPDUType, PointerFlag, ScanCodeTuple
 from pyrdp.layer import FastPathLayer, PlayerLayer
+from pyrdp.mitm.DeviceRedirectionMITM import DeviceRedirectionMITMObserver
 from pyrdp.mitm.MITMRecorder import MITMRecorder
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.parser import BitmapParser
-from pyrdp.pdu import BitmapUpdateData, FastPathBitmapEvent, FastPathInputEvent, FastPathMouseEvent, \
+from pyrdp.pdu import BitmapUpdateData, DeviceAnnounce, FastPathBitmapEvent, FastPathInputEvent, FastPathMouseEvent, \
     FastPathOutputEvent, FastPathPDU, FastPathScanCodeEvent, FastPathUnicodeEvent, PlayerBitmapPDU, \
     PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, \
     PlayerPDU, PlayerTextPDU
 
 
-class AttackerMITM:
+class AttackerMITM(DeviceRedirectionMITMObserver):
     """
     MITM component for commands coming from the player. The job of this component is just to adapt the format of events
     received to the format expected by RDP.
@@ -31,6 +33,7 @@ class AttackerMITM:
         :param log: state of the MITM
         :param recorder: recorder for this connection
         """
+        super().__init__()
 
         self.client = client
         self.server = server
@@ -38,6 +41,7 @@ class AttackerMITM:
         self.log = log
         self.state = state
         self.recorder = recorder
+        self.devices: Dict[int, DeviceAnnounce] = {}
 
         self.attacker.createObserver(
             onPDUReceived = self.onPDUReceived,
@@ -152,3 +156,7 @@ class AttackerMITM:
             bitmapData = BitmapParser().writeBitmapUpdateData([bitmap])
             event = FastPathBitmapEvent(FastPathOutputType.FASTPATH_UPDATETYPE_BITMAP, None, [], bitmapData)
             self.sendOutputEvents([event])
+
+
+    def onDeviceAnnounce(self, device: DeviceAnnounce):
+        self.devices[device.deviceID] = device

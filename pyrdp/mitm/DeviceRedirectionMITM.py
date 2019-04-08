@@ -10,17 +10,23 @@ from logging import LoggerAdapter
 from pathlib import Path
 from typing import Dict
 
-from pyrdp.core import decodeUTF16LE, FileProxy
+from pyrdp.core import decodeUTF16LE, FileProxy, ObservedBy, Observer, Subject
 from pyrdp.enum import CreateOption, DeviceType, FileAccess, IOOperationSeverity
 from pyrdp.layer import DeviceRedirectionLayer
 from pyrdp.mitm.config import MITMConfig
 from pyrdp.mitm.FileMapping import FileMapping, FileMappingDecoder, FileMappingEncoder
 from pyrdp.parser import DeviceRedirectionParser
-from pyrdp.pdu import DeviceCloseRequestPDU, DeviceCreateRequestPDU, DeviceIORequestPDU, \
+from pyrdp.pdu import DeviceAnnounce, DeviceCloseRequestPDU, DeviceCreateRequestPDU, DeviceIORequestPDU, \
     DeviceIOResponsePDU, DeviceListAnnounceRequest, DeviceReadRequestPDU, DeviceRedirectionPDU
 
 
-class DeviceRedirectionMITM:
+class DeviceRedirectionMITMObserver(Observer):
+    def onDeviceAnnounce(self, device: DeviceAnnounce):
+        pass
+
+
+@ObservedBy(DeviceRedirectionMITMObserver)
+class DeviceRedirectionMITM(Subject):
     """
     MITM component for the device redirection channel.
     It saves files transferred over RDP to a local directory. The files aren't named after their remote name to avoid
@@ -137,6 +143,8 @@ class DeviceRedirectionMITM:
                 "deviceID": device.deviceID,
                 "deviceData": device.preferredDosName.rstrip(b"\x00").decode()
             })
+
+            self.observer.onDeviceAnnounce(device)
 
     def handleCreateResponse(self, request: DeviceCreateRequestPDU, response: DeviceIOResponsePDU):
         """
