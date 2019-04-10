@@ -22,7 +22,7 @@ from pyrdp.player import keyboard
 from pyrdp.ui import QRemoteDesktop, RDPBitmapToQtImage
 
 
-class PlayerHandler(PlayerObserver):
+class PlayerEventHandler(PlayerObserver):
     """
     Class to manage the display of the RDP player when reading events.
     """

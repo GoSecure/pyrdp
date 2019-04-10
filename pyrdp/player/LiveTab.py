@@ -3,6 +3,7 @@
 # Copyright (C) 2018 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+
 import asyncio
 
 from PySide2.QtCore import Qt, Signal
@@ -10,7 +11,7 @@ from PySide2.QtWidgets import QWidget
 
 from pyrdp.player.AttackerBar import AttackerBar
 from pyrdp.player.BaseTab import BaseTab
-from pyrdp.player.PlayerHandler import PlayerHandler
+from pyrdp.player.PlayerEventHandler import PlayerEventHandler
 from pyrdp.player.PlayerLayerSet import AsyncIOPlayerLayerSet
 from pyrdp.player.RDPMITMWidget import RDPMITMWidget
 
@@ -29,7 +30,7 @@ class LiveTab(BaseTab):
         super().__init__(rdpWidget, parent)
         self.layers = layers
         self.rdpWidget = rdpWidget
-        self.eventHandler = PlayerHandler(self.widget, self.text)
+        self.eventHandler = PlayerEventHandler(self.widget, self.text)
         self.attackerBar = AttackerBar()
 
         self.attackerBar.controlTaken.connect(lambda: self.rdpWidget.setControlState(True))

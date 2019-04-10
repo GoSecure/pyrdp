@@ -10,7 +10,7 @@ from pyrdp.player.LiveTab import LiveTab
 from pyrdp.player.LiveThread import LiveThread
 from pyrdp.player.LiveWindow import LiveWindow
 from pyrdp.player.MainWindow import MainWindow
-from pyrdp.player.PlayerHandler import PlayerHandler
+from pyrdp.player.PlayerEventHandler import PlayerEventHandler
 from pyrdp.player.PlayerLayerSet import AsyncIOPlayerLayerSet, TwistedPlayerLayerSet
 from pyrdp.player.QTimerSequencer import QTimerSequencer
 from pyrdp.player.Replay import Replay
