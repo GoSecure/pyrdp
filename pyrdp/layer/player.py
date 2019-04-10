@@ -3,6 +3,7 @@
 # Copyright (C) 2018 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+import time
 
 from pyrdp.core import ObservedBy
 from pyrdp.enum import PlayerPDUType
@@ -59,3 +60,5 @@ class PlayerLayer(BufferedLayer):
         pdu = PlayerPDU(messageType, timeStamp, data)
         self.sendPDU(pdu)
 
+    def getCurrentTimeStamp(self) -> int:
+        return int(time.time() * 1000)

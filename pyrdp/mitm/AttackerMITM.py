@@ -14,8 +14,8 @@ from pyrdp.mitm.state import RDPMITMState
 from pyrdp.parser import BitmapParser
 from pyrdp.pdu import BitmapUpdateData, DeviceAnnounce, FastPathBitmapEvent, FastPathInputEvent, FastPathMouseEvent, \
     FastPathOutputEvent, FastPathPDU, FastPathScanCodeEvent, FastPathUnicodeEvent, PlayerBitmapPDU, \
-    PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, \
-    PlayerPDU, PlayerTextPDU
+    PlayerDeviceMappingPDU, PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, \
+    PlayerMouseWheelPDU, PlayerPDU, PlayerTextPDU
 
 
 class AttackerMITM(DeviceRedirectionMITMObserver):
@@ -160,3 +160,12 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
 
     def onDeviceAnnounce(self, device: DeviceAnnounce):
         self.devices[device.deviceID] = device
+
+        name = device.preferredDosName
+        endPosition = name.find(b"\x00")
+
+        if endPosition >= 0:
+            name = name[: endPosition]
+
+        pdu = PlayerDeviceMappingPDU(self.attacker.getCurrentTimeStamp(), device.deviceID, device.deviceType, name.decode())
+        self.attacker.sendPDU(pdu)

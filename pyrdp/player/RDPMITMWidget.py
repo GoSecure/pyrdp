@@ -48,7 +48,7 @@ class RDPMITMWidget(QRemoteDesktop):
 
         x, y = self.getMousePosition(event)
 
-        pdu = PlayerMouseMovePDU(self.getTimetamp(), x, y)
+        pdu = PlayerMouseMovePDU(self.layer.getCurrentTimeStamp(), x, y)
         self.layer.sendPDU(pdu)
 
     def mousePressEvent(self, event: QMouseEvent):
@@ -72,7 +72,7 @@ class RDPMITMWidget(QRemoteDesktop):
         if button not in mapping:
             return
 
-        pdu = PlayerMouseButtonPDU(self.getTimetamp(), x, y, mapping[button], pressed)
+        pdu = PlayerMouseButtonPDU(self.layer.getCurrentTimeStamp(), x, y, mapping[button], pressed)
         self.layer.sendPDU(pdu)
 
 
@@ -86,7 +86,7 @@ class RDPMITMWidget(QRemoteDesktop):
 
         event.setAccepted(True)
 
-        pdu = PlayerMouseWheelPDU(self.getTimetamp(), x, y, delta, horizontal)
+        pdu = PlayerMouseWheelPDU(self.layer.getCurrentTimeStamp(), x, y, delta, horizontal)
         self.layer.sendPDU(pdu)
 
 
@@ -118,7 +118,7 @@ class RDPMITMWidget(QRemoteDesktop):
             offset = 0
 
         scanCode = keyboard.findScanCodeForEvent(event) or event.nativeScanCode() + offset
-        pdu = PlayerKeyboardPDU(self.getTimetamp(), scanCode, released, event.key() in keyboard.EXTENDED_KEYS)
+        pdu = PlayerKeyboardPDU(self.layer.getCurrentTimeStamp(), scanCode, released, event.key() in keyboard.EXTENDED_KEYS)
         self.layer.sendPDU(pdu)
 
 
@@ -132,10 +132,10 @@ class RDPMITMWidget(QRemoteDesktop):
             scanCode = keyboard.SCANCODE_MAPPING[key]
             isExtended = key in keyboard.EXTENDED_KEYS
 
-            pressPDU = PlayerKeyboardPDU(self.getTimetamp(), scanCode, False, isExtended)
+            pressPDU = PlayerKeyboardPDU(self.layer.getCurrentTimeStamp(), scanCode, False, isExtended)
             pressPDUs.append(pressPDU)
 
-            releasePDU = PlayerKeyboardPDU(self.getTimetamp(), scanCode, True, isExtended)
+            releasePDU = PlayerKeyboardPDU(self.layer.getCurrentTimeStamp(), scanCode, True, isExtended)
             releasePDUs.append(releasePDU)
 
         def press() -> int:
@@ -158,13 +158,13 @@ class RDPMITMWidget(QRemoteDesktop):
         functions = []
 
         def pressCharacter(character: str) -> int:
-            pdu = PlayerTextPDU(self.getTimetamp(), character, False)
+            pdu = PlayerTextPDU(self.layer.getCurrentTimeStamp(), character, False)
             print(c)
             self.layer.sendPDU(pdu)
             return RDPMITMWidget.KEY_SEQUENCE_DELAY
 
         def releaseCharacter(character: str):
-            pdu = PlayerTextPDU(self.getTimetamp(), character, True)
+            pdu = PlayerTextPDU(self.layer.getCurrentTimeStamp(), character, True)
             self.layer.sendPDU(pdu)
 
         for c in text:
@@ -185,10 +185,10 @@ class RDPMITMWidget(QRemoteDesktop):
             self.sendCurrentScreen()
 
     def setForwardingState(self, shouldForward: bool):
-        self.layer.sendPDU(PlayerForwardingStatePDU(self.getTimetamp(), shouldForward, shouldForward))
+        self.layer.sendPDU(PlayerForwardingStatePDU(self.layer.getCurrentTimeStamp(), shouldForward, shouldForward))
 
     def sendCurrentScreen(self):
         width = self._buffer.width()
         height = self._buffer.height()
-        pdu = PlayerBitmapPDU(self.getTimetamp(), width, height, self._buffer.bits())
+        pdu = PlayerBitmapPDU(self.layer.getCurrentTimeStamp(), width, height, self._buffer.bits())
         self.layer.sendPDU(pdu)
