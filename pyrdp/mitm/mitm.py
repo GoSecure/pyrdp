@@ -239,7 +239,7 @@ class RDPMITM:
 
         if MCSChannelName.DEVICE_REDIRECTION in self.state.channelMap:
             deviceRedirectionChannel = self.state.channelMap[MCSChannelName.DEVICE_REDIRECTION]
-            
+
             if deviceRedirectionChannel in self.channelMITMs:
                 self.channelMITMs[deviceRedirectionChannel].addObserver(self.attacker)
 

@@ -4,7 +4,7 @@
 # Licensed under the GPLv3 or later.
 #
 
-from pyrdp.enum import PlayerPDUType
+from pyrdp.enum import DeviceType, PlayerPDUType
 from pyrdp.enum.player import MouseButton
 from pyrdp.pdu.pdu import PDU
 
@@ -122,3 +122,11 @@ class PlayerBitmapPDU(PlayerPDU):
         properties["pixels"] = f"[Color * {len(self.pixels)}]"
         representation = self.__class__.__name__ + str(properties)
         return representation
+
+
+class PlayerDeviceMappingPDU(PlayerPDU):
+    def __init__(self, timestamp: int, deviceID: int, deviceType: DeviceType, name: str):
+        super().__init__(PlayerPDUType.DEVICE_MAPPING, timestamp, b"")
+        self.deviceID = deviceID
+        self.deviceType = deviceType
+        self.name = name

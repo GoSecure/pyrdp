@@ -1,10 +1,10 @@
 from io import BytesIO
 
 from pyrdp.core import Int16LE, Uint16LE, Uint32LE, Uint64LE, Uint8
-from pyrdp.enum import MouseButton, PlayerPDUType
+from pyrdp.enum import DeviceType, MouseButton, PlayerPDUType
 from pyrdp.parser.segmentation import SegmentationParser
-from pyrdp.pdu import Color, PlayerBitmapPDU, PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, \
-    PlayerMouseMovePDU, PlayerMouseWheelPDU, PlayerPDU, PlayerTextPDU
+from pyrdp.pdu import Color, PlayerBitmapPDU, PlayerDeviceMappingPDU, PlayerForwardingStatePDU, PlayerKeyboardPDU, \
+    PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, PlayerPDU, PlayerTextPDU
 
 
 class PlayerParser(SegmentationParser):
@@ -175,3 +175,17 @@ class PlayerParser(SegmentationParser):
         Uint32LE.pack(pdu.width, stream)
         Uint32LE.pack(pdu.height, stream)
         stream.write(pdu.pixels)
+
+
+    def parseDeviceMapping(self, stream: BytesIO, timestamp: int) -> PlayerDeviceMappingPDU:
+        deviceID = Uint32LE.unpack(stream)
+        deviceType = DeviceType(Uint32LE.unpack(stream))
+        nameLength = Uint32LE.unpack(stream)
+        name = stream.read(nameLength).decode()
+        return PlayerDeviceMappingPDU(timestamp, deviceID, deviceType, name)
+
+    def writeDeviceMapping(self, pdu: PlayerDeviceMappingPDU, stream: BytesIO):
+        Uint32LE.pack(pdu.deviceID, stream)
+        Uint32LE.pack(pdu.deviceType, stream)
+        Uint32LE.pack(len(pdu.name), stream)
+        stream.write(pdu.name.encode())
