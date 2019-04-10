@@ -237,6 +237,12 @@ class RDPMITM:
         self.fastPath = FastPathMITM(self.client.fastPath, self.server.fastPath, self.state)
         self.attacker = AttackerMITM(self.client.fastPath, self.server.fastPath, self.player.player, self.log, self.state, self.recorder)
 
+        if MCSChannelName.DEVICE_REDIRECTION in self.state.channelMap:
+            deviceRedirectionChannel = self.state.channelMap[MCSChannelName.DEVICE_REDIRECTION]
+            
+            if deviceRedirectionChannel in self.channelMITMs:
+                self.channelMITMs[deviceRedirectionChannel].addObserver(self.attacker)
+
         LayerChainItem.chain(client, self.client.security, self.client.slowPath)
         LayerChainItem.chain(server, self.server.security, self.server.slowPath)
 
@@ -290,6 +296,9 @@ class RDPMITM:
 
         mitm = DeviceRedirectionMITM(clientLayer, serverLayer, self.getLog(MCSChannelName.DEVICE_REDIRECTION), self.config)
         self.channelMITMs[client.channelID] = mitm
+
+        if self.attacker:
+            mitm.addObserver(self.attacker)
 
     def buildVirtualChannel(self, client: MCSServerChannel, server: MCSClientChannel):
         """
