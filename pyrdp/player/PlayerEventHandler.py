@@ -15,8 +15,8 @@ from pyrdp.layer import PlayerObserver
 from pyrdp.logging import log
 from pyrdp.parser import BasicFastPathParser, BitmapParser, ClientConnectionParser, ClientInfoParser, ClipboardParser, \
     FastPathOutputParser, SlowPathParser
-from pyrdp.pdu import BitmapUpdateData, ConfirmActivePDU, FastPathBitmapEvent, FastPathMouseEvent, FastPathOrdersEvent, \
-    FastPathOutputEvent, FastPathScanCodeEvent, FastPathUnicodeEvent, FormatDataResponsePDU, InputPDU, KeyboardEvent, \
+from pyrdp.pdu import BitmapUpdateData, ConfirmActivePDU, FastPathBitmapEvent, FastPathMouseEvent, FastPathOutputEvent, \
+    FastPathScanCodeEvent, FastPathUnicodeEvent, FormatDataResponsePDU, InputPDU, KeyboardEvent, \
     MouseEvent, PlayerPDU, UpdatePDU
 from pyrdp.player import keyboard
 from pyrdp.ui import QRemoteDesktop, RDPBitmapToQtImage
@@ -24,7 +24,7 @@ from pyrdp.ui import QRemoteDesktop, RDPBitmapToQtImage
 
 class PlayerEventHandler(PlayerObserver):
     """
-    Class to manage the display of the RDP player when reading events.
+    Class to handle events coming to the player.
     """
 
     def __init__(self, viewer: QRemoteDesktop, text: QTextEdit):
@@ -33,123 +33,79 @@ class PlayerEventHandler(PlayerObserver):
         self.text = text
         self.shiftPressed = False
         self.capsLockOn = False
-        self.writeInCaps = False
-
-        self.inputParser = BasicFastPathParser(ParserMode.SERVER)
-        self.outputParser = BasicFastPathParser(ParserMode.CLIENT)
-        self.clientInfoParser = ClientInfoParser()
-        self.dataParser = SlowPathParser()
-        self.clipboardParser = ClipboardParser()
-        self.outputEventParser = FastPathOutputParser()
-        self.clientConnectionParser = ClientConnectionParser()
-
         self.buffer = b""
 
+
+    def writeText(self, text: str):
+        self.text.moveCursor(QTextCursor.End)
+        self.text.insertPlainText(text)
+
+    def writeSeparator(self):
+        self.writeText("--------------------\n")
+
+
     def onPDUReceived(self, pdu: PlayerPDU):
+        log.debug("Received %(pdu)s", {"pdu": pdu})
         parentMethod = super().onPDUReceived
         self.viewer.mainThreadHook.emit(lambda: parentMethod(pdu))
 
-    def onConnectionClose(self, pdu: PlayerPDU):
-        self.text.moveCursor(QTextCursor.End)
-        self.text.insertPlainText("\n<Connection closed>")
 
-    def onOutput(self, pdu: PlayerPDU):
-        pdu = self.outputParser.parse(pdu.payload)
-
-        for event in pdu.events:
-            reassembledEvent = self.reassembleEvent(event)
-            if reassembledEvent is not None:
-                if isinstance(reassembledEvent, FastPathOrdersEvent):
-                    log.debug("Not handling orders event, not coded :)")
-                elif isinstance(reassembledEvent, FastPathBitmapEvent):
-                    log.debug("Handling bitmap event %(arg1)s", {"arg1": type(reassembledEvent)})
-                    self.onBitmap(reassembledEvent)
-                else:
-                    log.debug("Can't handle output event: %(arg1)s", {"arg1": type(reassembledEvent)})
-            else:
-                log.debug("Reassembling output event...")
-
-    def onInput(self, pdu: PlayerPDU):
-        pdu = self.inputParser.parse(pdu.payload)
-
-        for event in pdu.events:
-            if isinstance(event, FastPathScanCodeEvent):
-                log.debug("handling %(arg1)s", {"arg1": event})
-                self.onScanCode(event.scanCode, event.isReleased, event.rawHeaderByte & 2 != 0)
-            elif isinstance(event, FastPathUnicodeEvent):
-                if not event.released:
-                    self.onUnicode(event)
-            elif isinstance(event, FastPathMouseEvent):
-                self.onMouse(event)
-            else:
-                log.debug("Can't handle input event: %(arg1)s", {"arg1": event})
-
-
-    def onScanCode(self, scanCode: int, isReleased: bool, isExtended: bool):
+    def onClientData(self, pdu: PlayerPDU):
         """
-        Handle scan code.
+        Prints the clientName on the screen
         """
-        log.debug("Reading scan code %(arg1)s", {"arg1": scanCode})
-        keyName = keyboard.getKeyName(scanCode, isExtended, self.shiftPressed, self.capsLockOn)
+        parser = ClientConnectionParser()
+        clientDataPDU = parser.parse(pdu.payload)
+        clientName = clientDataPDU.coreData.clientName.strip("\x00")
 
-        self.text.moveCursor(QTextCursor.End)
+        self.writeSeparator()
+        self.writeText(f"HOST: {clientName}\n")
+        self.writeSeparator()
 
-        if len(keyName) == 1:
-            if not isReleased:
-                self.text.insertPlainText(keyName)
-        else:
-            self.text.insertPlainText(f"\n<{keyName} {'released' if isReleased else 'pressed'}>")
-
-        self.text.moveCursor(QTextCursor.End)
-
-        # Left or right shift
-        if scanCode in [0x2A, 0x36]:
-            self.text.moveCursor(QTextCursor.End)
-            self.shiftPressed = not isReleased
-
-        # Caps lock
-        elif scanCode == 0x3A and not isReleased:
-            self.text.moveCursor(QTextCursor.End)
-            self.capsLockOn = not self.capsLockOn
-
-
-    def onUnicode(self, event: FastPathUnicodeEvent):
-        self.text.moveCursor(QTextCursor.End)
-        self.text.insertPlainText(str(event.text))
-
-    def onMouse(self, event: FastPathMouseEvent):
-        self.onMousePosition(event.mouseX, event.mouseY)
-
-    def onMousePosition(self, x: int, y: int):
-        self.viewer.setMousePosition(x, y)
-
-    def onBitmap(self, event: FastPathBitmapEvent):
-        parsedEvent = self.outputEventParser.parseBitmapEvent(event)
-        for bitmapData in parsedEvent.bitmapUpdateData:
-            self.handleBitmap(bitmapData)
-
-    def handleBitmap(self, bitmapData: BitmapUpdateData):
-        image = RDPBitmapToQtImage(bitmapData.width, bitmapData.heigth, bitmapData.bitsPerPixel, bitmapData.flags & BitmapFlags.BITMAP_COMPRESSION != 0, bitmapData.bitmapData)
-        self.viewer.notifyImage(bitmapData.destLeft, bitmapData.destTop, image,
-                                bitmapData.destRight - bitmapData.destLeft + 1,
-                                bitmapData.destBottom - bitmapData.destTop + 1)
 
     def onClientInfo(self, pdu: PlayerPDU):
-        clientInfoPDU = self.clientInfoParser.parse(pdu.payload)
-        self.text.insertPlainText("USERNAME: {}\nPASSWORD: {}\nDOMAIN: {}\n"
-                                  .format(clientInfoPDU.username.replace("\0", ""),
-                                          clientInfoPDU.password.replace("\0", ""),
-                                          clientInfoPDU.domain.replace("\0", "")))
-        self.text.insertPlainText("--------------------\n")
+        parser = ClientInfoParser()
+        clientInfoPDU = parser.parse(pdu.payload)
+
+        self.writeSeparator()
+
+        self.writeText("USERNAME: {}\nPASSWORD: {}\nDOMAIN: {}\n".format(
+            clientInfoPDU.username.replace("\x00", ""),
+            clientInfoPDU.password.replace("\x00", ""),
+            clientInfoPDU.domain.replace("\x00", "")
+        ))
+
+        self.writeSeparator()
+
+
+    def onConnectionClose(self, pdu: PlayerPDU):
+        self.writeText("\n<Connection closed>")
+
+
+    def onClipboardData(self, pdu: PlayerPDU):
+        parser = ClipboardParser()
+        pdu = parser.parse(pdu.payload)
+
+        if not isinstance(pdu, FormatDataResponsePDU):
+            return
+
+        clipboardData = decodeUTF16LE(pdu.requestedFormatData)
+
+        self.writeSeparator()
+        self.writeText(f"CLIPBOARD DATA: {clipboardData}")
+        self.writeSeparator()
+
 
     def onSlowPathPDU(self, pdu: PlayerPDU):
-        pdu = self.dataParser.parse(pdu.payload)
+        parser = SlowPathParser()
+        pdu = parser.parse(pdu.payload)
 
         if isinstance(pdu, ConfirmActivePDU):
-            self.viewer.resize(pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP].desktopWidth,
-                               pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP].desktopHeight)
+            bitmapCapability = pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP]
+            self.viewer.resize(bitmapCapability.desktopWidth, bitmapCapability.desktopHeight)
         elif isinstance(pdu, UpdatePDU) and pdu.updateType == SlowPathUpdateType.SLOWPATH_UPDATETYPE_BITMAP:
             updates = BitmapParser().parseBitmapUpdateData(pdu.updateData)
+
             for bitmap in updates:
                 self.handleBitmap(bitmap)
         elif isinstance(pdu, InputPDU):
@@ -159,21 +115,17 @@ class PlayerEventHandler(PlayerObserver):
                 elif isinstance(event, KeyboardEvent):
                     self.onScanCode(event.keyCode, event.flags & KeyboardFlag.KBDFLAGS_DOWN == 0, event.flags & KeyboardFlag.KBDFLAGS_EXTENDED != 0)
 
-    def onClipboardData(self, pdu: PlayerPDU):
-        formatDataResponsePDU: FormatDataResponsePDU = self.clipboardParser.parse(pdu.payload)
-        self.text.moveCursor(QTextCursor.End)
-        self.text.insertPlainText("\n=============\n")
-        self.text.insertPlainText("CLIPBOARD DATA: {}".format(decodeUTF16LE(formatDataResponsePDU.requestedFormatData)))
-        self.text.insertPlainText("\n=============\n")
 
-    def onClientData(self, pdu: PlayerPDU):
-        """
-        Prints the clientName on the screen
-        """
-        clientDataPDU = self.clientConnectionParser.parse(pdu.payload)
-        self.text.moveCursor(QTextCursor.End)
-        self.text.insertPlainText("--------------------\n")
-        self.text.insertPlainText(f"HOST: {clientDataPDU.coreData.clientName.strip(chr(0))}\n")
+    def onOutput(self, pdu: PlayerPDU):
+        parser = BasicFastPathParser(ParserMode.CLIENT)
+        pdu = parser.parse(pdu.payload)
+
+        for event in pdu.events:
+            reassembledEvent = self.reassembleEvent(event)
+
+            if reassembledEvent is not None:
+                if isinstance(reassembledEvent, FastPathBitmapEvent):
+                    self.onFastPathBitmap(reassembledEvent)
 
     def reassembleEvent(self, event: FastPathOutputEvent) -> Optional[Union[FastPathBitmapEvent, FastPathOutputEvent]]:
         """
@@ -181,9 +133,10 @@ class PlayerEventHandler(PlayerObserver):
         https://msdn.microsoft.com/en-us/library/cc240622.aspx
         :param event: A potentially segmented fastpath output event
         :return: a FastPathBitmapEvent if a complete PDU has been reassembled, otherwise None. If the event is not
-        fragmented, returns the original event.
+        fragmented, it is returned as is.
         """
         fragmentationFlag = FastPathFragmentation((event.header & 0b00110000) >> 4)
+
         if fragmentationFlag == FastPathFragmentation.FASTPATH_FRAGMENT_SINGLE:
             return event
         elif fragmentationFlag == FastPathFragmentation.FASTPATH_FRAGMENT_FIRST:
@@ -193,6 +146,77 @@ class PlayerEventHandler(PlayerObserver):
         elif fragmentationFlag == FastPathFragmentation.FASTPATH_FRAGMENT_LAST:
             self.buffer += event.payload
             event.payload = self.buffer
-            return self.outputEventParser.parseBitmapEvent(event)
+
+            return FastPathOutputParser().parseBitmapEvent(event)
 
         return None
+
+    def onFastPathBitmap(self, event: FastPathBitmapEvent):
+        parser = FastPathOutputParser()
+        parsedEvent = parser.parseBitmapEvent(event)
+
+        for bitmapData in parsedEvent.bitmapUpdateData:
+            self.handleBitmap(bitmapData)
+
+
+    def onInput(self, pdu: PlayerPDU):
+        parser = BasicFastPathParser(ParserMode.SERVER)
+        pdu = parser.parse(pdu.payload)
+
+        for event in pdu.events:
+            if isinstance(event, FastPathUnicodeEvent):
+                if not event.released:
+                    self.onUnicode(event)
+            elif isinstance(event, FastPathMouseEvent):
+                self.onMouse(event)
+            elif isinstance(event, FastPathScanCodeEvent):
+                self.onScanCode(event.scanCode, event.isReleased, event.rawHeaderByte & 2 != 0)
+
+
+    def onUnicode(self, event: FastPathUnicodeEvent):
+        self.writeText(str(event.text))
+
+
+    def onMouse(self, event: FastPathMouseEvent):
+        self.onMousePosition(event.mouseX, event.mouseY)
+
+    def onMousePosition(self, x: int, y: int):
+        self.viewer.setMousePosition(x, y)
+
+
+    def onScanCode(self, scanCode: int, isReleased: bool, isExtended: bool):
+        """
+        Handle scan code.
+        """
+        keyName = keyboard.getKeyName(scanCode, isExtended, self.shiftPressed, self.capsLockOn)
+
+        if len(keyName) == 1:
+            if not isReleased:
+                self.writeText(keyName)
+        else:
+            self.writeText(f"\n<{keyName} {'released' if isReleased else 'pressed'}>")
+
+        # Left or right shift
+        if scanCode in [0x2A, 0x36]:
+            self.shiftPressed = not isReleased
+
+        # Caps lock
+        elif scanCode == 0x3A and not isReleased:
+            self.capsLockOn = not self.capsLockOn
+
+
+    def handleBitmap(self, bitmapData: BitmapUpdateData):
+        image = RDPBitmapToQtImage(
+            bitmapData.width,
+            bitmapData.heigth,
+            bitmapData.bitsPerPixel,
+            bitmapData.flags & BitmapFlags.BITMAP_COMPRESSION != 0,
+            bitmapData.bitmapData
+        )
+
+        self.viewer.notifyImage(
+            bitmapData.destLeft,
+            bitmapData.destTop,
+            image,
+            bitmapData.destRight - bitmapData.destLeft + 1,
+            bitmapData.destBottom - bitmapData.destTop + 1)
