@@ -54,6 +54,12 @@ class Recorder:
         """
         Encapsulate the pdu properly, then record the data
         """
+        if messageType not in self.parsers:
+            for layer in self.topLayers:
+                layer.sendPDU(pdu)
+
+            return
+
         if pdu:
             data = self.parsers[messageType].write(pdu)
         else:
