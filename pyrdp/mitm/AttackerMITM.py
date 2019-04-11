@@ -168,4 +168,4 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
             name = name[: endPosition]
 
         pdu = PlayerDeviceMappingPDU(self.attacker.getCurrentTimeStamp(), device.deviceID, device.deviceType, name.decode())
-        self.attacker.sendPDU(pdu)
+        self.recorder.record(pdu, pdu.header)
