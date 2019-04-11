@@ -7,13 +7,15 @@
 import asyncio
 
 from PySide2.QtCore import Qt, Signal
-from PySide2.QtWidgets import QWidget
+from PySide2.QtWidgets import QHBoxLayout, QWidget
 
+from pyrdp.core import Directory
 from pyrdp.player.AttackerBar import AttackerBar
 from pyrdp.player.BaseTab import BaseTab
 from pyrdp.player.PlayerEventHandler import PlayerEventHandler
 from pyrdp.player.PlayerLayerSet import AsyncIOPlayerLayerSet
 from pyrdp.player.RDPMITMWidget import RDPMITMWidget
+from pyrdp.ui import FileSystemWidget
 
 
 class LiveTab(BaseTab):
@@ -36,7 +38,18 @@ class LiveTab(BaseTab):
         self.attackerBar.controlTaken.connect(lambda: self.rdpWidget.setControlState(True))
         self.attackerBar.controlReleased.connect(lambda: self.rdpWidget.setControlState(False))
 
+        self.fileSystem = Directory("")
+        self.fileSystemWidget = FileSystemWidget(self.fileSystem)
+        self.fileSystemWidget.setWindowTitle("Client drives")
+
+        self.attackerLayout = QHBoxLayout()
+        self.attackerLayout.addWidget(self.fileSystemWidget, 20)
+        self.attackerLayout.addWidget(self.text, 80)
+
         self.tabLayout.insertWidget(0, self.attackerBar)
+        self.tabLayout.removeWidget(self.text)
+        self.tabLayout.addLayout(self.attackerLayout)
+
         self.layers.player.addObserver(self.eventHandler)
 
     def getProtocol(self) -> asyncio.Protocol:
