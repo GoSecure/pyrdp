@@ -235,13 +235,15 @@ class RDPMITM:
 
         self.security = SecurityMITM(self.client.security, self.server.security, self.getLog("security"), self.config, self.state, self.recorder)
         self.fastPath = FastPathMITM(self.client.fastPath, self.server.fastPath, self.state)
-        self.attacker = AttackerMITM(self.client.fastPath, self.server.fastPath, self.player.player, self.log, self.state, self.recorder)
 
-        if MCSChannelName.DEVICE_REDIRECTION in self.state.channelMap:
-            deviceRedirectionChannel = self.state.channelMap[MCSChannelName.DEVICE_REDIRECTION]
+        if self.player.tcp.transport:
+            self.attacker = AttackerMITM(self.client.fastPath, self.server.fastPath, self.player.player, self.log, self.state, self.recorder)
 
-            if deviceRedirectionChannel in self.channelMITMs:
-                self.channelMITMs[deviceRedirectionChannel].addObserver(self.attacker)
+            if MCSChannelName.DEVICE_REDIRECTION in self.state.channelMap:
+                deviceRedirectionChannel = self.state.channelMap[MCSChannelName.DEVICE_REDIRECTION]
+
+                if deviceRedirectionChannel in self.channelMITMs:
+                    self.channelMITMs[deviceRedirectionChannel].addObserver(self.attacker)
 
         LayerChainItem.chain(client, self.client.security, self.client.slowPath)
         LayerChainItem.chain(server, self.server.security, self.server.slowPath)
