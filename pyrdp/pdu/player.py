@@ -21,6 +21,11 @@ class PlayerPDU(PDU):
         PDU.__init__(self, payload)
 
 
+class PlayerConnectionClosePDU(PlayerPDU):
+    def __init__(self, timestamp: int):
+        super().__init__(PlayerPDUType.CONNECTION_CLOSE, timestamp, b"")
+
+
 class PlayerMouseMovePDU(PlayerPDU):
     """
     PDU definition for mouse move events coming from the player.

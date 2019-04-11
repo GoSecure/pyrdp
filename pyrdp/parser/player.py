@@ -3,8 +3,9 @@ from io import BytesIO
 from pyrdp.core import Int16LE, Uint16LE, Uint32LE, Uint64LE, Uint8
 from pyrdp.enum import DeviceType, MouseButton, PlayerPDUType
 from pyrdp.parser.segmentation import SegmentationParser
-from pyrdp.pdu import Color, PlayerBitmapPDU, PlayerDeviceMappingPDU, PlayerForwardingStatePDU, PlayerKeyboardPDU, \
-    PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, PlayerPDU, PlayerTextPDU
+from pyrdp.pdu import Color, PlayerBitmapPDU, PlayerConnectionClosePDU, PlayerDeviceMappingPDU, \
+    PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, \
+    PlayerPDU, PlayerTextPDU
 
 
 class PlayerParser(SegmentationParser):
@@ -12,6 +13,7 @@ class PlayerParser(SegmentationParser):
         super().__init__()
 
         self.parsers = {
+            PlayerPDUType.CONNECTION_CLOSE: self.parseConnectionClose,
             PlayerPDUType.MOUSE_MOVE: self.parseMouseMove,
             PlayerPDUType.MOUSE_BUTTON: self.parseMouseButton,
             PlayerPDUType.MOUSE_WHEEL: self.parseMouseWheel,
@@ -23,6 +25,7 @@ class PlayerParser(SegmentationParser):
         }
 
         self.writers = {
+            PlayerPDUType.CONNECTION_CLOSE: self.writeConnectionClose,
             PlayerPDUType.MOUSE_MOVE: self.writeMouseMove,
             PlayerPDUType.MOUSE_BUTTON: self.writeMouseButton,
             PlayerPDUType.MOUSE_WHEEL: self.writeMouseWheel,
@@ -74,6 +77,13 @@ class PlayerParser(SegmentationParser):
         stream.write(substreamValue)
 
         return stream.getvalue()
+
+
+    def parseConnectionClose(self, stream: BytesIO, timestamp: int) -> PlayerConnectionClosePDU:
+        return PlayerConnectionClosePDU(timestamp)
+
+    def writeConnectionClose(self, pdu: PlayerConnectionClosePDU, stream: BytesIO):
+        pass
 
 
     def parseMousePosition(self, stream: BytesIO) -> (int, int):

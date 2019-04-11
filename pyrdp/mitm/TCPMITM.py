@@ -7,9 +7,9 @@
 from logging import LoggerAdapter
 from typing import Coroutine
 
-from pyrdp.enum import PlayerPDUType
 from pyrdp.layer import TwistedTCPLayer
 from pyrdp.mitm.state import RDPMITMState
+from pyrdp.pdu.player import PlayerConnectionClosePDU
 from pyrdp.recording import Recorder
 
 
@@ -72,7 +72,7 @@ class TCPMITM:
         :param reason: reason for disconnection
         """
 
-        self.recorder.record(None, PlayerPDUType.CONNECTION_CLOSE)
+        self.recordConnectionClose()
         self.log.info("Client connection closed. %(reason)s", {"reason": reason.value})
         self.serverConnector.close()
         self.server.disconnect(True)
@@ -93,7 +93,7 @@ class TCPMITM:
         :param reason: reason for disconnection
         """
 
-        self.recorder.record(None, PlayerPDUType.CONNECTION_CLOSE)
+        self.recordConnectionClose()
         self.log.info("Server connection closed. %(reason)s", {"reason": reason.value})
         self.client.disconnect(True)
 
@@ -114,3 +114,7 @@ class TCPMITM:
         self.state.forwardInput = True
         self.state.forwardOutput = True
         self.log.info("Attacker connection closed. %(reason)s", {"reason": reason.value})
+
+    def recordConnectionClose(self):
+        pdu = PlayerConnectionClosePDU(self.recorder.getCurrentTimeStamp())
+        self.recorder.record(pdu, pdu.header)
