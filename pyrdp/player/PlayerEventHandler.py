@@ -9,9 +9,9 @@ from typing import Optional, Union
 from PySide2.QtGui import QTextCursor
 from PySide2.QtWidgets import QTextEdit
 
-from pyrdp.core import decodeUTF16LE
-from pyrdp.enum import BitmapFlags, CapabilityType, FastPathFragmentation, KeyboardFlag, ParserMode, SlowPathUpdateType
-from pyrdp.layer import PlayerObserver
+from pyrdp.core import decodeUTF16LE, Observer
+from pyrdp.enum import BitmapFlags, CapabilityType, FastPathFragmentation, KeyboardFlag, ParserMode, PlayerPDUType, \
+    SlowPathUpdateType
 from pyrdp.logging import log
 from pyrdp.parser import BasicFastPathParser, BitmapParser, ClientConnectionParser, ClientInfoParser, ClipboardParser, \
     FastPathOutputParser, SlowPathParser
@@ -22,7 +22,7 @@ from pyrdp.player import keyboard
 from pyrdp.ui import QRemoteDesktop, RDPBitmapToQtImage
 
 
-class PlayerEventHandler(PlayerObserver):
+class PlayerEventHandler(Observer):
     """
     Class to handle events coming to the player.
     """
@@ -34,6 +34,15 @@ class PlayerEventHandler(PlayerObserver):
         self.shiftPressed = False
         self.capsLockOn = False
         self.buffer = b""
+        self.handlers = {
+            PlayerPDUType.CLIENT_DATA: self.onClientData,
+            PlayerPDUType.CLIENT_INFO: self.onClientInfo,
+            PlayerPDUType.CONNECTION_CLOSE: self.onConnectionClose,
+            PlayerPDUType.CLIPBOARD_DATA: self.onClipboardData,
+            PlayerPDUType.SLOW_PATH_PDU: self.onSlowPathPDU,
+            PlayerPDUType.FAST_PATH_OUTPUT: self.onFastPathOutput,
+            PlayerPDUType.FAST_PATH_INPUT: self.onFastPathInput,
+        }
 
 
     def writeText(self, text: str):
@@ -44,10 +53,15 @@ class PlayerEventHandler(PlayerObserver):
         self.writeText("--------------------\n")
 
 
-    def onPDUReceived(self, pdu: PlayerPDU):
+    def onPDUReceived(self, pdu: PlayerPDU, isMainThread = False):
+        if not isMainThread:
+            self.viewer.mainThreadHook.emit(lambda: self.onPDUReceived(pdu, True))
+            return
+
         log.debug("Received %(pdu)s", {"pdu": pdu})
-        parentMethod = super().onPDUReceived
-        self.viewer.mainThreadHook.emit(lambda: parentMethod(pdu))
+
+        if pdu.header in self.handlers:
+            self.handlers[pdu.header](pdu)
 
 
     def onClientData(self, pdu: PlayerPDU):
@@ -78,7 +92,7 @@ class PlayerEventHandler(PlayerObserver):
         self.writeSeparator()
 
 
-    def onConnectionClose(self, pdu: PlayerPDU):
+    def onConnectionClose(self, _: PlayerPDU):
         self.writeText("\n<Connection closed>")
 
 
@@ -116,7 +130,7 @@ class PlayerEventHandler(PlayerObserver):
                     self.onScanCode(event.keyCode, event.flags & KeyboardFlag.KBDFLAGS_DOWN == 0, event.flags & KeyboardFlag.KBDFLAGS_EXTENDED != 0)
 
 
-    def onOutput(self, pdu: PlayerPDU):
+    def onFastPathOutput(self, pdu: PlayerPDU):
         parser = BasicFastPathParser(ParserMode.CLIENT)
         pdu = parser.parse(pdu.payload)
 
@@ -159,7 +173,7 @@ class PlayerEventHandler(PlayerObserver):
             self.handleBitmap(bitmapData)
 
 
-    def onInput(self, pdu: PlayerPDU):
+    def onFastPathInput(self, pdu: PlayerPDU):
         parser = BasicFastPathParser(ParserMode.SERVER)
         pdu = parser.parse(pdu.payload)
 

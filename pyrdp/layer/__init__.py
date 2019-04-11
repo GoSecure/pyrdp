@@ -8,7 +8,7 @@ from pyrdp.layer.buffered import BufferedLayer
 from pyrdp.layer.layer import IntermediateLayer, Layer, LayerChainItem, LayerObserver, LayerRoutedObserver, \
     LayerStrictRoutedObserver
 from pyrdp.layer.mcs import MCSLayer, MCSObserver
-from pyrdp.layer.player import PlayerLayer, PlayerObserver
+from pyrdp.layer.player import PlayerLayer
 from pyrdp.layer.raw import RawLayer
 from pyrdp.layer.rdp.fastpath import FastPathLayer, FastPathObserver
 from pyrdp.layer.rdp.security import SecurityLayer, SecurityObserver, TLSSecurityLayer
