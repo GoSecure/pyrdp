@@ -12,7 +12,7 @@ from PySide2.QtWidgets import QHBoxLayout, QWidget
 from pyrdp.core import Directory
 from pyrdp.player.AttackerBar import AttackerBar
 from pyrdp.player.BaseTab import BaseTab
-from pyrdp.player.PlayerEventHandler import PlayerEventHandler
+from pyrdp.player.LiveEventHandler import LiveEventHandler
 from pyrdp.player.PlayerLayerSet import AsyncIOPlayerLayerSet
 from pyrdp.player.RDPMITMWidget import RDPMITMWidget
 from pyrdp.ui import FileSystemWidget
@@ -32,13 +32,13 @@ class LiveTab(BaseTab):
         super().__init__(rdpWidget, parent)
         self.layers = layers
         self.rdpWidget = rdpWidget
-        self.eventHandler = PlayerEventHandler(self.widget, self.text)
+        self.fileSystem = Directory("")
+        self.eventHandler = LiveEventHandler(self.widget, self.text, self.fileSystem)
         self.attackerBar = AttackerBar()
 
         self.attackerBar.controlTaken.connect(lambda: self.rdpWidget.setControlState(True))
         self.attackerBar.controlReleased.connect(lambda: self.rdpWidget.setControlState(False))
 
-        self.fileSystem = Directory("")
         self.fileSystemWidget = FileSystemWidget(self.fileSystem)
         self.fileSystemWidget.setWindowTitle("Client drives")
 
