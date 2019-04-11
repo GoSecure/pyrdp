@@ -10,14 +10,14 @@ from PySide2.QtGui import QTextCursor
 from PySide2.QtWidgets import QTextEdit
 
 from pyrdp.core import decodeUTF16LE, Observer
-from pyrdp.enum import BitmapFlags, CapabilityType, FastPathFragmentation, KeyboardFlag, ParserMode, PlayerPDUType, \
-    SlowPathUpdateType
+from pyrdp.enum import BitmapFlags, CapabilityType, DeviceType, FastPathFragmentation, KeyboardFlag, ParserMode, \
+    PlayerPDUType, SlowPathUpdateType
 from pyrdp.logging import log
 from pyrdp.parser import BasicFastPathParser, BitmapParser, ClientConnectionParser, ClientInfoParser, ClipboardParser, \
     FastPathOutputParser, SlowPathParser
 from pyrdp.pdu import BitmapUpdateData, ConfirmActivePDU, FastPathBitmapEvent, FastPathMouseEvent, FastPathOutputEvent, \
-    FastPathScanCodeEvent, FastPathUnicodeEvent, FormatDataResponsePDU, InputPDU, KeyboardEvent, \
-    MouseEvent, PlayerPDU, UpdatePDU
+    FastPathScanCodeEvent, FastPathUnicodeEvent, FormatDataResponsePDU, InputPDU, KeyboardEvent, MouseEvent, \
+    PlayerDeviceMappingPDU, PlayerPDU, UpdatePDU
 from pyrdp.player import keyboard
 from pyrdp.ui import QRemoteDesktop, RDPBitmapToQtImage
 
@@ -42,6 +42,7 @@ class PlayerEventHandler(Observer):
             PlayerPDUType.SLOW_PATH_PDU: self.onSlowPathPDU,
             PlayerPDUType.FAST_PATH_OUTPUT: self.onFastPathOutput,
             PlayerPDUType.FAST_PATH_INPUT: self.onFastPathInput,
+            PlayerPDUType.DEVICE_MAPPING: self.onDeviceMapping,
         }
 
 
@@ -234,3 +235,7 @@ class PlayerEventHandler(Observer):
             image,
             bitmapData.destRight - bitmapData.destLeft + 1,
             bitmapData.destBottom - bitmapData.destTop + 1)
+
+
+    def onDeviceMapping(self, pdu: PlayerDeviceMappingPDU):
+        self.writeText(f"\n<{DeviceType.getPrettyName(pdu.deviceType)} mapped: {pdu.name}>")
