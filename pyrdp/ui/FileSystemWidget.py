@@ -1,9 +1,9 @@
 from pathlib import Path
 
 from PySide2.QtCore import QObject
-from PySide2.QtWidgets import QWidget, QLabel, QListWidget, QVBoxLayout
+from PySide2.QtWidgets import QFrame, QLabel, QListWidget, QVBoxLayout, QWidget
 
-from pyrdp.core import DirectoryObserver, Directory
+from pyrdp.core import Directory, DirectoryObserver
 from pyrdp.ui import FileSystemItem, FileSystemItemType
 
 
@@ -20,16 +20,22 @@ class FileSystemWidget(QWidget, DirectoryObserver):
 
         super().__init__(parent)
         self.root = root
+        self.breadcrumbLabel = QLabel()
 
-        self.breadcrumbLabel = QLabel(str(Path("/").resolve()))
+        self.titleLabel = QLabel()
+        self.titleLabel.setStyleSheet("font-weight: bold")
+
+        self.titleSeparator: QFrame = QFrame()
+        self.titleSeparator.setFrameShape(QFrame.HLine)
+
         self.listWidget = QListWidget()
         self.listWidget.setSortingEnabled(True)
 
-        layout = QVBoxLayout()
-        layout.addWidget(self.breadcrumbLabel)
-        layout.addWidget(self.listWidget)
+        self.verticalLayout = QVBoxLayout()
+        self.verticalLayout.addWidget(self.breadcrumbLabel)
+        self.verticalLayout.addWidget(self.listWidget)
 
-        self.setLayout(layout)
+        self.setLayout(self.verticalLayout)
         self.listWidget.itemDoubleClicked.connect(self.onItemDoubleClicked)
 
         self.currentPath: Path = Path("/")
@@ -37,6 +43,31 @@ class FileSystemWidget(QWidget, DirectoryObserver):
         self.listCurrentDirectory()
 
         self.currentDirectory.addObserver(self)
+
+    def setWindowTitle(self, title: str):
+        """
+        Set the window title. When the title is not blank, a title label and a separator is displayed.
+        :param title: the new title.
+        """
+
+        previousTitle = self.windowTitle()
+
+        super().setWindowTitle(title)
+
+        self.titleLabel.setText(title)
+
+        if previousTitle == "" and title != "":
+            self.verticalLayout.insertWidget(0, self.titleLabel)
+            self.verticalLayout.insertWidget(1, self.titleSeparator)
+        elif title == "" and previousTitle != "":
+            self.verticalLayout.removeWidget(self.titleLabel)
+            self.verticalLayout.removeWidget(self.titleSeparator)
+
+            # noinspection PyTypeChecker
+            self.titleLabel.setParent(None)
+
+            # noinspection PyTypeChecker
+            self.titleSeparator.setParent(None)
 
     def onItemDoubleClicked(self, item: FileSystemItem):
         """
@@ -66,7 +97,7 @@ class FileSystemWidget(QWidget, DirectoryObserver):
             node = next(d for d in directories if d.name == part)
 
         self.listWidget.clear()
-        self.breadcrumbLabel.setText(str(self.currentPath))
+        self.breadcrumbLabel.setText(f"Location: {str(self.currentPath)}")
 
         if node != self.root:
             self.listWidget.addItem(FileSystemItem("..", FileSystemItemType.Directory))
