@@ -4,7 +4,6 @@
 # Licensed under the GPLv3 or later.
 #
 
-import time
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
@@ -65,13 +64,13 @@ class Recorder:
         else:
             data = b""
 
-        timeStamp = int(round(self.getCurrentTimeStamp() * 1000))
+        timeStamp = self.getCurrentTimeStamp()
 
         for layer in self.topLayers:
             layer.sendMessage(data, messageType, timeStamp)
 
-    def getCurrentTimeStamp(self) -> float:
-        return time.time()
+    def getCurrentTimeStamp(self) -> int:
+        return PlayerLayer().getCurrentTimeStamp()
 
 
 class FileLayer(LayerChainItem):
