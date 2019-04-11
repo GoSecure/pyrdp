@@ -19,6 +19,7 @@ class PlayerParser(SegmentationParser):
             PlayerPDUType.TEXT: self.parseText,
             PlayerPDUType.FORWARDING_STATE: self.parseForwardingState,
             PlayerPDUType.BITMAP: self.parseBitmap,
+            PlayerPDUType.DEVICE_MAPPING: self.parseDeviceMapping,
         }
 
         self.writers = {
@@ -29,6 +30,7 @@ class PlayerParser(SegmentationParser):
             PlayerPDUType.TEXT: self.writeText,
             PlayerPDUType.FORWARDING_STATE: self.writeForwardingState,
             PlayerPDUType.BITMAP: self.writeBitmap,
+            PlayerPDUType.DEVICE_MAPPING: self.writeDeviceMapping,
         }
 
 
