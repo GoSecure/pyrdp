@@ -71,9 +71,9 @@ docker run pyrdp pyrdp-mitm.py 192.168.1.10
 ```
 For more information about the diffrent commands and arguments, please refer to these sections: [Using the PyRDP MITM](#using-the-pyrdp-mitm), [Using the PyRDP Player](#using-the-pyrdp-player), [Using the PyRDP Certificate Cloner](#using-the-pyrdp-certificate-cloner).
 
-To store the log files, be sure that your destination directory is owned by a user with a UID of 1000, otherwise you will get a permission denied error. If you're the only user on the system, you should not worry about this. Add the -v option to the previous command:
+To store the output, be sure that your destination directory is owned by a user with a UID of 1000, otherwise you will get a permission denied error. If you're the only user on the system, you should not worry about this. Add the -v option to the previous command:
 ```
-docker run -v /home/developer/logs:/home/pyrdp/log pyrdp pyrdp-mitm.py 192.168.1.10
+docker run -v /home/developer/pyrdp_output:/home/pyrdp/pyrdp_output pyrdp pyrdp-mitm.py 192.168.1.10
 ```
 Using the player will require you to export the DISPLAY environment variable from the host to the docker (this redirects the GUI of the player to the host screen), expose the host's network and stop Qt from using the MITM-SHM X11 Shared Memory Extension. To do so, add the -e and --net options to the run command:
 ```
