@@ -5,18 +5,19 @@
 #
 
 from io import BytesIO
-from typing import Dict, Union
+from typing import Dict, List, Union
 
 from pyrdp.core import decodeUTF16LE, Uint16LE, Uint32LE, Uint64LE, Uint8
-from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketID, DeviceType, FileSystemInformationClass, \
-    GeneralCapabilityVersion, MajorFunction, MinorFunction, RDPDRCapabilityType
+from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketID, DeviceType, FileAttributes, \
+    FileSystemInformationClass, GeneralCapabilityVersion, MajorFunction, MinorFunction, RDPDRCapabilityType
 from pyrdp.parser import Parser
 from pyrdp.pdu import DeviceAnnounce, DeviceCloseRequestPDU, DeviceCloseResponsePDU, DeviceCreateRequestPDU, \
-    DeviceCreateResponsePDU, DeviceIORequestPDU, DeviceIOResponsePDU, DeviceListAnnounceRequest, DeviceReadRequestPDU, \
+    DeviceCreateResponsePDU, DeviceDirectoryControlResponsePDU, DeviceIORequestPDU, DeviceIOResponsePDU, \
+    DeviceListAnnounceRequest, DeviceQueryDirectoryRequestPDU, DeviceQueryDirectoryResponsePDU, DeviceReadRequestPDU, \
     DeviceReadResponsePDU, DeviceRedirectionCapabilitiesPDU, DeviceRedirectionCapability, \
     DeviceRedirectionClientCapabilitiesPDU, DeviceRedirectionGeneralCapability, DeviceRedirectionPDU, \
-    DeviceRedirectionServerCapabilitiesPDU
-from pyrdp.pdu.rdp.virtual_channel.device_redirection import DeviceQueryDirectoryRequest
+    DeviceRedirectionServerCapabilitiesPDU, FileBothDirectoryInformation, FileDirectoryInformation, \
+    FileFullDirectoryInformation, FileNamesInformation
 
 
 class DeviceRedirectionParser(Parser):
@@ -69,16 +70,34 @@ class DeviceRedirectionParser(Parser):
             MajorFunction.IRP_MJ_CREATE: self.parseDeviceCreateResponse,
             MajorFunction.IRP_MJ_READ: self.parseDeviceReadResponse,
             MajorFunction.IRP_MJ_CLOSE: self.parseDeviceCloseResponse,
+            MajorFunction.IRP_MJ_DIRECTORY_CONTROL: self.parseDirectoryControlResponse,
         }
 
         self.ioResponseWriters: Dict[MajorFunction, callable] = {
             MajorFunction.IRP_MJ_CREATE: self.writeDeviceCreateResponse,
             MajorFunction.IRP_MJ_READ: self.writeDeviceReadResponse,
             MajorFunction.IRP_MJ_CLOSE: self.writeDeviceCloseResponse,
+            MajorFunction.IRP_MJ_DIRECTORY_CONTROL: self.writeDirectoryControlResponse,
         }
 
-        # Dictionary to keep track of which completion ID is used for which major function.
+        self.fileInformationParsers: Dict[FileSystemInformationClass, callable] = {
+            FileSystemInformationClass.FileDirectoryInformation: self.parseFileDirectoryInformation,
+            FileSystemInformationClass.FileFullDirectoryInformation: self.parseFileFullDirectoryInformation,
+            FileSystemInformationClass.FileBothDirectoryInformation: self.parseFileBothDirectoryInformation,
+            FileSystemInformationClass.FileNamesInformation: self.parseFileNamesInformation,
+        }
+
+        self.fileInformationWriters: Dict[FileSystemInformationClass, callable] = {
+            FileSystemInformationClass.FileDirectoryInformation: self.writeFileDirectoryInformation,
+            FileSystemInformationClass.FileFullDirectoryInformation: self.writeFileFullDirectoryInformation,
+            FileSystemInformationClass.FileBothDirectoryInformation: self.writeFileBothDirectoryInformation,
+            FileSystemInformationClass.FileNamesInformation: self.writeFileNamesInformation,
+        }
+
+        # Dictionary to keep track of information associated to each completion ID.
         self.majorFunctionsForParsingResponse: Dict[int, MajorFunction] = {}
+        self.minorFunctionsForParsingResponse: Dict[int, MinorFunction] = {}
+        self.informationClassForParsingResponse: Dict[int, FileSystemInformationClass] = {}
 
 
     def parse(self, data: bytes) -> DeviceRedirectionPDU:
@@ -391,6 +410,8 @@ class DeviceRedirectionParser(Parser):
 
 
     def parseDirectoryControlRequest(self, deviceID: int, fileID: int, completionID: int, minorFunction: int, stream: BytesIO) -> DeviceIORequestPDU:
+        self.minorFunctionsForParsingResponse[completionID] = MinorFunction(minorFunction)
+
         if minorFunction == MinorFunction.IRP_MN_NOTIFY_CHANGE_DIRECTORY:
             return DeviceIORequestPDU(deviceID, fileID, completionID, MajorFunction.IRP_MJ_DIRECTORY_CONTROL, minorFunction, stream.read())
         else:
@@ -402,12 +423,16 @@ class DeviceRedirectionParser(Parser):
             path = stream.read(pathLength)
             path = decodeUTF16LE(path)[: -1]
 
-            return DeviceQueryDirectoryRequest(deviceID, fileID, completionID, informationClass, initialQuery, path)
+            self.informationClassForParsingResponse[completionID] = informationClass
+            return DeviceQueryDirectoryRequestPDU(deviceID, fileID, completionID, informationClass, initialQuery, path)
 
-    def writeDirectoryControlRequest(self, pdu: Union[DeviceIORequestPDU, DeviceQueryDirectoryRequest], stream: BytesIO):
+    def writeDirectoryControlRequest(self, pdu: Union[DeviceIORequestPDU, DeviceQueryDirectoryRequestPDU], stream: BytesIO):
+        self.minorFunctionsForParsingResponse[pdu.completionID] = pdu.minorFunction
+
         if pdu.minorFunction == MinorFunction.IRP_MN_NOTIFY_CHANGE_DIRECTORY:
             stream.write(pdu.payload)
         else:
+            self.informationClassForParsingResponse[pdu.completionID] = pdu.informationClass
             path = (pdu.path + "\x00").encode("utf-16le")
 
             Uint32LE.pack(pdu.informationClass, stream)
@@ -415,3 +440,311 @@ class DeviceRedirectionParser(Parser):
             Uint32LE.pack(len(path), stream)
             stream.write(b"\x00" * 23)
             stream.write(path)
+
+
+    def parseDirectoryControlResponse(self, deviceID: int, completionID: int, ioStatus: int, stream: BytesIO) -> DeviceIOResponsePDU:
+        minorFunction = self.minorFunctionsForParsingResponse.pop(completionID, None)
+
+        if minorFunction is None:
+            return DeviceIOResponsePDU(None, deviceID, completionID, ioStatus, stream.read())
+        elif minorFunction == MinorFunction.IRP_MN_NOTIFY_CHANGE_DIRECTORY:
+            return DeviceIOResponsePDU(None, deviceID, completionID, ioStatus, stream.read())
+
+        informationClass = self.informationClassForParsingResponse.pop(completionID)
+
+        length = Uint32LE.unpack(stream)
+        responseData = stream.read(length)
+        endByte = stream.read(1)
+
+        fileInformation = self.fileInformationParsers[informationClass](responseData)
+
+        return DeviceQueryDirectoryResponsePDU(deviceID, completionID, ioStatus, informationClass, fileInformation, endByte)
+
+    def writeDirectoryControlResponse(self, pdu: Union[DeviceDirectoryControlResponsePDU, DeviceQueryDirectoryResponsePDU], stream: BytesIO):
+        if not hasattr(pdu, "minorFunction") or pdu.minorFunction == MinorFunction.IRP_MN_NOTIFY_CHANGE_DIRECTORY:
+            stream.write(pdu.payload)
+            return
+
+        substream = BytesIO()
+        self.fileInformationWriters[pdu.informationClass](pdu.fileInformation, substream)
+
+        Uint32LE.pack(len(substream.getvalue()), stream)
+        stream.write(substream.getvalue())
+        stream.write(pdu.endByte)
+
+
+    def writeFileInformationList(self, dataList: List[bytes], stream: BytesIO):
+        currentOffset = 0
+
+        for index, data in enumerate(dataList):
+            isLastObject = index == len(dataList) - 1
+
+            length = len(data)
+            lengthWithOffset = length + 4
+
+            if not isLastObject and lengthWithOffset % 8 != 0:
+                alignmentLength = 8 - lengthWithOffset % 8
+            else:
+                alignmentLength = 0
+
+            totalLength = lengthWithOffset + alignmentLength
+            nextOffset = currentOffset + totalLength
+            currentOffset = nextOffset
+
+            Uint32LE.pack(nextOffset if not isLastObject else 0, stream)
+            stream.write(data)
+            stream.write(b"\x00" * alignmentLength)
+
+
+    def parseFileDirectoryInformation(self, data: bytes) -> List[FileDirectoryInformation]:
+        stream = BytesIO(data)
+        information: [FileDirectoryInformation] = []
+
+        while stream.tell() < len(data):
+            nextEntryOffset = Uint32LE.unpack(stream)
+            fileIndex = Uint32LE.unpack(stream)
+            creationTime = Uint64LE.unpack(stream)
+            lastAccessTime = Uint64LE.unpack(stream)
+            lastWriteTime = Uint64LE.unpack(stream)
+            lastChangeTime = Uint64LE.unpack(stream)
+            endOfFilePosition = Uint64LE.unpack(stream)
+            allocationSize = Uint64LE.unpack(stream)
+            fileAttributes = FileAttributes(Uint32LE.unpack(stream))
+            fileNameLength = Uint32LE.unpack(stream)
+            fileName = stream.read(fileNameLength)
+
+            if nextEntryOffset == 0:
+                break
+            elif stream.tell() % 8 != 0:
+                stream.read(8 - stream.tell() % 8) # alignment
+
+            fileName = decodeUTF16LE(fileName)
+
+            info = FileDirectoryInformation(
+                fileIndex,
+                creationTime,
+                lastAccessTime,
+                lastWriteTime,
+                lastChangeTime,
+                endOfFilePosition,
+                allocationSize,
+                fileAttributes,
+                fileName
+            )
+
+            information.append(info)
+
+        return information
+
+
+    def writeFileDirectoryInformation(self, information: List[FileDirectoryInformation], stream: BytesIO):
+        dataList: [bytes] = []
+
+        for info in information:
+            substream = BytesIO()
+            fileName = info.fileName.encode("utf-16le")
+
+            Uint32LE.pack(info.fileIndex, substream)
+            Uint64LE.pack(info.creationTime, substream)
+            Uint64LE.pack(info.lastAccessTime, substream)
+            Uint64LE.pack(info.lastWriteTime, substream)
+            Uint64LE.pack(info.lastChangeTime, substream)
+            Uint64LE.pack(info.endOfFilePosition, substream)
+            Uint64LE.pack(info.allocationSize, substream)
+            Uint32LE.pack(info.fileAttributes, substream)
+            Uint32LE.pack(len(fileName), substream)
+            substream.write(fileName)
+
+            dataList.append(substream.getvalue())
+
+        self.writeFileInformationList(dataList, stream)
+
+
+    def parseFileFullDirectoryInformation(self, data: bytes) -> List[FileFullDirectoryInformation]:
+        stream = BytesIO(data)
+        information: [FileFullDirectoryInformation] = []
+
+        while stream.tell() < len(data):
+            nextEntryOffset = Uint32LE.unpack(stream)
+            fileIndex = Uint32LE.unpack(stream)
+            creationTime = Uint64LE.unpack(stream)
+            lastAccessTime = Uint64LE.unpack(stream)
+            lastWriteTime = Uint64LE.unpack(stream)
+            lastChangeTime = Uint64LE.unpack(stream)
+            endOfFilePosition = Uint64LE.unpack(stream)
+            allocationSize = Uint64LE.unpack(stream)
+            fileAttributes = FileAttributes(Uint32LE.unpack(stream))
+            fileNameLength = Uint32LE.unpack(stream)
+            eaSize = Uint32LE.unpack(stream)
+            fileName = stream.read(fileNameLength)
+
+            if nextEntryOffset != 0:
+                stream.read(8 - stream.tell() % 8) # alignment
+                break
+
+            fileName = decodeUTF16LE(fileName)
+
+            info = FileFullDirectoryInformation(
+                fileIndex,
+                creationTime,
+                lastAccessTime,
+                lastWriteTime,
+                lastChangeTime,
+                endOfFilePosition,
+                allocationSize,
+                fileAttributes,
+                eaSize,
+                fileName
+            )
+
+            information.append(info)
+
+        return information
+
+
+    def writeFileFullDirectoryInformation(self, information: List[FileFullDirectoryInformation], stream: BytesIO):
+        dataList: [bytes] = []
+
+        for info in information:
+            substream = BytesIO()
+            fileName = info.fileName.encode("utf-16le")
+
+            Uint32LE.pack(info.fileIndex, substream)
+            Uint64LE.pack(info.creationTime, substream)
+            Uint64LE.pack(info.lastAccessTime, substream)
+            Uint64LE.pack(info.lastWriteTime, substream)
+            Uint64LE.pack(info.lastChangeTime, substream)
+            Uint64LE.pack(info.endOfFilePosition, substream)
+            Uint64LE.pack(info.allocationSize, substream)
+            Uint32LE.pack(info.fileAttributes, substream)
+            Uint32LE.pack(len(fileName), substream)
+            Uint32LE.pack(info.eaSize, substream)
+            substream.write(fileName)
+
+            dataList.append(substream.getvalue())
+
+        self.writeFileInformationList(dataList, stream)
+
+
+    def parseFileBothDirectoryInformation(self, data: bytes) -> List[FileBothDirectoryInformation]:
+        stream = BytesIO(data)
+        information: [FileBothDirectoryInformation] = []
+
+        while stream.tell() < len(data):
+            nextEntryOffset = Uint32LE.unpack(stream)
+            fileIndex = Uint32LE.unpack(stream)
+            creationTime = Uint64LE.unpack(stream)
+            lastAccessTime = Uint64LE.unpack(stream)
+            lastWriteTime = Uint64LE.unpack(stream)
+            lastChangeTime = Uint64LE.unpack(stream)
+            endOfFilePosition = Uint64LE.unpack(stream)
+            allocationSize = Uint64LE.unpack(stream)
+            fileAttributes = FileAttributes(Uint32LE.unpack(stream))
+            fileNameLength = Uint32LE.unpack(stream)
+            eaSize = Uint32LE.unpack(stream)
+            shortNameLength = Uint8.unpack(stream)
+            # stream.read(1) # reserved (not actually used, WTF Microsoft ????)
+            shortName = stream.read(24)[: min(24, shortNameLength)]
+            fileName = stream.read(fileNameLength)
+
+            if nextEntryOffset != 0:
+                stream.read(8 - stream.tell() % 8) # alignment
+                break
+
+            shortName = decodeUTF16LE(shortName)
+            fileName = decodeUTF16LE(fileName)
+
+            info = FileBothDirectoryInformation(
+                fileIndex,
+                creationTime,
+                lastAccessTime,
+                lastWriteTime,
+                lastChangeTime,
+                endOfFilePosition,
+                allocationSize,
+                fileAttributes,
+                eaSize,
+                shortName,
+                fileName
+            )
+
+            information.append(info)
+
+        return information
+
+
+    def writeFileBothDirectoryInformation(self, information: List[FileBothDirectoryInformation], stream: BytesIO):
+        dataList: [bytes] = []
+
+        for info in information:
+            substream = BytesIO()
+            fileName = info.fileName.encode("utf-16le")
+            shortName = info.shortName.encode("utf-16le")
+
+            Uint32LE.pack(info.fileIndex, substream)
+            Uint64LE.pack(info.creationTime, substream)
+            Uint64LE.pack(info.lastAccessTime, substream)
+            Uint64LE.pack(info.lastWriteTime, substream)
+            Uint64LE.pack(info.lastChangeTime, substream)
+            Uint64LE.pack(info.endOfFilePosition, substream)
+            Uint64LE.pack(info.allocationSize, substream)
+            Uint32LE.pack(info.fileAttributes, substream)
+            Uint32LE.pack(len(fileName), substream)
+            Uint32LE.pack(info.eaSize, substream)
+            Uint8.pack(len(shortName), substream)
+            # stream.write(b"\x00") # reserved
+            substream.write(shortName.ljust(24, b"\x00")[: 24])
+            substream.write(fileName)
+
+            dataList.append(substream.getvalue())
+
+        self.writeFileInformationList(dataList, stream)
+
+
+    def parseFileNamesInformation(self, data: bytes) -> List[FileNamesInformation]:
+        stream = BytesIO(data)
+        information: [FileNamesInformation] = []
+
+        while stream.tell() < len(data):
+            nextEntryOffset = Uint32LE.unpack(stream)
+            fileIndex = Uint32LE.unpack(stream)
+            fileNameLength = Uint32LE.unpack(stream)
+            fileName = stream.read(fileNameLength)
+
+            if nextEntryOffset != 0:
+                stream.read(8 - stream.tell() % 8) # alignment
+                break
+
+            fileName = decodeUTF16LE(fileName)
+
+            info = FileNamesInformation(fileIndex, fileName)
+            information.append(info)
+
+        return information
+
+
+    def writeFileNamesInformation(self, information: List[FileNamesInformation], stream: BytesIO):
+        dataList: [bytes] = []
+
+        for info in information:
+            substream = BytesIO()
+            fileName = info.fileName.encode("utf-16le")
+
+            Uint32LE.pack(info.fileIndex, substream)
+            Uint32LE.pack(len(fileName), substream)
+            substream.write(fileName)
+
+            dataList.append(substream.getvalue())
+
+        self.writeFileInformationList(dataList, stream)
+
+
+    def convertWindowsTimeStamp(self, timeStamp: int) -> int:
+        """
+        Convert Windows time (in 100-ns) to Unix time (in ms).
+        :param timeStamp: the Windows time stamp in 100-ns.
+        """
+        # Difference between Unix time epoch and Windows time epoch
+        offset = 116444736000000000 # in 100-ns
+        result = timeStamp - offset # in 100-ns
+        return result // 10 # in ms

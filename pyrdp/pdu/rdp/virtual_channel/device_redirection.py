@@ -6,8 +6,8 @@
 
 from typing import Dict, List, Optional
 
-from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketID, DeviceType, FileSystemInformationClass, \
-    MajorFunction, MinorFunction, RDPDRCapabilityType
+from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketID, DeviceType, FileAttributes, \
+    FileSystemInformationClass, MajorFunction, MinorFunction, RDPDRCapabilityType
 from pyrdp.pdu import PDU
 
 
@@ -118,12 +118,89 @@ class DeviceCloseResponsePDU(DeviceIOResponsePDU):
         super().__init__(MajorFunction.IRP_MJ_CLOSE, deviceID, completionID, ioStatus)
 
 
-class DeviceQueryDirectoryRequest(DeviceIORequestPDU):
+class FileInformationBase(PDU):
+    def __init__(self, informationClass: FileSystemInformationClass):
+        super().__init__(b"")
+        self.informationClass = informationClass
+
+
+class FileDirectoryInformation(FileInformationBase):
+    def __init__(self, fileIndex: int, creationTime: int, lastAccessTime: int, lastWriteTime: int, lastChangeTime: int, endOfFilePosition: int, allocationSize: int, fileAttributes: FileAttributes, fileName: str):
+        super().__init__(FileSystemInformationClass.FileDirectoryInformation)
+        self.fileIndex = fileIndex
+        self.creationTime = creationTime
+        self.lastAccessTime = lastAccessTime
+        self.lastWriteTime = lastWriteTime
+        self.lastChangeTime = lastChangeTime
+        self.endOfFilePosition = endOfFilePosition
+        self.allocationSize = allocationSize
+        self.fileAttributes = fileAttributes
+        self.fileName = fileName
+
+
+class FileFullDirectoryInformation(FileInformationBase):
+    def __init__(self, fileIndex: int, creationTime: int, lastAccessTime: int, lastWriteTime: int, lastChangeTime: int, endOfFilePosition: int, allocationSize: int, fileAttributes: FileAttributes, eaSize: int, fileName: str):
+        super().__init__(FileSystemInformationClass.FileFullDirectoryInformation)
+        self.fileIndex = fileIndex
+        self.creationTime = creationTime
+        self.lastAccessTime = lastAccessTime
+        self.lastWriteTime = lastWriteTime
+        self.lastChangeTime = lastChangeTime
+        self.endOfFilePosition = endOfFilePosition
+        self.allocationSize = allocationSize
+        self.fileAttributes = fileAttributes
+        self.eaSize = eaSize
+        self.fileName = fileName
+
+
+class FileBothDirectoryInformation(FileInformationBase):
+    def __init__(self, fileIndex: int, creationTime: int, lastAccessTime: int, lastWriteTime: int, lastChangeTime: int, endOfFilePosition: int, allocationSize: int, fileAttributes: FileAttributes, eaSize: int, shortName: str, fileName: str):
+        super().__init__(FileSystemInformationClass.FileBothDirectoryInformation)
+        self.fileIndex = fileIndex
+        self.creationTime = creationTime
+        self.lastAccessTime = lastAccessTime
+        self.lastWriteTime = lastWriteTime
+        self.lastChangeTime = lastChangeTime
+        self.endOfFilePosition = endOfFilePosition
+        self.allocationSize = allocationSize
+        self.fileAttributes = fileAttributes
+        self.eaSize = eaSize
+        self.shortName = shortName
+        self.fileName = fileName
+
+
+class FileNamesInformation(FileInformationBase):
+    def __init__(self, fileIndex: int, fileName: str):
+        super().__init__(FileSystemInformationClass.FileNamesInformation)
+        self.fileIndex = fileIndex
+        self.fileName = fileName
+
+
+class DeviceQueryDirectoryRequestPDU(DeviceIORequestPDU):
     def __init__(self, deviceID: int, fileID: int, completionID: int, informationClass: FileSystemInformationClass, initialQuery: int, path: str):
         super().__init__(deviceID, fileID, completionID, MajorFunction.IRP_MJ_DIRECTORY_CONTROL, MinorFunction.IRP_MN_QUERY_DIRECTORY)
         self.informationClass = informationClass
         self.initialQuery = initialQuery
         self.path = path
+
+
+class DeviceDirectoryControlResponsePDU(DeviceIOResponsePDU):
+    def __init__(self, minorFunction: MinorFunction, deviceID: int, completionID: int, ioStatus: int, payload: bytes = b""):
+        super().__init__(MajorFunction.IRP_MJ_DIRECTORY_CONTROL, deviceID, completionID, ioStatus, payload)
+        self.minorFunction = minorFunction
+
+
+class DeviceQueryDirectoryResponsePDU(DeviceDirectoryControlResponsePDU):
+    def __init__(self, deviceID: int, completionID: int, ioStatus: int, informationClass: FileSystemInformationClass, fileInformation: [FileInformationBase], endByte: bytes):
+        super().__init__(MinorFunction.IRP_MN_QUERY_DIRECTORY, deviceID, completionID, ioStatus)
+        self.informationClass = informationClass
+        self.fileInformation = fileInformation
+
+        # Named "padding" in the documentation.
+        # This byte is actually important, for some reason Windows uses it even though the documentation says
+        # it should be ignored.
+        # See MS-RDPEFS 2.2.3.4.10
+        self.endByte = endByte
 
 
 class DeviceAnnounce(PDU):

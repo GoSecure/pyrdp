@@ -41,10 +41,13 @@ from pyrdp.pdu.rdp.slowpath import ConfirmActivePDU, ControlPDU, DemandActivePDU
 from pyrdp.pdu.rdp.virtual_channel.clipboard import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU, \
     FormatListPDU, FormatListResponsePDU, FormatName, LongFormatName, ServerMonitorReadyPDU, ShortFormatName
 from pyrdp.pdu.rdp.virtual_channel.device_redirection import DeviceAnnounce, DeviceCloseRequestPDU, \
-    DeviceCloseResponsePDU, DeviceQueryDirectoryRequest, DeviceCreateRequestPDU, DeviceCreateResponsePDU, \
-    DeviceIORequestPDU, DeviceIOResponsePDU, DeviceListAnnounceRequest, DeviceReadRequestPDU, DeviceReadResponsePDU, \
+    DeviceCloseResponsePDU, DeviceCreateRequestPDU, DeviceCreateResponsePDU, DeviceDirectoryControlResponsePDU, \
+    DeviceDirectoryControlResponsePDU, DeviceIORequestPDU, DeviceIOResponsePDU, DeviceListAnnounceRequest, \
+    DeviceQueryDirectoryRequestPDU, DeviceQueryDirectoryResponsePDU, DeviceReadRequestPDU, DeviceReadResponsePDU, \
     DeviceRedirectionCapabilitiesPDU, DeviceRedirectionCapability, DeviceRedirectionClientCapabilitiesPDU, \
-    DeviceRedirectionGeneralCapability, DeviceRedirectionPDU, DeviceRedirectionServerCapabilitiesPDU
+    DeviceRedirectionGeneralCapability, DeviceRedirectionPDU, DeviceRedirectionServerCapabilitiesPDU, \
+    FileBothDirectoryInformation, FileDirectoryInformation, FileFullDirectoryInformation, FileInformationBase, \
+    FileNamesInformation
 from pyrdp.pdu.rdp.virtual_channel.virtual_channel import VirtualChannelPDU
 from pyrdp.pdu.segmentation import SegmentationPDU
 from pyrdp.pdu.tpkt import TPKTPDU
