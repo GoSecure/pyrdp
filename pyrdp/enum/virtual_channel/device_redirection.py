@@ -174,3 +174,10 @@ class ExtendedPDUFlags(IntEnum):
     RDPDR_DEVICE_REMOVE_PDUS = 0x00000001
     RDPDR_CLIENT_DISPLAY_NAME_PDU = 0x00000002
     RDPDR_USER_LOGGEDON_PDU = 0x00000004
+
+
+class FileSystemInformationClass(IntEnum):
+    FileDirectoryInformation = 0x00000001
+    FileFullDirectoryInformation = 0x00000002
+    FileBothDirectoryInformation = 0x00000003
+    FileNamesInformation = 0x0000000C

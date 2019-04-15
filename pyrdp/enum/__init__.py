@@ -15,7 +15,7 @@ from pyrdp.enum.segmentation import SegmentationPDUType
 from pyrdp.enum.virtual_channel.clipboard import ClipboardFormatName, ClipboardFormatNumber, ClipboardMessageFlags, \
     ClipboardMessageType
 from pyrdp.enum.virtual_channel.device_redirection import CreateOption, DeviceRedirectionComponent, \
-    DeviceRedirectionPacketID, DeviceType, FileAccess, GeneralCapabilityVersion, IOOperationSeverity, MajorFunction, \
-    MinorFunction, RDPDRCapabilityType
+    DeviceRedirectionPacketID, DeviceType, FileAccess, FileSystemInformationClass, GeneralCapabilityVersion, \
+    IOOperationSeverity, MajorFunction, MinorFunction, RDPDRCapabilityType
 from pyrdp.enum.virtual_channel.virtual_channel import VirtualChannelPDUFlag
 from pyrdp.enum.x224 import X224PDUType

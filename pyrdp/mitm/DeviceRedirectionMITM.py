@@ -11,13 +11,13 @@ from pathlib import Path
 from typing import Dict
 
 from pyrdp.core import decodeUTF16LE, FileProxy, ObservedBy, Observer, Subject
-from pyrdp.enum import CreateOption, DeviceType, FileAccess, IOOperationSeverity
+from pyrdp.enum import CreateOption, DeviceType, FileAccess, IOOperationSeverity, MajorFunction
 from pyrdp.layer import DeviceRedirectionLayer
 from pyrdp.mitm.config import MITMConfig
 from pyrdp.mitm.FileMapping import FileMapping, FileMappingDecoder, FileMappingEncoder
-from pyrdp.parser import DeviceRedirectionParser
-from pyrdp.pdu import DeviceAnnounce, DeviceCloseRequestPDU, DeviceCreateRequestPDU, DeviceIORequestPDU, \
-    DeviceIOResponsePDU, DeviceListAnnounceRequest, DeviceReadRequestPDU, DeviceRedirectionPDU
+from pyrdp.pdu import DeviceAnnounce, DeviceCloseRequestPDU, DeviceCloseResponsePDU, DeviceCreateRequestPDU, \
+    DeviceCreateResponsePDU, DeviceIORequestPDU, DeviceIOResponsePDU, DeviceListAnnounceRequest, DeviceReadRequestPDU, \
+    DeviceReadResponsePDU, DeviceRedirectionPDU
 
 
 class DeviceRedirectionMITMObserver(Observer):
@@ -53,6 +53,12 @@ class DeviceRedirectionMITM(Subject):
         self.openedMappings: Dict[int, FileMapping] = {}
         self.fileMap: Dict[str, FileMapping] = {}
         self.fileMapPath = self.config.outDir / "mapping.json"
+
+        self.responseHandlers: Dict[MajorFunction, callable] = {
+            MajorFunction.IRP_MJ_CREATE: self.handleCreateResponse,
+            MajorFunction.IRP_MJ_READ: self.handleReadResponse,
+            MajorFunction.IRP_MJ_CLOSE: self.handleCloseResponse,
+        }
 
         self.client.createObserver(
             onPDUReceived=self.onClientPDUReceived,
@@ -108,7 +114,6 @@ class DeviceRedirectionMITM(Subject):
 
         self.currentIORequests[pdu.completionID] = pdu
 
-
     def handleIOResponse(self, pdu: DeviceIOResponsePDU):
         """
         Handle an IO response, depending on what kind of request originated it.
@@ -120,12 +125,8 @@ class DeviceRedirectionMITM(Subject):
             if pdu.ioStatus >> 30 == IOOperationSeverity.STATUS_SEVERITY_ERROR:
                 self.log.warning("Received an IO Response with an error IO status: %(responsePDU)s for request %(requestPDU)s", {"responsePDU": repr(pdu), "requestPDU": repr(requestPDU)})
 
-            if isinstance(requestPDU, DeviceCreateRequestPDU):
-                self.handleCreateResponse(requestPDU, pdu)
-            elif isinstance(requestPDU, DeviceReadRequestPDU):
-                self.handleReadResponse(requestPDU, pdu)
-            elif isinstance(requestPDU, DeviceCloseRequestPDU):
-                self.handleCloseResponse(requestPDU, pdu)
+            if pdu.majorFunction in self.responseHandlers:
+                self.responseHandlers[pdu.majorFunction](requestPDU, pdu)
 
             self.currentIORequests.pop(pdu.completionID)
         else:
@@ -138,15 +139,15 @@ class DeviceRedirectionMITM(Subject):
         """
 
         for device in pdu.deviceList:
-            self.log.info("%(deviceName)s mapped with ID %(deviceID)d: %(deviceData)s", {
-                "deviceName": DeviceType.getPrettyName(device.deviceType),
+            self.log.info("%(deviceType)s mapped with ID %(deviceID)d: %(deviceName)s", {
+                "deviceType": DeviceType.getPrettyName(device.deviceType),
                 "deviceID": device.deviceID,
-                "deviceData": device.preferredDosName.rstrip(b"\x00").decode()
+                "deviceName": device.preferredDOSName
             })
 
             self.observer.onDeviceAnnounce(device)
 
-    def handleCreateResponse(self, request: DeviceCreateRequestPDU, response: DeviceIOResponsePDU):
+    def handleCreateResponse(self, request: DeviceCreateRequestPDU, response: DeviceCreateResponsePDU):
         """
         Prepare to intercept a file: create a FileProxy object, which will only create the file when we actually write
         to it. When listing a directory, Windows sends a lot of create requests without actually reading the files. We
@@ -154,8 +155,6 @@ class DeviceRedirectionMITM(Subject):
         :param request: the device create request
         :param response: the device IO response to the request
         """
-
-        response = DeviceRedirectionParser().parseDeviceCreateResponse(response)
 
         isFileRead = request.desiredAccess & (FileAccess.GENERIC_READ | FileAccess.FILE_READ_DATA) != 0
         isNotDirectory = request.createOptions & CreateOption.FILE_NON_DIRECTORY_FILE != 0
@@ -176,7 +175,7 @@ class DeviceRedirectionMITM(Subject):
             )
 
 
-    def handleReadResponse(self, request: DeviceReadRequestPDU, response: DeviceIOResponsePDU):
+    def handleReadResponse(self, request: DeviceReadRequestPDU, response: DeviceReadResponsePDU):
         """
         Write the data that was read at the appropriate offset in the file proxy.
         :param request: the device read request
@@ -184,10 +183,9 @@ class DeviceRedirectionMITM(Subject):
         """
 
         if request.fileID in self.openedFiles:
-            response = DeviceRedirectionParser().parseDeviceReadResponse(response)
             file = self.openedFiles[request.fileID]
             file.seek(request.offset)
-            file.write(response.readData)
+            file.write(response.payload)
 
             # Save the mapping permanently
             mapping = self.openedMappings[request.fileID]
@@ -197,7 +195,7 @@ class DeviceRedirectionMITM(Subject):
                 self.fileMap[fileName] = mapping
                 self.saveMapping()
 
-    def handleCloseResponse(self, request: DeviceCloseRequestPDU, _: DeviceIOResponsePDU):
+    def handleCloseResponse(self, request: DeviceCloseRequestPDU, _: DeviceCloseResponsePDU):
         """
         Close the file if it was open. Compute the hash of the file, then delete it if we already have a file with the
         same hash.

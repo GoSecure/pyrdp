@@ -4,10 +4,11 @@
 # Licensed under the GPLv3 or later.
 #
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 
-from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketID, DeviceType, MajorFunction, RDPDRCapabilityType
-from pyrdp.pdu.pdu import PDU
+from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketID, DeviceType, FileSystemInformationClass, \
+    MajorFunction, MinorFunction, RDPDRCapabilityType
+from pyrdp.pdu import PDU
 
 
 class DeviceRedirectionPDU(PDU):
@@ -19,20 +20,6 @@ class DeviceRedirectionPDU(PDU):
         super().__init__(payload)
         self.component = component
         self.packetID: DeviceRedirectionPacketID = DeviceRedirectionPacketID(packetID)
-
-
-class DeviceIOResponsePDU(DeviceRedirectionPDU):
-    """
-    https://msdn.microsoft.com/en-us/library/cc241334.aspx
-    """
-
-    def __init__(self, deviceID: int, completionID: int, ioStatus: int, payload=b""):
-        super().__init__(DeviceRedirectionComponent.RDPDR_CTYP_CORE,
-                         DeviceRedirectionPacketID.PAKID_CORE_DEVICE_IOCOMPLETION)
-        self.deviceID = deviceID
-        self.completionID = completionID
-        self.ioStatus = ioStatus
-        self.payload = payload
 
 
 class DeviceIORequestPDU(DeviceRedirectionPDU):
@@ -49,26 +36,18 @@ class DeviceIORequestPDU(DeviceRedirectionPDU):
         self.minorFunction = minorFunction
 
 
-class DeviceReadResponsePDU(DeviceIOResponsePDU):
+class DeviceIOResponsePDU(DeviceRedirectionPDU):
     """
-    https://msdn.microsoft.com/en-us/library/cc241337.aspx
-    """
-
-    def __init__(self, deviceID: int, completionID: int, ioStatus: int, readData: bytes):
-        super().__init__(deviceID, completionID, ioStatus)
-        self.readData = readData
-
-
-class DeviceReadRequestPDU(DeviceIORequestPDU):
-    """
-    https://msdn.microsoft.com/en-us/library/cc241330.aspx
+    https://msdn.microsoft.com/en-us/library/cc241334.aspx
     """
 
-    def __init__(self, deviceID: int, fileID: int, completionID: int, minorFunction: int,
-                 length: int, offset: int):
-        super().__init__(deviceID, fileID, completionID, MajorFunction.IRP_MJ_READ, minorFunction)
-        self.length = length
-        self.offset = offset
+    def __init__(self, majorFunction: Optional[MajorFunction], deviceID: int, completionID: int, ioStatus: int, payload=b""):
+        super().__init__(DeviceRedirectionComponent.RDPDR_CTYP_CORE, DeviceRedirectionPacketID.PAKID_CORE_DEVICE_IOCOMPLETION)
+        self.majorFunction = majorFunction
+        self.deviceID = deviceID
+        self.completionID = completionID
+        self.ioStatus = ioStatus
+        self.payload = payload
 
 
 class DeviceCreateRequestPDU(DeviceIORequestPDU):
@@ -94,10 +73,31 @@ class DeviceCreateResponsePDU(DeviceIOResponsePDU):
     https://msdn.microsoft.com/en-us/library/cc241335.aspx
     """
 
-    def __init__(self, deviceID: int, completionID: int, ioStatus: int, fileID: int, information: bytes= b""):
-        super().__init__(deviceID, completionID, ioStatus)
+    def __init__(self, deviceID: int, completionID: int, ioStatus: int, fileID: int, information: int):
+        super().__init__(MajorFunction.IRP_MJ_CREATE, deviceID, completionID, ioStatus)
         self.fileID = fileID
         self.information = information
+
+
+class DeviceReadRequestPDU(DeviceIORequestPDU):
+    """
+    https://msdn.microsoft.com/en-us/library/cc241330.aspx
+    """
+
+    def __init__(self, deviceID: int, fileID: int, completionID: int, minorFunction: int,
+                 length: int, offset: int):
+        super().__init__(deviceID, fileID, completionID, MajorFunction.IRP_MJ_READ, minorFunction)
+        self.length = length
+        self.offset = offset
+
+
+class DeviceReadResponsePDU(DeviceIOResponsePDU):
+    """
+    https://msdn.microsoft.com/en-us/library/cc241337.aspx
+    """
+
+    def __init__(self, deviceID: int, completionID: int, ioStatus: int, readData: bytes):
+        super().__init__(MajorFunction.IRP_MJ_READ, deviceID, completionID, ioStatus, readData)
 
 
 class DeviceCloseRequestPDU(DeviceIORequestPDU):
@@ -115,7 +115,15 @@ class DeviceCloseResponsePDU(DeviceIOResponsePDU):
     """
 
     def __init__(self, deviceID: int, completionID: int, ioStatus: int):
-        super().__init__(deviceID, completionID, ioStatus)
+        super().__init__(MajorFunction.IRP_MJ_CLOSE, deviceID, completionID, ioStatus)
+
+
+class DeviceQueryDirectoryRequest(DeviceIORequestPDU):
+    def __init__(self, deviceID: int, fileID: int, completionID: int, informationClass: FileSystemInformationClass, initialQuery: int, path: str):
+        super().__init__(deviceID, fileID, completionID, MajorFunction.IRP_MJ_DIRECTORY_CONTROL, MinorFunction.IRP_MN_QUERY_DIRECTORY)
+        self.informationClass = informationClass
+        self.initialQuery = initialQuery
+        self.path = path
 
 
 class DeviceAnnounce(PDU):
@@ -123,11 +131,11 @@ class DeviceAnnounce(PDU):
     https://msdn.microsoft.com/en-us/library/cc241326.aspx
     """
 
-    def __init__(self, deviceType: DeviceType, deviceID: int, preferredDosName: bytes, deviceData: bytes):
+    def __init__(self, deviceType: DeviceType, deviceID: int, preferredDOSName: str, deviceData: bytes):
         super().__init__()
         self.deviceID = deviceID
         self.deviceType = deviceType
-        self.preferredDosName = preferredDosName
+        self.preferredDOSName = preferredDOSName
         self.deviceData = deviceData
 
 
@@ -158,7 +166,7 @@ class DeviceRedirectionGeneralCapability(DeviceRedirectionCapability):
 
     def __init__(self, version: int, osType: int, osVersion: int, protocolMajorVersion: int,
                  protocolMinorVersion: int, ioCode1: int, ioCode2: int, extendedPDU: int, extraFlags1: int,
-                 extraFlags2: int, specialTypeDeviceCap: int):
+                 extraFlags2: int, specialTypeDeviceCap: Optional[int]):
         super().__init__(RDPDRCapabilityType.CAP_GENERAL_TYPE, version)
         self.osType = osType
         self.osVersion = osVersion

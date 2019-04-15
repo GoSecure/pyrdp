@@ -161,11 +161,5 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
     def onDeviceAnnounce(self, device: DeviceAnnounce):
         self.devices[device.deviceID] = device
 
-        name = device.preferredDosName
-        endPosition = name.find(b"\x00")
-
-        if endPosition >= 0:
-            name = name[: endPosition]
-
-        pdu = PlayerDeviceMappingPDU(self.attacker.getCurrentTimeStamp(), device.deviceID, device.deviceType, name.decode())
+        pdu = PlayerDeviceMappingPDU(self.attacker.getCurrentTimeStamp(), device.deviceID, device.deviceType, device.preferredDOSName)
         self.recorder.record(pdu, pdu.header)
