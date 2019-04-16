@@ -5,7 +5,7 @@ from pyrdp.enum import DeviceType, MouseButton, PlayerPDUType
 from pyrdp.parser.segmentation import SegmentationParser
 from pyrdp.pdu import Color, PlayerBitmapPDU, PlayerConnectionClosePDU, PlayerDeviceMappingPDU, \
     PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, \
-    PlayerPDU, PlayerTextPDU
+    PlayerPDU, PlayerTextPDU, PlayerDirectoryListingRequestPDU
 
 
 class PlayerParser(SegmentationParser):
@@ -22,6 +22,7 @@ class PlayerParser(SegmentationParser):
             PlayerPDUType.FORWARDING_STATE: self.parseForwardingState,
             PlayerPDUType.BITMAP: self.parseBitmap,
             PlayerPDUType.DEVICE_MAPPING: self.parseDeviceMapping,
+            PlayerPDUType.DIRECTORY_LISTING_REQUEST: self.parseDirectoryListingRequest,
         }
 
         self.writers = {
@@ -34,6 +35,7 @@ class PlayerParser(SegmentationParser):
             PlayerPDUType.FORWARDING_STATE: self.writeForwardingState,
             PlayerPDUType.BITMAP: self.writeBitmap,
             PlayerPDUType.DEVICE_MAPPING: self.writeDeviceMapping,
+            PlayerPDUType.DIRECTORY_LISTING_REQUEST: self.writeDirectoryListingRequest,
         }
 
 
@@ -201,3 +203,15 @@ class PlayerParser(SegmentationParser):
         Uint32LE.pack(pdu.deviceType, stream)
         Uint32LE.pack(len(pdu.name), stream)
         stream.write(pdu.name.encode())
+
+
+    def parseDirectoryListingRequest(self, stream: BytesIO, timestamp: int) -> PlayerDirectoryListingRequestPDU:
+        length = Uint32LE.unpack(stream)
+        path = stream.read(length).decode()
+        return PlayerDirectoryListingRequestPDU(timestamp, path)
+
+    def writeDirectoryListingRequest(self, pdu: PlayerDirectoryListingRequestPDU, stream: BytesIO):
+        path = pdu.path.encode()
+
+        Uint32LE.pack(len(path), stream)
+        stream.write(path)

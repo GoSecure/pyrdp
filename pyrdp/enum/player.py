@@ -21,6 +21,7 @@ class PlayerPDUType(IntEnum):
     FORWARDING_STATE = 13  # Event from the player to change the state of I/O forwarding
     BITMAP = 14  # Bitmap event from the player
     DEVICE_MAPPING = 15  # Device mapping event notification
+    DIRECTORY_LISTING_REQUEST = 16  # Directory listing request from the player
 
 
 class MouseButton(IntEnum):

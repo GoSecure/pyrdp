@@ -135,3 +135,9 @@ class PlayerDeviceMappingPDU(PlayerPDU):
         self.deviceID = deviceID
         self.deviceType = deviceType
         self.name = name
+
+
+class PlayerDirectoryListingRequestPDU(PlayerPDU):
+    def __init__(self, timestamp: int, path: str):
+        super().__init__(PlayerPDUType.DIRECTORY_LISTING_REQUEST, timestamp, b"")
+        self.path = path
