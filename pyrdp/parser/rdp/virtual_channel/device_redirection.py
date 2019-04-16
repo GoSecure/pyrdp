@@ -9,7 +9,8 @@ from typing import Dict, List, Union
 
 from pyrdp.core import decodeUTF16LE, Uint16LE, Uint32LE, Uint64LE, Uint8
 from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketID, DeviceType, FileAttributes, \
-    FileSystemInformationClass, GeneralCapabilityVersion, MajorFunction, MinorFunction, RDPDRCapabilityType
+    FileCreateDisposition, FileCreateOptions, FileShareAccess, FileSystemInformationClass, GeneralCapabilityVersion, \
+    MajorFunction, MinorFunction, RDPDRCapabilityType
 from pyrdp.parser import Parser
 from pyrdp.pdu import DeviceAnnounce, DeviceCloseRequestPDU, DeviceCloseResponsePDU, DeviceCreateRequestPDU, \
     DeviceCreateResponsePDU, DeviceDirectoryControlResponsePDU, DeviceIORequestPDU, DeviceIOResponsePDU, \
@@ -315,12 +316,14 @@ class DeviceRedirectionParser(Parser):
     def parseDeviceCreateRequest(self, deviceID: int, fileID: int, completionID: int, minorFunction: int, stream: BytesIO) -> DeviceCreateRequestPDU:
         desiredAccess = Uint32LE.unpack(stream)
         allocationSize = Uint64LE.unpack(stream)
-        fileAttributes = Uint32LE.unpack(stream)
-        sharedAccess = Uint32LE.unpack(stream)
-        createDisposition = Uint32LE.unpack(stream)
-        createOptions = Uint32LE.unpack(stream)
+        fileAttributes = FileAttributes(Uint32LE.unpack(stream))
+        sharedAccess = FileShareAccess(Uint32LE.unpack(stream))
+        createDisposition = FileCreateDisposition(Uint32LE.unpack(stream))
+        createOptions = FileCreateOptions(Uint32LE.unpack(stream))
         pathLength = Uint32LE.unpack(stream)
         path = stream.read(pathLength)
+
+        path = decodeUTF16LE(path)[: -1]
 
         return DeviceCreateRequestPDU(
             deviceID,
@@ -337,14 +340,16 @@ class DeviceRedirectionParser(Parser):
         )
 
     def writeDeviceCreateRequest(self, pdu: DeviceCreateRequestPDU, stream: BytesIO):
+        path = (pdu.path + "\x00").encode("utf-16le")
+
         Uint32LE.pack(pdu.desiredAccess, stream)
         Uint64LE.pack(pdu.allocationSize, stream)
         Uint32LE.pack(pdu.fileAttributes, stream)
         Uint32LE.pack(pdu.sharedAccess, stream)
         Uint32LE.pack(pdu.createDisposition, stream)
         Uint32LE.pack(pdu.createOptions, stream)
-        Uint32LE.pack(len(pdu.path), stream)
-        stream.write(pdu.path)
+        Uint32LE.pack(len(path), stream)
+        stream.write(path)
 
 
     def parseDeviceCreateResponse(self, deviceID: int, completionID: int, ioStatus: int, stream: BytesIO) -> DeviceCreateResponsePDU:

