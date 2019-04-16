@@ -139,6 +139,12 @@ class PlayerDeviceMappingPDU(PlayerPDU):
 
 class PlayerDirectoryListingRequestPDU(PlayerPDU):
     def __init__(self, timestamp: int, deviceID: int, path: str):
+        """
+        :param timestamp: time stamp for this PDU.
+        :param deviceID: ID of the device used.
+        :param path: path of the directory to list. The path should be a Unix-style path.
+        """
+
         super().__init__(PlayerPDUType.DIRECTORY_LISTING_REQUEST, timestamp, b"")
         self.deviceID = deviceID
         self.path = path
@@ -146,6 +152,12 @@ class PlayerDirectoryListingRequestPDU(PlayerPDU):
 
 class PlayerDirectoryListingResponsePDU(PlayerPDU):
     def __init__(self, timestamp: int, deviceID: int, filePath: str):
+        """
+        :param timestamp: time stamp for this PDU.
+        :param deviceID: ID of the device used.
+        :param path: Unix-style path of the file.
+        """
+
         super().__init__(PlayerPDUType.DIRECTORY_LISTING_RESPONSE, timestamp, b"")
         self.deviceID = deviceID
         self.filePath = filePath
