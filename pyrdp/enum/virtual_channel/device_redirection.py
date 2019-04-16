@@ -254,7 +254,7 @@ class FileShareAccess(IntFlag):
     FILE_SHARE_DELETE = 0x00000004
 
 
-class FileCreateDisposition(IntFlag):
+class FileCreateDisposition(IntEnum):
     FILE_SUPERSEDE = 0x00000000
     FILE_OPEN = 0x00000001
     FILE_CREATE = 0x00000002
