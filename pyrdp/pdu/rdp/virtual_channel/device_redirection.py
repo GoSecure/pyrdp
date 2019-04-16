@@ -191,7 +191,7 @@ class DeviceDirectoryControlResponsePDU(DeviceIOResponsePDU):
 
 
 class DeviceQueryDirectoryResponsePDU(DeviceDirectoryControlResponsePDU):
-    def __init__(self, deviceID: int, completionID: int, ioStatus: int, informationClass: FileSystemInformationClass, fileInformation: [FileInformationBase], endByte: bytes):
+    def __init__(self, deviceID: int, completionID: int, ioStatus: int, informationClass: FileSystemInformationClass, fileInformation: List[FileInformationBase], endByte: bytes):
         super().__init__(MinorFunction.IRP_MN_QUERY_DIRECTORY, deviceID, completionID, ioStatus)
         self.informationClass = informationClass
         self.fileInformation = fileInformation
