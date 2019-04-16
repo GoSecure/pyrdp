@@ -22,6 +22,7 @@ class PlayerPDUType(IntEnum):
     BITMAP = 14  # Bitmap event from the player
     DEVICE_MAPPING = 15  # Device mapping event notification
     DIRECTORY_LISTING_REQUEST = 16  # Directory listing request from the player
+    DIRECTORY_LISTING_RESPONSE = 17  # Directory listing response to the player
 
 
 class MouseButton(IntEnum):

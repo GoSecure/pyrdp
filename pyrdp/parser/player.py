@@ -4,8 +4,8 @@ from pyrdp.core import Int16LE, Uint16LE, Uint32LE, Uint64LE, Uint8
 from pyrdp.enum import DeviceType, MouseButton, PlayerPDUType
 from pyrdp.parser.segmentation import SegmentationParser
 from pyrdp.pdu import Color, PlayerBitmapPDU, PlayerConnectionClosePDU, PlayerDeviceMappingPDU, \
-    PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, \
-    PlayerPDU, PlayerTextPDU, PlayerDirectoryListingRequestPDU
+    PlayerDirectoryListingRequestPDU, PlayerDirectoryListingResponsePDU, PlayerForwardingStatePDU, PlayerKeyboardPDU, \
+    PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, PlayerPDU, PlayerTextPDU
 
 
 class PlayerParser(SegmentationParser):
@@ -23,6 +23,7 @@ class PlayerParser(SegmentationParser):
             PlayerPDUType.BITMAP: self.parseBitmap,
             PlayerPDUType.DEVICE_MAPPING: self.parseDeviceMapping,
             PlayerPDUType.DIRECTORY_LISTING_REQUEST: self.parseDirectoryListingRequest,
+            PlayerPDUType.DIRECTORY_LISTING_RESPONSE: self.parseDirectoryListingResponse,
         }
 
         self.writers = {
@@ -36,6 +37,7 @@ class PlayerParser(SegmentationParser):
             PlayerPDUType.BITMAP: self.writeBitmap,
             PlayerPDUType.DEVICE_MAPPING: self.writeDeviceMapping,
             PlayerPDUType.DIRECTORY_LISTING_REQUEST: self.writeDirectoryListingRequest,
+            PlayerPDUType.DIRECTORY_LISTING_RESPONSE: self.writeDirectoryListingResponse,
         }
 
 
@@ -53,14 +55,14 @@ class PlayerParser(SegmentationParser):
         stream = BytesIO(data)
 
         length = Uint64LE.unpack(stream)
-        type = PlayerPDUType(Uint16LE.unpack(stream))
+        pduType = PlayerPDUType(Uint16LE.unpack(stream))
         timestamp = Uint64LE.unpack(stream)
 
-        if type in self.parsers:
-            return self.parsers[type](stream, timestamp)
+        if pduType in self.parsers:
+            return self.parsers[pduType](stream, timestamp)
 
         payload = stream.read(length - 18)
-        return PlayerPDU(type, timestamp, payload)
+        return PlayerPDU(pduType, timestamp, payload)
 
     def write(self, pdu: PlayerPDU) -> bytes:
         substream = BytesIO()
@@ -81,7 +83,7 @@ class PlayerParser(SegmentationParser):
         return stream.getvalue()
 
 
-    def parseConnectionClose(self, stream: BytesIO, timestamp: int) -> PlayerConnectionClosePDU:
+    def parseConnectionClose(self, _: BytesIO, timestamp: int) -> PlayerConnectionClosePDU:
         return PlayerConnectionClosePDU(timestamp)
 
     def writeConnectionClose(self, pdu: PlayerConnectionClosePDU, stream: BytesIO):
@@ -219,3 +221,19 @@ class PlayerParser(SegmentationParser):
         Uint32LE.pack(pdu.deviceID)
         Uint32LE.pack(len(path), stream)
         stream.write(path)
+
+
+    def parseDirectoryListingResponse(self, stream: BytesIO, timestamp: int) -> PlayerDirectoryListingResponsePDU:
+        deviceID = Uint32LE.unpack(stream)
+        isDone = bool(Uint8.unpack(stream))
+        length = Uint32LE.unpack(stream)
+        fileName = stream.read(length).decode()
+        return PlayerDirectoryListingResponsePDU(timestamp, deviceID, isDone, fileName)
+
+    def writeDirectoryListingResponse(self, pdu: PlayerDirectoryListingResponsePDU, stream: BytesIO):
+        fileName = pdu.fileName.encode()
+
+        Uint32LE.pack(pdu.deviceID)
+        Uint8.pack(int(pdu.isDone))
+        Uint32LE.pack(len(fileName), stream)
+        stream.write(fileName)
