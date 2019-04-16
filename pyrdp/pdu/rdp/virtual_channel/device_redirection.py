@@ -119,14 +119,15 @@ class DeviceCloseResponsePDU(DeviceIOResponsePDU):
 
 
 class FileInformationBase(PDU):
-    def __init__(self, informationClass: FileSystemInformationClass):
+    def __init__(self, informationClass: FileSystemInformationClass, fileName: str):
         super().__init__(b"")
         self.informationClass = informationClass
+        self.fileName = fileName
 
 
 class FileDirectoryInformation(FileInformationBase):
     def __init__(self, fileIndex: int, creationTime: int, lastAccessTime: int, lastWriteTime: int, lastChangeTime: int, endOfFilePosition: int, allocationSize: int, fileAttributes: FileAttributes, fileName: str):
-        super().__init__(FileSystemInformationClass.FileDirectoryInformation)
+        super().__init__(FileSystemInformationClass.FileDirectoryInformation, fileName)
         self.fileIndex = fileIndex
         self.creationTime = creationTime
         self.lastAccessTime = lastAccessTime
@@ -135,12 +136,11 @@ class FileDirectoryInformation(FileInformationBase):
         self.endOfFilePosition = endOfFilePosition
         self.allocationSize = allocationSize
         self.fileAttributes = fileAttributes
-        self.fileName = fileName
 
 
 class FileFullDirectoryInformation(FileInformationBase):
     def __init__(self, fileIndex: int, creationTime: int, lastAccessTime: int, lastWriteTime: int, lastChangeTime: int, endOfFilePosition: int, allocationSize: int, fileAttributes: FileAttributes, eaSize: int, fileName: str):
-        super().__init__(FileSystemInformationClass.FileFullDirectoryInformation)
+        super().__init__(FileSystemInformationClass.FileFullDirectoryInformation, fileName)
         self.fileIndex = fileIndex
         self.creationTime = creationTime
         self.lastAccessTime = lastAccessTime
@@ -150,12 +150,11 @@ class FileFullDirectoryInformation(FileInformationBase):
         self.allocationSize = allocationSize
         self.fileAttributes = fileAttributes
         self.eaSize = eaSize
-        self.fileName = fileName
 
 
 class FileBothDirectoryInformation(FileInformationBase):
     def __init__(self, fileIndex: int, creationTime: int, lastAccessTime: int, lastWriteTime: int, lastChangeTime: int, endOfFilePosition: int, allocationSize: int, fileAttributes: FileAttributes, eaSize: int, shortName: str, fileName: str):
-        super().__init__(FileSystemInformationClass.FileBothDirectoryInformation)
+        super().__init__(FileSystemInformationClass.FileBothDirectoryInformation, fileName)
         self.fileIndex = fileIndex
         self.creationTime = creationTime
         self.lastAccessTime = lastAccessTime
@@ -166,14 +165,12 @@ class FileBothDirectoryInformation(FileInformationBase):
         self.fileAttributes = fileAttributes
         self.eaSize = eaSize
         self.shortName = shortName
-        self.fileName = fileName
 
 
 class FileNamesInformation(FileInformationBase):
     def __init__(self, fileIndex: int, fileName: str):
-        super().__init__(FileSystemInformationClass.FileNamesInformation)
+        super().__init__(FileSystemInformationClass.FileNamesInformation, fileName)
         self.fileIndex = fileIndex
-        self.fileName = fileName
 
 
 class DeviceQueryDirectoryRequestPDU(DeviceIORequestPDU):
