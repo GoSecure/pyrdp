@@ -4,22 +4,68 @@
 # Licensed under the GPLv3 or later.
 #
 
+from pathlib import PosixPath
+from typing import Dict
+
 from PySide2.QtWidgets import QTextEdit
 
-from pyrdp.core import Directory
-from pyrdp.enum import DeviceType
-from pyrdp.pdu import PlayerDeviceMappingPDU
+from pyrdp.enum import DeviceType, PlayerPDUType
+from pyrdp.layer import PlayerLayer
+from pyrdp.pdu import PlayerDeviceMappingPDU, PlayerDirectoryListingRequestPDU, PlayerDirectoryListingResponsePDU
+from pyrdp.player.filesystem import DirectoryObserver, Drive, FileSystem
 from pyrdp.player.PlayerEventHandler import PlayerEventHandler
 from pyrdp.ui import QRemoteDesktop
 
 
-class LiveEventHandler(PlayerEventHandler):
-    def __init__(self, viewer: QRemoteDesktop, text: QTextEdit, fileSystem: Directory):
+class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
+    def __init__(self, viewer: QRemoteDesktop, text: QTextEdit, fileSystem: FileSystem, layer: PlayerLayer):
         super().__init__(viewer, text)
         self.fileSystem = fileSystem
+        self.layer = layer
+        self.drives: Dict[int, Drive] = {}
+
+        self.handlers[PlayerPDUType.DIRECTORY_LISTING_RESPONSE] = self.handleDirectoryListingResponse
 
     def onDeviceMapping(self, pdu: PlayerDeviceMappingPDU):
         super().onDeviceMapping(pdu)
 
         if pdu.deviceType == DeviceType.RDPDR_DTYP_FILESYSTEM:
-            self.fileSystem.addDirectory(pdu.name)
+            drive = self.fileSystem.addDrive(pdu.name, pdu.deviceID)
+            drive.addObserver(self)
+            self.drives[drive.deviceID] = drive
+
+    def onListDirectory(self, deviceID: int, path: str):
+        request = PlayerDirectoryListingRequestPDU(self.layer.getCurrentTimeStamp(), deviceID, path)
+        self.layer.sendPDU(request)
+
+    def handleDirectoryListingResponse(self, response: PlayerDirectoryListingResponsePDU):
+        path = PosixPath(response.filePath)
+        parts = path.parts
+        directoryNames = list(parts[1 : -1])
+        fileName = path.name
+
+        if fileName in ["", ".", ".."]:
+            return
+
+        drive = self.drives[response.deviceID]
+
+        currentDirectory = drive
+        while len(directoryNames) > 0:
+            currentName = directoryNames.pop(0)
+
+            newDirectory = None
+
+            for directory in drive.directories:
+                if directory.name == currentName:
+                    newDirectory = directory
+                    break
+
+            if newDirectory is None:
+                return
+
+            currentDirectory = newDirectory
+
+        if response.isDirectory:
+            currentDirectory.addDirectory(fileName)
+        else:
+            currentDirectory.addFile(fileName)

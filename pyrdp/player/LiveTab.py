@@ -9,16 +9,16 @@ import asyncio
 from PySide2.QtCore import Qt, Signal
 from PySide2.QtWidgets import QHBoxLayout, QWidget
 
-from pyrdp.core import Directory
 from pyrdp.player.AttackerBar import AttackerBar
 from pyrdp.player.BaseTab import BaseTab
+from pyrdp.player.filesystem import DirectoryObserver, FileSystem
+from pyrdp.player.FileSystemWidget import FileSystemWidget
 from pyrdp.player.LiveEventHandler import LiveEventHandler
 from pyrdp.player.PlayerLayerSet import AsyncIOPlayerLayerSet
 from pyrdp.player.RDPMITMWidget import RDPMITMWidget
-from pyrdp.ui import FileSystemWidget
 
 
-class LiveTab(BaseTab):
+class LiveTab(BaseTab, DirectoryObserver):
     """
     Tab playing a live RDP connection as data is being received over the network.
     """
@@ -32,8 +32,8 @@ class LiveTab(BaseTab):
         super().__init__(rdpWidget, parent)
         self.layers = layers
         self.rdpWidget = rdpWidget
-        self.fileSystem = Directory("")
-        self.eventHandler = LiveEventHandler(self.widget, self.text, self.fileSystem)
+        self.fileSystem = FileSystem()
+        self.eventHandler = LiveEventHandler(self.widget, self.text, self.fileSystem, self.layers.player)
         self.attackerBar = AttackerBar()
 
         self.attackerBar.controlTaken.connect(lambda: self.rdpWidget.setControlState(True))

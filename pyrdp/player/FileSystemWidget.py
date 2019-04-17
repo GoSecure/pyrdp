@@ -1,10 +1,16 @@
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2019 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
 from pathlib import Path
 
 from PySide2.QtCore import QObject
 from PySide2.QtWidgets import QFrame, QLabel, QListWidget, QVBoxLayout, QWidget
 
-from pyrdp.core import Directory, DirectoryObserver
-from pyrdp.ui import FileSystemItem, FileSystemItemType
+from pyrdp.player.filesystem import Directory, DirectoryObserver, FileSystemItemType
+from pyrdp.player.FileSystemItem import FileSystemItem
 
 
 class FileSystemWidget(QWidget, DirectoryObserver):
@@ -93,8 +99,7 @@ class FileSystemWidget(QWidget, DirectoryObserver):
         node = self.root
 
         for part in self.currentPath.parts[1 :]:
-            directories = node.getDirectories()
-            node = next(d for d in directories if d.name == part)
+            node = next(d for d in node.directories if d.name == part)
 
         self.listWidget.clear()
         self.breadcrumbLabel.setText(f"Location: {str(self.currentPath)}")
@@ -102,22 +107,21 @@ class FileSystemWidget(QWidget, DirectoryObserver):
         if node != self.root:
             self.listWidget.addItem(FileSystemItem("..", FileSystemItemType.Directory))
 
-        for directory in node.getDirectories():
-            itemType = FileSystemItemType.Drive if node == self.root else FileSystemItemType.Directory
-            self.listWidget.addItem(FileSystemItem(directory.name, itemType))
+        for directory in node.directories:
+            self.listWidget.addItem(FileSystemItem(directory.name, directory.type))
 
-        for file in node.getFiles():
-            self.listWidget.addItem(FileSystemItem(file.name, FileSystemItemType.File))
+        for file in node.files:
+            self.listWidget.addItem(FileSystemItem(file.name, file.type))
 
         if node is not self.currentDirectory:
             self.currentDirectory.removeObserver(self)
             node.addObserver(self)
             self.currentDirectory = node
+            node.list()
 
-    def onDirectoryChanged(self, directory: 'Directory'):
+    def onDirectoryChanged(self):
         """
         Refresh the directory view when the directory has changed.
-        :param directory: the directory that was changed.
         """
 
         self.listCurrentDirectory()

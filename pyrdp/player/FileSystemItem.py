@@ -4,20 +4,22 @@
 # Licensed under the GPLv3 or later.
 #
 
-from enum import Enum
-
 from PySide2.QtCore import QObject
-from PySide2.QtWidgets import QListWidgetItem, QFileIconProvider
+from PySide2.QtWidgets import QFileIconProvider, QListWidgetItem
 
+from pyrdp.player.filesystem import FileSystemItemType
 
-class FileSystemItemType(Enum):
-        Directory = QFileIconProvider.IconType.Folder
-        Drive = QFileIconProvider.IconType.Drive
-        File = QFileIconProvider.IconType.File
 
 class FileSystemItem(QListWidgetItem):
     def __init__(self, name: str, itemType: FileSystemItemType, parent: QObject = None):
-        icon = QFileIconProvider().icon(itemType.value)
+        if itemType == FileSystemItemType.Drive:
+            iconType = QFileIconProvider.IconType.Drive
+        elif itemType == FileSystemItemType.Directory:
+            iconType = QFileIconProvider.IconType.Folder
+        else:
+            iconType = QFileIconProvider.IconType.File
+
+        icon = QFileIconProvider().icon(iconType)
 
         super().__init__(icon, name, parent)
         self.itemType = itemType

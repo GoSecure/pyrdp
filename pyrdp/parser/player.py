@@ -218,7 +218,7 @@ class PlayerParser(SegmentationParser):
     def writeDirectoryListingRequest(self, pdu: PlayerDirectoryListingRequestPDU, stream: BytesIO):
         path = pdu.path.encode()
 
-        Uint32LE.pack(pdu.deviceID)
+        Uint32LE.pack(pdu.deviceID, stream)
         Uint32LE.pack(len(path), stream)
         stream.write(path)
 
@@ -233,7 +233,7 @@ class PlayerParser(SegmentationParser):
     def writeDirectoryListingResponse(self, pdu: PlayerDirectoryListingResponsePDU, stream: BytesIO):
         filePath = pdu.filePath.encode()
 
-        Uint32LE.pack(pdu.deviceID)
+        Uint32LE.pack(pdu.deviceID, stream)
         Uint32LE.pack(len(filePath), stream)
         stream.write(filePath)
         Uint32LE.pack(int(pdu.isDirectory), stream)

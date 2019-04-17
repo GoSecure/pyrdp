@@ -4,7 +4,5 @@
 # Licensed under the GPLv3 or later.
 #
 
-from pyrdp.ui.FileSystemItem import FileSystemItem, FileSystemItemType
-from pyrdp.ui.FileSystemWidget import FileSystemWidget
 from pyrdp.ui.PlayPauseButton import PlayPauseButton
 from pyrdp.ui.qt import QRemoteDesktop, RDPBitmapToQtImage
