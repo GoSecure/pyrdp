@@ -175,3 +175,45 @@ class PlayerDirectoryListingResponsePDU(PlayerPDU):
         super().__init__(PlayerPDUType.DIRECTORY_LISTING_RESPONSE, timestamp, b"")
         self.deviceID = deviceID
         self.fileDescriptions = fileDescriptions
+
+
+class PlayerFileDownloadRequestPDU(PlayerPDU):
+    def __init__(self, timestamp: int, deviceID: int, path: str):
+        """
+        :param timestamp: time stamp for this PDU.
+        :param deviceID: ID of the device used.
+        :param path: path of the directory to list. The path should be a Unix-style path.
+        """
+
+        super().__init__(PlayerPDUType.FILE_DOWNLOAD_REQUEST, timestamp, b"")
+        self.deviceID = deviceID
+        self.path = path
+
+class PlayerFileDownloadResponsePDU(PlayerPDU):
+    def __init__(self, timestamp: int, deviceID: int, path: str, offset: int, payload: bytes):
+        """
+        :param timestamp: time stamp for this PDU.
+        :param deviceID: ID of the device used.
+        :param path: path of the directory to list. The path should be a Unix-style path.
+        :param offset: offset at which the data starts in the file.
+        :param payload: file data that was read.
+        """
+
+        super().__init__(PlayerPDUType.FILE_DOWNLOAD_RESPONSE, timestamp, payload)
+        self.deviceID = deviceID
+        self.path = path
+        self.offset = offset
+
+class PlayerFileDownloadCompletePDU(PlayerPDU):
+    def __init__(self, timestamp: int, deviceID: int, path: str, error: int):
+        """
+        :param timestamp: time stamp for this PDU.
+        :param deviceID: ID of the device used.
+        :param path: path of the directory to list. The path should be a Unix-style path.
+        :param error: error that resulted in completion (0 if nothing went wrong).
+        """
+
+        super().__init__(PlayerPDUType.FILE_DOWNLOAD_COMPLETE, timestamp, b"")
+        self.deviceID = deviceID
+        self.path = path
+        self.error = error

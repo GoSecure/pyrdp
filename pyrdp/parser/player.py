@@ -5,6 +5,7 @@ from pyrdp.enum import DeviceType, MouseButton, PlayerPDUType
 from pyrdp.parser.segmentation import SegmentationParser
 from pyrdp.pdu import Color, PlayerBitmapPDU, PlayerConnectionClosePDU, PlayerDeviceMappingPDU, \
     PlayerDirectoryListingRequestPDU, PlayerDirectoryListingResponsePDU, PlayerFileDescription, \
+    PlayerFileDownloadCompletePDU, PlayerFileDownloadRequestPDU, PlayerFileDownloadResponsePDU, \
     PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, \
     PlayerPDU, PlayerTextPDU
 
@@ -25,6 +26,9 @@ class PlayerParser(SegmentationParser):
             PlayerPDUType.DEVICE_MAPPING: self.parseDeviceMapping,
             PlayerPDUType.DIRECTORY_LISTING_REQUEST: self.parseDirectoryListingRequest,
             PlayerPDUType.DIRECTORY_LISTING_RESPONSE: self.parseDirectoryListingResponse,
+            PlayerPDUType.FILE_DOWNLOAD_REQUEST: self.parseFileDownloadRequest,
+            PlayerPDUType.FILE_DOWNLOAD_RESPONSE: self.parseFileDownloadResponse,
+            PlayerPDUType.FILE_DOWNLOAD_COMPLETE: self.parseFileDownloadComplete,
         }
 
         self.writers = {
@@ -39,6 +43,9 @@ class PlayerParser(SegmentationParser):
             PlayerPDUType.DEVICE_MAPPING: self.writeDeviceMapping,
             PlayerPDUType.DIRECTORY_LISTING_REQUEST: self.writeDirectoryListingRequest,
             PlayerPDUType.DIRECTORY_LISTING_RESPONSE: self.writeDirectoryListingResponse,
+            PlayerPDUType.FILE_DOWNLOAD_REQUEST: self.writeFileDownloadRequest,
+            PlayerPDUType.FILE_DOWNLOAD_RESPONSE: self.writeFileDownloadResponse,
+            PlayerPDUType.FILE_DOWNLOAD_COMPLETE: self.writeFileDownloadComplete,
         }
 
 
@@ -252,3 +259,54 @@ class PlayerParser(SegmentationParser):
 
         for description in pdu.fileDescriptions:
             self.writeFileDescription(description, stream)
+
+
+    def parseFileDownloadRequest(self, stream: BytesIO, timestamp: int) -> PlayerFileDownloadRequestPDU:
+        deviceID = Uint32LE.unpack(stream)
+        length = Uint32LE.unpack(stream)
+        path = stream.read(length).decode()
+        return PlayerFileDownloadRequestPDU(timestamp, deviceID, path)
+
+    def writeFileDownloadRequest(self, pdu: PlayerFileDownloadRequestPDU, stream: BytesIO):
+        path = pdu.path.encode()
+
+        Uint32LE.pack(pdu.deviceID, stream)
+        Uint32LE.pack(len(path), stream)
+        stream.write(path)
+
+
+    def parseFileDownloadResponse(self, stream: BytesIO, timestamp: int) -> PlayerFileDownloadResponsePDU:
+        deviceID = Uint32LE.unpack(stream)
+        pathLength = Uint32LE.unpack(stream)
+        path = stream.read(pathLength).decode()
+        offset = Uint64LE.unpack(stream)
+        payloadLength = Uint32LE.unpack(stream)
+        payload = stream.read(payloadLength)
+
+        return PlayerFileDownloadResponsePDU(timestamp, deviceID, path, offset, payload)
+
+    def writeFileDownloadResponse(self, pdu: PlayerFileDownloadResponsePDU, stream: BytesIO):
+        path = pdu.path.encode()
+
+        Uint32LE.pack(pdu.deviceID, stream)
+        Uint32LE.pack(len(path), stream)
+        stream.write(path)
+        Uint64LE.pack(pdu.offset, stream)
+        Uint32LE.pack(len(pdu.payload), stream)
+        stream.write(pdu.payload)
+
+
+    def parseFileDownloadComplete(self, stream: BytesIO, timestamp: int) -> PlayerFileDownloadCompletePDU:
+        deviceID = Uint32LE.unpack(stream)
+        length = Uint32LE.unpack(stream)
+        path = stream.read(length).decode()
+        error = Uint32LE.unpack(stream)
+        return PlayerFileDownloadCompletePDU(timestamp, deviceID, path, error)
+
+    def writeFileDownloadComplete(self, pdu: PlayerFileDownloadCompletePDU, stream: BytesIO):
+        path = pdu.path.encode()
+
+        Uint32LE.pack(pdu.deviceID, stream)
+        Uint32LE.pack(len(path), stream)
+        stream.write(path)
+        Uint32LE.pack(pdu.error, stream)

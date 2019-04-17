@@ -23,6 +23,9 @@ class PlayerPDUType(IntEnum):
     DEVICE_MAPPING = 15  # Device mapping event notification
     DIRECTORY_LISTING_REQUEST = 16  # Directory listing request from the player
     DIRECTORY_LISTING_RESPONSE = 17  # Directory listing response to the player
+    FILE_DOWNLOAD_REQUEST = 18  # File download request from the player
+    FILE_DOWNLOAD_RESPONSE = 19  # File download response to the player
+    FILE_DOWNLOAD_COMPLETE = 20  # File download completion notification to the player
 
 
 class MouseButton(IntEnum):
