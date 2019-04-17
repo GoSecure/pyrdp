@@ -3,14 +3,18 @@
 # Copyright (C) 2019 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+from typing import Dict
 
 from PySide2.QtCore import QObject
+from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QFileIconProvider, QListWidgetItem
 
 from pyrdp.player.filesystem import FileSystemItemType
 
 
 class FileSystemItem(QListWidgetItem):
+    _iconCache: Dict[QFileIconProvider.IconType, QIcon] = {}
+
     def __init__(self, name: str, itemType: FileSystemItemType, parent: QObject = None):
         if itemType == FileSystemItemType.Drive:
             iconType = QFileIconProvider.IconType.Drive
@@ -19,7 +23,11 @@ class FileSystemItem(QListWidgetItem):
         else:
             iconType = QFileIconProvider.IconType.File
 
-        icon = QFileIconProvider().icon(iconType)
+        icon = FileSystemItem._iconCache.get(iconType, None)
+
+        if icon is None:
+            icon = QFileIconProvider().icon(iconType)
+            FileSystemItem._iconCache[iconType] = icon
 
         super().__init__(icon, name, parent)
         self.itemType = itemType
