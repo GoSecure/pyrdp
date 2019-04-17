@@ -30,7 +30,7 @@ class DeviceRedirectionMITMObserver(Observer):
     def onDirectoryListingResult(self, requestID: int, deviceID: int, fileName: str, isDirectory: bool):
         pass
 
-    def onDirectoryListingComplete(self, requestID: int):
+    def onDirectoryListingComplete(self, requestID: int, deviceID: int):
         pass
 
 
@@ -415,7 +415,7 @@ class DeviceRedirectionMITM(Subject):
             self.sendIORequest(pdu)
 
         def handleDirectoryListingComplete(self, _: DeviceQueryDirectoryResponsePDU):
-            self.mitm.observer.onDirectoryListingComplete(self.requestID)
+            self.mitm.observer.onDirectoryListingComplete(self.requestID, self.deviceID)
 
             # Once we're done, we can close the file.
             request = DeviceCloseRequestPDU(

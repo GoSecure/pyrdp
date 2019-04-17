@@ -3,6 +3,7 @@
 # Copyright (C) 2019 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+from collections import defaultdict
 from logging import LoggerAdapter
 from pathlib import Path
 from typing import Dict, Optional
@@ -46,6 +47,7 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
         self.devices: Dict[int, DeviceAnnounce] = {}
         self.deviceRedirection: Optional[DeviceRedirectionMITM] = None
         self.directoryListingRequests: Dict[int, Path] = {}
+        self.directoryListingLists = defaultdict(list)
 
         self.attacker.createObserver(
             onPDUReceived = self.onPDUReceived,
@@ -203,8 +205,19 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
         filePath = path / fileName
 
         description = PlayerFileDescription(str(filePath), isDirectory)
-        pdu = PlayerDirectoryListingResponsePDU(self.attacker.getCurrentTimeStamp(), deviceID, [description])
-        self.attacker.sendPDU(pdu)
+        directoryList = self.directoryListingLists[requestID]
+        directoryList.append(description)
 
-    def onDirectoryListingComplete(self, requestID: int):
+        if len(directoryList) == 10:
+            self.sendDirectoryList(requestID, deviceID)
+            directoryList.clear()
+
+    def onDirectoryListingComplete(self, requestID: int, deviceID: int):
+        self.sendDirectoryList(requestID, deviceID)
         self.directoryListingRequests.pop(requestID, None)
+        self.directoryListingLists.pop(requestID, None)
+
+    def sendDirectoryList(self, requestID: int, deviceID: int):
+        directoryList = self.directoryListingLists[requestID]
+        pdu = PlayerDirectoryListingResponsePDU(self.attacker.getCurrentTimeStamp(), deviceID, directoryList)
+        self.attacker.sendPDU(pdu)
