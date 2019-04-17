@@ -43,4 +43,4 @@ class FileSystemItem(QListWidgetItem):
         if self.isDirectory() != other.isDirectory():
             return self.isDirectory()
 
-        return self.text() < other.text()
+        return self.text().upper() < other.text().upper()
