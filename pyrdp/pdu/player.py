@@ -4,6 +4,8 @@
 # Licensed under the GPLv3 or later.
 #
 
+from typing import List
+
 from pyrdp.enum import DeviceType, PlayerPDUType
 from pyrdp.enum.player import MouseButton
 from pyrdp.pdu.pdu import PDU
@@ -150,15 +152,26 @@ class PlayerDirectoryListingRequestPDU(PlayerPDU):
         self.path = path
 
 
+class PlayerFileDescription(PDU):
+    def __init__(self, filePath: str, isDirectory: bool):
+        """
+        :param filePath: Unix-style path of the file.
+        :param isDirectory: True if the file is a directory.
+        """
+
+        super().__init__()
+        self.path = filePath
+        self.isDirectory = isDirectory
+
+
 class PlayerDirectoryListingResponsePDU(PlayerPDU):
-    def __init__(self, timestamp: int, deviceID: int, filePath: str, isDirectory: bool):
+    def __init__(self, timestamp: int, deviceID: int, fileDescriptions: List[PlayerFileDescription]):
         """
         :param timestamp: time stamp for this PDU.
         :param deviceID: ID of the device used.
-        :param path: Unix-style path of the file.
+        :param fileDescriptions: list of file descriptions.
         """
 
         super().__init__(PlayerPDUType.DIRECTORY_LISTING_RESPONSE, timestamp, b"")
         self.deviceID = deviceID
-        self.filePath = filePath
-        self.isDirectory = isDirectory
+        self.fileDescriptions = fileDescriptions

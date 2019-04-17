@@ -4,8 +4,9 @@ from pyrdp.core import Int16LE, Uint16LE, Uint32LE, Uint64LE, Uint8
 from pyrdp.enum import DeviceType, MouseButton, PlayerPDUType
 from pyrdp.parser.segmentation import SegmentationParser
 from pyrdp.pdu import Color, PlayerBitmapPDU, PlayerConnectionClosePDU, PlayerDeviceMappingPDU, \
-    PlayerDirectoryListingRequestPDU, PlayerDirectoryListingResponsePDU, PlayerForwardingStatePDU, PlayerKeyboardPDU, \
-    PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, PlayerPDU, PlayerTextPDU
+    PlayerDirectoryListingRequestPDU, PlayerDirectoryListingResponsePDU, PlayerFileDescription, \
+    PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, \
+    PlayerPDU, PlayerTextPDU
 
 
 class PlayerParser(SegmentationParser):
@@ -223,17 +224,31 @@ class PlayerParser(SegmentationParser):
         stream.write(path)
 
 
+    def parseFileDescription(self, stream: BytesIO) -> PlayerFileDescription:
+        length = Uint32LE.unpack(stream)
+        path = stream.read(length).decode()
+        isDirectory = bool(Uint8.unpack(stream))
+
+        return PlayerFileDescription(path, isDirectory)
+
+    def writeFileDescription(self, description: PlayerFileDescription, stream: BytesIO):
+        path = description.path.encode()
+
+        Uint32LE.pack(len(path), stream)
+        stream.write(path)
+        Uint8.pack(int(description.isDirectory), stream)
+
+
     def parseDirectoryListingResponse(self, stream: BytesIO, timestamp: int) -> PlayerDirectoryListingResponsePDU:
         deviceID = Uint32LE.unpack(stream)
-        length = Uint32LE.unpack(stream)
-        filePath = stream.read(length).decode()
-        isDirectory = bool(Uint8.unpack(stream))
-        return PlayerDirectoryListingResponsePDU(timestamp, deviceID, filePath, isDirectory)
+        count = Uint32LE.unpack(stream)
+        fileDescriptions = [self.parseFileDescription(stream) for _ in range(count)]
+
+        return PlayerDirectoryListingResponsePDU(timestamp, deviceID, fileDescriptions)
 
     def writeDirectoryListingResponse(self, pdu: PlayerDirectoryListingResponsePDU, stream: BytesIO):
-        filePath = pdu.filePath.encode()
-
         Uint32LE.pack(pdu.deviceID, stream)
-        Uint32LE.pack(len(filePath), stream)
-        stream.write(filePath)
-        Uint32LE.pack(int(pdu.isDirectory), stream)
+        Uint32LE.pack(len(pdu.fileDescriptions), stream)
+
+        for description in pdu.fileDescriptions:
+            self.writeFileDescription(description, stream)

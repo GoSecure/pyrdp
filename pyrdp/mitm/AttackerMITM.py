@@ -15,7 +15,7 @@ from pyrdp.mitm.state import RDPMITMState
 from pyrdp.parser import BitmapParser
 from pyrdp.pdu import BitmapUpdateData, DeviceAnnounce, FastPathBitmapEvent, FastPathInputEvent, FastPathMouseEvent, \
     FastPathOutputEvent, FastPathPDU, FastPathScanCodeEvent, FastPathUnicodeEvent, PlayerBitmapPDU, \
-    PlayerDeviceMappingPDU, PlayerDirectoryListingRequestPDU, PlayerDirectoryListingResponsePDU, \
+    PlayerDeviceMappingPDU, PlayerDirectoryListingRequestPDU, PlayerDirectoryListingResponsePDU, PlayerFileDescription, \
     PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, \
     PlayerPDU, PlayerTextPDU
 
@@ -202,7 +202,8 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
         path = self.directoryListingRequests[requestID]
         filePath = path / fileName
 
-        pdu = PlayerDirectoryListingResponsePDU(self.attacker.getCurrentTimeStamp(), deviceID, str(filePath), isDirectory)
+        description = PlayerFileDescription(str(filePath), isDirectory)
+        pdu = PlayerDirectoryListingResponsePDU(self.attacker.getCurrentTimeStamp(), deviceID, [description])
         self.attacker.sendPDU(pdu)
 
     def onDirectoryListingComplete(self, requestID: int):

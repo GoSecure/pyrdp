@@ -39,33 +39,34 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
         self.layer.sendPDU(request)
 
     def handleDirectoryListingResponse(self, response: PlayerDirectoryListingResponsePDU):
-        path = PosixPath(response.filePath)
-        parts = path.parts
-        directoryNames = list(parts[1 : -1])
-        fileName = path.name
+        for description in response.fileDescriptions:
+            path = PosixPath(description.path)
+            parts = path.parts
+            directoryNames = list(parts[1 : -1])
+            fileName = path.name
 
-        if fileName in ["", ".", ".."]:
-            return
+            if fileName in ["", ".", ".."]:
+                continue
 
-        drive = self.drives[response.deviceID]
+            drive = self.drives[response.deviceID]
 
-        currentDirectory = drive
-        while len(directoryNames) > 0:
-            currentName = directoryNames.pop(0)
+            currentDirectory = drive
+            while len(directoryNames) > 0:
+                currentName = directoryNames.pop(0)
 
-            newDirectory = None
+                newDirectory = None
 
-            for directory in drive.directories:
-                if directory.name == currentName:
-                    newDirectory = directory
-                    break
+                for directory in drive.directories:
+                    if directory.name == currentName:
+                        newDirectory = directory
+                        break
 
-            if newDirectory is None:
-                return
+                if newDirectory is None:
+                    return
 
-            currentDirectory = newDirectory
+                currentDirectory = newDirectory
 
-        if response.isDirectory:
-            currentDirectory.addDirectory(fileName)
-        else:
-            currentDirectory.addFile(fileName)
+            if description.isDirectory:
+                currentDirectory.addDirectory(fileName)
+            else:
+                currentDirectory.addFile(fileName)
