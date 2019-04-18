@@ -197,7 +197,7 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
         pdu = PlayerFileDownloadResponsePDU(
             self.attacker.getCurrentTimeStamp(),
             deviceID,
-            path,
+            path.replace("\\", "/"),
             offset,
             data
         )
@@ -208,7 +208,7 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
         pdu = PlayerFileDownloadCompletePDU(
             self.attacker.getCurrentTimeStamp(),
             deviceID,
-            path,
+            path.replace("\\", "/"),
             error
         )
 
