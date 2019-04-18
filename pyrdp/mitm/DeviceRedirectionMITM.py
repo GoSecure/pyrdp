@@ -402,7 +402,7 @@ class DeviceRedirectionMITM(Subject):
                 self.fileID,
                 self.requestID,
                 0,
-                4096,
+                1024 * 16,
                 self.offset
             )
 
