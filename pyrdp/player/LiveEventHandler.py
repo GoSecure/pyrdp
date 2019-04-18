@@ -56,7 +56,7 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
 
                 newDirectory = None
 
-                for directory in drive.directories:
+                for directory in currentDirectory.directories:
                     if directory.name == currentName:
                         newDirectory = directory
                         break
