@@ -33,7 +33,7 @@ class LiveTab(BaseTab, DirectoryObserver):
         self.layers = layers
         self.rdpWidget = rdpWidget
         self.fileSystem = FileSystem()
-        self.eventHandler = LiveEventHandler(self.widget, self.text, self.fileSystem, self.layers.player)
+        self.eventHandler = LiveEventHandler(self.widget, self.text, self.log, self.fileSystem, self.layers.player)
         self.attackerBar = AttackerBar()
 
         self.attackerBar.controlTaken.connect(lambda: self.rdpWidget.setControlState(True))
@@ -41,6 +41,7 @@ class LiveTab(BaseTab, DirectoryObserver):
 
         self.fileSystemWidget = FileSystemWidget(self.fileSystem)
         self.fileSystemWidget.setWindowTitle("Client drives")
+        self.fileSystemWidget.fileDownloadRequested.connect(self.eventHandler.onFileDownloadRequested)
 
         self.attackerLayout = QHBoxLayout()
         self.attackerLayout.addWidget(self.fileSystemWidget, 20)

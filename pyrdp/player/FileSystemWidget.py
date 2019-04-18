@@ -5,11 +5,13 @@
 #
 
 from pathlib import Path
+from typing import Optional
 
-from PySide2.QtCore import QObject
-from PySide2.QtWidgets import QFrame, QLabel, QListWidget, QVBoxLayout, QWidget
+from PySide2.QtCore import QObject, QPoint, Qt, Signal
+from PySide2.QtWidgets import QAction, QFileDialog, QFrame, QLabel, QListWidget, QMenu, QVBoxLayout, QWidget
 
-from pyrdp.player.filesystem import Directory, DirectoryObserver, FileSystemItemType
+from pyrdp.player.FileDownloadDialog import FileDownloadDialog
+from pyrdp.player.filesystem import Directory, DirectoryObserver, File, FileSystemItemType
 from pyrdp.player.FileSystemItem import FileSystemItem
 
 
@@ -17,6 +19,9 @@ class FileSystemWidget(QWidget, DirectoryObserver):
     """
     Widget for display directories, using the pyrdp.core.filesystem classes.
     """
+
+    # fileDownloadRequested(file, targetPath, dialog)
+    fileDownloadRequested = Signal(File, str, FileDownloadDialog)
 
     def __init__(self, root: Directory, parent: QObject = None):
         """
@@ -36,6 +41,8 @@ class FileSystemWidget(QWidget, DirectoryObserver):
 
         self.listWidget = QListWidget()
         self.listWidget.setSortingEnabled(True)
+        self.listWidget.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.listWidget.customContextMenuRequested.connect(self.onCustomContextMenu)
 
         self.verticalLayout = QVBoxLayout()
         self.verticalLayout.addWidget(self.breadcrumbLabel)
@@ -125,3 +132,60 @@ class FileSystemWidget(QWidget, DirectoryObserver):
         """
 
         self.listCurrentDirectory()
+
+    def currentItemText(self) -> str:
+        try:
+            return self.listWidget.selectedItems()[0].text()
+        except IndexError:
+            return ""
+
+    def selectedFile(self) -> Optional[File]:
+        text = self.currentItemText()
+
+        if text == "":
+            return None
+
+        if text == "..":
+            return self.currentDirectory.parent
+
+        for sequence in [self.currentDirectory.files, self.currentDirectory.directories]:
+            for file in sequence:
+                if text == file.name:
+                    return file
+
+        return None
+
+    def canDownloadSelectedItem(self) -> bool:
+        return self.selectedFile().type == FileSystemItemType.File
+
+    def onCustomContextMenu(self, localPosition: QPoint):
+        selectedFile = self.selectedFile()
+
+        if selectedFile is None:
+            return
+
+        globalPosition = self.listWidget.mapToGlobal(localPosition)
+
+        downloadAction = QAction("Download file")
+        downloadAction.setEnabled(selectedFile.type in [FileSystemItemType.File])
+        downloadAction.triggered.connect(self.downloadFile)
+
+        itemMenu = QMenu()
+        itemMenu.addAction(downloadAction)
+
+        itemMenu.exec_(globalPosition)
+
+    def downloadFile(self):
+        file = self.selectedFile()
+
+        if file.type != FileSystemItemType.File:
+            return
+
+        filePath = file.getFullPath()
+        targetPath, _ = QFileDialog.getSaveFileName(self, f"Download file {filePath}", file.name)
+
+        if targetPath != "":
+            dialog = FileDownloadDialog(filePath, targetPath, self)
+            dialog.show()
+
+            self.fileDownloadRequested.emit(file, targetPath, dialog)

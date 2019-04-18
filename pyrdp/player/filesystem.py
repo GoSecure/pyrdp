@@ -23,6 +23,9 @@ class FileSystemItem:
         self.name = name
         self.type = itemType
 
+    def getFullPath(self, name: str = "") -> str:
+        pass
+
 
 class DirectoryObserver(Observer):
     def onDirectoryChanged(self):
@@ -56,25 +59,44 @@ class Directory(FileSystemItem, Subject):
         return directory
 
     def list(self, name: str = ""):
-        if self.parent is None:
-            return
+        if name == "":
+            self.files.clear()
+            self.directories.clear()
 
+        path = self.getFullPath(name)
+        self.parent.list(str(path))
+
+    def getFullPath(self, name: str = "") -> str:
         path = PosixPath(self.name)
 
         if name != "":
             path /= name
-        else:
-            self.files.clear()
-            self.directories.clear()
 
-        self.parent.list(str(path))
+        path = str(path)
+
+        if self.parent is None:
+            return path
+        else:
+            return self.parent.getFullPath(path)
 
 
 class File(FileSystemItem):
     def __init__(self, name: str, parent: Directory):
         super().__init__(name, FileSystemItemType.File)
-        self.name = name
         self.parent = parent
+
+    def getFullPath(self, name: str = "") -> str:
+        path = PosixPath(self.name)
+
+        if name != "":
+            path /= name
+
+        path = str(path)
+
+        if self.parent is None:
+            return path
+        else:
+            return self.parent.getFullPath(path)
 
 
 class Drive(Directory):
@@ -93,6 +115,14 @@ class Drive(Directory):
             self.directories.clear()
 
         self.observer.onListDirectory(self.deviceID, path)
+
+    def getFullPath(self, name: str = "") -> str:
+        path = PosixPath("/")
+
+        if name != "":
+            path /= name
+
+        return str(path)
 
 
 @ObservedBy(DirectoryObserver)
