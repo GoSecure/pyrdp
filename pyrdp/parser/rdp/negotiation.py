@@ -9,7 +9,7 @@ from io import BytesIO
 from pyrdp.core import Uint16LE, Uint32LE, Uint8
 from pyrdp.enum import NegotiationRequestFlags, NegotiationType
 from pyrdp.parser.parser import Parser
-from pyrdp.pdu import NegotiationRequestPDU, NegotiationResponsePDU
+from pyrdp.pdu import NegotiationFailurePDU, NegotiationRequestPDU, NegotiationResponsePDU
 
 
 class NegotiationRequestParser(Parser):
@@ -93,8 +93,13 @@ class NegotiationResponseParser(Parser):
             type = Uint8.unpack(stream)
             flags = Uint8.unpack(stream)
             length = Uint16LE.unpack(stream)
-            selectedProtocols = Uint32LE.unpack(stream)
-            return NegotiationResponsePDU(type, flags, selectedProtocols)
+
+            if type == NegotiationType.TYPE_RDP_NEG_FAILURE:
+                failureCode = Uint32LE.unpack(stream)
+                return NegotiationFailurePDU(type, flags, failureCode)
+            else:
+                selectedProtocols = Uint32LE.unpack(stream)
+                return NegotiationResponsePDU(type, flags, selectedProtocols)
         else:
             return NegotiationResponsePDU(None, None, None)
 

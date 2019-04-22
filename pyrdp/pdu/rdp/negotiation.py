@@ -6,7 +6,7 @@
 
 from typing import Optional
 
-from pyrdp.enum import NegotiationProtocols, NegotiationRequestFlags, NegotiationType
+from pyrdp.enum import NegotiationFailureCode, NegotiationProtocols, NegotiationRequestFlags, NegotiationType
 from pyrdp.pdu.pdu import PDU
 
 
@@ -53,3 +53,19 @@ class NegotiationResponsePDU(PDU):
         self.tlsSelected = selectedProtocols is not None and selectedProtocols & NegotiationProtocols.SSL != 0
         self.credSspSelected = selectedProtocols is not None and selectedProtocols & NegotiationProtocols.CRED_SSP != 0
         self.earlyUserAuthSelected = selectedProtocols is not None and selectedProtocols & NegotiationProtocols.EARLY_USER_AUTHORIZATION_RESULT != 0
+
+class NegotiationFailurePDU(PDU):
+    """
+    Special PDU indicating failure. Sent by the server.
+    """
+    def __init__(self, type: Optional[int], flags: Optional[int], failureCode: NegotiationFailureCode):
+        """
+        :param flags: response flags.
+        :param failureCode: error from the server
+        """
+        PDU.__init__(self)
+        self.type = type
+        self.packetType = NegotiationType.TYPE_RDP_NEG_RSP
+        self.length = 8
+        self.flags = flags
+        self.failureCode = failureCode

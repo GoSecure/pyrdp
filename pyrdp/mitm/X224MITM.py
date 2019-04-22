@@ -8,7 +8,7 @@ import typing
 from logging import LoggerAdapter
 
 from pyrdp.core import defer
-from pyrdp.enum import NegotiationProtocols, NegotiationType
+from pyrdp.enum import NegotiationFailureCode, NegotiationProtocols, NegotiationType
 from pyrdp.layer import X224Layer
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.parser import NegotiationRequestParser, NegotiationResponseParser
@@ -89,7 +89,7 @@ class X224MITM:
         await self.connector
         self.server.sendConnectionRequest(payload = payload)
 
-    def onConnectionConfirm(self, _: X224ConnectionConfirmPDU):
+    def onConnectionConfirm(self, pdu: X224ConnectionConfirmPDU):
         """
         Execute a startTLS if the SSL protocol was selected.
         :param _: the connection confirm PDU
@@ -99,6 +99,12 @@ class X224MITM:
         protocols = NegotiationProtocols.SSL if self.originalRequest.tlsSupported else NegotiationProtocols.NONE
 
         parser = NegotiationResponseParser()
+        response = parser.parse(pdu.payload)
+        if response.type == NegotiationType.TYPE_RDP_NEG_FAILURE:
+            self.log.info("The server failed the negotiation. Error: %(error)s", {"error": NegotiationFailureCode.getMessage(response.failureCode)})
+            return
+
+        # TODO: cleanup
         payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, protocols))
         self.client.sendConnectionConfirm(payload, source=0x1234)
 
