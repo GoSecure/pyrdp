@@ -51,7 +51,7 @@ class PlayerEventHandler(Observer):
         self.text.insertPlainText(text)
 
     def writeSeparator(self):
-        self.writeText("--------------------\n")
+        self.writeText("\n--------------------\n")
 
 
     def onPDUReceived(self, pdu: PlayerPDU, isMainThread = False):
