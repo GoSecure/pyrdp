@@ -11,6 +11,11 @@ from pyrdp.pdu import Color, PlayerBitmapPDU, PlayerConnectionClosePDU, PlayerDe
 
 
 class PlayerParser(SegmentationParser):
+    """
+    Parser used for parsing messages to and from the PyRDP player. The player can be used by attackers to see the
+    RDP session in real time and take control of the session.
+    """
+
     def __init__(self):
         super().__init__()
 

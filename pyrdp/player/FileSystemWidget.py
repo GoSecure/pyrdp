@@ -17,7 +17,7 @@ from pyrdp.player.FileSystemItem import FileSystemItem
 
 class FileSystemWidget(QWidget, DirectoryObserver):
     """
-    Widget for display directories, using the pyrdp.core.filesystem classes.
+    Widget for listing directory contents and download files from the RDP client.
     """
 
     # fileDownloadRequested(file, targetPath, dialog)
@@ -84,7 +84,8 @@ class FileSystemWidget(QWidget, DirectoryObserver):
 
     def onItemDoubleClicked(self, item: FileSystemItem):
         """
-        Handle double-clicks on items in the list.
+        Handle double-clicks on items in the list. When the item is a directory, the current path changes and the
+        contents of the directory are listed. Files are ignored.
         :param item: the item that was clicked.
         """
 
@@ -159,6 +160,10 @@ class FileSystemWidget(QWidget, DirectoryObserver):
         return self.selectedFile().type == FileSystemItemType.File
 
     def onCustomContextMenu(self, localPosition: QPoint):
+        """
+        Show a custom context menu with a "Download file" action when a file is right-clicked.
+        :param localPosition: position where the user clicked.
+        """
         selectedFile = self.selectedFile()
 
         if selectedFile is None:

@@ -20,6 +20,11 @@ from pyrdp.ui import QRemoteDesktop
 
 
 class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
+    """
+    Event handler used for live connections. Handles the same events as the replay handler, plus directory listing and
+    file read events.
+    """
+
     def __init__(self, viewer: QRemoteDesktop, text: QTextEdit, log: LoggerAdapter, fileSystem: FileSystem, layer: PlayerLayer):
         super().__init__(viewer, text)
         self.log = log

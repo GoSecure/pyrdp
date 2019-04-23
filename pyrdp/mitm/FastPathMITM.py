@@ -18,6 +18,7 @@ class FastPathMITM:
         """
         :param client: fast-path layer for the client side
         :param server: fast-path layer for the server side
+        :param state: the MITM state.
         """
 
         self.client = client

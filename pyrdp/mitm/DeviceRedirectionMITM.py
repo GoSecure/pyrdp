@@ -91,9 +91,11 @@ class DeviceRedirectionMITM(Subject):
             with open(self.fileMapPath, "r") as f:
                 self.fileMap: Dict[str, FileMapping] = json.loads(f.read(), cls=FileMappingDecoder)
         except IOError:
-            pass
+            self.log.warning("Could not read the RDPDR file mapping at %(path)s. The file may not exist or it may have incorrect permissions. A new mapping will be created.", {
+                "path": str(self.fileMapPath),
+            })
         except json.JSONDecodeError:
-            self.log.error(f"Failed to decode file mapping, overwriting previous file")
+            self.log.error("Failed to decode file mapping, overwriting previous file")
 
     def saveMapping(self):
         """
@@ -269,6 +271,11 @@ class DeviceRedirectionMITM(Subject):
 
 
     def findNextRequestID(self) -> int:
+        """
+        Find the next request ID to be returned for a forged request. Request ID's start from a different base than the
+        IDs for normal RDPDR requests to avoid collisions. IDs are reused after their request has completed. What we
+        call a "request ID" is the equivalent of the "completion ID" in RDPDR documentation.
+        """
         completionID = DeviceRedirectionMITM.FORGED_COMPLETION_ID
 
         while completionID in self.forgedRequests:

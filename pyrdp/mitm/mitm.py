@@ -326,11 +326,11 @@ class RDPMITM:
             return
 
         if self.config.payloadDelay is None:
-            self.log.error("Payload was set but no delay is configured. Payload will not be sent.")
+            self.log.error("Payload was set but no delay is configured. Please configure a payload delay. Payload will not be sent for this connection.")
             return
 
         if self.config.payloadDuration is None:
-            self.log.error("Payload was set but no duration is configured. Payload will not be sent.")
+            self.log.error("Payload was set but no duration is configured. Please configure a payload duration. Payload will not be sent for this connection.")
             return
 
         def waitForDelay() -> int:

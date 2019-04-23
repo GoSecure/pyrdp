@@ -163,7 +163,7 @@ def main():
     parser.add_argument("--payload-powershell", help="PowerShell command to run automatically upon connection", default=None)
     parser.add_argument("--payload-powershell-file", help="PowerShell script to run automatically upon connection (as -EncodedCommand)", default=None)
     parser.add_argument("--payload-delay", help="Time to wait after a new connection before sending the payload, in milliseconds", default=None)
-    parser.add_argument("--payload-duration", help="Amount of time the payload should take to complete, in milliseconds", default=None)
+    parser.add_argument("--payload-duration", help="Amount of time for which input / output should be dropped, in milliseconds. This can be used to hide the payload screen.", default=None)
     parser.add_argument("--no-replay", help="Disable replay recording", action="store_true")
 
     args = parser.parse_args()

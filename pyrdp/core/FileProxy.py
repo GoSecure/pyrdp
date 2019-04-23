@@ -6,6 +6,10 @@ from pyrdp.core.subject import ObservedBy, Subject
 
 
 class FileProxyObserver(Observer):
+    """
+    Observer class for receiving FileProxy events (file creation and file close).
+    """
+
     def onFileCreated(self, fileProxy: 'FileProxy'):
         pass
 
