@@ -1,3 +1,9 @@
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2019 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
 from io import BytesIO
 
 from pyrdp.core import Int16LE, Uint16LE, Uint32LE, Uint64LE, Uint8

@@ -1,3 +1,9 @@
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2019 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
 from PySide2.QtGui import QKeySequence
 from PySide2.QtWidgets import QShortcut, QWidget
 

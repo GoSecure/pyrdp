@@ -1,3 +1,9 @@
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2019 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
 import os
 from collections import defaultdict
 from typing import BinaryIO, Dict, List

@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2019 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
 # setuptools MUST be imported first, otherwise we get an error with the ext_modules argument.
 import setuptools
 from distutils.core import Extension, setup
