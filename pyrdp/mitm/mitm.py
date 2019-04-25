@@ -32,7 +32,7 @@ from pyrdp.mitm.state import RDPMITMState
 from pyrdp.mitm.TCPMITM import TCPMITM
 from pyrdp.mitm.VirtualChannelMITM import VirtualChannelMITM
 from pyrdp.mitm.X224MITM import X224MITM
-from pyrdp.player import TwistedPlayerLayerSet
+from pyrdp.player.PlayerLayerSet import TwistedPlayerLayerSet
 from pyrdp.recording import FileLayer, RecordingFastPathObserver, RecordingSlowPathObserver
 
 
