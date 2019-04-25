@@ -14,7 +14,7 @@ from pyrdp.player.BaseTab import BaseTab
 from pyrdp.player.filesystem import DirectoryObserver, FileSystem
 from pyrdp.player.FileSystemWidget import FileSystemWidget
 from pyrdp.player.LiveEventHandler import LiveEventHandler
-from pyrdp.player.PlayerLayerSet import AsyncIOPlayerLayerSet
+from pyrdp.mitm.PlayerLayerSet import AsyncIOPlayerLayerSet
 from pyrdp.player.RDPMITMWidget import RDPMITMWidget
 
 
