@@ -186,6 +186,59 @@ this would be the command to use:
 pyrdp-mitm.py 192.168.1.10 -i 127.0.0.1 -d 4000
 ```
 
+### Running payloads on new connections
+PyRDP has support for running console commands or PowerShell payloads automatically when new connections are made.
+Due to the nature of RDP, the process is a bit hackish and is not always 100% reliable. Here is how it works:
+
+1. Wait for the user to be authenticated.
+2. Block the client's input / output to hide the payload and prevent interference.
+3. Send a fake Windows+R sequence and run `cmd.exe`.
+4. Run the payload as a console command and exit the console. If a PowerShell payload is configured, it is run with `powershell -enc <PAYLOAD>`.
+5. Wait a bit to allow the payload to complete.
+6. Restore the client's input / output.
+
+For this to work, you need to set 3 arguments:
+
+- the payload
+- the delay before the payload starts
+- the payload's duration
+
+#### Setting the payload
+You can use one of the following arguments to set the payload to run:
+
+- `--payload`, a string containing console commands
+- `--payload-powershell`, a string containing PowerShell commands
+- `--payload-powershell-file`, a path to a PowerShell script
+
+#### Choosing when to start the payload
+For the moment, PyRDP does not detect when the user is logged on.
+You must give it an amount of time to wait for before running the payload.
+After this amount of time has passed, it will send the fake key sequences and expect the payload to run properly.
+To do this, you use the `--payload-delay` argument. The delay is in milliseconds.
+For example, if you expect the user to be logged in within the first 5 seconds, you would use the following arguments:
+
+```
+--payload-delay 5000
+```
+
+This could be made more accurate by leveraging some messages exchanged during RDPDR initialization.
+See [this issue](https://github.com/GoSecure/pyrdp/issues/98) if you're interested in making this work better.
+
+#### Choosing when to resume normal activity
+Because there is no direct way to know when the console has stopped running, you must tell PyRDP how long you want
+the client's input / output to be blocked. We recommend you set this to the maximum amount of time you would expect the
+console that is running your payload to be visible. In other words, the amount of time you would expect your payload to
+complete.
+To set the payload duration, you use the `--payload-duration` argument with an amount of time in milliseconds.
+For example, if you expect your payload to take up to 5 seconds to complete, you would use the following argument:
+
+```
+--payload-duration 5000
+```
+
+This will block the client's input / output for 5 seconds to hide the console and prevent interference.
+After 5 seconds, input / output is restored back to normal.
+
 ### Other MITM arguments
 Run `pyrdp-mitm.py --help` for a full list of arguments.
 
