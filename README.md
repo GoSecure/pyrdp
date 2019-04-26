@@ -24,10 +24,14 @@ target machine.
 - [Installing](#installing)
     * [Installing with Docker](#installing-with-docker)
     * [Installing on Windows](#installing-on-windows)
-- [Using the PyRDP MITM](#using-the-pyrdp-mitm)
+- [Using the PyRDP Man-in-the-Middle](#using-the-pyrdp-man-in-the-middle)
     * [Specifying the private key and certificate](#specifying-the-private-key-and-certificate)
     * [Connecting to the PyRDP player](#connecting-to-the-pyrdp-player)
         + [Connecting to a PyRDP player when the MITM is running on a server](#connecting-to-a-pyrdp-player-when-the-mitm-is-running-on-a-server)
+    * [Running payloads on new connections](#running-payloads-on-new-connections)
+        + [Setting the payload](#setting-the-payload)
+        + [Choosing when to start the payload](#choosing-when-to-start-the-payload)
+        + [Choosing when to resume normal activity](#choosing-when-to-resume-normal-activity)
     * [Other MITM arguments](#other-mitm-arguments)
 - [Using the PyRDP Player](#using-the-pyrdp-player)
     * [Playing a replay file](#playing-a-replay-file)
@@ -115,7 +119,7 @@ docker run -it pyrdp pyrdp-mitm.py 192.168.1.10
 
 For more information about the various commands and arguments, please refer to these sections:
 
-- [Using the PyRDP MITM](#using-the-pyrdp-mitm)
+- [Using the PyRDP MITM](#using-the-pyrdp-man-in-the-middle)
 - [Using the PyRDP Player](#using-the-pyrdp-player)
 - [Using the PyRDP Certificate Cloner](#using-the-pyrdp-certificate-cloner)
 
