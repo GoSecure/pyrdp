@@ -1,10 +1,16 @@
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2019 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
 from PySide2.QtWidgets import QApplication, QWidget
 
-from pyrdp.layer import PlayerMessageLayer
-from pyrdp.player.ReplayBar import ReplayBar
-from pyrdp.player.PlayerMessageHandler import PlayerMessageHandler
+from pyrdp.layer import PlayerLayer
 from pyrdp.player.BaseTab import BaseTab
+from pyrdp.player.PlayerEventHandler import PlayerEventHandler
 from pyrdp.player.Replay import Replay
+from pyrdp.player.ReplayBar import ReplayBar
 from pyrdp.player.ReplayThread import ReplayThread
 from pyrdp.ui import QRemoteDesktop
 
@@ -19,13 +25,13 @@ class ReplayTab(BaseTab):
         :param fileName: name of the file to read.
         :param parent: parent widget.
         """
-        self.viewer = QRemoteDesktop(800, 600)
+        self.viewer = QRemoteDesktop(800, 600, parent)
         super().__init__(self.viewer, parent)
         QApplication.instance().aboutToQuit.connect(self.onClose)
 
         self.fileName = fileName
         self.file = open(self.fileName, "rb")
-        self.eventHandler = PlayerMessageHandler(self.widget, self.text)
+        self.eventHandler = PlayerEventHandler(self.widget, self.text)
 
         replay = Replay(self.file)
         self.thread = ReplayThread(replay)
@@ -39,10 +45,11 @@ class ReplayTab(BaseTab):
         self.controlBar.pause.connect(self.thread.pause)
         self.controlBar.seek.connect(self.thread.seek)
         self.controlBar.speedChanged.connect(self.thread.setSpeed)
+        self.controlBar.button.setDefault(True)
 
-        self.layout().insertWidget(0, self.controlBar)
+        self.tabLayout.insertWidget(0, self.controlBar)
 
-        self.player = PlayerMessageLayer()
+        self.player = PlayerLayer()
         self.player.addObserver(self.eventHandler)
 
     def readEvent(self, position: int):

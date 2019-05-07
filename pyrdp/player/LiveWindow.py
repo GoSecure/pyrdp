@@ -1,6 +1,13 @@
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2019 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
+import asyncio
 from queue import Queue
 
-from PySide2.QtCore import Signal
+from PySide2.QtCore import Signal, Qt
 from PySide2.QtWidgets import QApplication, QWidget
 
 from pyrdp.player.BaseWindow import BaseWindow
@@ -14,7 +21,7 @@ class LiveWindow(BaseWindow):
     """
     connectionReceived = Signal()
 
-    def __init__(self, address, port, parent: QWidget = None):
+    def __init__(self, address: str, port: int, parent: QWidget = None):
         super().__init__(parent)
         QApplication.instance().aboutToQuit.connect(self.onClose)
 
@@ -23,7 +30,7 @@ class LiveWindow(BaseWindow):
         self.connectionReceived.connect(self.createLivePlayerTab)
         self.queue = Queue()
 
-    def onConnection(self):
+    def onConnection(self) -> asyncio.Protocol:
         self.connectionReceived.emit()
         tab = self.queue.get()
         return tab.getProtocol()
@@ -35,10 +42,22 @@ class LiveWindow(BaseWindow):
         self.setCurrentIndex(self.count() - 1)
         self.queue.put(tab)
 
-    def onConnectionClosed(self, tab):
+    def onConnectionClosed(self, tab: LiveTab):
         index = self.indexOf(tab)
         text = self.tabText(index)
         self.setTabText(index, text + " - Closed")
 
     def onClose(self):
         self.server.stop()
+
+    def sendKeySequence(self, keys: [Qt.Key]):
+        tab: LiveTab = self.currentWidget()
+
+        if tab is not None:
+            tab.sendKeySequence(keys)
+
+    def sendText(self, text: str):
+        tab: LiveTab = self.currentWidget()
+
+        if tab is not None:
+            tab.sendText(text)

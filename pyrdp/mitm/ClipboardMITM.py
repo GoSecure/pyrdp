@@ -7,7 +7,7 @@
 from logging import LoggerAdapter
 
 from pyrdp.core import decodeUTF16LE
-from pyrdp.enum import ClipboardFormatNumber, ClipboardMessageFlags, ClipboardMessageType, PlayerMessageType
+from pyrdp.enum import ClipboardFormatNumber, ClipboardMessageFlags, ClipboardMessageType, PlayerPDUType
 from pyrdp.layer import ClipboardLayer
 from pyrdp.pdu import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU
 from pyrdp.recording import Recorder
@@ -61,7 +61,7 @@ class PassiveClipboardStealer:
             if pdu.msgFlags == ClipboardMessageFlags.CB_RESPONSE_OK:
                 clipboardData = self.decodeClipboardData(pdu.requestedFormatData)
                 self.log.info("Clipboard data: %(clipboardData)r", {"clipboardData": clipboardData})
-                self.recorder.record(pdu, PlayerMessageType.CLIPBOARD_DATA)
+                self.recorder.record(pdu, PlayerPDUType.CLIPBOARD_DATA)
 
             self.forwardNextDataResponse = True
 

@@ -7,7 +7,7 @@
 from typing import Callable, Dict
 
 from pyrdp.enum import ClientCapabilityFlag, EncryptionLevel, EncryptionMethod, HighColorDepth, MCSChannelName, \
-    PlayerMessageType, SupportedColorDepth
+    PlayerPDUType, SupportedColorDepth
 from pyrdp.layer import MCSLayer
 from pyrdp.mcs import MCSClientChannel, MCSServerChannel
 from pyrdp.mitm.state import RDPMITMState
@@ -98,7 +98,7 @@ class MCSMITM:
 
         rdpClientDataPDU.coreData.earlyCapabilityFlags &= ~ClientCapabilityFlag.RNS_UD_CS_WANT_32BPP_SESSION
 
-        self.recorder.record(rdpClientDataPDU, PlayerMessageType.CLIENT_DATA)
+        self.recorder.record(rdpClientDataPDU, PlayerPDUType.CLIENT_DATA)
 
         if rdpClientDataPDU.networkData:
             self.state.channelDefinitions = rdpClientDataPDU.networkData.channelDefinitions

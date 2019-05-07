@@ -7,6 +7,7 @@
 from io import BytesIO
 
 from pyrdp.core import Uint16LE
+from pyrdp.enum import FastPathOutputType
 from pyrdp.pdu import BitmapUpdateData
 
 
@@ -32,3 +33,23 @@ class BitmapParser:
                                                flags, bitmapData))
 
         return bitmapUpdates
+
+    def writeBitmapUpdateData(self, bitmaps: [BitmapUpdateData]) -> bytes:
+        stream = BytesIO()
+
+        Uint16LE.pack(FastPathOutputType.FASTPATH_UPDATETYPE_BITMAP, stream)
+        Uint16LE.pack(len(bitmaps), stream)
+
+        for bitmap in bitmaps:
+            Uint16LE.pack(bitmap.destLeft, stream)
+            Uint16LE.pack(bitmap.destTop, stream)
+            Uint16LE.pack(bitmap.destRight, stream)
+            Uint16LE.pack(bitmap.destBottom, stream)
+            Uint16LE.pack(bitmap.width, stream)
+            Uint16LE.pack(bitmap.heigth, stream)
+            Uint16LE.pack(bitmap.bitsPerPixel, stream)
+            Uint16LE.pack(bitmap.flags, stream)
+            Uint16LE.pack(len(bitmap.bitmapData), stream)
+            stream.write(bitmap.bitmapData)
+
+        return stream.getvalue()
