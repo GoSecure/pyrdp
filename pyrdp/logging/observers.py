@@ -6,11 +6,12 @@
 
 from logging import LoggerAdapter
 
-from pyrdp.enum import ErrorInfo, MCSPDUType, X224PDUType
+from pyrdp.enum import DeviceRedirectionPacketID, ErrorInfo, MCSPDUType, X224PDUType
 from pyrdp.layer import FastPathObserver, LayerObserver, MCSObserver, SecurityObserver, SlowPathObserver, X224Observer
 from pyrdp.parser import ClientInfoParser
-from pyrdp.pdu import FastPathPDU, MCSAttachUserConfirmPDU, MCSChannelJoinConfirmPDU, MCSConnectResponsePDU, MCSPDU, \
+from pyrdp.pdu import DeviceRedirectionPDU, FastPathPDU, FastPathScanCodeEvent, MCSAttachUserConfirmPDU, MCSChannelJoinConfirmPDU, MCSConnectResponsePDU, MCSPDU, \
     SecurityExchangePDU, SlowPathPDU, X224PDU
+from pyrdp.player.keyboard import getKeyName
 
 
 class LoggingObserver:
@@ -22,6 +23,10 @@ class LoggingObserver:
         self.log = log
 
     def logPDU(self, pdu):
+        if isinstance(pdu, DeviceRedirectionPDU):
+            if pdu.packetID == DeviceRedirectionPacketID.PAKID_CORE_USER_LOGGEDON:
+                # User has logged on
+                CredentialLogger.instance.printCandidate()
         self.log.debug("Received %(pdu)s", {"pdu": pdu})
 
 
@@ -146,3 +151,71 @@ class LayerLogger(LoggingObserver, LayerObserver):
 
     def onPDUReceived(self, pdu):
         self.logPDU(pdu)
+
+# Singleton
+class CredentialLogger(LoggingObserver):
+    """
+    Logging observer for credentials going through the fast-path layers.
+    Credentials gets printed whenever RDPDR receives a "loggon" type packet
+    """
+    instance = None
+
+    class __CredentialLogger:
+        def __init__(self, log: LoggerAdapter):
+            self.log = log
+            self.shiftPressed = False
+            self.capsLockOn = False
+            self.candidate = ""
+            self.buffer = ""
+
+        def onPDUReceived(self, pdu: FastPathPDU):
+            self.logPDU(pdu)
+
+        def logPDU(self, pdu):
+            for event in pdu.events:
+                if isinstance(event, FastPathScanCodeEvent):
+                    self.onScanCode(event.scanCode, event.isReleased, event.rawHeaderByte & 2 != 0)
+
+        def onScanCode(self, scanCode: int, isReleased: bool, isExtended: bool):
+            """
+            Handle scan code.
+            """
+            keyName = getKeyName(scanCode, isExtended, self.shiftPressed, self.capsLockOn)
+
+            if len(keyName) == 1:
+                if not isReleased:
+                    self.buffer += keyName
+
+            # Left or right shift
+            if scanCode in [0x2A, 0x36]:
+                self.shiftPressed = not isReleased
+
+            # Caps lock
+            elif scanCode == 0x3A and not isReleased:
+                self.capsLockOn = not self.capsLockOn
+
+            # Return
+            elif scanCode == 0x1C and not isReleased:
+                self.candidate = self.buffer
+                self.buffer = ""
+
+        # Print the last entered crendential
+        def printCandidate(self):
+            # If form is submitted with a click, print the buffer instead
+            # If the RDP client sends the credentials, both will be empty
+            if self.candidate or self.buffer:
+                self.log.info("Credentials candidate: %(candidate)s", {"candidate" : (self.candidate or self.buffer) })
+
+    def __new__(self, log: LoggerAdapter):
+        if not CredentialLogger.instance:
+            CredentialLogger.instance = CredentialLogger.__CredentialLogger(log)
+        return CredentialLogger.instance
+
+    def __init__(self, log: LoggerAdapter):
+        super().__init__(log)
+
+    # Forward getters/setters to the instance
+    def __getattr__(self, name):
+        return getattr(self.instance, name)
+    def __setattr__(self, name):
+        return setattr(self.instance, name)
