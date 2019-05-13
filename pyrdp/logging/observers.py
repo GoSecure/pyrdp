@@ -162,6 +162,7 @@ class CredentialLogger(LoggingObserver):
 
     class __CredentialLogger:
         def __init__(self, log: LoggerAdapter):
+            self.active = True
             self.log = log
             self.shiftPressed = False
             self.capsLockOn = False
@@ -169,7 +170,8 @@ class CredentialLogger(LoggingObserver):
             self.buffer = ""
 
         def onPDUReceived(self, pdu: FastPathPDU):
-            self.logPDU(pdu)
+            if self.active:
+                self.logPDU(pdu)
 
         def logPDU(self, pdu):
             for event in pdu.events:
@@ -206,9 +208,19 @@ class CredentialLogger(LoggingObserver):
             if self.candidate or self.buffer:
                 self.log.info("Credentials candidate: %(candidate)s", {"candidate" : (self.candidate or self.buffer) })
 
+                # Deactivate the logger for this client
+                self.active = False
+                self.shiftPressed = False
+                self.capsLockOn = False
+                self.candidate = ""
+                self.buffer = ""
+
     def __new__(self, log: LoggerAdapter):
         if not CredentialLogger.instance:
             CredentialLogger.instance = CredentialLogger.__CredentialLogger(log)
+
+        # Reactivate the logger, triggered on a new connection
+        CredentialLogger.instance.active = True
         return CredentialLogger.instance
 
     def __init__(self, log: LoggerAdapter):
