@@ -1,0 +1,66 @@
+= {project-name} Changelog
+:project-name: PyRDP
+:uri-repo: https://github.com/GoSecure/pyrdp
+:uri-issue: {uri-repo}/issues/
+
+This document provides a high-level view of the changes introduced in {project-name} by release.
+For a detailed view of what has changed, refer to the {uri-repo}/commits/master[commit history] on GitHub.
+
+////
+== <next release>
+
+Enhancements::
+
+Bug fixes::
+
+=== Release meta
+
+* Released on:
+* Released by:
+* Release beer:
+////
+
+
+== 0.2.0
+
+A special _NorthSec 2019_ release just in time for
+https://github.com/xshill[Francis Labelle] and
+https://github.com/res260[Émilio Gonzalez]'s talk on {project-name}.
+
+* https://docs.google.com/presentation/d/1avcn8Sh2b3IE7AA0G9l7Cj5F1pxqizUm98IbXUo2cvY/edit#slide=id.g404b70030f_0_581[Presentation Slides]
+* https://nsec.io/session/2019-welcome-to-the-jumble-improving-rdp-tooling-for-malware-analysis-and-pentesting.html[Abstract]
+
+=== Enhancements
+
+* Session takeover: take control of an active session with working mouse and keyboard
+* Client-side file browsing and downloading
+* Ability to run custom PowerShell or console commands on new connections (https://github.com/GoSecure/pyrdp#running-payloads-on-new-connections[documentation])
+* Easier integration with `virtualenv` ({uri-issue}84[#84])
+* Provided a simple Dockerfile for Docker image creation ({uri-issue}66[#66])
+* Documentation on how to combine with Bettercap (more on the way)
+* Important refactoring
+
+=== Credits
+
+Thanks to the following people who contributed to this release:
+
+Etienne Lacroix, Olivier Bilodeau, Francis Labelle
+
+
+== 0.1.0
+
+First release. See our
+https://www.gosecure.net/blog/2018/12/19/rdp-man-in-the-middle-smile-youre-on-camera[introductory
+blog post] for details.
+
+=== Credits
+
+Thanks to the following people who contributed to this release:
+
+Francis Labelle, Émilio Gonzalez, CoolAcid
+
+Special thanks to https://github.com/citronneur[Sylvain Peyrefitte] who
+created RDPy on which we initially based PyRDP. We eventually had to fork due
+to drastic changes in order to achieve the capabilities we were interested in
+building. That said, his initial architecture and base library choices should
+be recognized as they stood the test of time.
