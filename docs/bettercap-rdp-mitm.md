@@ -20,12 +20,13 @@ Install Bettercap by running these commands :
 
     sudo apt-get update
     sudo apt-get install build-essential libpcap-dev libusb-1.0-0-dev libnetfilter-queue-dev
-    mkdir -p $GOPATH/src/github.com/GoSecure/
-    cd $GOPATH/src/github.com/GoSecure/
+    mkdir -p $GOPATH/src/github.com/bettercap/
+    cd $GOPATH/src/github.com/bettercap/
     git clone https://github.com/GoSecure/bettercap.git -b rdp-mitm
     cd bettercap
     go get
     go build
+    make build && sudo make install
 
 Install Caplets by running these commands :
 
