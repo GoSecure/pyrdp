@@ -16,7 +16,7 @@ from pyrdp.enum import MCSChannelName, ParserMode, PlayerPDUType, ScanCode, Segm
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, LayerChainItem, RawLayer, VirtualChannelLayer
 from pyrdp.logging import RC4LoggingObserver
 from pyrdp.logging.adapters import SessionLogger
-from pyrdp.logging.observers import CredentialLogger, FastPathLogger, LayerLogger, MCSLogger, SecurityLogger, SlowPathLogger, X224Logger
+from pyrdp.logging.observers import FastPathLogger, LayerLogger, MCSLogger, SecurityLogger, SlowPathLogger, X224Logger
 from pyrdp.mcs import MCSClientChannel, MCSServerChannel
 from pyrdp.mitm.AttackerMITM import AttackerMITM
 from pyrdp.mitm.ClipboardMITM import ActiveClipboardStealer
@@ -227,7 +227,6 @@ class RDPMITM:
 
         self.client.security.addObserver(SecurityLogger(self.getClientLog("security")))
         self.client.fastPath.addObserver(FastPathLogger(self.getClientLog("fastpath")))
-        self.client.fastPath.addObserver(CredentialLogger(self.getClientLog("credential")))
         self.client.fastPath.addObserver(RecordingFastPathObserver(self.recorder, PlayerPDUType.FAST_PATH_INPUT))
 
         self.server.security.addObserver(SecurityLogger(self.getServerLog("security")))
@@ -298,7 +297,7 @@ class RDPMITM:
         LayerChainItem.chain(client, clientSecurity, clientVirtualChannel, clientLayer)
         LayerChainItem.chain(server, serverSecurity, serverVirtualChannel, serverLayer)
 
-        deviceRedirection = DeviceRedirectionMITM(clientLayer, serverLayer, self.getLog(MCSChannelName.DEVICE_REDIRECTION), self.config)
+        deviceRedirection = DeviceRedirectionMITM(clientLayer, serverLayer, self.getLog(MCSChannelName.DEVICE_REDIRECTION), self.config, self.state)
         self.channelMITMs[client.channelID] = deviceRedirection
 
         if self.attacker:
