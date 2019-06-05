@@ -9,8 +9,8 @@ are in our target list, otherwise we will forward them.
 ## Requirements
 
 1. PyRDP  
-2. Our fork and branch of Bettercap [https://github.com/GoSecure/bettercap/tree/rdp-mitm]
-3. Our fork of Caplets [https://github.com/GoSecure/caplets/]
+2. Our fork and branch of [Bettercap](https://github.com/GoSecure/bettercap/tree/rdp-mitm)
+3. Our fork of [Caplets](https://github.com/GoSecure/caplets/)
 
 ## Setup
 
@@ -30,7 +30,8 @@ Install Bettercap by running these commands :
 
 Install Caplets by running these commands :
 
-    cd
+    mkdir -p ~/src/
+    cd ~/src/
     git clone https://github.com/GoSecure/caplets.git
     cd caplets
     sudo make install
@@ -39,13 +40,13 @@ Install Caplets by running these commands :
 
 Start bettercap with :
 
-    sudo bettercap -iface <interface> -caplet <caplet>
+    sudo bettercap -iface <interface> -caplet <caplet> -eval "set rdp.proxy.command $(which pyrdp-mitm.py)"
 
 Basic example :
 
-    sudo bettercap -iface wlp2s0 -caplet rdp-proxy/rdp-sniffer.cap
+    sudo bettercap -iface wlp2s0 -caplet rdp-proxy/rdp-sniffer.cap -eval "set rdp.proxy.command $(which pyrdp-mitm.py)"
 
-We currently have 2 caplets. Read each caplet for further documentation and usage. Here's a quick rundown :
+We currently have 2 caplets. Read each caplet's source for further documentation and usage. Here's a quick rundown :
 
 <dl>
   <dt>rdp-proxy/rdp-sniffer.cap</dt>
