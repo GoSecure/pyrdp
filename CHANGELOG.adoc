@@ -6,12 +6,16 @@
 This document provides a high-level view of the changes introduced in {project-name} by release.
 For a detailed view of what has changed, refer to the {uri-repo}/commits/master[commit history] on GitHub.
 
+== _Unreleased_
+
+=== Bug fixes
+
+* Fixed issue with `virtualenv` setup ({uri-issue}110[#110])
+
+
 ////
-== <next release>
 
 Enhancements::
-
-Bug fixes::
 
 === Release meta
 
@@ -21,7 +25,7 @@ Bug fixes::
 ////
 
 
-== 0.2.0
+== 0.2.0 - 2019-05-15
 
 A special _NorthSec 2019_ release just in time for
 https://github.com/xshill[Francis Labelle] and
@@ -47,7 +51,7 @@ Thanks to the following people who contributed to this release:
 Etienne Lacroix, Olivier Bilodeau, Francis Labelle
 
 
-== 0.1.0
+== 0.1.0 - 2018-12-20
 
 First release. See our
 https://www.gosecure.net/blog/2018/12/19/rdp-man-in-the-middle-smile-youre-on-camera[introductory
