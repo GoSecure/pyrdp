@@ -1,0 +1,26 @@
+= Development guide
+
+== Making a release
+
+// TODO
+
+. Update the changelog
+** Generate author list with:
++
+    git log <tag>.. --format="%aN" --reverse | perl -e 'my %dedupe; while (<STDIN>) { print unless $dedupe{$_}++}' | sort
++
+** linkify issues with vim's: `%s/#\(\d\d\)/{uri-issue}\1[#\1]/gc`
+
+. Prepare release commit
+** commit msg: Prepare %version% release
+** release commit (--allow-empty) msg: Release %version%
+
+. Tag the release commit
+** Annotated Tag msg: Version %version%
+
+. Push your changes (including the tag)
+. Make a release on github (from changelog and copy from previous releases)
+
+. Update version in `setup.py` (+1 bugfix, append 'dev') and commit
+** commit msg: Begin development on next release
+
