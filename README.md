@@ -19,6 +19,8 @@ It features a few tools:
 We have used this tool as part of an RDP honeypot which records sessions and saves a copy of the malware dropped on our
 target machine.
 
+PyRDP was [first introduced in a blogpost](https://www.gosecure.net/blog/2018/12/19/rdp-man-in-the-middle-smile-youre-on-camera) in which we [demonstrated that we can catch a real threat actor in action](https://www.youtube.com/watch?v=eB7RC9FmL6Q). In May 2019 a [presentation by its authors](https://docs.google.com/presentation/d/1avcn8Sh2b3IE7AA0G9l7Cj5F1pxqizUm98IbXUo2cvY/edit#slide=id.g404b70030f_0_581) was given at NorthSec and two demos were performed. [The first one covered](https://youtu.be/5JztJzi-m48) credential logging, clipboard stealing, client-side file browsing and a session take-over. [The second one covered](https://youtu.be/bU67tj1RkMA) the execution of cmd or powershell payloads when a client successfully authenticates.
+
 ## Table of Contents
 - [Supported Systems](#supported-systems)
 - [Installing](#installing)
