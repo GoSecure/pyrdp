@@ -57,7 +57,7 @@ class RDPMITMState:
         self.inputBuffer = ""
         """Used to store what the client types"""
 
-        self.candidate = ""
+        self.credentialsCandidate = ""
         """The potential client password"""
 
         self.shiftPressed = False
@@ -65,6 +65,9 @@ class RDPMITMState:
 
         self.capsLockOn = False
         """The current keyboard capsLock state"""
+
+        self.ctrlPressed = False
+        """The current keybaord ctrl state"""
 
         self.securitySettings.addObserver(self.crypters[ParserMode.CLIENT])
         self.securitySettings.addObserver(self.crypters[ParserMode.SERVER])

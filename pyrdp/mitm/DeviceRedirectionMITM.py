@@ -281,14 +281,14 @@ class DeviceRedirectionMITM(Subject):
         Handle events that should be triggered when a client logs in.
         """
 
-        if self.state.candidate or self.state.inputBuffer:
-            self.log.info("Credentials candidate: %(candidate)s", {"candidate" : (self.state.candidate or self.state.inputBuffer) })
+        if self.state.credentialsCandidate or self.state.inputBuffer:
+            self.log.info("Credentials candidate from heuristic: %(credentials_candidate)s", {"credentials_candidate" : (self.state.credentialsCandidate or self.state.inputBuffer) })
 
         # Deactivate the logger for this client
         self.state.loggedIn = True
         self.state.shiftPressed = False
         self.state.capsLockOn = False
-        self.state.candidate = ""
+        self.state.credentialsCandidate = ""
         self.state.inputBuffer = ""
 
 

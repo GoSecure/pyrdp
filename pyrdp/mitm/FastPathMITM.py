@@ -8,6 +8,8 @@ from pyrdp.layer import FastPathLayer
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.pdu import FastPathPDU, FastPathScanCodeEvent
 from pyrdp.player.keyboard import getKeyName
+from pyrdp.enum import ScanCode
+
 
 class FastPathMITM:
     """
@@ -51,20 +53,31 @@ class FastPathMITM:
         Handle scan code.
         """
         keyName = getKeyName(scanCode, isExtended, self.state.shiftPressed, self.state.capsLockOn)
-
-        if len(keyName) == 1:
-            if not isReleased:
-                self.state.inputBuffer += keyName
+        scanCodeTuple = (scanCode, isExtended)
 
         # Left or right shift
-        if scanCode in [0x2A, 0x36]:
+        if scanCodeTuple in [ScanCode.LSHIFT, ScanCode.RSHIFT]:
             self.state.shiftPressed = not isReleased
-
         # Caps lock
-        elif scanCode == 0x3A and not isReleased:
+        elif scanCodeTuple == ScanCode.CAPSLOCK and not isReleased:
             self.state.capsLockOn = not self.state.capsLockOn
-
+        # Control
+        elif scanCodeTuple in [ScanCode.LCONTROL, ScanCode.RCONTROL]:
+            self.state.ctrlPressed = not isReleased
+        # Backspace
+        elif scanCodeTuple == ScanCode.BACKSPACE and not isReleased:
+            self.state.inputBuffer += "<\\b>"
+        # Tab
+        elif scanCodeTuple == ScanCode.TAB and not isReleased:
+            self.state.inputBuffer += "<\\t>"
+        # CTRL + A
+        elif scanCodeTuple == ScanCode.KEY_A and self.state.ctrlPressed and not isReleased:
+            self.state.inputBuffer += "<ctrl-a>"
         # Return
-        elif scanCode == 0x1C and not isReleased:
-            self.state.candidate = self.state.inputBuffer
+        elif scanCodeTuple == ScanCode.RETURN and not isReleased:
+            self.state.credentialsCandidate = self.state.inputBuffer
             self.state.inputBuffer = ""
+        # Normal input
+        elif len(keyName) == 1:
+            if not isReleased:
+                self.state.inputBuffer += keyName
