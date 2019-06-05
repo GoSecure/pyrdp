@@ -9,6 +9,9 @@ from typing import Optional
 from PySide2.QtCore import Qt
 from PySide2.QtGui import QKeyEvent
 
+# https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/089d362b-31eb-4a1a-b6fa-92fe61bb5dbf
+KBDFLAGS_EXTENDED = 2
+
 SCANCODE_MAPPING = {
     Qt.Key.Key_Escape: 0x01,
     Qt.Key.Key_1: 0x02,

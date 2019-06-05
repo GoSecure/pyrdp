@@ -7,7 +7,7 @@
 from pyrdp.layer import FastPathLayer
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.pdu import FastPathPDU, FastPathScanCodeEvent
-from pyrdp.player.keyboard import getKeyName
+from pyrdp.player import keyboard
 from pyrdp.enum import ScanCode
 
 
@@ -42,7 +42,7 @@ class FastPathMITM:
         if not self.state.loggedIn:
             for event in pdu.events:
                 if isinstance(event, FastPathScanCodeEvent):
-                    self.onScanCode(event.scanCode, event.isReleased, event.rawHeaderByte & 2 != 0)
+                    self.onScanCode(event.scanCode, event.isReleased, event.rawHeaderByte & keyboard.KBDFLAGS_EXTENDED != 0)
 
     def onServerPDUReceived(self, pdu: FastPathPDU):
         if self.state.forwardOutput:
@@ -52,7 +52,7 @@ class FastPathMITM:
         """
         Handle scan code.
         """
-        keyName = getKeyName(scanCode, isExtended, self.state.shiftPressed, self.state.capsLockOn)
+        keyName = keyboard.getKeyName(scanCode, isExtended, self.state.shiftPressed, self.state.capsLockOn)
         scanCodeTuple = (scanCode, isExtended)
 
         # Left or right shift
