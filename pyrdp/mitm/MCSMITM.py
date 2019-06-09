@@ -3,7 +3,7 @@
 # Copyright (C) 2019 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-
+from logging import LoggerAdapter
 from typing import Callable, Dict
 
 from pyrdp.enum import ClientCapabilityFlag, EncryptionLevel, EncryptionMethod, HighColorDepth, MCSChannelName, \
@@ -27,15 +27,18 @@ class MCSMITM:
     external callback for building MCS channels when a join request is accepted.
     """
 
-    def __init__(self, client: MCSLayer, server: MCSLayer, state: RDPMITMState, recorder: Recorder, buildChannelCallback: Callable[[MCSServerChannel, MCSClientChannel], None]):
+    def __init__(self, client: MCSLayer, server: MCSLayer, state: RDPMITMState, recorder: Recorder,
+                 buildChannelCallback: Callable[[MCSServerChannel, MCSClientChannel], None], log: LoggerAdapter):
         """
         :param client: MCS layer for the client side
         :param server: MCS layer for the server side
         :param state: the RDP MITM shared state
         :param recorder: the recorder for this session
         :param buildChannelCallback: function called when MCS channels are built
+        :param log: logger for the MCS layer.
         """
 
+        self.log = log
         self.client = client
         self.server = server
         self.state = state
@@ -76,8 +79,13 @@ class MCSMITM:
         rdpClientConnectionParser = ClientConnectionParser()
         gccConferenceCreateRequestPDU: GCCConferenceCreateRequestPDU = gccParser.parse(pdu.payload)
 
-        # FIPS is not implemented, so remove this flag if it's set
         rdpClientDataPDU = rdpClientConnectionParser.parse(gccConferenceCreateRequestPDU.payload)
+
+        if "MS_T120" in map(lambda channelDef: channelDef.name, rdpClientDataPDU.networkData.channelDefinitions):
+            self.log.warning("Client tries to open virtual channel 'MS_T120', which most likely means it either"
+                             " scans for or tries to exploit BlueKeep (CVE-2019-0708).", {"bluekeep": True})
+
+        # FIPS is not implemented, so remove this flag if it's set
         rdpClientDataPDU.securityData.encryptionMethods &= ~EncryptionMethod.ENCRYPTION_FIPS
         rdpClientDataPDU.securityData.extEncryptionMethods &= ~EncryptionMethod.ENCRYPTION_FIPS
 
