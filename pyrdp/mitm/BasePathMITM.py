@@ -24,10 +24,8 @@ class BasePathMITM:
     def onClientPDUReceived(self, pdu: PDU):
         raise NotImplementedError("onClientPDUReceived must be overridden")
 
-
     def onServerPDUReceived(self, pdu: PDU):
         raise NotImplementedError("onServerPDUReceived must be overridden")
-
 
     def onScanCode(self, scanCode: int, isReleased: bool, isExtended: bool):
         """
