@@ -15,6 +15,7 @@ from pyrdp.enum import CreateOption, DeviceType, DirectoryAccessMask, FileAccess
     FileCreateDisposition, FileCreateOptions, FileShareAccess, FileSystemInformationClass, IOOperationSeverity, \
     MajorFunction, MinorFunction
 from pyrdp.layer import DeviceRedirectionLayer
+from pyrdp.logging.StatCounter import StatCounter, STAT
 from pyrdp.mitm.config import MITMConfig
 from pyrdp.mitm.FileMapping import FileMapping, FileMappingDecoder, FileMappingEncoder
 from pyrdp.pdu import DeviceAnnounce, DeviceCloseRequestPDU, DeviceCloseResponsePDU, DeviceCreateRequestPDU, \
@@ -53,7 +54,8 @@ class DeviceRedirectionMITM(Subject):
     FORGED_COMPLETION_ID = 1000000
 
 
-    def __init__(self, client: DeviceRedirectionLayer, server: DeviceRedirectionLayer, log: LoggerAdapter, config: MITMConfig):
+    def __init__(self, client: DeviceRedirectionLayer, server: DeviceRedirectionLayer, log: LoggerAdapter,
+                 config: MITMConfig, statCounter: StatCounter):
         """
         :param client: device redirection layer for the client side
         :param server: device redirection layer for the server side
@@ -65,6 +67,7 @@ class DeviceRedirectionMITM(Subject):
         self.client = client
         self.server = server
         self.log = log
+        self.statCounter = statCounter
         self.config = config
         self.currentIORequests: Dict[int, DeviceIORequestPDU] = {}
         self.openedFiles: Dict[int, FileProxy] = {}
@@ -106,9 +109,11 @@ class DeviceRedirectionMITM(Subject):
             f.write(json.dumps(self.fileMap, cls=FileMappingEncoder, indent=4, sort_keys=True))
 
     def onClientPDUReceived(self, pdu: DeviceRedirectionPDU):
+        self.statCounter.increment(STAT.DEVICE_REDIRECTION, STAT.DEVICE_REDIRECTION_CLIENT)
         self.handlePDU(pdu, self.server)
 
     def onServerPDUReceived(self, pdu: DeviceRedirectionPDU):
+        self.statCounter.increment(STAT.DEVICE_REDIRECTION, STAT.DEVICE_REDIRECTION_SERVER)
         self.handlePDU(pdu, self.client)
 
     def handlePDU(self, pdu: DeviceRedirectionPDU, destination: DeviceRedirectionLayer):
@@ -137,6 +142,7 @@ class DeviceRedirectionMITM(Subject):
         :param pdu: the device IO request
         """
 
+        self.statCounter.increment(STAT.DEVICE_REDIRECTION_IOREQUEST)
         self.currentIORequests[pdu.completionID] = pdu
 
     def handleIOResponse(self, pdu: DeviceIOResponsePDU):
@@ -144,6 +150,8 @@ class DeviceRedirectionMITM(Subject):
         Handle an IO response, depending on what kind of request originated it.
         :param pdu: the device IO response.
         """
+
+        self.statCounter.increment(STAT.DEVICE_REDIRECTION_IORESPONSE)
 
         if pdu.completionID in self.forgedRequests:
             request = self.forgedRequests[pdu.completionID]
@@ -156,6 +164,7 @@ class DeviceRedirectionMITM(Subject):
             requestPDU = self.currentIORequests.pop(pdu.completionID)
 
             if pdu.ioStatus >> 30 == IOOperationSeverity.STATUS_SEVERITY_ERROR:
+                self.statCounter.increment(STAT.DEVICE_REDIRECTION_IOERROR)
                 self.log.warning("Received an IO Response with an error IO status: %(responsePDU)s for request %(requestPDU)s", {"responsePDU": repr(pdu), "requestPDU": repr(requestPDU)})
 
             if pdu.majorFunction in self.responseHandlers:
@@ -234,6 +243,8 @@ class DeviceRedirectionMITM(Subject):
         :param _: the device IO response to the request
         """
 
+        self.statCounter.increment(STAT.DEVICE_REDIRECTION_FILE_CLOSE)
+
         if request.fileID in self.openedFiles:
             file = self.openedFiles.pop(request.fileID)
             file.close()
@@ -292,6 +303,8 @@ class DeviceRedirectionMITM(Subject):
         :param path: path of the file to download. The path should use '\' instead of '/' to separate directories.
         """
 
+        self.statCounter.increment(STAT.DEVICE_REDIRECTION_FORGED_FILE_READ)
+
         completionID = self.findNextRequestID()
         request = DeviceRedirectionMITM.ForgedFileReadRequest(deviceID, completionID, self, path)
         self.forgedRequests[completionID] = request
@@ -309,6 +322,8 @@ class DeviceRedirectionMITM(Subject):
         should also contain a pattern to match. For example: to list all files in the Documents folder, the path should be
         \Documents\*
         """
+
+        self.statCounter.increment(STAT.DEVICE_REDIRECTION_FORGED_DIRECTORY_LISTING)
 
         completionID = self.findNextRequestID()
         request = DeviceRedirectionMITM.ForgedDirectoryListingRequest(deviceID, completionID, self, path)

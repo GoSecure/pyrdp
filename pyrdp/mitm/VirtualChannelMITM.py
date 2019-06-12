@@ -5,6 +5,8 @@
 #
 
 from pyrdp.layer import RawLayer
+from pyrdp.logging import StatCounter
+from pyrdp.logging.StatCounter import STAT
 from pyrdp.pdu import PDU
 
 
@@ -13,7 +15,7 @@ class VirtualChannelMITM:
     Generic MITM component for any virtual channel.
     """
 
-    def __init__(self, client: RawLayer, server: RawLayer):
+    def __init__(self, client: RawLayer, server: RawLayer, statCounter: StatCounter):
         """
         :param client: layer for the client side
         :param server: layer for the server side
@@ -21,6 +23,7 @@ class VirtualChannelMITM:
 
         self.client = client
         self.server = server
+        self.statCounter = statCounter
 
         self.client.createObserver(
             onPDUReceived = self.onClientPDUReceived
@@ -36,6 +39,7 @@ class VirtualChannelMITM:
         :param pdu: the PDU that was received
         """
 
+        self.statCounter.increment(STAT.VIRTUAL_CHANNEL_INPUT)
         self.server.sendPDU(pdu)
 
     def onServerPDUReceived(self, pdu: PDU):
@@ -44,4 +48,5 @@ class VirtualChannelMITM:
         :param pdu: the PDU that was received
         """
 
+        self.statCounter.increment(STAT.VIRTUAL_CHANNEL, STAT.VIRTUAL_CHANNEL_OUTPUT)
         self.client.sendPDU(pdu)

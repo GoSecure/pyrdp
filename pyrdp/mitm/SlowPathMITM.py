@@ -6,6 +6,7 @@
 
 from pyrdp.enum import CapabilityType, OrderFlag, VirtualChannelCompressionFlag
 from pyrdp.layer import SlowPathLayer, SlowPathObserver
+from pyrdp.logging.StatCounter import StatCounter, STAT
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.pdu import Capability, ConfirmActivePDU, DemandActivePDU, SlowPathPDU
 
@@ -15,11 +16,12 @@ class SlowPathMITM:
     MITM component for the slow-path layer.
     """
 
-    def __init__(self, client: SlowPathLayer, server: SlowPathLayer, state: RDPMITMState):
+    def __init__(self, client: SlowPathLayer, server: SlowPathLayer, state: RDPMITMState, statCounter: StatCounter):
         """
         :param client: slow-path layer for the client side
         :param server: slow-path layer for the server side
         """
+        self.statCounter = statCounter
         self.client = client
         self.server = server
         self.state = state
@@ -35,12 +37,14 @@ class SlowPathMITM:
         )
 
     def onClientPDUReceived(self, pdu: SlowPathPDU):
+        self.statCounter.increment(STAT.IO_INPUT_SLOWPATH)
         SlowPathObserver.onPDUReceived(self.clientObserver, pdu)
 
         if self.state.forwardInput:
             self.server.sendPDU(pdu)
 
     def onServerPDUReceived(self, pdu: SlowPathPDU):
+        self.statCounter.increment(STAT.IO_OUTPUT_SLOWPATH)
         SlowPathObserver.onPDUReceived(self.serverObserver, pdu)
 
         if self.state.forwardOutput:
