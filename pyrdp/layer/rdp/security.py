@@ -135,7 +135,9 @@ class TLSSecurityLayer(SecurityLayer):
         self.securityHeaderExpected = False
 
     def recv(self, data: bytes):
-        if not self.securityHeaderExpected:
+        # Licensing happens in the security layer
+        licensingBytes = b"\x80\x00"
+        if not self.securityHeaderExpected and data[0:2] != b"\x80\x00":
             if self.next is not None:
                 self.next.recv(data)
         else:
