@@ -37,15 +37,18 @@ class LiveWindow(BaseWindow):
 
     def createLivePlayerTab(self):
         tab = LiveTab()
-        tab.connectionClosed.connect(self.onConnectionClosed)
+        tab.connectionRenameTab.connect(self.renameLivePlayerTab)
         self.addTab(tab, "New connection")
         self.setCurrentIndex(self.count() - 1)
         self.queue.put(tab)
 
-    def onConnectionClosed(self, tab: LiveTab):
+    def renameLivePlayerTab(self, tab: LiveTab, name: str, closed: bool):
         index = self.indexOf(tab)
-        text = self.tabText(index)
-        self.setTabText(index, text + " - Closed")
+        if closed:
+            text = self.tabText(index)
+            self.setTabText(index, text + " - Closed")
+        elif name:
+            self.setTabText(index, name)
 
     def onClose(self):
         self.server.stop()

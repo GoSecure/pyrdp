@@ -23,7 +23,7 @@ class LiveTab(BaseTab, DirectoryObserver):
     Tab playing a live RDP connection as data is being received over the network.
     """
 
-    connectionClosed = Signal(object)
+    connectionRenameTab = Signal(object, str, bool)
 
     def __init__(self, parent: QWidget = None):
         layers = AsyncIOPlayerLayerSet()
@@ -33,7 +33,7 @@ class LiveTab(BaseTab, DirectoryObserver):
         self.layers = layers
         self.rdpWidget = rdpWidget
         self.fileSystem = FileSystem()
-        self.eventHandler = LiveEventHandler(self.widget, self.text, self.log, self.fileSystem, self.layers.player)
+        self.eventHandler = LiveEventHandler(self.widget, self.text, self.log, self.fileSystem, self.layers.player, self.connectionRenameTab, self)
         self.attackerBar = AttackerBar()
 
         self.attackerBar.controlTaken.connect(lambda: self.rdpWidget.setControlState(True))
@@ -55,9 +55,6 @@ class LiveTab(BaseTab, DirectoryObserver):
 
     def getProtocol(self) -> asyncio.Protocol:
         return self.layers.tcp
-
-    def onDisconnection(self):
-        self.connectionClosed.emit()
 
     def onClose(self):
         self.layers.tcp.disconnect(True)
