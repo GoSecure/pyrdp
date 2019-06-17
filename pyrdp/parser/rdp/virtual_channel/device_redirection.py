@@ -143,7 +143,12 @@ class DeviceRedirectionParser(Parser):
         deviceData = stream.read(deviceDataLength)
 
         preferredDOSName = preferredDOSName.decode(errors = "ignore")[: 7]
-        endIndex = preferredDOSName.index("\x00")
+
+        endIndex = -1
+        try:
+            endIndex = preferredDOSName.index("\x00")
+        except:
+            pass
 
         if endIndex >= 0:
             preferredDOSName = preferredDOSName[: endIndex]
