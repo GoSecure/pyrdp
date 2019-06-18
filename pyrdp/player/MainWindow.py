@@ -97,18 +97,18 @@ class MainWindow(QMainWindow):
         for fileName in filesToRead:
             self.replayWindow.openFile(fileName)
 
-    def onOpenFile(self) -> None:
+    def onOpenFile(self):
         fileName, _ = QFileDialog.getOpenFileName(self, "Open File")
 
         if fileName:
             self.tabManager.setCurrentWidget(self.replayWindow)
             self.replayWindow.openFile(fileName)
 
-    def sendKeySequence(self, keys: [Qt.Key]) -> None:
+    def sendKeySequence(self, keys: [Qt.Key]):
         if self.tabManager.currentWidget() is self.liveWindow:
             self.liveWindow.sendKeySequence(keys)
 
-    def sendText(self) -> None:
+    def sendText(self):
         if self.tabManager.currentWidget() is not self.liveWindow:
             return
 
@@ -119,13 +119,13 @@ class MainWindow(QMainWindow):
 
         self.liveWindow.sendText(text)
 
-    def toggleFocusNewTab(self) -> None:
+    def toggleFocusNewTab(self):
         self.options["focusNewTab"] = not self.options.get("focusNewTab")
 
-    def toggleCloseTabOnCtrlW(self) -> None:
+    def toggleCloseTabOnCtrlW(self):
         self.options["closeTabOnCtrlW"] = not self.options.get("closeTabOnCtrlW")
 
-    def updateTabConnectionCount(self) -> None:
+    def updateTabConnectionCount(self):
         """
         Update the first tab (Live connections) with the current number of tabs
         """

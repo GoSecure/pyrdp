@@ -40,7 +40,7 @@ class LiveWindow(BaseWindow):
         tab = self.queue.get()
         return tab.getProtocol()
 
-    def createLivePlayerTab(self) -> None:
+    def createLivePlayerTab(self):
         tab = LiveTab()
         tab.connectionRenameTab.connect(self.renameLivePlayerTab)
         self.addTab(tab, "New connection")
@@ -51,7 +51,7 @@ class LiveWindow(BaseWindow):
         self.updateCountSignal.emit()
         self.queue.put(tab)
 
-    def renameLivePlayerTab(self, tab: LiveTab, name: str, closed: bool) -> None:
+    def renameLivePlayerTab(self, tab: LiveTab, name: str, closed: bool):
         index = self.indexOf(tab)
         if closed:
             text = self.tabText(index)
@@ -59,22 +59,22 @@ class LiveWindow(BaseWindow):
         elif name:
             self.setTabText(index, name)
 
-    def onClose(self) -> None:
+    def onClose(self):
         self.server.stop()
 
-    def sendKeySequence(self, keys: [Qt.Key]) -> None:
+    def sendKeySequence(self, keys: [Qt.Key]):
         tab: LiveTab = self.currentWidget()
 
         if tab is not None:
             tab.sendKeySequence(keys)
 
-    def sendText(self, text: str) -> None:
+    def sendText(self, text: str):
         tab: LiveTab = self.currentWidget()
 
         if tab is not None:
             tab.sendText(text)
 
-    def onTabClosed(self, index: int) -> None:
+    def onTabClosed(self, index: int):
         """
         Gracefully closes the tab by calling the onClose method
         :param index: Index of the closed tab
@@ -82,7 +82,7 @@ class LiveWindow(BaseWindow):
         super().onTabClosed(index)
         self.updateCountSignal.emit()
 
-    def onTabCloseRequest(self, index: int) -> None:
+    def onTabCloseRequest(self, index: int):
         """
         Prompt the user for validation when the connection is live, then forward call to the parent.
         """
