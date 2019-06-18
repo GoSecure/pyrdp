@@ -144,11 +144,10 @@ class DeviceRedirectionParser(Parser):
 
         preferredDOSName = preferredDOSName.decode(errors = "ignore")[: 7]
 
-        endIndex = -1
         try:
             endIndex = preferredDOSName.index("\x00")
-        except:
-            pass
+        except ValueError:
+            endIndex = -1
 
         if endIndex >= 0:
             preferredDOSName = preferredDOSName[: endIndex]
