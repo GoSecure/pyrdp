@@ -76,7 +76,7 @@ class MainWindow(QMainWindow):
         closeTabOnCtrlW = QAction("Close current tab on Ctrl+W", self)
         closeTabOnCtrlW.setCheckable(True)
         closeTabOnCtrlW.setChecked(self.options.get("closeTabOnCtrlW"))
-        closeTabOnCtrlW.triggered.connect(lambda: self.togglecloseTabOnCtrlW())
+        closeTabOnCtrlW.triggered.connect(lambda: self.toggleCloseTabOnCtrlW())
 
         # Create menu
         menuBar = self.menuBar()
@@ -97,18 +97,18 @@ class MainWindow(QMainWindow):
         for fileName in filesToRead:
             self.replayWindow.openFile(fileName)
 
-    def onOpenFile(self):
+    def onOpenFile(self) -> None:
         fileName, _ = QFileDialog.getOpenFileName(self, "Open File")
 
         if fileName:
             self.tabManager.setCurrentWidget(self.replayWindow)
             self.replayWindow.openFile(fileName)
 
-    def sendKeySequence(self, keys: [Qt.Key]):
+    def sendKeySequence(self, keys: [Qt.Key]) -> None:
         if self.tabManager.currentWidget() is self.liveWindow:
             self.liveWindow.sendKeySequence(keys)
 
-    def sendText(self):
+    def sendText(self) -> None:
         if self.tabManager.currentWidget() is not self.liveWindow:
             return
 
@@ -119,13 +119,13 @@ class MainWindow(QMainWindow):
 
         self.liveWindow.sendText(text)
 
-    def toggleFocusNewTab(self):
+    def toggleFocusNewTab(self) -> None:
         self.options["focusNewTab"] = not self.options.get("focusNewTab")
 
-    def togglecloseTabOnCtrlW(self):
+    def toggleCloseTabOnCtrlW(self) -> None:
         self.options["closeTabOnCtrlW"] = not self.options.get("closeTabOnCtrlW")
 
-    def updateTabConnectionCount(self):
+    def updateTabConnectionCount(self) -> None:
         """
         Update the first tab (Live connections) with the current number of tabs
         """

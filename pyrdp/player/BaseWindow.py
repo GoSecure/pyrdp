@@ -28,7 +28,7 @@ class BaseWindow(QTabWidget):
         self.options = options
         self.closeTabShortcut = QShortcut(QKeySequence("Ctrl+W"), self, self.onCtrlW)
 
-    def onTabClosed(self, index):
+    def onTabClosed(self, index: int) -> None:
         """
         Gracefully closes the tab by calling the onClose method
         :param index: Index of the closed tab
@@ -38,13 +38,13 @@ class BaseWindow(QTabWidget):
         self.removeTab(index)
 
 
-    def onTabCloseRequest(self, index):
+    def onTabCloseRequest(self, index: int) -> None:
         """
         By default, will close the tab. Can be overriden to add validation.
         """
 
         self.onTabClosed(index)
 
-    def onCtrlW(self):
+    def onCtrlW(self) -> None:
         if self.options.get("closeTabOnCtrlW") and self.count() > 0:
             self.onTabCloseRequest(self.currentIndex())
