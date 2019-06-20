@@ -107,8 +107,7 @@ class MCSMITM:
         if rdpClientDataPDU.networkData:
             self.state.channelDefinitions = rdpClientDataPDU.networkData.channelDefinitions
             if "MS_T120" in map(lambda channelDef: channelDef.name, rdpClientDataPDU.networkData.channelDefinitions):
-                self.log.warning("Client tries to open virtual channel 'MS_T120', which most likely means it either"
-                                 " scans for or tries to exploit BlueKeep (CVE-2019-0708).", {"bluekeep": True})
+                self.log.info("Bluekeep (CVE-2019-0708) scan or exploit attempt detected.", {"bluekeep": True})
 
         serverGCCPDU = GCCConferenceCreateRequestPDU("1", rdpClientConnectionParser.write(rdpClientDataPDU))
         serverMCSPDU = MCSConnectInitialPDU(
