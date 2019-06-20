@@ -116,7 +116,7 @@ class StatCounter:
     """
 
     def __init__(self):
-        self.stats = {"report": 1.0}
+        self.stats = {"report": 1.0}  # 1.0 = True
 
     def increment(self, *args: str):
         """
@@ -151,7 +151,8 @@ class StatCounter:
         self.stats[STAT.CONNECTION_TIME] = time.time() - self.stats[STAT.CONNECTION_TIME]
         self.incrementWith(STAT.TOTAL_INPUT, STAT.MCS_INPUT, STAT.IO_INPUT_FASTPATH, STAT.VIRTUAL_CHANNEL_INPUT, STAT.CLIPBOARD_CLIENT, STAT.DEVICE_REDIRECTION_CLIENT)
         self.incrementWith(STAT.TOTAL_OUTPUT, STAT.MCS_OUTPUT, STAT.IO_OUTPUT_FASTPATH, STAT.VIRTUAL_CHANNEL_OUTPUT, STAT.CLIPBOARD_SERVER, STAT.DEVICE_REDIRECTION_SERVER)
-        self.stats[STAT.CLIENT_SERVER_RATIO] = self.stats[STAT.TOTAL_INPUT] / self.stats[STAT.TOTAL_OUTPUT]
+        if self.stats[STAT.TOTAL_OUTPUT] > 0:
+            self.stats[STAT.CLIENT_SERVER_RATIO] = self.stats[STAT.TOTAL_INPUT] / self.stats[STAT.TOTAL_OUTPUT]
 
     def logReport(self, log: LoggerAdapter):
         log.info(self.stats)
