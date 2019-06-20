@@ -57,14 +57,7 @@ class TwistedTCPLayer(IntermediateLayer, Protocol):
         When the TCP handshake is completed, notify the observer.
         """
         self.connectedEvent.set()
-
-        try:
-            # Connection to client
-            ip = self.transport.client[0]
-            self.observer.onConnection(ip)
-        except AttributeError:
-            # Connection to server / attacker
-            self.observer.onConnection()
+        self.observer.onConnection()
 
     def connectionLost(self, reason=connectionDone):
         """
