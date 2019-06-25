@@ -155,4 +155,4 @@ class StatCounter:
             self.stats[STAT.CLIENT_SERVER_RATIO] = self.stats[STAT.TOTAL_INPUT] / self.stats[STAT.TOTAL_OUTPUT]
 
     def logReport(self, log: LoggerAdapter):
-        log.info(self.stats)
+        log.info("Connection report", self.stats)
