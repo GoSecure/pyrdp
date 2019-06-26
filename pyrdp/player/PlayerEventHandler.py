@@ -6,6 +6,7 @@
 
 from typing import Optional, Union
 
+from PySide2.QtCore import QObject
 from PySide2.QtGui import QTextCursor
 from PySide2.QtWidgets import QTextEdit
 
@@ -22,7 +23,7 @@ from pyrdp.player import keyboard
 from pyrdp.ui import QRemoteDesktop, RDPBitmapToQtImage
 
 
-class PlayerEventHandler(Observer):
+class PlayerEventHandler(QObject, Observer):
     """
     Class to handle events coming to the player.
     """

@@ -42,7 +42,8 @@ class LiveWindow(BaseWindow):
 
     def createLivePlayerTab(self):
         tab = LiveTab()
-        tab.connectionRenameTab.connect(self.renameLivePlayerTab)
+        tab.renameTab.connect(self.renameLivePlayerTab)
+        tab.connectionClosed.connect(self.onConnectionClosed)
         self.addTab(tab, "New connection")
 
         if self.options.get("focusNewTab"):
@@ -51,16 +52,18 @@ class LiveWindow(BaseWindow):
         self.updateCountSignal.emit()
         self.queue.put(tab)
 
-    def renameLivePlayerTab(self, tab: LiveTab, name: str, closed: bool):
+    def renameLivePlayerTab(self, tab: LiveTab, name: str):
         index = self.indexOf(tab)
-        if closed:
-            text = self.tabText(index)
-            self.setTabText(index, text + self.closedTabText)
-        elif name:
-            self.setTabText(index, name)
+        self.setTabText(index, name)
 
     def onClose(self):
         self.server.stop()
+
+    def onConnectionClosed(self, tab: LiveTab):
+        index = self.indexOf(tab)
+        text = self.tabText(index)
+        name = text + self.closedTabText
+        self.setTabText(index, name)
 
     def sendKeySequence(self, keys: [Qt.Key]):
         tab: LiveTab = self.currentWidget()

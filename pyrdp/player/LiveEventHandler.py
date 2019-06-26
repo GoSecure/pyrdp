@@ -28,7 +28,10 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
     file read events.
     """
 
-    def __init__(self, viewer: QRemoteDesktop, text: QTextEdit, log: LoggerAdapter, fileSystem: FileSystem, layer: PlayerLayer, connectionRenameTab: Signal, tabInstance: LiveTab):
+    connectionClosed = Signal(object)
+    renameTab = Signal(object, str)
+
+    def __init__(self, viewer: QRemoteDesktop, text: QTextEdit, log: LoggerAdapter, fileSystem: FileSystem, layer: PlayerLayer, tabInstance: LiveTab):
         super().__init__(viewer, text)
         self.log = log
         self.fileSystem = fileSystem
@@ -36,7 +39,6 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
         self.drives: Dict[int, Drive] = {}
         self.downloadFiles: Dict[str, BinaryIO] = {}
         self.downloadDialogs: Dict[str, FileDownloadDialog] = {}
-        self.connectionRenameTab = connectionRenameTab
         self.tabInstance = tabInstance
 
         self.handlers[PlayerPDUType.DIRECTORY_LISTING_RESPONSE] = self.handleDirectoryListingResponse
@@ -54,7 +56,7 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
         clientDataPDU = ClientConnectionParser().parse(pdu.payload)
         clientName = clientDataPDU.coreData.clientName.strip("\x00")
 
-        self.connectionRenameTab.emit(self.tabInstance, clientName, False)
+        self.renameTab.emit(self.tabInstance, clientName)
         super().onClientData(pdu)
 
 
@@ -63,7 +65,7 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
         Message the LiveWindow that this tab's connection is closed
         """
 
-        self.connectionRenameTab.emit(self.tabInstance, "", True)
+        self.connectionClosed.emit(self.tabInstance)
         super().onConnectionClose(pdu)
 
     def onDeviceMapping(self, pdu: PlayerDeviceMappingPDU):
