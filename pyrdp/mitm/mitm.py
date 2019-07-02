@@ -90,7 +90,7 @@ class RDPMITM:
         self.x224 = X224MITM(self.client.x224, self.server.x224, self.getLog("x224"), self.state, serverConnector, self.startTLS)
         """X224 MITM component"""
 
-        self.mcs = MCSMITM(self.client.mcs, self.server.mcs, self.state, self.recorder, self.buildChannel)
+        self.mcs = MCSMITM(self.client.mcs, self.server.mcs, self.state, self.recorder, self.buildChannel, self.getLog("mcs"))
         """MCS MITM component"""
 
         self.security: SecurityMITM = None
