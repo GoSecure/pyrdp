@@ -4,13 +4,13 @@
 # Licensed under the GPLv3 or later.
 #
 
-from pyrdp.enum import CapabilityType, OrderFlag, VirtualChannelCompressionFlag
+from pyrdp.enum import CapabilityType, KeyboardFlag, OrderFlag, VirtualChannelCompressionFlag
 from pyrdp.layer import SlowPathLayer, SlowPathObserver
 from pyrdp.mitm.state import RDPMITMState
-from pyrdp.pdu import Capability, ConfirmActivePDU, DemandActivePDU, SlowPathPDU
+from pyrdp.pdu import Capability, ConfirmActivePDU, DemandActivePDU, InputPDU, KeyboardEvent, SlowPathPDU
+from pyrdp.mitm.BasePathMITM import BasePathMITM
 
-
-class SlowPathMITM:
+class SlowPathMITM(BasePathMITM):
     """
     MITM component for the slow-path layer.
     """
@@ -20,9 +20,7 @@ class SlowPathMITM:
         :param client: slow-path layer for the client side
         :param server: slow-path layer for the server side
         """
-        self.client = client
-        self.server = server
-        self.state = state
+        super().__init__(state, client, server)
 
         self.clientObserver = self.client.createObserver(
             onPDUReceived = self.onClientPDUReceived,
@@ -39,6 +37,12 @@ class SlowPathMITM:
 
         if self.state.forwardInput:
             self.server.sendPDU(pdu)
+
+        if not self.state.loggedIn:
+            if isinstance(pdu, InputPDU):
+                for event in pdu.events:
+                    if isinstance(event, KeyboardEvent):
+                        self.onScanCode(event.keyCode, event.flags & KeyboardFlag.KBDFLAGS_DOWN == 0, event.flags & KeyboardFlag.KBDFLAGS_EXTENDED != 0)
 
     def onServerPDUReceived(self, pdu: SlowPathPDU):
         SlowPathObserver.onPDUReceived(self.serverObserver, pdu)

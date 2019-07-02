@@ -3,6 +3,7 @@
 # Copyright (C) 2019 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+
 from logging import LoggerAdapter
 from typing import Callable, Dict
 
@@ -28,7 +29,7 @@ class MCSMITM:
     """
 
     def __init__(self, client: MCSLayer, server: MCSLayer, state: RDPMITMState, recorder: Recorder,
-                 buildChannelCallback: Callable[[MCSServerChannel, MCSClientChannel], None], log: LoggerAdapter):
+                buildChannelCallback: Callable[[MCSServerChannel, MCSClientChannel], None], log: LoggerAdapter):
         """
         :param client: MCS layer for the client side
         :param server: MCS layer for the server side
@@ -78,7 +79,6 @@ class MCSMITM:
         gccParser = GCCParser()
         rdpClientConnectionParser = ClientConnectionParser()
         gccConferenceCreateRequestPDU: GCCConferenceCreateRequestPDU = gccParser.parse(pdu.payload)
-
         rdpClientDataPDU = rdpClientConnectionParser.parse(gccConferenceCreateRequestPDU.payload)
 
         # FIPS is not implemented, so remove this flag if it's set
@@ -119,6 +119,8 @@ class MCSMITM:
             pdu.maxParams,
             gccParser.write(serverGCCPDU)
         )
+
+        self.log.info("Client hostname %(clientName)s", {"clientName": rdpClientDataPDU.coreData.clientName.strip("\x00")})
 
         self.server.sendPDU(serverMCSPDU)
 

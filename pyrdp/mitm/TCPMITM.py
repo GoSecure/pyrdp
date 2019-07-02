@@ -3,7 +3,7 @@
 # Copyright (C) 2019 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-
+import time
 from logging import LoggerAdapter
 from typing import Coroutine
 
@@ -27,6 +27,9 @@ class TCPMITM:
         :param recorder: recorder for this connection
         :param serverConnector: coroutine that connects to the server side, closed when the client disconnects
         """
+
+        self.connectionTime = 0
+        # To keep track of the duration of the TCP connection.
 
         self.client = client
         self.server = server
@@ -63,8 +66,9 @@ class TCPMITM:
         """
         Log the fact that a new client has connected.
         """
-
-        self.log.info("New client connected")
+        self.connectionTime = time.time()
+        ip = self.client.transport.client[0]
+        self.log.info("New client connected from %(clientIp)s", {"clientIp": ip})
 
     def onClientDisconnection(self, reason):
         """
@@ -72,8 +76,11 @@ class TCPMITM:
         :param reason: reason for disconnection
         """
 
+        self.connectionTime = time.time() - self.connectionTime
+
         self.recordConnectionClose()
         self.log.info("Client connection closed. %(reason)s", {"reason": reason.value})
+        self.log.info("Client connection time: %(connectionTime)s secs", {"connectionTime": self.connectionTime})
         self.serverConnector.close()
         self.server.disconnect(True)
 

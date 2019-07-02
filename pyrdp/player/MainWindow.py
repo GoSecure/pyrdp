@@ -72,11 +72,13 @@ class MainWindow(QMainWindow):
             self.replayWindow.openFile(fileName)
 
     def onOpenFile(self):
-        fileName, _ = QFileDialog.getOpenFileName(self, "Open File")
+        fileNames, _ = QFileDialog.getOpenFileNames(self, "Open File(s)")
 
-        if fileName:
+        if fileNames:
             self.tabManager.setCurrentWidget(self.replayWindow)
-            self.replayWindow.openFile(fileName)
+            for fileName in fileNames:
+                self.replayWindow.openFile(fileName)
+
 
     def sendKeySequence(self, keys: [Qt.Key]):
         if self.tabManager.currentWidget() is self.liveWindow:

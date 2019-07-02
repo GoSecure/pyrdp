@@ -51,6 +51,24 @@ class RDPMITMState:
         self.forwardOutput = True
         """Whether output from the server should be forwarded to the client"""
 
+        self.loggedIn = False
+        """Keep tracks of the client login status"""
+
+        self.inputBuffer = ""
+        """Used to store what the client types"""
+
+        self.credentialsCandidate = ""
+        """The potential client password"""
+
+        self.shiftPressed = False
+        """The current keyboard shift state"""
+
+        self.capsLockOn = False
+        """The current keyboard capsLock state"""
+
+        self.ctrlPressed = False
+        """The current keybaord ctrl state"""
+
         self.securitySettings.addObserver(self.crypters[ParserMode.CLIENT])
         self.securitySettings.addObserver(self.crypters[ParserMode.SERVER])
 

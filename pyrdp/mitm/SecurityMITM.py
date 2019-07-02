@@ -38,12 +38,13 @@ class SecurityMITM:
         self.recorder = recorder
 
         self.client.createObserver(
+            onLicensingDataReceived = self.onClientLicensingData,
             onSecurityExchangeReceived = self.onSecurityExchange,
             onClientInfoReceived=self.onClientInfo,
         )
 
         self.server.createObserver(
-            onLicensingDataReceived = self.onLicensingData
+            onLicensingDataReceived = self.onServerLicensingData,
         )
 
     def onSecurityExchange(self, pdu: SecurityExchangePDU):
@@ -94,7 +95,7 @@ class SecurityMITM:
         self.log.debug("Sending %(pdu)s", {"pdu": pdu})
         self.server.sendClientInfo(pdu)
 
-    def onLicensingData(self, data: bytes):
+    def onServerLicensingData(self, data: bytes):
         """
         Forward licensing data to the client and disable security headers if TLS is in use.
         :param data: the licensing data
@@ -104,3 +105,14 @@ class SecurityMITM:
             self.server.securityHeaderExpected = False
 
         self.client.sendLicensing(data)
+
+    def onClientLicensingData(self, data: bytes):
+        """
+        Forward licensing data to the server and disable security headers if TLS is in use.
+        :param data: the licensing data
+        """
+        if self.state.useTLS:
+            self.client.securityHeaderExpected = False
+            self.server.securityHeaderExpected = False
+
+        self.server.sendLicensing(data)
