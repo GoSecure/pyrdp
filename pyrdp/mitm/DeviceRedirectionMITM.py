@@ -11,13 +11,14 @@ from pathlib import Path
 from typing import Dict, Optional, Union
 
 from pyrdp.core import FileProxy, ObservedBy, Observer, Subject
-from pyrdp.enum import CreateOption, DeviceType, DirectoryAccessMask, FileAccessMask, FileAttributes, \
+from pyrdp.enum import CreateOption, DeviceRedirectionPacketID, DeviceType, DirectoryAccessMask, FileAccessMask, FileAttributes, \
     FileCreateDisposition, FileCreateOptions, FileShareAccess, FileSystemInformationClass, IOOperationSeverity, \
     MajorFunction, MinorFunction
 from pyrdp.layer import DeviceRedirectionLayer
 from pyrdp.logging.StatCounter import StatCounter, STAT
 from pyrdp.mitm.config import MITMConfig
 from pyrdp.mitm.FileMapping import FileMapping, FileMappingDecoder, FileMappingEncoder
+from pyrdp.mitm.state import RDPMITMState
 from pyrdp.pdu import DeviceAnnounce, DeviceCloseRequestPDU, DeviceCloseResponsePDU, DeviceCreateRequestPDU, \
     DeviceCreateResponsePDU, DeviceDirectoryControlResponsePDU, DeviceIORequestPDU, DeviceIOResponsePDU, \
     DeviceListAnnounceRequest, DeviceQueryDirectoryRequestPDU, DeviceQueryDirectoryResponsePDU, DeviceReadRequestPDU, \
@@ -55,7 +56,7 @@ class DeviceRedirectionMITM(Subject):
 
 
     def __init__(self, client: DeviceRedirectionLayer, server: DeviceRedirectionLayer, log: LoggerAdapter,
-                 config: MITMConfig, statCounter: StatCounter):
+                 config: MITMConfig, statCounter: StatCounter, state: RDPMITMState):
         """
         :param client: device redirection layer for the client side
         :param server: device redirection layer for the server side
@@ -66,6 +67,7 @@ class DeviceRedirectionMITM(Subject):
 
         self.client = client
         self.server = server
+        self.state = state
         self.log = log
         self.statCounter = statCounter
         self.config = config
@@ -132,6 +134,10 @@ class DeviceRedirectionMITM(Subject):
 
         elif isinstance(pdu, DeviceListAnnounceRequest):
             self.handleDeviceListAnnounceRequest(pdu)
+
+        elif isinstance(pdu, DeviceRedirectionPDU):
+            if pdu.packetID == DeviceRedirectionPacketID.PAKID_CORE_USER_LOGGEDON:
+                self.handleClientLogin()
 
         if not dropPDU:
             destination.sendPDU(pdu)
@@ -279,6 +285,22 @@ class DeviceRedirectionMITM(Subject):
                     break
 
             self.saveMapping()
+
+
+    def handleClientLogin(self):
+        """
+        Handle events that should be triggered when a client logs in.
+        """
+
+        if self.state.credentialsCandidate or self.state.inputBuffer:
+            self.log.info("Credentials candidate from heuristic: %(credentials_candidate)s", {"credentials_candidate" : (self.state.credentialsCandidate or self.state.inputBuffer) })
+
+        # Deactivate the logger for this client
+        self.state.loggedIn = True
+        self.state.shiftPressed = False
+        self.state.capsLockOn = False
+        self.state.credentialsCandidate = ""
+        self.state.inputBuffer = ""
 
 
     def findNextRequestID(self) -> int:

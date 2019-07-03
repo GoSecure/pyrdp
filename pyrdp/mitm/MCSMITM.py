@@ -3,6 +3,7 @@
 # Copyright (C) 2019 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+
 from logging import LoggerAdapter
 from typing import Callable, Dict
 
@@ -37,6 +38,7 @@ class MCSMITM:
         :param state: the RDP MITM shared state
         :param recorder: the recorder for this session
         :param buildChannelCallback: function called when MCS channels are built
+        :param log: logger for the MCS layer.
         """
 
         self.log = log
@@ -80,9 +82,9 @@ class MCSMITM:
         gccParser = GCCParser()
         rdpClientConnectionParser = ClientConnectionParser()
         gccConferenceCreateRequestPDU: GCCConferenceCreateRequestPDU = gccParser.parse(pdu.payload)
+        rdpClientDataPDU = rdpClientConnectionParser.parse(gccConferenceCreateRequestPDU.payload)
 
         # FIPS is not implemented, so remove this flag if it's set
-        rdpClientDataPDU = rdpClientConnectionParser.parse(gccConferenceCreateRequestPDU.payload)
         rdpClientDataPDU.securityData.encryptionMethods &= ~EncryptionMethod.ENCRYPTION_FIPS
         rdpClientDataPDU.securityData.extEncryptionMethods &= ~EncryptionMethod.ENCRYPTION_FIPS
 
@@ -107,6 +109,8 @@ class MCSMITM:
 
         if rdpClientDataPDU.networkData:
             self.state.channelDefinitions = rdpClientDataPDU.networkData.channelDefinitions
+            if "MS_T120" in map(lambda channelDef: channelDef.name, rdpClientDataPDU.networkData.channelDefinitions):
+                self.log.info("Bluekeep (CVE-2019-0708) scan or exploit attempt detected.", {"bluekeep": True})
 
         serverGCCPDU = GCCConferenceCreateRequestPDU("1", rdpClientConnectionParser.write(rdpClientDataPDU))
         serverMCSPDU = MCSConnectInitialPDU(
@@ -118,6 +122,8 @@ class MCSMITM:
             pdu.maxParams,
             gccParser.write(serverGCCPDU)
         )
+
+        self.log.info("Client hostname %(clientName)s", {"clientName": rdpClientDataPDU.coreData.clientName.strip("\x00")})
 
         self.server.sendPDU(serverMCSPDU)
 

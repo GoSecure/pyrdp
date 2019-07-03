@@ -185,7 +185,7 @@ class PlayerEventHandler(Observer):
             elif isinstance(event, FastPathMouseEvent):
                 self.onMouse(event)
             elif isinstance(event, FastPathScanCodeEvent):
-                self.onScanCode(event.scanCode, event.isReleased, event.rawHeaderByte & 2 != 0)
+                self.onScanCode(event.scanCode, event.isReleased, event.rawHeaderByte & keyboard.KBDFLAGS_EXTENDED != 0)
 
 
     def onUnicode(self, event: FastPathUnicodeEvent):

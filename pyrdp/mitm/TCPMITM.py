@@ -68,8 +68,13 @@ class TCPMITM:
         """
         Log the fact that a new client has connected.
         """
-        self.statCounter.start()
-        self.log.info("New client connected")
+        
+        # Statistics
+        self.statCounter.start()        
+        self.connectionTime = time.time()
+
+        ip = self.client.transport.client[0]
+        self.log.info("New client connected from %(clientIp)s", {"clientIp": ip})
 
     def onClientDisconnection(self, reason):
         """
