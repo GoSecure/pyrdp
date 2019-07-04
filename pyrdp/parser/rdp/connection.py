@@ -363,7 +363,7 @@ class ServerConnectionParser(Parser):
 
         return ProprietaryCertificate(signatureAlgorithmID, keyAlgorithmID, publicKeyType, publicKey, signatureType, signature, padding)
 
-    def parsePublicKey(self, data: bytes) -> RSA.pubkey.pubkey:
+    def parsePublicKey(self, data: bytes) -> RSA.RsaKey:
         stream = BytesIO(data)
         _magic = stream.read(4)
         keyLength = Uint32LE.unpack(stream)
@@ -475,7 +475,7 @@ class ServerConnectionParser(Parser):
         stream.write(cert.signature)
         stream.write(b"\x00" * 8)
 
-    def writePublicKey(self, publicKey: RSA.pubkey.pubkey) -> bytes:
+    def writePublicKey(self, publicKey: RSA.RsaKey) -> bytes:
         modulus = publicKey.n
         publicExponent = publicKey.e
 
