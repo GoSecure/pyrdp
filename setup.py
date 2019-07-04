@@ -28,7 +28,6 @@ setup(name='pyrdp',
     install_requires=[
         'appdirs',
         'cryptography',
-        'dbus-python',
         'names',
         'pyasn1',
         'pycrypto',
@@ -38,6 +37,7 @@ setup(name='pyrdp',
         'rsa',
         'service_identity',
         'twisted',
+        'dbus-python;platform_system!="Windows"',
         'notify2;platform_system!="Windows"'
     ],
 )
