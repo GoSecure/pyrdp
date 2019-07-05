@@ -16,21 +16,21 @@ Cryptographic utility functions
 """
 
 # Adapted from https://github.com/dlitz/pycrypto/blob/master/lib/Crypto/PublicKey/_slowmath.py
-# Not meant to be a safe implementation. We only need raw RSA without padding.
 class RSA:
     """
     Class for encrypting or decrypting data with RSA
+    Not meant to be a safe implementation. We only need raw RSA without padding.
     """
 
     def __init__(self, key: RsaKey):
         self.key = key
 
-    def encrypt(self, plaintext: bytes):
+    def encrypt(self, plaintext: bytes) -> bytes:
         m = bytes_to_long(plaintext)
         ciphertext = pow(m, self.key.e, self.key.n)
         return long_to_bytes(ciphertext)
 
-    def decrypt(self, ciphertext: bytes):
+    def decrypt(self, ciphertext: bytes) -> bytes:
         c = bytes_to_long(ciphertext)
 
         # compute c**d (mod n)
