@@ -50,7 +50,7 @@ def prepareLoggers(logLevel: int, outDir: Path):
         uiLogger = logging.getLogger(LOGGER_NAMES.PLAYER_UI)
         uiLogger.addHandler(notifyHandler)
     else:
-        print("Notifications are not supported for your platform, they will be disabled.")
+        pyrdpLogger.warning("Notifications are not supported for your platform, they will be disabled.")
 
 def main():
     """
