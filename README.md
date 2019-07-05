@@ -126,7 +126,7 @@ and using a directory name like `venv` is more standard anyway.
 Before installing the dependencies, you need to activate your virtual environment:
 
 ```
-venv\bin\activate
+venv\Scripts\activate
 ```
 
 Finally, you can install the project with Pip:
