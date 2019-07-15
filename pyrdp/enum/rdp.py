@@ -220,6 +220,7 @@ class RDPVersion(IntEnum):
     RDP10_4 = 0x80009
     RDP10_5 = 0x8000A
     RDP10_6 = 0x8000B
+    RDP10_7 = 0x8000C
 
 
 class ColorDepth(IntEnum):
