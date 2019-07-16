@@ -42,6 +42,7 @@ class TwistedTCPLayer(IntermediateLayer, Protocol):
     """
 
     def __init__(self):
+        self.log = logging.getLogger(LOGGER_NAMES.PYRDP)
         super().__init__(TCPParser())
         self.connectedEvent = asyncio.Event()
         self.logSSLRequired = False
@@ -91,9 +92,8 @@ class TwistedTCPLayer(IntermediateLayer, Protocol):
         except KeyboardInterrupt:
             raise
         except Exception as e:
-            log = logging.getLogger(LOGGER_NAMES.PYRDP)
-            log.exception(e)
-            log.error("Exception occurred when receiving: %(data)s" , {"data": hexlify(data).decode()})
+            self.log.exception(e)
+            self.log.error("Exception occurred when receiving: %(data)s" , {"data": hexlify(data).decode()})
             raise
 
     def sendBytes(self, data: bytes):
