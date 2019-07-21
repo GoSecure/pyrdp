@@ -155,4 +155,9 @@ class StatCounter:
             self.stats[STAT.CLIENT_SERVER_RATIO] = self.stats[STAT.TOTAL_INPUT] / self.stats[STAT.TOTAL_OUTPUT]
 
     def logReport(self, log: LoggerAdapter):
-        log.info("Connection report", self.stats)
+        """
+        Create an INFO log message to log the Connection report using the keys in self.stats.
+        :param log: Logger to use to log the report
+        """
+        keys = "".join([f"{key}: %({key})s " for key in self.stats.keys()])
+        log.info(f"Connection report: {keys}", self.stats)
