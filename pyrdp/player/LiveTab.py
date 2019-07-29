@@ -6,7 +6,7 @@
 
 import asyncio
 
-from PySide2.QtCore import Qt, Signal
+from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QHBoxLayout, QWidget
 
 from pyrdp.player.AttackerBar import AttackerBar
@@ -22,8 +22,6 @@ class LiveTab(BaseTab, DirectoryObserver):
     """
     Tab playing a live RDP connection as data is being received over the network.
     """
-
-    connectionClosed = Signal(object)
 
     def __init__(self, parent: QWidget = None):
         layers = AsyncIOPlayerLayerSet()
@@ -59,9 +57,6 @@ class LiveTab(BaseTab, DirectoryObserver):
 
     def getProtocol(self) -> asyncio.Protocol:
         return self.layers.tcp
-
-    def onDisconnection(self):
-        self.connectionClosed.emit()
 
     def onClose(self):
         self.layers.tcp.disconnect(True)
