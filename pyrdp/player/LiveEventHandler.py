@@ -7,12 +7,15 @@ from logging import LoggerAdapter
 from pathlib import Path, PosixPath
 from typing import BinaryIO, Dict
 
+from PySide2.QtCore import Signal
 from PySide2.QtWidgets import QTextEdit
 
 from pyrdp.enum import DeviceType, PlayerPDUType
 from pyrdp.layer import PlayerLayer
 from pyrdp.pdu import PlayerDeviceMappingPDU, PlayerDirectoryListingRequestPDU, PlayerDirectoryListingResponsePDU, \
-    PlayerFileDownloadCompletePDU, PlayerFileDownloadRequestPDU, PlayerFileDownloadResponsePDU
+    PlayerFileDownloadCompletePDU, PlayerFileDownloadRequestPDU, PlayerFileDownloadResponsePDU, PlayerPDU
+from pyrdp.parser import ClientConnectionParser
+from pyrdp.player import LiveTab
 from pyrdp.player.FileDownloadDialog import FileDownloadDialog
 from pyrdp.player.filesystem import DirectoryObserver, Drive, File, FileSystem, FileSystemItemType
 from pyrdp.player.PlayerEventHandler import PlayerEventHandler
@@ -25,7 +28,10 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
     file read events.
     """
 
-    def __init__(self, viewer: QRemoteDesktop, text: QTextEdit, log: LoggerAdapter, fileSystem: FileSystem, layer: PlayerLayer):
+    connectionClosed = Signal(object)
+    renameTab = Signal(object, str)
+
+    def __init__(self, viewer: QRemoteDesktop, text: QTextEdit, log: LoggerAdapter, fileSystem: FileSystem, layer: PlayerLayer, tabInstance: LiveTab):
         super().__init__(viewer, text)
         self.log = log
         self.fileSystem = fileSystem
@@ -33,10 +39,34 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
         self.drives: Dict[int, Drive] = {}
         self.downloadFiles: Dict[str, BinaryIO] = {}
         self.downloadDialogs: Dict[str, FileDownloadDialog] = {}
+        self.tabInstance = tabInstance
 
         self.handlers[PlayerPDUType.DIRECTORY_LISTING_RESPONSE] = self.handleDirectoryListingResponse
         self.handlers[PlayerPDUType.FILE_DOWNLOAD_RESPONSE] = self.handleDownloadResponse
         self.handlers[PlayerPDUType.FILE_DOWNLOAD_COMPLETE] = self.handleDownloadComplete
+        self.handlers[PlayerPDUType.CLIENT_DATA] = self.onClientData
+        self.handlers[PlayerPDUType.CONNECTION_CLOSE] = self.onConnectionClose
+
+
+    def onClientData(self, pdu: PlayerPDU):
+        """
+        Message the LiveWindow to rename the tab to the hostname of the client
+        """
+
+        clientDataPDU = ClientConnectionParser().parse(pdu.payload)
+        clientName = clientDataPDU.coreData.clientName.strip("\x00")
+
+        self.renameTab.emit(self.tabInstance, clientName)
+        super().onClientData(pdu)
+
+
+    def onConnectionClose(self, pdu: PlayerPDU):
+        """
+        Message the LiveWindow that this tab's connection is closed
+        """
+
+        self.connectionClosed.emit(self.tabInstance)
+        super().onConnectionClose(pdu)
 
     def onDeviceMapping(self, pdu: PlayerDeviceMappingPDU):
         super().onDeviceMapping(pdu)
