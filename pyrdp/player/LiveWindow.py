@@ -7,13 +7,12 @@
 import asyncio
 from queue import Queue
 
-from PySide2.QtCore import Signal, Qt
-from PySide2.QtWidgets import QApplication, QWidget
+from PySide2.QtCore import Qt, Signal
+from PySide2.QtWidgets import QApplication, QFileIconProvider, QMessageBox, QWidget
 
 from pyrdp.player.BaseWindow import BaseWindow
 from pyrdp.player.LiveTab import LiveTab
 from pyrdp.player.LiveThread import LiveThread
-
 
 class LiveWindow(BaseWindow):
     """
@@ -37,10 +36,16 @@ class LiveWindow(BaseWindow):
 
     def createLivePlayerTab(self):
         tab = LiveTab()
+        tab.addIconToTab.connect(self.addIconToTab)
         tab.connectionClosed.connect(self.onConnectionClosed)
         self.addTab(tab, "New connection")
         self.setCurrentIndex(self.count() - 1)
         self.queue.put(tab)
+
+    def addIconToTab(self, tab: LiveTab):
+        index = self.indexOf(tab)
+        icon = QFileIconProvider().icon(QFileIconProvider.IconType.Drive)
+        self.setTabIcon(index, icon)
 
     def onConnectionClosed(self, tab: LiveTab):
         index = self.indexOf(tab)

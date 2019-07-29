@@ -5,34 +5,49 @@
 #
 from logging import LoggerAdapter
 from pathlib import Path, PosixPath
-from typing import BinaryIO, Dict
+from typing import BinaryIO, Dict, Union
 
+from PySide2.QtCore import Signal
 from PySide2.QtWidgets import QTextEdit
 
 from pyrdp.enum import DeviceType, PlayerPDUType
 from pyrdp.layer import PlayerLayer
 from pyrdp.pdu import PlayerDeviceMappingPDU, PlayerDirectoryListingRequestPDU, PlayerDirectoryListingResponsePDU, \
     PlayerFileDownloadCompletePDU, PlayerFileDownloadRequestPDU, PlayerFileDownloadResponsePDU
+from pyrdp.player import LiveTab
 from pyrdp.player.FileDownloadDialog import FileDownloadDialog
-from pyrdp.player.filesystem import DirectoryObserver, Drive, File, FileSystem, FileSystemItemType
+from pyrdp.player.filesystem import DirectoryObserver, Directory, Drive, File, FileSystem, FileSystemItemType
 from pyrdp.player.PlayerEventHandler import PlayerEventHandler
 from pyrdp.ui import QRemoteDesktop
 
+import os
 
 class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
     """
     Event handler used for live connections. Handles the same events as the replay handler, plus directory listing and
     file read events.
     """
+    addIconToTab = Signal(object)
+    connectionClosed = Signal(object)
+    renameTab = Signal(object, str)
 
-    def __init__(self, viewer: QRemoteDesktop, text: QTextEdit, log: LoggerAdapter, fileSystem: FileSystem, layer: PlayerLayer):
+    def __init__(self, viewer: QRemoteDesktop, text: QTextEdit, log: LoggerAdapter, fileSystem: FileSystem, layer: PlayerLayer, tabInstance: LiveTab):
         super().__init__(viewer, text)
         self.log = log
         self.fileSystem = fileSystem
         self.layer = layer
         self.drives: Dict[int, Drive] = {}
+        self.downloadDirectories: Dict[str, Directory] = {}
         self.downloadFiles: Dict[str, BinaryIO] = {}
         self.downloadDialogs: Dict[str, FileDownloadDialog] = {}
+        self.tabInstance = tabInstance
+
+        # Clicking on an item and "downloading" is a job. Only one job at a time.
+        # We need to process each job independently to keep the dialog reliable
+        self.jobsQueue = set()
+        self.directoryDownloadQueue = set()
+        self.fileDownloadQueue = set()
+        self.currentDownload = None
 
         self.handlers[PlayerPDUType.DIRECTORY_LISTING_RESPONSE] = self.handleDirectoryListingResponse
         self.handlers[PlayerPDUType.FILE_DOWNLOAD_RESPONSE] = self.handleDownloadResponse
@@ -42,6 +57,7 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
         super().onDeviceMapping(pdu)
 
         if pdu.deviceType == DeviceType.RDPDR_DTYP_FILESYSTEM:
+            self.addIconToTab.emit(self.tabInstance)
             drive = self.fileSystem.addDrive(pdu.name, pdu.deviceID)
             drive.addObserver(self)
             self.drives[drive.deviceID] = drive
@@ -49,6 +65,46 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
     def onListDirectory(self, deviceID: int, path: str):
         request = PlayerDirectoryListingRequestPDU(self.layer.getCurrentTimeStamp(), deviceID, path)
         self.layer.sendPDU(request)
+
+    def addToDownloadQueue(self, item: Union[File, Directory], targetPath: str, dialog: FileDownloadDialog):
+        job = (item, targetPath, dialog)
+
+        self.jobsQueue.add(job)
+
+        if self.currentDownload == None:
+            self.dispatchDownload()
+
+    def dispatchDownload(self):
+        # We download each file of a directory before enumerating other directories.
+        # Otherwise we may fill the stack with too many queued items.
+        # When we're done with both file and directories, we start an other queued job
+
+        # Request download of a queued file
+        if len(self.fileDownloadQueue) != 0:
+            file, savePath, dialog = self.fileDownloadQueue.pop()
+
+            self.currentDownload = file.getFullPath()
+            self.onFileDownloadRequested(file, savePath, dialog)
+
+        # Request download of a queued directory
+        elif len(self.directoryDownloadQueue) != 0:
+            directory, path, dialog = self.directoryDownloadQueue.pop()
+
+            self.currentDownload = directory.getFullPath()
+            self.onDirectoryDownloadRequested(directory, path, dialog)
+
+        # Process queued jobs
+        elif len(self.jobsQueue) != 0:
+            item, path, dialog = self.jobsQueue.pop()
+            self.currentDownload = item.getFullPath()
+
+            if isinstance(item, File):
+                self.onFileDownloadRequested(item, path, dialog)
+
+            elif isinstance(item, Directory):
+                self.onDirectoryDownloadRequested(item, path, dialog)
+        else:
+            self.currentDownload = None
 
     def handleDirectoryListingResponse(self, response: PlayerDirectoryListingResponsePDU):
         for description in response.fileDescriptions:
@@ -79,22 +135,50 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
                 currentDirectory = newDirectory
 
             if description.isDirectory:
-                currentDirectory.addDirectory(fileName)
+                # If the directory is not flagged as downloading, but the parent is
+                if not self.downloadDirectories.get(str(path)) and self.downloadDirectories.get(str(path.parent)):
+                    # Create directory on disk
+                    parentPath = self.downloadDirectories[str(path.parent)]
+                    directoryPath = f"{parentPath}/{fileName}"
+
+                    os.mkdir(directoryPath)
+
+                    # Queue downloads requests
+                    directory = Directory(fileName, currentDirectory)
+                    dialog = self.downloadDialogs[str(path.parent)]
+                    self.directoryDownloadQueue.add((directory, directoryPath, dialog))
+                else:
+                    currentDirectory.addDirectory(fileName)
             else:
-                currentDirectory.addFile(fileName)
+                # If the directory is flagged as download, download the file
+                if self.downloadDirectories.get(str(path.parent)):
+                    # Create file on disk
+                    parentPath = self.downloadDirectories[str(path.parent)]
+                    filePath = f"{parentPath}/{fileName}"
+
+                    file = File(fileName, currentDirectory)
+
+                    # Queue downloads requests
+                    dialog = self.downloadDialogs[str(path.parent)]
+                    dialog.incrementDownloadTotal()
+                    self.fileDownloadQueue.add((file, filePath, dialog))
+                else:
+                    currentDirectory.addFile(fileName)
+
+        # Having 10 files means another chunk is coming, wait for it
+        if len(response.fileDescriptions) != 10:
+            self.dispatchDownload()
 
     def onFileDownloadRequested(self, file: File, targetPath: str, dialog: FileDownloadDialog):
         remotePath = file.getFullPath()
 
         self.log.info("Saving %(remotePath)s to %(targetPath)s", {"remotePath": remotePath, "targetPath": targetPath})
-        parent = file.parent
 
-        if parent is None:
+        if file.parent is None:
             self.log.error("Cannot save file without drive information.")
             return
 
-        while parent.parent is not None:
-            parent = parent.parent
+        parent = file.getRootParent()
 
         if parent.type != FileSystemItemType.Drive:
             self.log.error("Cannot save file: root parent is not a drive.")
@@ -109,7 +193,26 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
         self.downloadFiles[remotePath] = targetFile
         self.downloadDialogs[remotePath] = dialog
 
-        pdu = PlayerFileDownloadRequestPDU(self.layer.getCurrentTimeStamp(), parent.deviceID, file.getFullPath())
+        pdu = PlayerFileDownloadRequestPDU(self.layer.getCurrentTimeStamp(), parent.deviceID, remotePath)
+        self.layer.sendPDU(pdu)
+
+    def onDirectoryDownloadRequested(self, directory: Directory, targetPath: str, dialog: FileDownloadDialog):
+        remotePath = directory.getFullPath()
+
+        if directory.parent is None:
+            self.log.error("Cannot save directory without drive information.")
+            return
+
+        parent = directory.getRootParent()
+
+        if parent.type != FileSystemItemType.Drive:
+            self.log.error("Cannot save directory: root parent is not a drive.")
+            return
+
+        self.downloadDirectories[remotePath] = targetPath
+        self.downloadDialogs[remotePath] = dialog
+
+        pdu = PlayerDirectoryListingRequestPDU(self.layer.getCurrentTimeStamp(), parent.deviceID, remotePath)
         self.layer.sendPDU(pdu)
 
     def handleDownloadResponse(self, response: PlayerFileDownloadResponsePDU):
@@ -122,7 +225,7 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
         targetFile.write(response.payload)
 
         dialog = self.downloadDialogs[remotePath]
-        dialog.reportProgress(response.offset + len(response.payload))
+        dialog.reportProgress(len(response.payload))
 
     def handleDownloadComplete(self, response: PlayerFileDownloadCompletePDU):
         remotePath = response.path
@@ -130,17 +233,23 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
         if remotePath not in self.downloadFiles:
             return
 
-        dialog = self.downloadDialogs.pop(remotePath)
-        dialog.reportCompletion(response.error)
-
         targetFile = self.downloadFiles.pop(remotePath)
         targetFileName = targetFile.name
         targetFile.close()
 
+        dialog = self.downloadDialogs.pop(remotePath)
+        dialog.incrementDownloadCount()
+
+        # Report completion if there are no more queued jobs (multiple download)
+        # or if no one else uses this dialog (single download)
+        if len(self.fileDownloadQueue) == 0 and len(self.directoryDownloadQueue) == 0:
+            dialog.reportCompletion(response.error)
+            self.downloadDirectories.clear()
+
         if response.error != 0:
             self.log.error("Error happened when downloading %(remotePath)s. The file may not have been saved completely. Error code: %(errorCode)s", {
                 "remotePath": remotePath,
-                "errorCode": "0x%08lx",
+                "errorCode": '0x%08lx' % response.error,
             })
 
             try:
@@ -149,3 +258,4 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
                 self.log.error("Error when deleting file %(path)s: %(exception)s", {"path": targetFileName, "exception": str(e)})
         else:
             self.log.info("Download %(path)s complete.", {"path": targetFile.name})
+            self.dispatchDownload()
