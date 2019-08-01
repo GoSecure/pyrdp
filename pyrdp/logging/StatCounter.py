@@ -159,5 +159,5 @@ class StatCounter:
         Create an INFO log message to log the Connection report using the keys in self.stats.
         :param log: Logger to use to log the report
         """
-        keys = "".join([f"{key}: %({key})s " for key in self.stats.keys()])
+        keys = ", ".join([f"{key}: %({key})s" for key in self.stats.keys()])
         log.info(f"Connection report: {keys}", self.stats)
