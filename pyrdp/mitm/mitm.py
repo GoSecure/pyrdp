@@ -23,6 +23,7 @@ from pyrdp.mitm.ClipboardMITM import ActiveClipboardStealer
 from pyrdp.mitm.config import MITMConfig
 from pyrdp.mitm.DeviceRedirectionMITM import DeviceRedirectionMITM
 from pyrdp.mitm.FastPathMITM import FastPathMITM
+from pyrdp.mitm.FileCrawler import FileCrawler
 from pyrdp.mitm.layerset import RDPLayerSet
 from pyrdp.mitm.MCSMITM import MCSMITM
 from pyrdp.mitm.MITMRecorder import MITMRecorder
@@ -104,6 +105,8 @@ class RDPMITM:
 
         self.attacker: AttackerMITM = None
 
+        self.crawler: FileCrawler = None
+
         self.client.x224.addObserver(X224Logger(self.getClientLog("x224")))
         self.client.mcs.addObserver(MCSLogger(self.getClientLog("mcs")))
         self.client.slowPath.addObserver(SlowPathLogger(self.getClientLog("slowpath")))
@@ -126,6 +129,9 @@ class RDPMITM:
             date = datetime.datetime.now()
             replayFileName = "rdp_replay_{}_{}.pyrdp".format(date.strftime('%Y%m%d_%H-%M-%S'), date.microsecond // 1000)
             self.recorder.addTransport(FileLayer(self.config.replayDir / replayFileName))
+
+        if not config.disableCrawler:
+            self.crawler: FileCrawler = FileCrawler(self.getClientLog(MCSChannelName.DEVICE_REDIRECTION).createChild("crawler"), self.config, self.state)
 
     def getProtocol(self) -> Protocol:
         """
@@ -299,6 +305,9 @@ class RDPMITM:
 
         deviceRedirection = DeviceRedirectionMITM(clientLayer, serverLayer, self.getLog(MCSChannelName.DEVICE_REDIRECTION), self.config, self.state)
         self.channelMITMs[client.channelID] = deviceRedirection
+
+        if not self.config.disableCrawler:
+            self.crawler.setDeviceRedirectionComponent(deviceRedirection)
 
         if self.attacker:
             self.attacker.setDeviceRedirectionComponent(deviceRedirection)

@@ -1,0 +1,24 @@
+# Common extensions
+*/*.txt
+*/*.pdf
+*/*.csv
+*/*.xls*
+*/*.doc*
+*/*.ppt*
+
+# Possible malware samples
+*/*.exe
+*/*.dll
+*/*.ps1
+
+# Credentials
+*/passwd
+*/shadow
+*/*unattend.xml
+*/*Unattended.xml
+*/*auth.json
+*/*.kdb*
+
+# Awesome folders to dump :)
+*/.git
+*/.ssh

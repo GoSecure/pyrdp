@@ -1,0 +1,27 @@
+# Non-interesting / big Windows root folders
+/$Recycle.Bin
+/Boot
+/Recovery
+/Windows
+/BGinfo
+/PerfLogs
+
+# Non-interesting / big Linux root folders
+/bin
+/boot
+/dev
+/lib
+/lib64
+/lost+found
+/media
+/mnt
+/proc
+/run
+/sbin
+/snap
+/sys
+/tmp
+/usr
+
+
+"/$Recycle.Bin", "/Boot", "/Recovery", "/Windows", "/BGinfo", "/PerfLogs", "/bin", "/boot", "/dev", "/lib", "/lib64", "/lost+found", "/media", "/mnt", "/proc", "/run", "/sbin", "/snap", "/sys", "/tmp", "/usr"

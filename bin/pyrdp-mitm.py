@@ -164,6 +164,9 @@ def main():
     parser.add_argument("--payload-powershell-file", help="PowerShell script to run automatically upon connection (as -EncodedCommand)", default=None)
     parser.add_argument("--payload-delay", help="Time to wait after a new connection before sending the payload, in milliseconds", default=None)
     parser.add_argument("--payload-duration", help="Amount of time for which input / output should be dropped, in milliseconds. This can be used to hide the payload screen.", default=None)
+    parser.add_argument("--disable-crawler", help="Disable automatic shared drive scraping", action="store_true")
+    parser.add_argument("--crawler-match-file", help="File to be used by the crawler to chose what to download when scraping the client shared drives.")
+    parser.add_argument("--crawler-ignore-file", help="File to be used by the crawler to chose what folders to avoid when scraping the client shared drives.")
     parser.add_argument("--no-replay", help="Disable replay recording", action="store_true")
 
     args = parser.parse_args()
@@ -205,6 +208,9 @@ def main():
     config.replacementUsername = args.username
     config.replacementPassword = args.password
     config.outDir = outDir
+    config.disableCrawler = args.disable_crawler
+    config.crawlerMatchFileName = args.crawler_match_file
+    config.crawlerIgnoreFileName = args.crawler_ignore_file
     config.recordReplays = not args.no_replay
 
 
