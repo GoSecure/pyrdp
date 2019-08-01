@@ -26,8 +26,9 @@ import os
 class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
     """
     Event handler used for live connections. Handles the same events as the replay handler, plus directory listing and
-    file read events.
+    file read events. Also dispatches download requested by the player.
     """
+
     addIconToTab = Signal(object)
     connectionClosed = Signal(object)
     renameTab = Signal(object, str)
@@ -99,9 +100,15 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
             self.dispatchDownload()
 
     def dispatchDownload(self):
-        # We download each file of a directory before enumerating other directories.
-        # Otherwise we may fill the stack with too many queued items.
-        # When we're done with both file and directories, we start an other queued job
+        """
+        Since the download is single-threaded, we need to queue everything.
+        When requesting the download of a file, it gets queued in fileDownloadQueue.
+        When requesting the download of a directory, it gets queued in directoryDownloadQueue.
+
+        When flagging a directory for download, we queue all of his files and directory for download.
+        We then download each file of a directory before enumerating other directories.
+        When we're done with both file and directories, we start an other queued job
+        """
 
         # Request download of a queued file
         if len(self.fileDownloadQueue) != 0:
@@ -131,6 +138,15 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
             self.currentDownload = None
 
     def handleDirectoryListingResponse(self, response: PlayerDirectoryListingResponsePDU):
+        """
+        List the files and subdirectories of a directory.
+
+        If any files or subdirectories have been requested for download,
+        we queue them in the appropriate download queue.
+
+        Otherwise, update the directory list.
+        """
+
         for description in response.fileDescriptions:
             path = PosixPath(description.path)
             parts = path.parts
@@ -194,6 +210,10 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
             self.dispatchDownload()
 
     def onFileDownloadRequested(self, file: File, targetPath: str, dialog: FileDownloadDialog):
+        """
+        Create the file on disk and request it for download to the client.
+        """
+
         remotePath = file.getFullPath()
 
         self.log.info("Saving %(remotePath)s to %(targetPath)s", {"remotePath": remotePath, "targetPath": targetPath})
@@ -221,6 +241,11 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
         self.layer.sendPDU(pdu)
 
     def onDirectoryDownloadRequested(self, directory: Directory, targetPath: str, dialog: FileDownloadDialog):
+        """
+        Flag the requested directory for download and request to list his files and subdirectories.
+        Each of the files and subdirectories will be queued for download.
+        """
+
         remotePath = directory.getFullPath()
 
         if directory.parent is None:
@@ -240,6 +265,10 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
         self.layer.sendPDU(pdu)
 
     def handleDownloadResponse(self, response: PlayerFileDownloadResponsePDU):
+        """
+        Write the received data to the file being downloaded and update the dialog's download progress.
+        """
+
         remotePath = response.path
 
         if remotePath not in self.downloadFiles:
@@ -252,6 +281,10 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
         dialog.reportProgress(len(response.payload))
 
     def handleDownloadComplete(self, response: PlayerFileDownloadCompletePDU):
+        """
+        Update the download dialog and remove the file from the list of files to be downloaded.
+        """
+
         remotePath = response.path
 
         if remotePath not in self.downloadFiles:
