@@ -39,6 +39,10 @@ class TCPMITM:
         self.recorder = recorder
         self.serverConnector = serverConnector
 
+        # Allows a lower layer to raise error tagged with the correct sessionID
+        self.client.log = log
+        self.server.log = log
+
         self.clientObserver = self.client.createObserver(
             onConnection = self.onClientConnection,
             onDisconnection = self.onClientDisconnection,
