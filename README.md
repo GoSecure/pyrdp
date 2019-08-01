@@ -6,8 +6,9 @@ It features a few tools:
     - Logs credentials used when connecting
     - Steals data copied to the clipboard
     - Saves a copy of the files transferred over the network
+    - Crawls shared drives in the background and saves them locally
     - Saves replays of connections so you can look at them later
-    - Run console commands or PowerShell payloads automatically on new connections
+    - Runs console commands or PowerShell payloads automatically on new connections
 - RDP Player:
     - See live RDP connections coming from the MITM
     - View replays of RDP connections
