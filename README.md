@@ -52,7 +52,7 @@ PyRDP was [first introduced in a blogpost](https://www.gosecure.net/blog/2018/12
 ## Supported Systems
 PyRDP should work on Python 3.6 and up.
 
-This tool has been tested to work on Python 3.6 on Linux (Ubuntu 18.04). It has not been tested on OSX.
+This tool has been tested to work on Python 3.6 on Linux (Ubuntu 18.04) and Windows (See section [Installing on Windows](#installing-on-windows)). It has not been tested on OSX.
 
 ## Installing
 
