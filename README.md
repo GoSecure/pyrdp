@@ -307,11 +307,8 @@ If you're interested in experimenting with RDP and making your own tools, head o
 [documentation section](docs/README.md) for more information.
 
 ## Using PyRDP with Bettercap
-We wanted to test using PyRDP to man-in-the-middle all RDP connections on a
-given LAN. Due to our architecture right now this redirects to a single
-destination RDP server specified on the command-line. If you're interested in
-making that working, check out [this document](docs/bettercap-rdp-mitm.md) for
-more information.
+We developped our own Bettercap module, `rdp.proxy`, to man-in-the-middle all RDP connections
+on a given LAN. Check out [this document](docs/bettercap-rdp-mitm.md) for more information.
 
 ## Contributing to PyRDP
 See our [contribution guidelines](CONTRIBUTING.md).

@@ -38,6 +38,10 @@ Install Caplets by running these commands :
 
 ## Usage
 
+Assuming that you installed PyRDP using a venv, you need to activate your PyRDP virtual environment:
+
+    source venv/bin/activate
+
 Start bettercap with :
 
     sudo bettercap -iface <interface> -caplet <caplet> -eval "set rdp.proxy.command $(which pyrdp-mitm.py)"
@@ -45,6 +49,11 @@ Start bettercap with :
 Basic example :
 
     sudo bettercap -iface wlp2s0 -caplet rdp-proxy/rdp-sniffer.cap -eval "set rdp.proxy.command $(which pyrdp-mitm.py)"
+
+## Caplets
+
+Caplets are basically a way to script bettercap's configuration. You can also use a caplet to better understand how to use a module.
+You may modify a caplet to fine-tune the module, but you will need to reinstall it with `sudo make install` to apply the modifications.
 
 We currently have 2 caplets. Read each caplet's source for further documentation and usage. Here's a quick rundown :
 
@@ -54,7 +63,7 @@ We currently have 2 caplets. Read each caplet's source for further documentation
 
   <dt>rdp-proxy/rdp-sniffer-nla-redirect.cap</dt>
   <dd>Will forward every target to a PyRDP instance if they have disabled NLA. Otherwise, redirect the client to a user-defined non-NLA host.</dd>
-  <dd>Requires some configuration inside the caplet at ~/caplets/rdp-proxy/rdp-sniffer-nla-redirect.cap</dd>
+  <dd>Requires some configuration inside the caplet at ~/src/caplets/rdp-proxy/rdp-sniffer-nla-redirect.cap</dd>
   <dd>Don't forget to `sudo make install` after editing the caplet.</dd>
 </dl>
 
