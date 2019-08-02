@@ -26,6 +26,7 @@ PyRDP was [first introduced in a blogpost](https://www.gosecure.net/blog/2018/12
 - [Installing](#installing)
     * [Installing with Docker](#installing-with-docker)
     * [Installing on Windows](#installing-on-windows)
+    * [Migrating away from pycrypto](#Migrating-away-from-pycrypto)
 - [Using the PyRDP Man-in-the-Middle](#using-the-pyrdp-man-in-the-middle)
     * [Specifying the private key and certificate](#specifying-the-private-key-and-certificate)
     * [Connecting to the PyRDP player](#connecting-to-the-pyrdp-player)
@@ -166,7 +167,7 @@ ImportError: cannot import name 'RsaKey'
 You will need to remove the module pycrypto and reinstall PyRDP.
 
 ```
-pip3 remove pycrypto
+pip3 uninstall pycrypto
 pip3 install -U -e .
 ```
 
