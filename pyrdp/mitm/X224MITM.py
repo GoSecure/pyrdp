@@ -104,7 +104,6 @@ class X224MITM:
             self.log.info("The server failed the negotiation. Error: %(error)s", {"error": NegotiationFailureCode.getMessage(response.failureCode)})
             return
 
-        # TODO: cleanup
         payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, protocols))
         self.client.sendConnectionConfirm(payload, source=0x1234)
 
