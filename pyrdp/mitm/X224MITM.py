@@ -100,7 +100,7 @@ class X224MITM:
 
         parser = NegotiationResponseParser()
         response = parser.parse(pdu.payload)
-        if response.type == NegotiationType.TYPE_RDP_NEG_FAILURE:
+        if isinstance(response.type, NegotiationType.TYPE_RDP_NEG_FAILURE):
             self.log.info("The server failed the negotiation. Error: %(error)s", {"error": NegotiationFailureCode.getMessage(response.failureCode)})
             return
 
