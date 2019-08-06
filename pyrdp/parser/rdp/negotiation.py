@@ -5,6 +5,7 @@
 #
 
 from io import BytesIO
+from typing import Union
 
 from pyrdp.core import Uint16LE, Uint32LE, Uint8
 from pyrdp.enum import NegotiationRequestFlags, NegotiationType
@@ -82,7 +83,7 @@ class NegotiationResponseParser(Parser):
     """
     Parser for RDP negotiation responses (Connection Confirm payloads).
     """
-    def parse(self, data: bytes) -> NegotiationResponsePDU:
+    def parse(self, data: bytes) -> Union[NegotiationResponsePDU, NegotiationFailurePDU]:
         """
         Parse a negotiation response.
         :param data: the response data.
