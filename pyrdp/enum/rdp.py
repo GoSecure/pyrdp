@@ -348,6 +348,10 @@ class NegotiationProtocols(IntFlag):
 
 
 class NegotiationFailureCode(IntEnum):
+    """
+    RDP Negotiation Failure error messages
+    See: https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/1b3920e7-0116-4345-bc45-f2c4ad012761
+    """
 
     SSL_REQUIRED_BY_SERVER = 0x00000001
     SSL_NOT_ALLOWED_BY_SERVER = 0x00000002
