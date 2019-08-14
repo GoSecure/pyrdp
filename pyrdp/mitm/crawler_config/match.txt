@@ -2,9 +2,12 @@
 */*.txt
 */*.pdf
 */*.csv
-*/*.xls*
-*/*.doc*
-*/*.ppt*
+*/*.xls
+*/*.xlsx
+*/*.doc
+*/*.docx
+*/*.ppt
+*/*.pptx
 
 # Possible malware samples
 */*.bat
@@ -18,8 +21,13 @@
 */*unattend.xml
 */*Unattended.xml
 */*auth.json
-*/*.kdb*
-
+*/*.kdb
+*/*.kdbx
+ 
+  
+   
+    
+    
 # Awesome folders to dump :)
 */.git
 */ssh

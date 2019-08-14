@@ -126,10 +126,10 @@ class FileCrawlerMITM(DeviceRedirectionMITMObserver):
         try:
             with open(path, "r") as f:
                 for line in f:
-                    if line[0] in ["#", " ", "\n"]:
+                    if line and line[0] in ["#", " ", "\n"]:
                         continue
 
-                    patternList.append(line[:-1].lower())
+                    patternList.append(line.lower().rstrip())
         except Exception as e:
             self.log.exception(e)
             self.log.error("Failed to open file %(path)s", {"path": path})
