@@ -27,7 +27,8 @@ setup(name='pyrdp',
     scripts=[
         'bin/pyrdp-clonecert.py',
         'bin/pyrdp-mitm.py',
-        'bin/pyrdp-player.py'
+        'bin/pyrdp-player.py',
+        'bin/pyrdp-replay.py'
     ],
     install_requires=[
         'appdirs>=1,<2',
