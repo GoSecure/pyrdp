@@ -18,7 +18,7 @@ class LOGGER_NAMES:
     PLAYER = f"{PYRDP}.player"
     PLAYER_UI = f"{PLAYER}.ui"
 
-    # Independant logger
+    # Independent logger
     CRAWLER = "crawler"
 
 def getSSLLogger():
