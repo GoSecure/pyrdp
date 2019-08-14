@@ -110,7 +110,10 @@ class ClientConnectionParser(Parser):
             core.postBeta2ColorDepth = Uint16LE.unpack(stream)
             core.clientProductId = Uint16LE.unpack(stream)
             core.serialNumber = Uint32LE.unpack(stream)
-            core.highColorDepth = HighColorDepth(Uint16LE.unpack(stream))
+
+            # Should match HighColorDepth enum most of the time, but in order to support scanners and we script, we have to loosely accept this one
+            # Anyway, the server will reject it and enforce another one
+            core.highColorDepth = Uint16LE.unpack(stream)
             core.supportedColorDepths = Uint16LE.unpack(stream)
             core.earlyCapabilityFlags = Uint16LE.unpack(stream)
             core.clientDigProductId = decodeUTF16LE(stream.read(64))

@@ -5,4 +5,4 @@
 #
 
 from pyrdp.mitm.config import MITMConfig
-from pyrdp.mitm.mitm import RDPMITM
+from pyrdp.mitm.RDPMITM import RDPMITM

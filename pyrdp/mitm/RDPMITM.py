@@ -17,6 +17,7 @@ from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, LayerChainItem, 
 from pyrdp.logging import RC4LoggingObserver
 from pyrdp.logging.adapters import SessionLogger
 from pyrdp.logging.observers import FastPathLogger, LayerLogger, MCSLogger, SecurityLogger, SlowPathLogger, X224Logger
+from pyrdp.logging.StatCounter import StatCounter
 from pyrdp.mcs import MCSClientChannel, MCSServerChannel
 from pyrdp.mitm.AttackerMITM import AttackerMITM
 from pyrdp.mitm.ClipboardMITM import ActiveClipboardStealer
@@ -66,6 +67,9 @@ class RDPMITM:
         self.config = config
         """The MITM configuration"""
 
+        self.statCounter = StatCounter()
+        """Class to keep track of connection-related statistics such as # of mouse events, # of output events, etc."""
+
         self.state = RDPMITMState()
         """The MITM state"""
 
@@ -85,19 +89,19 @@ class RDPMITM:
         """MITM components for virtual channels"""
 
         serverConnector = self.connectToServer()
-        self.tcp = TCPMITM(self.client.tcp, self.server.tcp, self.player.tcp, self.getLog("tcp"), self.state, self.recorder, serverConnector)
+        self.tcp = TCPMITM(self.client.tcp, self.server.tcp, self.player.tcp, self.getLog("tcp"), self.state, self.recorder, serverConnector, self.statCounter)
         """TCP MITM component"""
 
         self.x224 = X224MITM(self.client.x224, self.server.x224, self.getLog("x224"), self.state, serverConnector, self.startTLS)
         """X224 MITM component"""
 
-        self.mcs = MCSMITM(self.client.mcs, self.server.mcs, self.state, self.recorder, self.buildChannel, self.getLog("mcs"))
+        self.mcs = MCSMITM(self.client.mcs, self.server.mcs, self.state, self.recorder, self.buildChannel, self.getLog("mcs"), self.statCounter)
         """MCS MITM component"""
 
         self.security: SecurityMITM = None
         """Security MITM component"""
 
-        self.slowPath = SlowPathMITM(self.client.slowPath, self.server.slowPath, self.state)
+        self.slowPath = SlowPathMITM(self.client.slowPath, self.server.slowPath, self.state, self.statCounter)
         """Slow-path MITM component"""
 
         self.fastPath: FastPathMITM = None
@@ -160,8 +164,6 @@ class RDPMITM:
         """
         return self.serverLog.createChild(name)
 
-
-
     async def connectToServer(self):
         """
         Coroutine that connects to the target RDP server and the attacker.
@@ -183,8 +185,6 @@ class RDPMITM:
             except asyncio.TimeoutError:
                 self.log.error("Failed to connect to recording host: timeout expired")
 
-
-
     def startTLS(self):
         """
         Execute a startTLS on both the client and server side.
@@ -194,8 +194,6 @@ class RDPMITM:
 
         self.client.tcp.startTLS(contextForClient)
         self.server.tcp.startTLS(contextForServer)
-
-
 
     def buildChannel(self, client: MCSServerChannel, server: MCSClientChannel):
         """
@@ -240,7 +238,7 @@ class RDPMITM:
         self.server.fastPath.addObserver(RecordingFastPathObserver(self.recorder, PlayerPDUType.FAST_PATH_OUTPUT))
 
         self.security = SecurityMITM(self.client.security, self.server.security, self.getLog("security"), self.config, self.state, self.recorder)
-        self.fastPath = FastPathMITM(self.client.fastPath, self.server.fastPath, self.state)
+        self.fastPath = FastPathMITM(self.client.fastPath, self.server.fastPath, self.state, self.statCounter)
 
         if self.player.tcp.transport:
             self.attacker = AttackerMITM(self.client.fastPath, self.server.fastPath, self.player.player, self.log, self.state, self.recorder)
@@ -280,7 +278,8 @@ class RDPMITM:
         LayerChainItem.chain(client, clientSecurity, clientVirtualChannel, clientLayer)
         LayerChainItem.chain(server, serverSecurity, serverVirtualChannel, serverLayer)
 
-        mitm = ActiveClipboardStealer(clientLayer, serverLayer, self.getLog(MCSChannelName.CLIPBOARD), self.recorder)
+        mitm = ActiveClipboardStealer(clientLayer, serverLayer, self.getLog(MCSChannelName.CLIPBOARD), self.recorder,
+                                      self.statCounter)
         self.channelMITMs[client.channelID] = mitm
 
     def buildDeviceChannel(self, client: MCSServerChannel, server: MCSClientChannel):
@@ -303,7 +302,7 @@ class RDPMITM:
         LayerChainItem.chain(client, clientSecurity, clientVirtualChannel, clientLayer)
         LayerChainItem.chain(server, serverSecurity, serverVirtualChannel, serverLayer)
 
-        deviceRedirection = DeviceRedirectionMITM(clientLayer, serverLayer, self.getLog(MCSChannelName.DEVICE_REDIRECTION), self.config, self.state)
+        deviceRedirection = DeviceRedirectionMITM(clientLayer, serverLayer, self.getLog(MCSChannelName.DEVICE_REDIRECTION), self.config, self.statCounter, self.state)
         self.channelMITMs[client.channelID] = deviceRedirection
 
         if not self.config.disableCrawler:
@@ -327,7 +326,7 @@ class RDPMITM:
         LayerChainItem.chain(client, clientSecurity, clientLayer)
         LayerChainItem.chain(server, serverSecurity, serverLayer)
 
-        mitm = VirtualChannelMITM(clientLayer, serverLayer)
+        mitm = VirtualChannelMITM(clientLayer, serverLayer, self.statCounter)
         self.channelMITMs[client.channelID] = mitm
 
     def sendPayload(self):

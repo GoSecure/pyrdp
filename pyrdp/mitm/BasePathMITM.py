@@ -9,17 +9,18 @@ from pyrdp.player import keyboard
 from pyrdp.enum import ScanCode
 from pyrdp.pdu.pdu import PDU
 from pyrdp.layer.layer import Layer
-
+from pyrdp.logging.StatCounter import StatCounter, STAT
 
 class BasePathMITM:
     """
     Base MITM component for the fast-path and slow-path layers.
     """
 
-    def __init__(self, state: RDPMITMState, client: Layer, server: Layer):
+    def __init__(self, state: RDPMITMState, client: Layer, server: Layer, statCounter: StatCounter):
         self.state = state
         self.client = client
         self.server = server
+        self.statCounter = statCounter
 
     def onClientPDUReceived(self, pdu: PDU):
         raise NotImplementedError("onClientPDUReceived must be overridden")
