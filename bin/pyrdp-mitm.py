@@ -46,9 +46,16 @@ class MITMServerFactory(ServerFactory):
 
     def buildProtocol(self, addr):
         sessionID = f"{names.get_first_name()}{random.randrange(100000,999999)}"
-        logger = logging.getLogger(LOGGER_NAMES.MITM_CONNECTIONS)
-        logger = SessionLogger(logger, sessionID)
-        mitm = RDPMITM(logger, self.config)
+
+        # mainLogger logs in a file and stdout
+        mainlogger = logging.getLogger(LOGGER_NAMES.MITM_CONNECTIONS)
+        mainlogger = SessionLogger(mainlogger, sessionID)
+
+        # crawler logger only logs to a file for analysis purposes
+        crawlerLogger = logging.getLogger(LOGGER_NAMES.CRAWLER)
+        crawlerLogger = SessionLogger(crawlerLogger, sessionID)
+
+        mitm = RDPMITM(mainlogger, crawlerLogger, self.config)
 
         return mitm.getProtocol()
 
@@ -86,6 +93,21 @@ def prepareLoggers(logLevel: int, logFilter: str, sensorID: str, outDir: Path):
 
     connectionsLogger = logging.getLogger(LOGGER_NAMES.MITM_CONNECTIONS)
     connectionsLogger.addHandler(jsonFileHandler)
+
+    crawlerFormatter = VariableFormatter("[{asctime}] - {sessionID} - {message}", style = "{", defaultVariables = {
+        "sessionID": "GLOBAL"
+    })
+
+    crawlerFileHandler = logging.FileHandler(logDir / "crawl.log")
+    crawlerFileHandler.setFormatter(crawlerFormatter)
+
+    jsonCrawlerFileHandler = logging.FileHandler(logDir / "crawl.json")
+    jsonCrawlerFileHandler.setFormatter(JSONFormatter({"sensor": sensorID}))
+
+    crawlerLogger = logging.getLogger(LOGGER_NAMES.CRAWLER)
+    crawlerLogger.addHandler(crawlerFileHandler)
+    crawlerLogger.addHandler(jsonCrawlerFileHandler)
+    crawlerLogger.setLevel(logging.INFO)
 
     log.prepareSSLLogger(logDir / "ssl.log")
 
@@ -165,8 +187,8 @@ def main():
     parser.add_argument("--payload-delay", help="Time to wait after a new connection before sending the payload, in milliseconds", default=None)
     parser.add_argument("--payload-duration", help="Amount of time for which input / output should be dropped, in milliseconds. This can be used to hide the payload screen.", default=None)
     parser.add_argument("--disable-crawler", help="Disable automatic shared drive scraping", action="store_true")
-    parser.add_argument("--crawler-match-file", help="File to be used by the crawler to chose what to download when scraping the client shared drives.")
-    parser.add_argument("--crawler-ignore-file", help="File to be used by the crawler to chose what folders to avoid when scraping the client shared drives.")
+    parser.add_argument("--crawler-match-file", help="File to be used by the crawler to chose what to download when scraping the client shared drives.", default=None)
+    parser.add_argument("--crawler-ignore-file", help="File to be used by the crawler to chose what folders to avoid when scraping the client shared drives.", default=None)
     parser.add_argument("--no-replay", help="Disable replay recording", action="store_true")
 
     args = parser.parse_args()

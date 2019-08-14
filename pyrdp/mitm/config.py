@@ -54,7 +54,7 @@ class MITMConfig:
         """Amount of time the payload should take to complete, in milliseconds"""
 
         self.disableCrawler: bool = False
-        """Whether the crawler should be crawling or not"""
+        """Whether the crawler should be disabled or not"""
 
         self.crawlerMatchFileName: str = None
         """Path to the crawler match configuration file"""

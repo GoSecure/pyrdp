@@ -22,4 +22,5 @@
 
 # Awesome folders to dump :)
 */.git
+*/ssh
 */.ssh

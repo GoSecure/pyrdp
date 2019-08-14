@@ -32,7 +32,7 @@ class VirtualFile:
         self.path = filePath
         self.isDirectory = isDirectory
 
-class FileCrawler(DeviceRedirectionMITMObserver):
+class FileCrawlerMITM(DeviceRedirectionMITMObserver):
     """
     Component used to automatically crawl each shared drives based on user-configurable patterns.
     For each shared drives, we start by listing the root directory.
@@ -50,10 +50,11 @@ class FileCrawler(DeviceRedirectionMITMObserver):
     When done downloading files and directories, we do the same process for every unvisited directory in the unvisitedDirectory queue.
     """
 
-    def __init__(self, log: LoggerAdapter, config: MITMConfig, state: RDPMITMState):
+    def __init__(self, mainLogger: LoggerAdapter, fileLogger: LoggerAdapter, config: MITMConfig, state: RDPMITMState):
         super().__init__()
 
-        self.log = log
+        self.log = mainLogger
+        self.fileLogger = fileLogger
         self.state = state
         self.config = config
         self.devices: Dict[int, VirtualFile] = {}
@@ -79,6 +80,11 @@ class FileCrawler(DeviceRedirectionMITMObserver):
         self.unvisitedDrive: List[VirtualFile] = []
 
     def setDeviceRedirectionComponent(self, deviceRedirection: DeviceRedirectionMITM):
+        """
+        Sets a reference to the class we are currently observing. Can only observe one class.
+        If uninitialized, load the patterns from the pattern files.
+        :param deviceRedirection: Reference to the observed class.
+        """
         if self.deviceRedirection:
             self.deviceRedirection.removeObserver(self)
 
@@ -90,6 +96,11 @@ class FileCrawler(DeviceRedirectionMITMObserver):
             self.preparePatterns()
 
     def preparePatterns(self):
+        """
+        Load patterns from either the default match files or the user-configured files.
+        Should only be called once.
+        """
+
         matchPath = None
         ignorePath = None
 
@@ -104,10 +115,10 @@ class FileCrawler(DeviceRedirectionMITMObserver):
         else:
             ignorePath = Path(__file__).parent.absolute() / "crawler_config" / "ignore.txt"
 
-        self.log.info("Using match pattern file %(matchPath)s", {"matchPath": matchPath})
+        self.log.debug("Using match pattern file %(matchPath)s", {"matchPath": matchPath})
         self.matchPatterns = self.parsePatterns(matchPath)
 
-        self.log.info("Using ignore pattern file %(ignorePath)s", {"ignorePath": ignorePath})
+        self.log.debug("Using ignore pattern file %(ignorePath)s", {"ignorePath": ignorePath})
         self.ignorePatterns = self.parsePatterns(ignorePath)
 
     def parsePatterns(self, path: str) -> List[str]:
@@ -120,26 +131,33 @@ class FileCrawler(DeviceRedirectionMITMObserver):
 
                     patternList.append(line[:-1].lower())
         except Exception as e:
-            self.log.error("Failed to open file %(path)s : %(exception)s", {"path": path, "exception": str(e)})
+            self.log.exception(e)
+            self.log.error("Failed to open file %(path)s", {"path": path})
 
         return patternList
 
     def dispatchDownload(self):
+        """
+        Processes each queue in order of priority.
+        File download have priority over directory download.
+        Crawl each folder before visiting another drive.
+        """
+
         # Download a queued file
         if len(self.matchedFileQueue) != 0:
             file = self.matchedFileQueue.pop()
-
             self.downloadFile(file)
+
         # List a queued directory
         elif len(self.matchedDirectoryQueue) != 0:
             directory = self.matchedDirectoryQueue.pop()
-
             self.listDirectory(directory.deviceID, directory.path, True)
+
         # List an unvisited directory
         elif len(self.unvisitedDirectory) != 0:
             directory = self.unvisitedDirectory.pop()
-
             self.listDirectory(directory.deviceID, directory.path)
+
         # List an unvisited drive
         elif len(self.unvisitedDrive) != 0:
             drive = self.unvisitedDrive.pop()
@@ -147,6 +165,7 @@ class FileCrawler(DeviceRedirectionMITMObserver):
             # TODO : Maybe dump whole drive if there isn't a lot of files?
             # Maybe if theres no directory at the root directory -> dump all?
             self.log.info("Begin crawling disk %(disk)s", {"disk" : drive.name})
+            self.fileLogger.info("Begin crawling disk %(disk)s", {"disk" : drive.name})
             self.listDirectory(drive.deviceID, drive.path)
         else:
             self.log.info("Done crawling.")
@@ -165,6 +184,11 @@ class FileCrawler(DeviceRedirectionMITMObserver):
         self.dispatchDownload()
 
     def crawlListing(self, requestID: int):
+        """
+        Match files and directories against the configured match and ignore patterns.
+        :param requestID: The ID of the request containing the directory listing.
+        """
+
         directoryList = self.directoryListingLists.pop(requestID, {})
 
         for item in directoryList:
@@ -186,6 +210,8 @@ class FileCrawler(DeviceRedirectionMITMObserver):
             else:
                 if matched:
                     self.matchedFileQueue.append(item)
+
+            self.fileLogger.info("%(file)s - %(isDirectory)s - %(isDownloaded)s", {"file" : item.path, "isDirectory": item.isDirectory, "isDownloaded": matched})
         self.dispatchDownload()
 
     def downloadFile(self, file: VirtualFile):
@@ -200,6 +226,7 @@ class FileCrawler(DeviceRedirectionMITMObserver):
             Path(localPath).parent.mkdir(parents=True, exist_ok=True)
             targetFile = open(localPath, "wb")
         except Exception as e:
+            # TODO : Test self.log.exception as proposed by Emilio
             self.log.error("Cannot save file: %(exception)s", {"exception": str(e)})
             return
 
@@ -207,6 +234,12 @@ class FileCrawler(DeviceRedirectionMITMObserver):
         self.deviceRedirection.sendForgedFileRead(file.deviceID, remotePath)
 
     def listDirectory(self, deviceID: int, path: str, download: bool = False):
+        """
+        List the directory
+        :param deviceID: Drive we are actually listing.
+        :param path: Path of the directory we are listing.
+        :param download: Wether or not we need to download this directory.
+        """
         listingPath = str(Path(path).absolute()).replace("/", "\\")
 
         if not listingPath.endswith("*"):
@@ -248,9 +281,13 @@ class FileCrawler(DeviceRedirectionMITMObserver):
         file.close()
 
         if errorCode != 0:
+            # TODO : Handle common error codes like :
+            # 0xc0000022 : Permission error
+            # Doc : https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/18d8fbe8-a967-4f1c-ae50-99ca8e491d2d
+
             self.log.error("Error happened when downloading %(remotePath)s. The file may not have been saved completely. Error code: %(errorCode)s", {
                 "remotePath": remotePath,
-                "errorCode": "0x%08lx",
+                "errorCode": "0x%08lx" % errorCode,
             })
 
         self.dispatchDownload()
