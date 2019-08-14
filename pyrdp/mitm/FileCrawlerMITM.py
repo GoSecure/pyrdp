@@ -226,8 +226,8 @@ class FileCrawlerMITM(DeviceRedirectionMITMObserver):
             Path(localPath).parent.mkdir(parents=True, exist_ok=True)
             targetFile = open(localPath, "wb")
         except Exception as e:
-            # TODO : Test self.log.exception as proposed by Emilio
-            self.log.error("Cannot save file: %(exception)s", {"exception": str(e)})
+            self.log.exception(e)
+            self.log.error("Cannot save file: %(localPath)s", {"localPath": localPath})
             return
 
         self.downloadFiles[remotePath] = targetFile
