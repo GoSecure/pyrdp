@@ -1,9 +1,15 @@
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2019 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
 import os
 from collections import defaultdict
 from typing import BinaryIO, Dict, List
 
-from pyrdp.layer import PlayerMessageLayer
-from pyrdp.pdu import PlayerMessagePDU
+from pyrdp.layer import PlayerLayer
+from pyrdp.pdu import PlayerPDU
 
 
 class Replay:
@@ -27,11 +33,11 @@ class Replay:
         file.seek(0)
 
         # Register PDUs as they are parsed by the layer
-        def registerEvent(pdu: PlayerMessagePDU):
+        def registerEvent(pdu: PlayerPDU):
             events[pdu.timestamp].append(currentMessagePosition)
 
         # The layer will take care of parsing for us
-        player = PlayerMessageLayer()
+        player = PlayerLayer()
         player.createObserver(onPDUReceived = registerEvent)
 
         # Parse all events in the file

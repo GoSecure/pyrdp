@@ -1,3 +1,9 @@
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2019 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
 import asyncio
 import operator
 from typing import Callable, Dict

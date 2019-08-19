@@ -4,23 +4,24 @@
 # Licensed under the GPLv3 or later.
 #
 
-from pyrdp.enum import CapabilityType, OrderFlag, VirtualChannelCompressionFlag
+from pyrdp.enum import CapabilityType, KeyboardFlag, OrderFlag, VirtualChannelCompressionFlag
 from pyrdp.layer import SlowPathLayer, SlowPathObserver
-from pyrdp.pdu import Capability, ConfirmActivePDU, DemandActivePDU, SlowPathPDU
+from pyrdp.logging.StatCounter import StatCounter, STAT
+from pyrdp.mitm.state import RDPMITMState
+from pyrdp.pdu import Capability, ConfirmActivePDU, DemandActivePDU, InputPDU, KeyboardEvent, SlowPathPDU
+from pyrdp.mitm.BasePathMITM import BasePathMITM
 
-
-class SlowPathMITM:
+class SlowPathMITM(BasePathMITM):
     """
     MITM component for the slow-path layer.
     """
 
-    def __init__(self, client: SlowPathLayer, server: SlowPathLayer):
+    def __init__(self, client: SlowPathLayer, server: SlowPathLayer, state: RDPMITMState, statCounter: StatCounter):
         """
         :param client: slow-path layer for the client side
         :param server: slow-path layer for the server side
         """
-        self.client = client
-        self.server = server
+        super().__init__(state, client, server, statCounter)
 
         self.clientObserver = self.client.createObserver(
             onPDUReceived = self.onClientPDUReceived,
@@ -33,12 +34,24 @@ class SlowPathMITM:
         )
 
     def onClientPDUReceived(self, pdu: SlowPathPDU):
+        self.statCounter.increment(STAT.IO_INPUT_SLOWPATH)
         SlowPathObserver.onPDUReceived(self.clientObserver, pdu)
-        self.server.sendPDU(pdu)
+
+        if self.state.forwardInput:
+            self.server.sendPDU(pdu)
+
+        if not self.state.loggedIn:
+            if isinstance(pdu, InputPDU):
+                for event in pdu.events:
+                    if isinstance(event, KeyboardEvent):
+                        self.onScanCode(event.keyCode, event.flags & KeyboardFlag.KBDFLAGS_DOWN == 0, event.flags & KeyboardFlag.KBDFLAGS_EXTENDED != 0)
 
     def onServerPDUReceived(self, pdu: SlowPathPDU):
+        self.statCounter.increment(STAT.IO_OUTPUT_SLOWPATH)
         SlowPathObserver.onPDUReceived(self.serverObserver, pdu)
-        self.client.sendPDU(pdu)
+
+        if self.state.forwardOutput:
+            self.client.sendPDU(pdu)
 
     def onConfirmActive(self, pdu: ConfirmActivePDU):
         """

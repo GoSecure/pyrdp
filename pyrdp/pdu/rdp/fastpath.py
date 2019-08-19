@@ -4,7 +4,7 @@
 # Licensed under the GPLv3 or later.
 #
 
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from pyrdp.enum import SegmentationPDUType
 from pyrdp.pdu.pdu import PDU
@@ -24,7 +24,7 @@ class FastPathEvent(PDU):
 
 class FastPathPDU(SegmentationPDU):
     def __init__(self, header: int, events: [FastPathEvent]):
-        PDU.__init__(self)
+        super().__init__(b"")
         self.header = header
         self.events = events
 
@@ -58,10 +58,10 @@ class FastPathOutputEvent(FastPathEvent):
 
 class FastPathScanCodeEvent(FastPathInputEvent):
 
-    def __init__(self, rawHeaderByte: int, scancode: int, isReleased: bool):
-        FastPathEvent.__init__(self)
+    def __init__(self, rawHeaderByte: int, scanCode: int, isReleased: bool):
+        super().__init__()
         self.rawHeaderByte = rawHeaderByte
-        self.scancode = scancode
+        self.scanCode = scanCode
         self.isReleased = isReleased
 
 
@@ -71,15 +71,26 @@ class FastPathMouseEvent(FastPathInputEvent):
     """
 
     def __init__(self, rawHeaderByte: int, pointerFlags: int, mouseX: int, mouseY: int):
-        FastPathEvent.__init__(self)
+        super().__init__()
         self.rawHeaderByte = rawHeaderByte
         self.mouseY = mouseY
         self.mouseX = mouseX
         self.pointerFlags = pointerFlags
 
 
+class FastPathUnicodeEvent(FastPathInputEvent):
+    """
+    Unicode event (text presses and releases)
+    """
+
+    def __init__(self, text: Union[str, bytes], released: bool):
+        super().__init__()
+        self.text = text
+        self.released = released
+
+
 class FastPathBitmapEvent(FastPathOutputEvent):
-    def __init__(self, header: int, compressionFlags: int, bitmapUpdateData: List[BitmapUpdateData], payload: bytes):
+    def __init__(self, header: int, compressionFlags: Optional[int], bitmapUpdateData: List[BitmapUpdateData], payload: bytes):
         super().__init__(header, compressionFlags, payload)
         self.bitmapUpdateData = bitmapUpdateData
 
@@ -88,7 +99,7 @@ class FastPathOrdersEvent(FastPathOutputEvent):
     """
     https://msdn.microsoft.com/en-us/library/cc241573.aspx
     """
-    def __init__(self, header: int, compressionFlags: int, orderCount: int, orderData: bytes):
+    def __init__(self, header: int, compressionFlags: Optional[int], orderCount: int, orderData: bytes):
         super().__init__(header, compressionFlags)
         self.compressionFlags = compressionFlags
         self.orderCount = orderCount

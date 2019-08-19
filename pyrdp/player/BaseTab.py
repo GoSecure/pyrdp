@@ -3,6 +3,7 @@
 # Copyright (C) 2018 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+
 import logging
 
 from PySide2.QtCore import Qt
@@ -34,8 +35,9 @@ class BaseTab(QWidget):
 
         scrollViewer = QScrollArea()
         scrollViewer.setWidget(self.widget)
-        layout = QVBoxLayout()
-        layout.addWidget(scrollViewer, 8)
-        layout.addWidget(self.text, 2)
 
-        self.setLayout(layout)
+        self.tabLayout = QVBoxLayout()
+        self.tabLayout.addWidget(scrollViewer, 8)
+        self.tabLayout.addWidget(self.text, 2)
+
+        self.setLayout(self.tabLayout)

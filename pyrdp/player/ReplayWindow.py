@@ -1,3 +1,11 @@
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2019 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
+from typing import Dict
+
 from PySide2.QtWidgets import QWidget
 
 from pyrdp.player.BaseWindow import BaseWindow
@@ -9,8 +17,8 @@ class ReplayWindow(BaseWindow):
     Class for managing replay tabs.
     """
 
-    def __init__(self, parent: QWidget = None):
-        super().__init__(parent)
+    def __init__(self, options: Dict[str, object], parent: QWidget = None):
+        super().__init__(options, parent)
 
     def openFile(self, fileName: str):
         """

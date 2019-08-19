@@ -5,33 +5,46 @@
 #
 
 from pyrdp.layer import FastPathLayer
-from pyrdp.pdu import FastPathPDU
+from pyrdp.logging.StatCounter import StatCounter, STAT
+from pyrdp.mitm.state import RDPMITMState
+from pyrdp.pdu import FastPathPDU, FastPathScanCodeEvent
+from pyrdp.player import keyboard
+from pyrdp.enum import ScanCode
+from pyrdp.mitm.BasePathMITM import BasePathMITM
 
-
-class FastPathMITM:
+class FastPathMITM(BasePathMITM):
     """
     MITM component for the fast-path layer.
     """
 
-    def __init__(self, client: FastPathLayer, server: FastPathLayer):
+    def __init__(self, client: FastPathLayer, server: FastPathLayer, state: RDPMITMState, statCounter: StatCounter):
         """
         :param client: fast-path layer for the client side
         :param server: fast-path layer for the server side
+        :param state: the MITM state.
         """
 
-        self.client = client
-        self.server = server
+        super().__init__(state, client, server, statCounter)
 
         self.client.createObserver(
-            onPDUReceived = self.onClientPDUReceived,
+            onPDUReceived=self.onClientPDUReceived,
         )
 
         self.server.createObserver(
-            onPDUReceived = self.onServerPDUReceived,
+            onPDUReceived=self.onServerPDUReceived,
         )
 
     def onClientPDUReceived(self, pdu: FastPathPDU):
-        self.server.sendPDU(pdu)
+        self.statCounter.increment(STAT.IO_INPUT_FASTPATH)
+        if self.state.forwardInput:
+            self.server.sendPDU(pdu)
+
+        if not self.state.loggedIn:
+            for event in pdu.events:
+                if isinstance(event, FastPathScanCodeEvent):
+                    self.onScanCode(event.scanCode, event.isReleased, event.rawHeaderByte & keyboard.KBDFLAGS_EXTENDED != 0)
 
     def onServerPDUReceived(self, pdu: FastPathPDU):
-        self.client.sendPDU(pdu)
+        self.statCounter.increment(STAT.IO_OUTPUT_FASTPATH)
+        if self.state.forwardOutput:
+            self.client.sendPDU(pdu)

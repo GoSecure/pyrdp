@@ -220,6 +220,7 @@ class RDPVersion(IntEnum):
     RDP10_4 = 0x80009
     RDP10_5 = 0x8000A
     RDP10_6 = 0x8000B
+    RDP10_7 = 0x8000C
 
 
 class ColorDepth(IntEnum):
@@ -775,20 +776,6 @@ class PointerEventType(IntEnum):
     TS_PTRMSGTYPE_COLOR = 0x0006
     TS_PTRMSGTYPE_CACHED = 0x0007
     TS_PTRMSGTYPE_POINTER = 0x0008
-
-
-class PlayerMessageType(IntEnum):
-    """
-    Types of events that we can encounter when replaying a RDP connection.
-    """
-
-    FAST_PATH_INPUT = 1  # Ex: scancode, mouse
-    FAST_PATH_OUTPUT = 2  # Ex: image
-    CLIENT_INFO = 3  # Creds on connection
-    SLOW_PATH_PDU = 4  # For slow-path PDUs
-    CONNECTION_CLOSE = 5  # To advertise the end of the connection
-    CLIPBOARD_DATA = 6  # To collect clipboard data
-    CLIENT_DATA = 7  # Contains the clientName
 
 
 class ChannelOption(IntFlag):

@@ -4,7 +4,7 @@
 # Licensed under the GPLv3 or later.
 #
 
-from pyrdp.enum import PlayerMessageType
+from pyrdp.enum import PlayerPDUType
 from pyrdp.layer import FastPathObserver, SlowPathObserver
 from pyrdp.pdu import ConfirmActivePDU, InputPDU, UpdatePDU
 from pyrdp.pdu.rdp.fastpath import FastPathPDU
@@ -12,7 +12,7 @@ from pyrdp.recording.recorder import Recorder
 
 
 class RecordingFastPathObserver(FastPathObserver):
-    def __init__(self, recorder: Recorder, messageType: PlayerMessageType):
+    def __init__(self, recorder: Recorder, messageType: PlayerPDUType):
         self.recorder = recorder
         self.messageType = messageType
         FastPathObserver.__init__(self)
@@ -29,5 +29,5 @@ class RecordingSlowPathObserver(SlowPathObserver):
 
     def onPDUReceived(self, pdu):
         if isinstance(pdu, (ConfirmActivePDU, UpdatePDU, InputPDU)):
-            self.recorder.record(pdu, PlayerMessageType.SLOW_PATH_PDU)
+            self.recorder.record(pdu, PlayerPDUType.SLOW_PATH_PDU)
         SlowPathObserver.onPDUReceived(self, pdu)

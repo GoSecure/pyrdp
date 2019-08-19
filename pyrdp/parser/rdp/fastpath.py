@@ -16,7 +16,7 @@ from pyrdp.parser.rdp.bitmap import BitmapParser
 from pyrdp.parser.rdp.security import BasicSecurityParser
 from pyrdp.pdu import FastPathBitmapEvent, FastPathEventRaw, FastPathMouseEvent, FastPathOrdersEvent, FastPathPDU, \
     FastPathScanCodeEvent, SecondaryDrawingOrder
-from pyrdp.pdu.rdp.fastpath import FastPathEvent, FastPathOutputEvent
+from pyrdp.pdu.rdp.fastpath import FastPathEvent, FastPathOutputEvent, FastPathUnicodeEvent
 from pyrdp.security import RC4Crypter, RC4CrypterProxy
 
 
@@ -235,6 +235,7 @@ class FastPathInputParser(Parser):
         FastPathInputType.FASTPATH_INPUT_EVENT_QOE_TIMESTAMP: 5,
     }
 
+
     def getEventLength(self, data: bytes) -> int:
         if isinstance(data, FastPathEventRaw):
             return len(data.data)
@@ -246,28 +247,51 @@ class FastPathInputParser(Parser):
             return FastPathInputParser.INPUT_EVENT_LENGTHS[FastPathInputType.FASTPATH_INPUT_EVENT_SCANCODE]
         elif isinstance(data, FastPathMouseEvent):
             return FastPathInputParser.INPUT_EVENT_LENGTHS[FastPathInputType.FASTPATH_INPUT_EVENT_MOUSE]
+        elif isinstance(data, FastPathUnicodeEvent):
+            return FastPathInputParser.INPUT_EVENT_LENGTHS[FastPathInputType.FASTPATH_INPUT_EVENT_UNICODE]
+
         raise ValueError("Unsupported event type?")
+
 
     def parse(self, data: bytes) -> FastPathEvent:
         stream = BytesIO(data)
         eventHeader = Uint8.unpack(stream.read(1))
         eventCode = (eventHeader & 0b11100000) >> 5
         eventFlags= eventHeader & 0b00011111
+
         if eventCode == FastPathInputType.FASTPATH_INPUT_EVENT_SCANCODE:
-            return self.parseScanCode(eventFlags, eventHeader, stream)
+            return self.parseScanCodeEvent(eventFlags, eventHeader, stream)
         elif eventCode == FastPathInputType.FASTPATH_INPUT_EVENT_MOUSE:
-            return self.parseMouseEvent(data, eventHeader)
+            return self.parseMouseEvent(eventHeader, stream)
+        elif eventCode == FastPathInputType.FASTPATH_INPUT_EVENT_UNICODE:
+            return self.parseUnicodeEvent(eventHeader, stream)
+
         return FastPathEventRaw(data)
 
-    def parseMouseEvent(self, data: bytes, eventHeader: int) -> FastPathMouseEvent:
-        pointerFlags = Uint16LE.unpack(data[1:3])
-        mouseX = Uint16LE.unpack(data[3:5])
-        mouseY = Uint16LE.unpack(data[5:7])
+
+    def parseScanCodeEvent(self, eventFlags: int, eventHeader: int, stream: BytesIO) -> FastPathScanCodeEvent:
+        scanCode = Uint8.unpack(stream.read(1))
+        return FastPathScanCodeEvent(eventHeader, scanCode, eventFlags & 1 != 0)
+
+
+    def parseMouseEvent(self, eventHeader: int, stream: BytesIO) -> FastPathMouseEvent:
+        pointerFlags = Uint16LE.unpack(stream)
+        mouseX = Uint16LE.unpack(stream)
+        mouseY = Uint16LE.unpack(stream)
         return FastPathMouseEvent(eventHeader, pointerFlags, mouseX, mouseY)
 
-    def parseScanCode(self, eventFlags: int, eventHeader: int, stream: BytesIO) -> FastPathScanCodeEvent:
-        scancode = Uint8.unpack(stream.read(1))
-        return FastPathScanCodeEvent(eventHeader, scancode, eventFlags & 1 != 0)
+
+    def parseUnicodeEvent(self, eventHeader: int, stream: BytesIO) -> FastPathUnicodeEvent:
+        released = eventHeader & 1 != 0
+        text = stream.read(2)
+
+        try:
+            text = text.decode("utf-16le")
+        except UnicodeError:
+            pass
+
+        return FastPathUnicodeEvent(text, released)
+
 
     def write(self, event: FastPathEvent) -> bytes:
         if isinstance(event, FastPathEventRaw):
@@ -276,21 +300,38 @@ class FastPathInputParser(Parser):
             return self.writeScanCodeEvent(event)
         elif isinstance(event, FastPathMouseEvent):
             return self.writeMouseEvent(event)
+        elif isinstance(event, FastPathUnicodeEvent):
+            return self.writeUnicodeEvent(event)
+
         raise ValueError("Invalid FastPath event: {}".format(event))
 
+
     def writeScanCodeEvent(self, event: FastPathScanCodeEvent) -> bytes:
-        raw_data = BytesIO()
-        Uint8.pack(event.rawHeaderByte, raw_data)
-        Uint8.pack(event.scancode, raw_data)
-        return raw_data.getvalue()
+        stream = BytesIO()
+        Uint8.pack(event.rawHeaderByte | int(event.isReleased), stream)
+        Uint8.pack(event.scanCode, stream)
+        return stream.getvalue()
+
 
     def writeMouseEvent(self, event: FastPathMouseEvent) -> bytes:
-        rawData = BytesIO()
-        Uint8.pack(event.rawHeaderByte, rawData)
-        Uint16LE.pack(event.pointerFlags, rawData)
-        Uint16LE.pack(event.mouseX, rawData)
-        Uint16LE.pack(event.mouseY, rawData)
-        return rawData.getvalue()
+        stream = BytesIO()
+        Uint8.pack(event.rawHeaderByte, stream)
+        Uint16LE.pack(event.pointerFlags, stream)
+        Uint16LE.pack(event.mouseX, stream)
+        Uint16LE.pack(event.mouseY, stream)
+        return stream.getvalue()
+
+
+    def writeUnicodeEvent(self, event: FastPathUnicodeEvent):
+        stream = BytesIO()
+        Uint8.pack(int(event.released) | (FastPathInputType.FASTPATH_INPUT_EVENT_UNICODE << 5), stream)
+
+        if isinstance(event.text, bytes):
+            stream.write(event.text[: 2].ljust(2, b"\x00"))
+        elif isinstance(event.text, str):
+            stream.write(event.text[: 1].ljust(1, "\x00").encode("utf-16le"))
+
+        return stream.getvalue()
 
 
 class FastPathOutputParser(Parser):
@@ -339,6 +380,7 @@ class FastPathOutputParser(Parser):
 
         eventType = header & 0xf
         fragmentation = header & 0b00110000 != 0
+
         if fragmentation:
             log.debug("Fragmentation is present in output fastpath event packets."
                       " Not parsing it and saving to FastPathOutputUpdateEvent.")

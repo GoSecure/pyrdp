@@ -27,7 +27,7 @@ QRemoteDesktop is a widget use for render in rdpy
 from io import BytesIO
 
 import rle
-from PySide2.QtCore import QEvent, QPoint
+from PySide2.QtCore import QEvent, QPoint, Signal
 from PySide2.QtGui import QColor, QImage, QMatrix, QPainter
 from PySide2.QtWidgets import QWidget
 
@@ -124,6 +124,9 @@ class QRemoteDesktop(QWidget):
     """
     Qt RDP display widget
     """
+    # This signal can be used by other objects to run code on the main thread. The argument is a callable.
+    mainThreadHook = Signal(object)
+
     def __init__(self, width: int, height: int, parent: QWidget = None):
         """
         :param width: width of widget
@@ -139,6 +142,12 @@ class QRemoteDesktop(QWidget):
         self._buffer = QImage(width, height, QImage.Format_RGB32)
         self.mouseX = width // 2
         self.mouseY = height // 2
+
+        self.mainThreadHook.connect(self.runOnMainThread)
+
+
+    def runOnMainThread(self, target: callable):
+        target()
 
 
     def notifyImage(self, x: int, y: int, qimage: QImage, width: int, height: int):
@@ -171,7 +180,7 @@ class QRemoteDesktop(QWidget):
         """
         self._buffer = QImage(width, height, QImage.Format_RGB32)
         super().resize(width, height)
-        
+
     def paintEvent(self, e: QEvent):
         """
         Call when Qt renderer engine estimate that is needed

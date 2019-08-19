@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2019 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
 # setuptools MUST be imported first, otherwise we get an error with the ext_modules argument.
 import setuptools
 from distutils.core import Extension, setup
 
 setup(name='pyrdp',
-    version='1.0.0',
+    version='0.2.0',
     description='Remote Desktop Protocol Man-in-the-Middle and library for Python 3',
     long_description="""Remote Desktop Protocol Man-in-the-Middle and library for Python 3""",
     author='Émilio Gonzalez, Francis Labelle',

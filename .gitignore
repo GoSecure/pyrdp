@@ -19,3 +19,6 @@ pyrdp_output/
 test.bin
 saved_files/
 pyrdp_log/
+bin/_*
+cert.cert
+private.key
