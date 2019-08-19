@@ -7,7 +7,7 @@
 import socket
 from typing import Optional
 
-from Crypto.PublicKey import RSA
+from Crypto.PublicKey.RSA import RsaKey
 
 from pyrdp.enum import ChannelOption, ConnectionDataType, RDPVersion, ServerCertificateType, EncryptionLevel
 from pyrdp.enum.rdp import ClientCapabilityFlag, ColorDepth, ConnectionType, DesktopOrientation, EncryptionMethod, \
@@ -161,14 +161,14 @@ class ClientDataPDU(PDU):
 
 
 class ServerCertificate:
-    def __init__(self, certificateType: ServerCertificateType, publicKey: RSA.pubkey.pubkey, signature: bytes):
+    def __init__(self, certificateType: ServerCertificateType, publicKey: RsaKey, signature: bytes):
         self.type = certificateType
         self.publicKey = publicKey
         self.signature = signature
 
 
 class ProprietaryCertificate(ServerCertificate):
-    def __init__(self, signatureAlgorithmID: int, keyAlgorithmID: int, publicKeyType: int, publicKey: RSA.pubkey.pubkey, signatureType: int, signature: bytes, padding: bytes):
+    def __init__(self, signatureAlgorithmID: int, keyAlgorithmID: int, publicKeyType: int, publicKey: RsaKey, signatureType: int, signature: bytes, padding: bytes):
         ServerCertificate.__init__(self, ServerCertificateType.PROPRIETARY, publicKey, signature)
         self.signatureAlgorithmID = signatureAlgorithmID
         self.keyAlgorithmID = keyAlgorithmID

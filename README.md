@@ -27,6 +27,7 @@ In August 2019, PyRDP was demo'ed at BlackHat Arsenal ([slides](https://docs.goo
 - [Installing](#installing)
     * [Installing with Docker](#installing-with-docker)
     * [Installing on Windows](#installing-on-windows)
+    * [Migrating away from pycrypto](#Migrating-away-from-pycrypto)
 - [Using the PyRDP Man-in-the-Middle](#using-the-pyrdp-man-in-the-middle)
     * [Specifying the private key and certificate](#specifying-the-private-key-and-certificate)
     * [Connecting to the PyRDP player](#connecting-to-the-pyrdp-player)
@@ -152,6 +153,24 @@ If you plan on using the player, X11 forwarding using an SSH connection would be
 ### Installing on Windows
 If you want to install PyRDP on Windows, note that `setup.py` will try to compile `ext/rle.c`, so you will need to have
 a C compiler installed. You will also need to generate a private key and certificate to run the MITM.
+
+### Migrating away from pycrypto
+Since pycrypto isn't maintained anymore, we chose to migrate to pycryptodome.
+If you get this error, it means that you are using the module pycrypto instead of pycryptodome.
+
+```
+[...]
+  File "[...]/pyrdp/pyrdp/pdu/rdp/connection.py", line 10, in <module>
+    from Crypto.PublicKey.RSA import RsaKey
+ImportError: cannot import name 'RsaKey'
+```
+
+You will need to remove the module pycrypto and reinstall PyRDP.
+
+```
+pip3 uninstall pycrypto
+pip3 install -U -e .
+```
 
 ## Using the PyRDP Man-in-the-Middle
 Use `pyrdp-mitm.py <ServerIP>` or `pyrdp-mitm.py <ServerIP>:<ServerPort>` to run the MITM.
