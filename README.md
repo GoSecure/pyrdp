@@ -25,8 +25,8 @@ In August 2019, PyRDP was demo'ed at BlackHat Arsenal ([slides](https://docs.goo
 ## Table of Contents
 - [Supported Systems](#supported-systems)
 - [Installing](#installing)
-    * [Installing with Docker](#installing-with-docker)
     * [Installing on Windows](#installing-on-windows)
+    * [Installing with Docker](#installing-with-docker)
     * [Migrating away from pycrypto](#Migrating-away-from-pycrypto)
 - [Using the PyRDP Man-in-the-Middle](#using-the-pyrdp-man-in-the-middle)
     * [Specifying the private key and certificate](#specifying-the-private-key-and-certificate)
@@ -54,7 +54,7 @@ In August 2019, PyRDP was demo'ed at BlackHat Arsenal ([slides](https://docs.goo
 ## Supported Systems
 PyRDP should work on Python 3.6 and up.
 
-This tool has been tested to work on Python 3.6 on Linux (Ubuntu 18.04). It has not been tested on OSX and Windows.
+This tool has been tested to work on Python 3.6 on Linux (Ubuntu 18.04) and Windows (See section [Installing on Windows](#installing-on-windows)). It has not been tested on OSX.
 
 ## Installing
 
@@ -88,6 +88,47 @@ Before installing the dependencies, you need to activate your virtual environmen
 
 ```
 source venv/bin/activate
+```
+
+Finally, you can install the project with Pip:
+
+```
+pip3 install -U pip setuptools wheel
+pip3 install -U -e .
+```
+
+This should install all the dependencies required to run PyRDP.
+
+If you ever want to leave your virtual environment, you can simply deactivate it:
+
+```
+deactivate
+```
+
+Note that you will have to activate your environment every time you want to have the PyRDP scripts available as shell
+commands.
+
+### Installing on Windows
+
+The steps are almost the same. There are two additional prerequisites.
+
+1. Any C compiler
+2. [OpenSSL](https://wiki.openssl.org/index.php/Binaries). Make sure it is reachable from your `$PATH`.
+
+Then, create your virtual environment in PyRDP's directory:
+
+```
+cd pyrdp
+python3 -m venv venv
+```
+
+*DO NOT* use the root PyRDP directory for the virtual environment folder (`python3 -m venv .`). You will make a mess,
+and using a directory name like `venv` is more standard anyway.
+
+Before installing the dependencies, you need to activate your virtual environment:
+
+```
+venv\Scripts\activate
 ```
 
 Finally, you can install the project with Pip:
@@ -149,10 +190,6 @@ docker run -e DISPLAY=$DISPLAY -e QT_X11_NO_MITSHM=1 --net=host pyrdp pyrdp-play
 
 Keep in mind that exposing the host's network to the docker can compromise the isolation between your container and the host.
 If you plan on using the player, X11 forwarding using an SSH connection would be a more secure way.
-
-### Installing on Windows
-If you want to install PyRDP on Windows, note that `setup.py` will try to compile `ext/rle.c`, so you will need to have
-a C compiler installed. You will also need to generate a private key and certificate to run the MITM.
 
 ### Migrating away from pycrypto
 Since pycrypto isn't maintained anymore, we chose to migrate to pycryptodome.

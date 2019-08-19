@@ -6,8 +6,11 @@
 
 import logging
 
-import notify2
-
+# Dependency not installed on Windows. Notifications are not supported
+try:
+    import notify2
+except ImportError:
+    pass
 
 class NotifyHandler(logging.StreamHandler):
     """
