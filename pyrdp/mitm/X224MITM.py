@@ -13,7 +13,7 @@ from pyrdp.layer import X224Layer
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.parser import NegotiationRequestParser, NegotiationResponseParser
 from pyrdp.pdu import NegotiationRequestPDU, NegotiationResponsePDU, X224ConnectionConfirmPDU, X224ConnectionRequestPDU, \
-    X224DisconnectRequestPDU, X224ErrorPDU
+    X224DisconnectRequestPDU, X224ErrorPDU, NegotiationFailurePDU
 
 
 class X224MITM:
@@ -100,11 +100,11 @@ class X224MITM:
 
         parser = NegotiationResponseParser()
         response = parser.parse(pdu.payload)
-        if isinstance(response.type, NegotiationType.TYPE_RDP_NEG_FAILURE):
+        if isinstance(response, NegotiationFailurePDU):
             self.log.info("The server failed the negotiation. Error: %(error)s", {"error": NegotiationFailureCode.getMessage(response.failureCode)})
-            return
-
-        payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, protocols))
+            payload = pdu.payload
+        else:
+            payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, protocols))
         self.client.sendConnectionConfirm(payload, source=0x1234)
 
         if self.originalRequest.tlsSupported:
