@@ -6,6 +6,7 @@
 
 from pyrdp.enum import CapabilityType, KeyboardFlag, OrderFlag, VirtualChannelCompressionFlag
 from pyrdp.layer import SlowPathLayer, SlowPathObserver
+from pyrdp.logging.StatCounter import StatCounter, STAT
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.pdu import Capability, ConfirmActivePDU, DemandActivePDU, InputPDU, KeyboardEvent, SlowPathPDU
 from pyrdp.mitm.BasePathMITM import BasePathMITM
@@ -15,12 +16,12 @@ class SlowPathMITM(BasePathMITM):
     MITM component for the slow-path layer.
     """
 
-    def __init__(self, client: SlowPathLayer, server: SlowPathLayer, state: RDPMITMState):
+    def __init__(self, client: SlowPathLayer, server: SlowPathLayer, state: RDPMITMState, statCounter: StatCounter):
         """
         :param client: slow-path layer for the client side
         :param server: slow-path layer for the server side
         """
-        super().__init__(state, client, server)
+        super().__init__(state, client, server, statCounter)
 
         self.clientObserver = self.client.createObserver(
             onPDUReceived = self.onClientPDUReceived,
@@ -33,6 +34,7 @@ class SlowPathMITM(BasePathMITM):
         )
 
     def onClientPDUReceived(self, pdu: SlowPathPDU):
+        self.statCounter.increment(STAT.IO_INPUT_SLOWPATH)
         SlowPathObserver.onPDUReceived(self.clientObserver, pdu)
 
         if self.state.forwardInput:
@@ -45,6 +47,7 @@ class SlowPathMITM(BasePathMITM):
                         self.onScanCode(event.keyCode, event.flags & KeyboardFlag.KBDFLAGS_DOWN == 0, event.flags & KeyboardFlag.KBDFLAGS_EXTENDED != 0)
 
     def onServerPDUReceived(self, pdu: SlowPathPDU):
+        self.statCounter.increment(STAT.IO_OUTPUT_SLOWPATH)
         SlowPathObserver.onPDUReceived(self.serverObserver, pdu)
 
         if self.state.forwardOutput:

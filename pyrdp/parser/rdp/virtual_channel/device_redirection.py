@@ -365,7 +365,7 @@ class DeviceRedirectionParser(Parser):
         fileID = Uint32LE.unpack(stream)
         information = stream.read(1)
 
-        if information == "":
+        if information == b"":
             information = 0
         else:
             information = Uint8.unpack(information)

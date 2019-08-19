@@ -5,6 +5,7 @@
 #
 
 from logging import LoggerAdapter
+from Crypto.PublicKey.RSA import RsaKey
 
 from pyrdp.core import decodeUTF16LE
 from pyrdp.enum import ClientInfoFlags, PlayerPDUType
@@ -14,6 +15,7 @@ from pyrdp.mitm.state import RDPMITMState
 from pyrdp.parser import ClientInfoParser
 from pyrdp.pdu import SecurityExchangePDU
 from pyrdp.recording import Recorder
+from pyrdp.security.crypto import RSA
 
 
 class SecurityMITM:
@@ -52,7 +54,7 @@ class SecurityMITM:
         Set the security settings' client random from the security exchange.
         :param pdu: the security exchange
         """
-        clientRandom = self.state.rc4RSAKey.decrypt(pdu.clientRandom[:: -1])[:: -1]
+        clientRandom = RSA(self.state.rc4RSAKey).decrypt(pdu.clientRandom[:: -1])[:: -1]
         self.state.securitySettings.setClientRandom(clientRandom)
 
         self.server.sendSecurityExchange(self.state.securitySettings.encryptClientRandom())

@@ -220,6 +220,7 @@ class RDPVersion(IntEnum):
     RDP10_4 = 0x80009
     RDP10_5 = 0x8000A
     RDP10_6 = 0x8000B
+    RDP10_7 = 0x8000C
 
 
 class ColorDepth(IntEnum):
@@ -345,6 +346,32 @@ class NegotiationProtocols(IntFlag):
     SSL = 0b00000001
     CRED_SSP = 0b00000010
     EARLY_USER_AUTHORIZATION_RESULT = 0b00001000
+
+
+class NegotiationFailureCode(IntEnum):
+    """
+    RDP Negotiation Failure error messages
+    See: https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/1b3920e7-0116-4345-bc45-f2c4ad012761
+    """
+
+    SSL_REQUIRED_BY_SERVER = 0x00000001
+    SSL_NOT_ALLOWED_BY_SERVER = 0x00000002
+    SSL_CERT_NOT_ON_SERVER = 0x00000003
+    INCONSISTENT_FLAGS = 0x00000004
+    HYBRID_REQUIRED_BY_SERVER = 0x00000005
+    SSL_WITH_USER_AUTH_REQUIRED_BY_SERVER = 0x00000006
+
+    @staticmethod
+    def getMessage(code: "NegotiationFailureCode"):
+        MESSAGES = {
+            NegotiationFailureCode.SSL_REQUIRED_BY_SERVER: "The server requires that the client support Enhanced RDP Security (section 5.4) with either TLS 1.0, 1.1 or 1.2 (section 5.4.5.1) or CredSSP (section 5.4.5.2). If only CredSSP was requested then the server only supports TLS.",
+            NegotiationFailureCode.SSL_NOT_ALLOWED_BY_SERVER: "The server is configured to only use Standard RDP Security mechanisms (section 5.3) and does not support any External Security Protocols (section 5.4.5).",
+            NegotiationFailureCode.SSL_CERT_NOT_ON_SERVER: "The server does not possess a valid authentication certificate and cannot initialize the External Security Protocol Provider (section 5.4.5).",
+            NegotiationFailureCode.INCONSISTENT_FLAGS: "The list of requested security protocols is not consistent with the current security protocol in effect. This error is only possible when the Direct Approach (sections 5.4.2.2 and 1.3.1.2) is used and an External Security Protocol (section 5.4.5) is already being used.",
+            NegotiationFailureCode.HYBRID_REQUIRED_BY_SERVER: "The server requires that the client support Enhanced RDP Security (section 5.4) with CredSSP (section 5.4.5.2).",
+            NegotiationFailureCode.SSL_WITH_USER_AUTH_REQUIRED_BY_SERVER: "The server requires that the client support Enhanced RDP Security (section 5.4) with TLS 1.0, 1.1 or 1.2 (section 5.4.5.1) and certificate-based client authentication."
+        }
+        return MESSAGES.get(code, "Unknown Error")
 
 
 class CapabilityType(IntEnum):
