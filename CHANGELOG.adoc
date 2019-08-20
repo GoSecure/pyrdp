@@ -6,17 +6,43 @@
 This document provides a high-level view of the changes introduced in {project-name} by release.
 For a detailed view of what has changed, refer to the {uri-repo}/commits/master[commit history] on GitHub.
 
-== _Unreleased_
+== 0.3.0 - <releaseDate>
+
+A special BlackHat USA Arsenal 2019 release!
+
+* https://docs.google.com/presentation/d/17P_l2n-hgCehQ5eTWilru4IXXHnGIRTj4ftoW4BiX5A/edit?usp=sharing[BlackHat USA Arsenal 2019 slides]
+
+
+=== Enhancements
+
+* Added Windows support ({uri-issue}129[#129])
+* Improved documentation for operation with Bettercap ({uri-issue}107[#107])
+* Added support for RDP v10.7 ({uri-issue}135[#135])
+* Added a heuristics-based credential logger to enable credentials collection at scale ({uri-issue}106[#106])
+* Dependency update: Replaced pycrypto with pycryptodome ({uri-issue}128[#128])
+* UX improvements to the PyRDP-Player ({uri-issue}119[#119], {uri-issue}124[#124])
+* Improved handling of X224 Negotiation Failures like NLA ({uri-issue}102[#102])
+* Accept and log connections from scanners better ({uri-issue}136[#136])
+* Added BlueKeep specific detection and logging ({uri-issue}114[#114])
+* Added a log entry that resumes a connection, useful to hunt specific connections ({uri-issue}117[#117])
+* Logging minor improvements ({uri-issue}123[#123], {uri-issue}112[#112])
+
 
 === Bug fixes
 
 * Fixed issue with `virtualenv` setup ({uri-issue}110[#110])
+* Fixed connections to Windows servers with RDS enabled ({uri-issue}118[#118])
+* Shared Folders: Fixed a case where DOSName had no nullbyte ({uri-issue}121[#121])
+
+
+=== Credits
+
+Thanks to the following people who contributed to this release:
+
+Maxime Carbonneau, Émilio Gonzalez, Francis Labelle and Olivier Bilodeau
 
 
 ////
-
-Enhancements::
-
 === Release meta
 
 * Released on:
