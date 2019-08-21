@@ -17,19 +17,19 @@ A special BlackHat USA Arsenal 2019 release!
 
 * Added Windows support ({uri-issue}129[#129])
 * Improved documentation for operation with Bettercap ({uri-issue}107[#107])
-* Added support for RDP v10.7 ({uri-issue}135[#135])
 * Added a heuristics-based credential logger to enable credentials collection at scale ({uri-issue}106[#106])
 * Dependency update: Replaced pycrypto with pycryptodome ({uri-issue}128[#128])
 * UX improvements to the PyRDP-Player ({uri-issue}119[#119], {uri-issue}124[#124])
 * Improved handling of X224 Negotiation Failures like NLA ({uri-issue}102[#102])
 * Accept and log connections from scanners better ({uri-issue}136[#136])
 * Added BlueKeep specific detection and logging ({uri-issue}114[#114])
-* Added a log entry that resumes a connection, useful to hunt specific connections ({uri-issue}117[#117])
+* Added a log entry that summarizes a connection, useful to hunt specific connections ({uri-issue}117[#117])
 * Logging minor improvements ({uri-issue}123[#123], {uri-issue}112[#112])
 
 
 === Bug fixes
 
+* Added support for RDP v10.7 in the connection handshake ({uri-issue}135[#135])
 * Fixed issue with `virtualenv` setup ({uri-issue}110[#110])
 * Fixed connections to Windows servers with RDS enabled ({uri-issue}118[#118])
 * Shared Folders: Fixed a case where DOSName had no nullbyte ({uri-issue}121[#121])
