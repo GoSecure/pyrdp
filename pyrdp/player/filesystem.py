@@ -79,6 +79,13 @@ class Directory(FileSystemItem, Subject):
         else:
             return self.parent.getFullPath(path)
 
+    def getRootParent(self) -> FileSystemItem:
+        parent = self.parent
+
+        while parent.parent is not None:
+            parent = parent.parent
+
+        return parent
 
 class File(FileSystemItem):
     def __init__(self, name: str, parent: Directory):
@@ -98,6 +105,13 @@ class File(FileSystemItem):
         else:
             return self.parent.getFullPath(path)
 
+    def getRootParent(self) -> FileSystemItem:
+        parent = self.parent
+
+        while parent.parent is not None:
+            parent = parent.parent
+
+        return parent
 
 class Drive(Directory):
     def __init__(self, name: str, deviceID: int):
@@ -123,7 +137,6 @@ class Drive(Directory):
             path /= name
 
         return str(path)
-
 
 @ObservedBy(DirectoryObserver)
 class FileSystem(Directory):

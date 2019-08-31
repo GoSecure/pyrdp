@@ -135,7 +135,12 @@ def generateCertificate(keyPath: str, certificatePath: str) -> bool:
     :return: True if generation was successful
     """
 
-    result = os.system("openssl req -newkey rsa:2048 -nodes -keyout %s -x509 -days 365 -out %s -subj '/CN=www.example.com/O=PYRDP/C=US' 2>/dev/null" % (keyPath, certificatePath))
+    if os.name != "nt":
+        nullDevicePath = "/dev/null"
+    else:
+        nullDevicePath = "NUL"
+
+    result = os.system("openssl req -newkey rsa:2048 -nodes -keyout %s -x509 -days 365 -out %s -subj \"/CN=www.example.com/O=PYRDP/C=US\" 2>%s" % (keyPath, certificatePath, nullDevicePath))
     return result == 0
 
 

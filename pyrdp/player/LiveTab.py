@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018, 2019 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -34,6 +34,7 @@ class LiveTab(BaseTab, DirectoryObserver):
         self.eventHandler = LiveEventHandler(self.widget, self.text, self.log, self.fileSystem, self.layers.player, self)
         self.attackerBar = AttackerBar()
         self.connectionClosed = self.eventHandler.connectionClosed
+        self.addIconToTab = self.eventHandler.addIconToTab
         self.renameTab = self.eventHandler.renameTab
 
         self.attackerBar.controlTaken.connect(lambda: self.rdpWidget.setControlState(True))
@@ -41,7 +42,8 @@ class LiveTab(BaseTab, DirectoryObserver):
 
         self.fileSystemWidget = FileSystemWidget(self.fileSystem)
         self.fileSystemWidget.setWindowTitle("Client drives")
-        self.fileSystemWidget.fileDownloadRequested.connect(self.eventHandler.onFileDownloadRequested)
+        self.fileSystemWidget.fileDownloadRequested.connect(self.eventHandler.addToDownloadQueue)
+        self.fileSystemWidget.directoryDownloadRequested.connect(self.eventHandler.addToDownloadQueue)
 
         self.attackerLayout = QHBoxLayout()
         self.attackerLayout.addWidget(self.fileSystemWidget, 20)

@@ -21,12 +21,14 @@ We have used this tool as part of an RDP honeypot which records sessions and sav
 target machine.
 
 PyRDP was [first introduced in a blogpost](https://www.gosecure.net/blog/2018/12/19/rdp-man-in-the-middle-smile-youre-on-camera) in which we [demonstrated that we can catch a real threat actor in action](https://www.youtube.com/watch?v=eB7RC9FmL6Q). In May 2019 a [presentation by its authors](https://docs.google.com/presentation/d/1avcn8Sh2b3IE7AA0G9l7Cj5F1pxqizUm98IbXUo2cvY/edit#slide=id.g404b70030f_0_581) was given at NorthSec and two demos were performed. [The first one covered](https://youtu.be/5JztJzi-m48) credential logging, clipboard stealing, client-side file browsing and a session take-over. [The second one covered](https://youtu.be/bU67tj1RkMA) the execution of cmd or powershell payloads when a client successfully authenticates.
+In August 2019, PyRDP was demo'ed at BlackHat Arsenal ([slides](https://docs.google.com/presentation/d/17P_l2n-hgCehQ5eTWilru4IXXHnGIRTj4ftoW4BiX5A/edit?usp=sharing)).
 
 ## Table of Contents
 - [Supported Systems](#supported-systems)
 - [Installing](#installing)
-    * [Installing with Docker](#installing-with-docker)
     * [Installing on Windows](#installing-on-windows)
+    * [Installing with Docker](#installing-with-docker)
+    * [Migrating away from pycrypto](#Migrating-away-from-pycrypto)
 - [Using the PyRDP Man-in-the-Middle](#using-the-pyrdp-man-in-the-middle)
     * [Specifying the private key and certificate](#specifying-the-private-key-and-certificate)
     * [Connecting to the PyRDP player](#connecting-to-the-pyrdp-player)
@@ -53,7 +55,7 @@ PyRDP was [first introduced in a blogpost](https://www.gosecure.net/blog/2018/12
 ## Supported Systems
 PyRDP should work on Python 3.6 and up.
 
-This tool has been tested to work on Python 3.6 on Linux (Ubuntu 18.04). It has not been tested on OSX and Windows.
+This tool has been tested to work on Python 3.6 on Linux (Ubuntu 18.04) and Windows (See section [Installing on Windows](#installing-on-windows)). It has not been tested on OSX.
 
 ## Installing
 
@@ -87,6 +89,47 @@ Before installing the dependencies, you need to activate your virtual environmen
 
 ```
 source venv/bin/activate
+```
+
+Finally, you can install the project with Pip:
+
+```
+pip3 install -U pip setuptools wheel
+pip3 install -U -e .
+```
+
+This should install all the dependencies required to run PyRDP.
+
+If you ever want to leave your virtual environment, you can simply deactivate it:
+
+```
+deactivate
+```
+
+Note that you will have to activate your environment every time you want to have the PyRDP scripts available as shell
+commands.
+
+### Installing on Windows
+
+The steps are almost the same. There are two additional prerequisites.
+
+1. Any C compiler
+2. [OpenSSL](https://wiki.openssl.org/index.php/Binaries). Make sure it is reachable from your `$PATH`.
+
+Then, create your virtual environment in PyRDP's directory:
+
+```
+cd pyrdp
+python3 -m venv venv
+```
+
+*DO NOT* use the root PyRDP directory for the virtual environment folder (`python3 -m venv .`). You will make a mess,
+and using a directory name like `venv` is more standard anyway.
+
+Before installing the dependencies, you need to activate your virtual environment:
+
+```
+venv\Scripts\activate
 ```
 
 Finally, you can install the project with Pip:
@@ -149,9 +192,23 @@ docker run -e DISPLAY=$DISPLAY -e QT_X11_NO_MITSHM=1 --net=host pyrdp pyrdp-play
 Keep in mind that exposing the host's network to the docker can compromise the isolation between your container and the host.
 If you plan on using the player, X11 forwarding using an SSH connection would be a more secure way.
 
-### Installing on Windows
-If you want to install PyRDP on Windows, note that `setup.py` will try to compile `ext/rle.c`, so you will need to have
-a C compiler installed. You will also need to generate a private key and certificate to run the MITM.
+### Migrating away from pycrypto
+Since pycrypto isn't maintained anymore, we chose to migrate to pycryptodome.
+If you get this error, it means that you are using the module pycrypto instead of pycryptodome.
+
+```
+[...]
+  File "[...]/pyrdp/pyrdp/pdu/rdp/connection.py", line 10, in <module>
+    from Crypto.PublicKey.RSA import RsaKey
+ImportError: cannot import name 'RsaKey'
+```
+
+You will need to remove the module pycrypto and reinstall PyRDP.
+
+```
+pip3 uninstall pycrypto
+pip3 install -U -e .
+```
 
 ## Using the PyRDP Man-in-the-Middle
 Use `pyrdp-mitm.py <ServerIP>` or `pyrdp-mitm.py <ServerIP>:<ServerPort>` to run the MITM.
@@ -312,6 +369,8 @@ If you're interested in experimenting with RDP and making your own tools, head o
 ## Using PyRDP with Bettercap
 We developped our own Bettercap module, `rdp.proxy`, to man-in-the-middle all RDP connections
 on a given LAN. Check out [this document](docs/bettercap-rdp-mitm.md) for more information.
+
+## PyRDP Presentations
 
 ## Contributing to PyRDP
 See our [contribution guidelines](CONTRIBUTING.md).

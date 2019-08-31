@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018, 2019 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -33,7 +33,7 @@ from pyrdp.pdu.rdp.fastpath import FastPathBitmapEvent, FastPathEvent, FastPathE
 from pyrdp.pdu.rdp.input import ExtendedMouseEvent, KeyboardEvent, MouseEvent, SlowPathInput, SynchronizeEvent, \
     UnicodeKeyboardEvent, UnusedEvent
 from pyrdp.pdu.rdp.licensing import LicenseBinaryBlob, LicenseErrorAlertPDU, LicensingPDU
-from pyrdp.pdu.rdp.negotiation import NegotiationRequestPDU, NegotiationResponsePDU
+from pyrdp.pdu.rdp.negotiation import NegotiationFailurePDU, NegotiationRequestPDU, NegotiationResponsePDU
 from pyrdp.pdu.rdp.pointer import Point, PointerCacheEvent, PointerColorEvent, PointerEvent, PointerNewEvent, \
     PointerPositionEvent, PointerSystemEvent
 from pyrdp.pdu.rdp.security import SecurityExchangePDU, SecurityPDU

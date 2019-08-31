@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018, 2019 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -365,7 +365,7 @@ class DeviceRedirectionParser(Parser):
         fileID = Uint32LE.unpack(stream)
         information = stream.read(1)
 
-        if information == "":
+        if information == b"":
             information = 0
         else:
             information = Uint8.unpack(information)
