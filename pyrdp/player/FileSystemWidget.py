@@ -8,20 +8,21 @@ from pathlib import Path
 from typing import Optional
 
 from PySide2.QtCore import QObject, QPoint, Qt, Signal
-from PySide2.QtWidgets import QAction, QFileDialog, QFrame, QLabel, QListWidget, QMenu, QVBoxLayout, QWidget
+from PySide2.QtWidgets import QAction, QFileDialog, QFrame, QLabel, QListWidget, QMenu, QMessageBox, QVBoxLayout, QWidget
 
 from pyrdp.player.FileDownloadDialog import FileDownloadDialog
 from pyrdp.player.filesystem import Directory, DirectoryObserver, File, FileSystemItemType
 from pyrdp.player.FileSystemItem import FileSystemItem
 
+import os
 
 class FileSystemWidget(QWidget, DirectoryObserver):
     """
     Widget for listing directory contents and download files from the RDP client.
     """
 
-    # fileDownloadRequested(file, targetPath, dialog)
     fileDownloadRequested = Signal(File, str, FileDownloadDialog)
+    directoryDownloadRequested = Signal(Directory, str, FileDownloadDialog)
 
     def __init__(self, root: Directory, parent: QObject = None):
         """
@@ -99,6 +100,7 @@ class FileSystemWidget(QWidget, DirectoryObserver):
 
         self.listCurrentDirectory()
 
+
     def listCurrentDirectory(self):
         """
         Refresh the list widget with the current directory's contents.
@@ -175,8 +177,13 @@ class FileSystemWidget(QWidget, DirectoryObserver):
         downloadAction.setEnabled(selectedFile.type in [FileSystemItemType.File])
         downloadAction.triggered.connect(self.downloadFile)
 
+        downloadRecursiveAction = QAction("Download files recursively")
+        downloadRecursiveAction.setEnabled(selectedFile.type in [FileSystemItemType.Directory])
+        downloadRecursiveAction.triggered.connect(self.downloadDirectoryRecursively)
+
         itemMenu = QMenu()
         itemMenu.addAction(downloadAction)
+        itemMenu.addAction(downloadRecursiveAction)
 
         itemMenu.exec_(globalPosition)
 
@@ -189,8 +196,39 @@ class FileSystemWidget(QWidget, DirectoryObserver):
         filePath = file.getFullPath()
         targetPath, _ = QFileDialog.getSaveFileName(self, f"Download file {filePath}", file.name)
 
-        if targetPath != "":
-            dialog = FileDownloadDialog(filePath, targetPath, self)
-            dialog.show()
+        if targetPath == "":
+            QMessageBox.critical(self, "Download file", "Please select a valid file. Aborting download.")
+            return
 
-            self.fileDownloadRequested.emit(file, targetPath, dialog)
+        dialog = FileDownloadDialog(filePath, targetPath, False, self)
+        dialog.incrementDownloadTotal()
+        dialog.show()
+
+        self.fileDownloadRequested.emit(file, targetPath, dialog)
+
+    def downloadDirectoryRecursively(self):
+        selectedFolder = self.selectedFile()
+
+        if selectedFolder.type != FileSystemItemType.Directory:
+            return
+
+        directoryPath = QFileDialog.getExistingDirectory(self, f"Download folder {selectedFolder.getFullPath()}")
+        remotePath = selectedFolder.getFullPath()
+
+        dialog = None
+        if directoryPath == "":
+            QMessageBox.critical(self, "Download folder", f"Please select a valid folder. Aborting download.")
+            return
+
+        directoryPath += f"/{selectedFolder.name}"
+
+        try:
+            os.mkdir(directoryPath)
+        except FileExistsError:
+            QMessageBox.critical(self, "Download folder", f"Folder already exist. Make sure to select an empty directory. Aborting download.")
+            return
+
+        dialog = FileDownloadDialog(remotePath, directoryPath, True, self)
+        dialog.show()
+
+        self.directoryDownloadRequested.emit(selectedFolder, directoryPath, dialog)
