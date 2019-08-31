@@ -5,6 +5,10 @@
 /BGinfo
 /PerfLogs
 
+# Dev packages folders
+*/node_modules
+*/vendor
+
 # Default files on Windows
 */AppData/Local/Packages
 */Common Files
