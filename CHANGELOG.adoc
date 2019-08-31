@@ -6,7 +6,7 @@
 This document provides a high-level view of the changes introduced in {project-name} by release.
 For a detailed view of what has changed, refer to the {uri-repo}/commits/master[commit history] on GitHub.
 
-== 0.3.0 - <releaseDate>
+== 0.3.0 - 2019-08-31
 
 A special BlackHat USA Arsenal 2019 release!
 
