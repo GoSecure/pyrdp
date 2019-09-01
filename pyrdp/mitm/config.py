@@ -53,14 +53,14 @@ class MITMConfig:
         self.payloadDuration: int = None
         """Amount of time the payload should take to complete, in milliseconds"""
 
-        self.disableCrawler: bool = False
-        """Whether the crawler should be disabled or not"""
+        self.enableCrawler: bool = False
+        """Whether the crawler should be enabled or not"""
 
         self.crawlerMatchFileName: str = None
         """Path to the crawler match configuration file"""
 
         self.crawlerIgnoreFileName: str = None
-        """Path to the crawler match configuration file"""
+        """Path to the crawler ignore configuration file"""
 
     @property
     def replayDir(self) -> Path:

@@ -134,7 +134,7 @@ class RDPMITM:
             replayFileName = "rdp_replay_{}_{}.pyrdp".format(date.strftime('%Y%m%d_%H-%M-%S'), date.microsecond // 1000)
             self.recorder.addTransport(FileLayer(self.config.replayDir / replayFileName))
 
-        if not config.disableCrawler:
+        if config.enableCrawler:
             self.crawler: FileCrawlerMITM = FileCrawlerMITM(self.getClientLog(MCSChannelName.DEVICE_REDIRECTION).createChild("crawler"), crawlerLogger, self.config, self.state)
 
     def getProtocol(self) -> Protocol:
@@ -305,7 +305,7 @@ class RDPMITM:
         deviceRedirection = DeviceRedirectionMITM(clientLayer, serverLayer, self.getLog(MCSChannelName.DEVICE_REDIRECTION), self.config, self.statCounter, self.state)
         self.channelMITMs[client.channelID] = deviceRedirection
 
-        if not self.config.disableCrawler:
+        if self.config.enableCrawler:
             self.crawler.setDeviceRedirectionComponent(deviceRedirection)
 
         if self.attacker:
