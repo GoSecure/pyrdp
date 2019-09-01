@@ -11,6 +11,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 === Enhancements
 
 * Add recursive folder download from the PyRDP Player and a queue to download files ({uri-issue}140[#140])
+* Add file crawler to automatically download files from the client drive using pattern files ({uri-issue}141[#141])
 
 
 === Bug fixes

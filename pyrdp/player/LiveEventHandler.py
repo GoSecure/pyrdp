@@ -306,7 +306,7 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
         if response.error != 0:
             self.log.error("Error happened when downloading %(remotePath)s. The file may not have been saved completely. Error code: %(errorCode)s", {
                 "remotePath": remotePath,
-                "errorCode": '0x%08lx' % response.error,
+                "errorCode": "0x%08lx" % response.error,
             })
 
             try:
