@@ -8,6 +8,8 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 == 0.4.0 - 2019-09-01
 
+Release just in time for our Derbycon talk!
+
 === Enhancements
 
 * Add recursive folder download from the PyRDP Player and a queue to download files ({uri-issue}140[#140])
