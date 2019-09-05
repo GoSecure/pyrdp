@@ -1,6 +1,8 @@
 # PyRDP
 PyRDP is a Python 3 Remote Desktop Protocol (RDP) Man-in-the-Middle (MITM) and library.
 
+![PyRDP Logo](https://raw.githubusercontent.com/GoSecure/pyrdp/master/docs/pyrdp-logo.svg?sanitize=true)
+
 It features a few tools:
 - RDP Man-in-the-Middle
     - Logs credentials used when connecting
