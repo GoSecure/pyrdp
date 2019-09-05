@@ -8,7 +8,7 @@ import typing
 from logging import LoggerAdapter
 
 from pyrdp.core import defer
-from pyrdp.enum import NegotiationFailureCode, NegotiationProtocols, NegotiationType
+from pyrdp.enum import NegotiationFailureCode, NegotiationProtocols, NegotiationType, NegotiationRequestFlags
 from pyrdp.layer import X224Layer
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.parser import NegotiationRequestParser, NegotiationResponseParser
@@ -58,6 +58,10 @@ class X224MITM:
         parser = NegotiationRequestParser()
         self.originalRequest = parser.parse(pdu.payload)
         self.state.requestedProtocols = self.originalRequest.requestedProtocols
+
+        if self.originalRequest.flags & NegotiationRequestFlags.RESTRICTED_ADMIN_MODE_REQUIRED:
+            self.log.warning("Client has enabled Restricted Admin Mode, which forces Network-Level Authentication (NLA)."
+                             " Connection will fail.", {"restrictedAdminActivated": True})
 
         if self.originalRequest.cookie:
             self.log.info("%(cookie)s", {"cookie": self.originalRequest.cookie.decode()})

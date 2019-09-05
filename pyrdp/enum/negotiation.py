@@ -4,15 +4,8 @@
 # Licensed under the GPLv3 or later.
 #
 
-from enum import IntEnum
+from enum import IntEnum, Flag
 
-
-class NegotiationRequestFlags(IntEnum):
-    """
-    Negotiation request flags.
-    """
-    NONE = 0
-    CORRELATION_INFO_PRESENT = 8
 
 class NegotiationType(IntEnum):
     """
@@ -22,3 +15,13 @@ class NegotiationType(IntEnum):
     TYPE_RDP_NEG_RSP = 0x02
     TYPE_RDP_NEG_FAILURE = 0x03
     TYPE_RDP_CORRELATION_INFO = 0x06
+
+
+class NegotiationRequestFlags(IntEnum):
+    """
+    https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/902b090b-9cb3-4efc-92bf-ee13373371e3
+    """
+    NONE = 0x00
+    RESTRICTED_ADMIN_MODE_REQUIRED = 0x01
+    REDIRECTED_AUTHENTICATION_MODE_REQUIRED = 0x02
+    CORRELATION_INFO_PRESENT = 0x08
