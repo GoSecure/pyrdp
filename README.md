@@ -65,6 +65,8 @@ We recommend installing PyRDP in a
 [virtual environment](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/)
 to avoid dependency issues.
 
+_Note: PyRDP cannot be installed on 32bit systems. See: [this issue.](https://github.com/GoSecure/pyrdp/issues/150)_
+
 First, make sure to install the prerequisite packages (on Ubuntu):
 
 ```
