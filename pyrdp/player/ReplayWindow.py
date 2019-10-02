@@ -26,7 +26,7 @@ class ReplayWindow(BaseWindow):
         :param fileName: replay path.
         """
         self.tab = ReplayTab(fileName)
-        self.addTab(tab, fileName)
+        self.addTab(self.tab, fileName)
         self.log.debug("Loading replay file %(arg1)s", {"arg1": fileName})
 
     def play(self):
