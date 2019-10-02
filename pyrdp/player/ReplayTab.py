@@ -85,3 +85,6 @@ class ReplayTab(BaseTab):
     def onClose(self):
         self.thread.close()
         self.thread.wait()
+        
+    def play(self):
+        self.thread.play()
