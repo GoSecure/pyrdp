@@ -96,6 +96,8 @@ class MainWindow(QMainWindow):
 
         for fileName in filesToRead:
             self.replayWindow.openFile(fileName)
+            if len(filesToRead) == 1:
+                self.replayWindow.play()
 
     def onOpenFile(self):
         fileNames, _ = QFileDialog.getOpenFileNames(self, "Open File(s)")
