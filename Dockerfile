@@ -10,7 +10,7 @@ RUN apt-get update
 
 # Install Dependencies
 RUN apt-get install python3 python3-pip -y
-RUN apt-get install notify-osd dbus-x11 libdbus-1-dev libdbus-glib-1-dev -y
+RUN apt-get install notify-osd dbus-x11 libdbus-1-dev libdbus-glib-1-dev libgl1-mesa-glx -y
 
 COPY . /pyrdp
 
