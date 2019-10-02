@@ -4,6 +4,8 @@
 # Licensed under the GPLv3 or later.
 #
 
+import logging
+
 from typing import Optional, Union
 
 from PySide2.QtCore import QObject
@@ -21,7 +23,7 @@ from pyrdp.pdu import BitmapUpdateData, ConfirmActivePDU, FastPathBitmapEvent, F
     PlayerDeviceMappingPDU, PlayerPDU, UpdatePDU
 from pyrdp.player import keyboard
 from pyrdp.ui import QRemoteDesktop, RDPBitmapToQtImage
-
+from pyrdp.logging import LOGGER_NAMES
 
 class PlayerEventHandler(QObject, Observer):
     """
@@ -35,6 +37,7 @@ class PlayerEventHandler(QObject, Observer):
         self.shiftPressed = False
         self.capsLockOn = False
         self.buffer = b""
+        self.log = logging.getLogger(LOGGER_NAMES.PLAYER)
         self.handlers = {
             PlayerPDUType.CLIENT_DATA: self.onClientData,
             PlayerPDUType.CLIENT_INFO: self.onClientInfo,
@@ -48,6 +51,7 @@ class PlayerEventHandler(QObject, Observer):
 
 
     def writeText(self, text: str):
+        self.log.info(text)
         self.text.moveCursor(QTextCursor.End)
         self.text.insertPlainText(text)
 
