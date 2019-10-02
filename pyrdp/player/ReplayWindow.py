@@ -28,3 +28,6 @@ class ReplayWindow(BaseWindow):
         tab = ReplayTab(fileName)
         self.addTab(tab, fileName)
         self.log.debug("Loading replay file %(arg1)s", {"arg1": fileName})
+
+    def play(self):
+        tab.play()
