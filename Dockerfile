@@ -6,11 +6,14 @@
 
 FROM ubuntu:18.04
 
-RUN apt-get update
-
 # Install Dependencies
-RUN apt-get install python3 python3-pip -y
-RUN apt-get install notify-osd dbus-x11 libdbus-1-dev libdbus-glib-1-dev -y
+RUN apt-get update && apt-get install -y \
+        python3 \
+        python3-pip \
+        libdbus-1-dev \
+        libdbus-glib-1-dev \
+        notify-osd dbus-x11 \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY . /pyrdp
 
