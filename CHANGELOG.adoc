@@ -6,6 +6,15 @@
 This document provides a high-level view of the changes introduced in {project-name} by release.
 For a detailed view of what has changed, refer to the {uri-repo}/commits/master[commit history] on GitHub.
 
+== <master> - <unreleased>
+
+=== Enhancements
+
+* Improvements to our docker image ({uri-issue}156[#156], {uri-issue}157[#157])
+* Logging when Restricted Admin Mode is enabled on clients
+* Documentation improvements
+
+
 == 0.4.0 - 2019-09-01
 
 Release just in time for our Derbycon talk!
