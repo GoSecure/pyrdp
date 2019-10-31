@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
         python3-pip \
         libdbus-1-dev \
         libdbus-glib-1-dev \
+        libgl1-mesa-glx \
         notify-osd dbus-x11 \
     && rm -rf /var/lib/apt/lists/*
 
