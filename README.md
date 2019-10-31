@@ -164,7 +164,7 @@ docker build -t pyrdp .
 Afterwards, you can execute the following command to run the container:
 
 ```
-docker run -it pyrdp pyrdp-mitm.py 192.168.1.10
+docker run -it -p 3389:3389 pyrdp pyrdp-mitm.py 192.168.1.10
 ```
 
 For more information about the various commands and arguments, please refer to these sections:
@@ -176,7 +176,7 @@ For more information about the various commands and arguments, please refer to t
 To store the PyRDP output permanently (logs, files, etc.), add the -v option to the previous command. For example:
 
 ```
-docker run -v /home/myname/pyrdp_output:/home/pyrdp/pyrdp_output pyrdp pyrdp-mitm.py 192.168.1.10
+docker run -v $PWD/pyrdp_output:/home/pyrdp/pyrdp_output -p 3389:3389 pyrdp pyrdp-mitm.py 192.168.1.10
 ```
 
 Make sure that your destination directory is owned by a user with a UID of 1000, otherwise you will get a permission denied error.
