@@ -10,7 +10,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 === Enhancements
 
-* Improvements to our docker image ({uri-issue}156[#156], {uri-issue}157[#157])
+* Improvements to our docker image ({uri-issue}156[#156], {uri-issue}157[#157], {uri-issue}160[#160])
 * Logging when Restricted Admin Mode is enabled on clients
 * Documentation improvements
 
