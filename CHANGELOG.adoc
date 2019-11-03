@@ -6,7 +6,9 @@
 This document provides a high-level view of the changes introduced in {project-name} by release.
 For a detailed view of what has changed, refer to the {uri-repo}/commits/master[commit history] on GitHub.
 
-== <master> - <unreleased>
+== 0.4.1 - 2019-11-03
+
+Now with 100% public docker image!
 
 === Enhancements
 
@@ -17,6 +19,17 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 === Bug fixes
 
 * Fixed libGL.so.1 missing in docker image ({uri-issue}138[#138], {uri-issue}159[#159])
+
+=== Release meta
+
+* Released by: Olivier Bilodeau
+* Release beer: Archibald's Triple Américaine limited edition from YUL Airport
+
+=== Credits
+
+Thanks to the following people who contributed to this release:
+
+Émilio Gonzalez, Francis Labelle, Olivier Bilodeau, Ondrej Gersl
 
 
 == 0.4.0 - 2019-09-01
@@ -70,14 +83,6 @@ Thanks to the following people who contributed to this release:
 
 Maxime Carbonneau, Émilio Gonzalez, Francis Labelle and Olivier Bilodeau
 
-
-////
-=== Release meta
-
-* Released on:
-* Released by:
-* Release beer:
-////
 
 
 == 0.2.0 - 2019-05-15
