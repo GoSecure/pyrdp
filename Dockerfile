@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y \
 COPY . /pyrdp
 
 RUN cd /pyrdp \
-    && pip3 install -e . -U
+    && pip3 --no-cache-dir install -e . -U
 
 # Create user
 RUN useradd --create-home --home-dir /home/pyrdp pyrdp 
