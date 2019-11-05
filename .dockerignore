@@ -1,2 +1,32 @@
+# classics
+.git
+.cache
+
+# pyrdp specific
 pyrdp_output/
 venv*/
+
+# asciidoc renders
+*.html
+
+# some development artifacts
+/*.prof
+TODO
+TODO.adoc
+
+# python
+*.pyc
+
+# IDE stuff
+.project
+.pydevproject
+.idea/
+*~
+.vscode
+
+# packaging
+dist/
+build/
+rdpy.egg-info/
+pyrdp.egg-info/
+rle*.so
