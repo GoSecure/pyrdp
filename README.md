@@ -70,7 +70,7 @@ _Note: PyRDP cannot be installed on 32bit systems. See: [this issue.](https://gi
 First, make sure to install the prerequisite packages (on Ubuntu):
 
 ```
-sudo apt install libdbus-1-dev libdbus-glib-1-dev
+sudo apt install libdbus-1-dev libdbus-glib-1-dev libgl1-mesa-glx
 ```
 
 On some systems, you may need to install the `python3-venv` package:
