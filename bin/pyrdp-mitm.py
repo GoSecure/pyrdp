@@ -180,7 +180,6 @@ def main():
     parser.add_argument("-d", "--destination-port", help="Listening port of the PyRDP player (default: 3000).", default=3000)
     parser.add_argument("-k", "--private-key", help="Path to private key (for SSL)")
     parser.add_argument("-c", "--certificate", help="Path to certificate (for SSL)")
-    parser.add_argument("-n", "--nla", help="For NLA client authentication (need to provide credentials)", action="store_true")
     parser.add_argument("-u", "--username", help="Username that will replace the client's username", default=None)
     parser.add_argument("-p", "--password", help="Password that will replace the client's password", default=None)
     parser.add_argument("-L", "--log-level", help="Console logging level. Logs saved to file are always verbose.", default="INFO", choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"])
