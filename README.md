@@ -89,7 +89,7 @@ to avoid dependency issues.
 First, make sure to install the prerequisite packages (on Ubuntu):
 
 ```
-sudo apt install libdbus-1-dev libdbus-glib-1-dev git
+sudo apt install libdbus-1-dev libdbus-glib-1-dev libgl1-mesa-glx git
 ```
 
 On some systems, you may need to install the `python3-venv` package:

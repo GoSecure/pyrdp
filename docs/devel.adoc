@@ -2,25 +2,27 @@
 
 == Making a release
 
-// TODO
+NOTE: This is a work in progress
 
-. Update the changelog
-** Generate author list with:
+.Update the changelog
+* You can generate author list with where `<tag>` is replaced with previous release's tag:
 +
     git log <tag>.. --format="%aN" --reverse | perl -e 'my %dedupe; while (<STDIN>) { print unless $dedupe{$_}++}' | sort
-+
-** linkify issues with vim's: `%s/#\(\d\d\)/{uri-issue}\1[#\1]/gc`
 
-. Prepare release commit
-** commit msg: Prepare %version% release
-** release commit (--allow-empty) msg: Release %version%
+.Prepare release commit
+* Update version in `setup.py`
+* commit msg: Prepare %version% release
+* You can optionally do a release commit (with `--allow-empty` if needed) msg: Release %version%
 
-. Tag the release commit
-** Annotated Tag msg: Version %version%
+.Tag the release commit
+* Annotated Tag msg: Version %version%
 
-. Push your changes (including the tag)
-. Make a release on github (from changelog and copy from previous releases)
+.Push your changes (don't forget the tag!)
 
-. Update version in `setup.py` (+1 bugfix, append 'dev') and commit
-** commit msg: Begin development on next release
+.Make a release on github (from changelog and copy sections themes from previous releases)
+* linkify issues with vim's: `%s/{uri-issue}\d\+\[#\(\d\+\)\]/#\1/gc`
+
+.Post-release
+* Update version in `setup.py` (+1 bugfix, append 'dev') and commit
+* commit msg: Begin development on next release
 
