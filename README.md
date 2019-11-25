@@ -187,7 +187,7 @@ First of all, build the image by executing this command at the root of PyRDP (wh
 docker build -t pyrdp .
 ```
 
-Afterwards, you can execute PyRDP by invoking the `pyrdp` docker container. See [Usage instructions](TODO) and the [Docker specific instructions](TODO) for details.
+Afterwards, you can execute PyRDP by invoking the `pyrdp` docker container. See [Usage instructions](#using-pyrdp) and the [Docker specific instructions](#docker-specific-usage-instructions) for details.
 
 ### Migrating away from pycrypto
 Since pycrypto isn't maintained anymore, we chose to migrate to pycryptodome.
@@ -373,7 +373,7 @@ on a given LAN. Check out [this document](docs/bettercap-rdp-mitm.md) for more i
 
 Since docker restricts the interactions with the host system (filesystem and network), the PyRDP docker image must be run with some parameters depending on your use case. This section documents those parameters.
 
-We refer to the publicly provided docker image but if you [built your own](TODO) replace `gosecure/pyrdp` with the name of your locally built image.
+We refer to the publicly provided docker image but if you [built your own](#building-the-docker-image) replace `gosecure/pyrdp` with the name of your locally built image.
 
 #### Mapping a Listening Port
 
