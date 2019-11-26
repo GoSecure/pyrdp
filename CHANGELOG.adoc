@@ -6,6 +6,19 @@
 This document provides a high-level view of the changes introduced in {project-name} by release.
 For a detailed view of what has changed, refer to the {uri-repo}/commits/master[commit history] on GitHub.
 
+== <master> - <unreleased>
+
+=== Enhancements
+
+* Further Docker image size improvements
+* Documentation updates and fixes ({uri-repo}165[#165], {uri-repo}166[#166])
+
+=== Bug fixes
+
+* Remove NLA argument from `pyrdp-mitm`.
+  It was never supported and thus misleading.
+
+
 == 0.4.1 - 2019-11-03
 
 Now with 100% public docker image!
