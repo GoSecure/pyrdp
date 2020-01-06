@@ -23,4 +23,5 @@ services:
      - ./pyrdp_log:/home/pyrdp/log
      # Place the command you want to execute here:
      # ex: pyrdp-player.py
-    command: ["pyrdp-player.py"]
+     # ex: pyrdp-mitm.py
+    command: ["pyrdp-mitm.py", "-h"]
