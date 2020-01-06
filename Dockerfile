@@ -1,15 +1,18 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019, 2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
 FROM ubuntu:18.04
 
 # Install Dependencies
-RUN apt-get update && apt-get install -y \
-        python3 \
-        python3-pip \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3 python3-pip \
+        # Required for local pip install
+        python3-setuptools \
+        # Required to build dbus-python
+        build-essential python3-dev \
         libdbus-1-dev \
         libdbus-glib-1-dev \
         libgl1-mesa-glx \
