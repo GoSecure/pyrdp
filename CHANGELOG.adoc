@@ -11,7 +11,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 === Enhancements
 
 * Further Docker image size improvements
-* Documentation updates and fixes ({uri-repo}165[#165], {uri-repo}166[#166])
+* Documentation updates and fixes ({uri-repo}165[#165], {uri-repo}166[#166], {uri-repo}172[#172])
 
 === Bug fixes
 
