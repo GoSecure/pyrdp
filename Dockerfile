@@ -1,9 +1,3 @@
-#
-# This file is part of the PyRDP project.
-# Copyright (C) 2019, 2020 GoSecure Inc.
-# Licensed under the GPLv3 or later.
-#
-
 FROM ubuntu:18.04
 
 # Install Dependencies
