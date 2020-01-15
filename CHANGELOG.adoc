@@ -16,6 +16,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 === Bug fixes
 
+* Python 3.8 supported by fixing a logging.Formatter misuse ({uri-repo}176[#176])
 * Remove NLA argument from `pyrdp-mitm`.
   It was never supported and thus misleading.
 
