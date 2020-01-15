@@ -2,7 +2,7 @@
 
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018, 2019 GoSecure Inc.
+# Copyright (C) 2018-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -29,6 +29,7 @@ import names
 from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
 
+from pyrdp.core import parseTarget
 from pyrdp.logging import JSONFormatter, log, LOGGER_NAMES, LoggerNameFilter, SessionLogger, VariableFormatter
 from pyrdp.mitm import MITMConfig, RDPMITM
 
@@ -204,14 +205,7 @@ def main():
     prepareLoggers(logLevel, args.log_filter, args.sensor_id, outDir)
     pyrdpLogger = logging.getLogger(LOGGER_NAMES.MITM)
 
-    target = args.target
-
-    if ":" in target:
-        targetHost = target[: target.index(":")]
-        targetPort = int(target[target.index(":") + 1:])
-    else:
-        targetHost = target
-        targetPort = 3389
+    targetHost, targetPort = parseTarget(args.target)
 
     if (args.private_key is None) != (args.certificate is None):
         pyrdpLogger.error("You must provide both the private key and the certificate")

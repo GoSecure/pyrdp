@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018, 2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -9,6 +9,7 @@ File that contains helper methods to use in the library.
 """
 import logging
 from logging import Logger
+from typing import Tuple
 
 
 def decodeUTF16LE(data: bytes) -> str:
@@ -46,3 +47,16 @@ def getLoggerPassFilters(loggerName: str) -> Logger:
         parentLoggerName += "."
     [logger.addFilter(parentFilter) for parentFilter in filterList]
     return logger
+
+
+def parseTarget(target: str) -> Tuple[str, int]:
+    """
+    Parse a target host:port and return components. Port is optional.
+    """
+    if ":" in target:
+        targetHost = target[: target.index(":")]
+        targetPort = int(target[target.index(":") + 1:])
+    else:
+        targetHost = target
+        targetPort = 3389
+    return targetHost, targetPort
