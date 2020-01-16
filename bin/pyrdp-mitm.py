@@ -22,13 +22,12 @@ import os
 import sys
 from pathlib import Path
 
-import appdirs
 from twisted.internet import reactor
 
-from pyrdp.core import parseTarget
+from pyrdp.core import parseTarget, validateKeyAndCertificate
 from pyrdp.core.mitm import MITMServerFactory
 from pyrdp.logging import JSONFormatter, log, LOGGER_NAMES, LoggerNameFilter, SessionLogger, VariableFormatter
-from pyrdp.mitm import MITMConfig, RDPMITM
+from pyrdp.mitm import MITMConfig
 
 
 def prepareLoggers(logLevel: int, logFilter: str, sensorID: str, outDir: Path):
@@ -83,60 +82,6 @@ def prepareLoggers(logLevel: int, logFilter: str, sensorID: str, outDir: Path):
     log.prepareSSLLogger(logDir / "ssl.log")
 
 
-def getSSLPaths() -> (str, str):
-    """
-    Get the path to the TLS key and certificate in pyrdp's config directory.
-    :return: the path to the key and the path to the certificate.
-    """
-    config = appdirs.user_config_dir("pyrdp", "pyrdp")
-
-    if not os.path.exists(config):
-        os.makedirs(config)
-
-    key = config + "/private_key.pem"
-    certificate = config + "/certificate.pem"
-    return key, certificate
-
-
-def generateCertificate(keyPath: str, certificatePath: str) -> bool:
-    """
-    Generate an RSA private key and certificate with default values.
-    :param keyPath: path where the private key should be saved.
-    :param certificatePath: path where the certificate should be saved.
-    :return: True if generation was successful
-    """
-
-    if os.name != "nt":
-        nullDevicePath = "/dev/null"
-    else:
-        nullDevicePath = "NUL"
-
-    result = os.system("openssl req -newkey rsa:2048 -nodes -keyout %s -x509 -days 365 -out %s -subj \"/CN=www.example.com/O=PYRDP/C=US\" 2>%s" % (keyPath, certificatePath, nullDevicePath))
-    return result == 0
-
-
-def handleKeyAndCertificate(key: str, certificate: str):
-    """
-    Handle the certificate and key arguments that were given on the command line.
-    :param key: path to the TLS private key.
-    :param certificate: path to the TLS certificate.
-    """
-
-    logger = logging.getLogger(LOGGER_NAMES.MITM)
-
-    if os.path.exists(key) and os.path.exists(certificate):
-        logger.info("Using existing private key: %(privateKey)s", {"privateKey": key})
-        logger.info("Using existing certificate: %(certificate)s", {"certificate": certificate})
-    else:
-        logger.info("Generating a private key and certificate for SSL connections")
-
-        if generateCertificate(key, certificate):
-            logger.info("Private key path: %(privateKeyPath)s", {"privateKeyPath": key})
-            logger.info("Certificate path: %(certificatePath)s", {"certificatePath": certificate})
-        else:
-            logger.error("Generation failed. Please provide the private key and certificate with -k and -c")
-
-
 def logConfiguration(config: MITMConfig):
     logging.getLogger(LOGGER_NAMES.MITM).info("Target: %(target)s:%(port)d", {"target": config.targetHost, "port": config.targetPort})
     logging.getLogger(LOGGER_NAMES.MITM).info("Output directory: %(outputDirectory)s", {"outputDirectory": config.outDir.absolute()})
@@ -177,15 +122,7 @@ def main():
     pyrdpLogger = logging.getLogger(LOGGER_NAMES.MITM)
 
     targetHost, targetPort = parseTarget(args.target)
-
-    if (args.private_key is None) != (args.certificate is None):
-        pyrdpLogger.error("You must provide both the private key and the certificate")
-        sys.exit(1)
-    elif args.private_key is None:
-        key, certificate = getSSLPaths()
-        handleKeyAndCertificate(key, certificate)
-    else:
-        key, certificate = args.private_key, args.certificate
+    key, certificate = validateKeyAndCertificate(args.private_key, args.certificate)
 
     listenPort = int(args.listen)
 
