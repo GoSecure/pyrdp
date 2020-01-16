@@ -12,6 +12,7 @@ import names
 from pyrdp.mitm import MITMConfig, RDPMITM
 from pyrdp.logging import LOGGER_NAMES, SessionLogger
 
+
 class MITMServerFactory(ServerFactory):
     """
     Server factory for the RDP man-in-the-middle that generates a unique session ID for every connection.
