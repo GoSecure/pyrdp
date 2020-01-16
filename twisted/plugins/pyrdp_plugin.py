@@ -14,8 +14,7 @@ asyncioreactor.install(asyncio.get_event_loop())
 from twisted.python import usage
 from twisted.plugin import IPlugin
 from twisted.application.service import IServiceMaker
-from twisted.application import service, internet
-from twisted.internet import endpoints, protocol, reactor
+from twisted.application import internet
 
 from pyrdp.core import parseTarget, validateKeyAndCertificate
 from pyrdp.core.mitm import MITMServerFactory
@@ -25,28 +24,13 @@ from pyrdp.mitm import MITMConfig
 class Options(usage.Options):
     # Warning: keep in sync with bin/pyrdp-mitm.py
     optParameters = [
-        ["listen", "l", "tcp:3389", "Port number to listen on (default: tcp:3389)"],
+        ["listen", "l", "3389", "Port number to listen on (default: 3389)"],
         ["target", "t", None, "IP:port of the target RDP machine (ex: 192.168.1.10:3390)"],
         ["output", "o", "pyrdp_output", "Output folder for logs and recordings"],
         ["private-key", "k", None, "Path to private key (for SSL)"],
         ["certificate", "c", None, "Path to certificate (for SSL)"],
         ["username", "u", None, "Username that will replace the client's username"],
         ["password", "p", None, "Password that will replace the client's password"]]
-
-class SetupService(service.Service):
-    name = 'Setup Service'
-
-    def __init__(self, reactor):
-        self.reactor = reactor
-
-    def startService(self):
-        """
-        Custom initialisation code goes here.
-        """
-        self.reactor.callLater(3, self.done)
-
-    def done(self):
-        pass
 
 
 @implementer(IServiceMaker, IPlugin)
@@ -57,7 +41,7 @@ class PyRdpMitmServiceMaker(object):
 
     def makeService(self, options):
         """
-        Construct a TCPServer from a factory defined in myproject.
+        Construct a TCPServer from a MITMServerFactory
         """
 
         # Warning: only implemented a minimal subset of available config
@@ -77,20 +61,7 @@ class PyRdpMitmServiceMaker(object):
         config.outDir = Path(options["output"])
         config.outDir.mkdir(exist_ok = True)
 
-        endpoint = endpoints.serverFromString(reactor, options["listen"])
-        server_service = internet.StreamServerEndpointService(endpoint, MITMServerFactory(config))
-        server_service.setName("PyRDP Server")
-
-        setup_service = SetupService(reactor)
-
-        ms = service.MultiService()
-        server_service.setServiceParent(ms)
-        setup_service.setServiceParent(ms)
-        return ms
-
-        #return internet.TCPServer(3389, MITMServerFactory(config))
-        #return internet.StreamServerEndpointService(targetPort, MITMServerFactory(config))
-        #return reactor.listenTCP(targetPort, MITMServerFactory(config))
+        return internet.TCPServer(int(options["listen"]), MITMServerFactory(config))
 
 
 serviceMaker = PyRdpMitmServiceMaker()
