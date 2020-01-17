@@ -4,5 +4,6 @@
 # Licensed under the GPLv3 or later.
 #
 
+from pyrdp.mitm.cli import parseTarget, validateKeyAndCertificate
 from pyrdp.mitm.config import MITMConfig
 from pyrdp.mitm.RDPMITM import RDPMITM

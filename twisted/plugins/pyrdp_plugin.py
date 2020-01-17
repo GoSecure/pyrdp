@@ -16,9 +16,9 @@ from twisted.application.service import IServiceMaker
 from twisted.application import internet
 from zope.interface import implementer
 
-from pyrdp.core import parseTarget, validateKeyAndCertificate
 from pyrdp.core.mitm import MITMServerFactory
 from pyrdp.mitm import MITMConfig
+from pyrdp.mitm.cli import parseTarget, validateKeyAndCertificate
 
 
 class Options(usage.Options):

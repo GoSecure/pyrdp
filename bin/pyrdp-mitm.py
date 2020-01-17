@@ -19,10 +19,10 @@ asyncioreactor.install(asyncio.get_event_loop())
 
 from twisted.internet import reactor
 
-from pyrdp.core import parseTarget, validateKeyAndCertificate
 from pyrdp.core.mitm import MITMServerFactory
 from pyrdp.logging import JSONFormatter, log, LOGGER_NAMES, LoggerNameFilter, SessionLogger, VariableFormatter
 from pyrdp.mitm import MITMConfig
+from pyrdp.mitm.cli import parseTarget, validateKeyAndCertificate
 
 
 def prepareLoggers(logLevel: int, logFilter: str, sensorID: str, outDir: Path):
