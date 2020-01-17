@@ -7,7 +7,7 @@
 #
 import asyncio
 import argparse
-import logging.handlers
+import logging
 import os
 import sys
 from pathlib import Path
@@ -20,66 +20,8 @@ asyncioreactor.install(asyncio.get_event_loop())
 from twisted.internet import reactor
 
 from pyrdp.core.mitm import MITMServerFactory
-from pyrdp.logging import JSONFormatter, log, LOGGER_NAMES, LoggerNameFilter, SessionLogger, VariableFormatter
 from pyrdp.mitm import MITMConfig
-from pyrdp.mitm.cli import parseTarget, validateKeyAndCertificate
-
-
-def prepareLoggers(logLevel: int, logFilter: str, sensorID: str, outDir: Path):
-    """
-    :param logLevel: log level for the stream handler.
-    :param logFilter: logger name to filter on.
-    :param sensorID: ID to differentiate between instances of this program in the JSON log.
-    :param outDir: output directory.
-    """
-    logDir = outDir / "logs"
-    logDir.mkdir(exist_ok = True)
-
-    formatter = VariableFormatter("[{asctime}] - {levelname} - {sessionID} - {name} - {message}", style = "{", defaultVariables = {
-        "sessionID": "GLOBAL"
-    })
-
-    streamHandler = logging.StreamHandler()
-    streamHandler.setFormatter(formatter)
-    streamHandler.setLevel(logLevel)
-    streamHandler.addFilter(LoggerNameFilter(logFilter))
-
-    logFileHandler = logging.handlers.TimedRotatingFileHandler(logDir / "mitm.log", when = "D")
-    logFileHandler.setFormatter(formatter)
-
-    jsonFileHandler = logging.FileHandler(logDir / "mitm.json")
-    jsonFileHandler.setFormatter(JSONFormatter({"sensor": sensorID}))
-    jsonFileHandler.setLevel(logging.INFO)
-
-    rootLogger = logging.getLogger(LOGGER_NAMES.PYRDP)
-    rootLogger.addHandler(streamHandler)
-    rootLogger.addHandler(logFileHandler)
-    rootLogger.setLevel(logging.DEBUG)
-
-    connectionsLogger = logging.getLogger(LOGGER_NAMES.MITM_CONNECTIONS)
-    connectionsLogger.addHandler(jsonFileHandler)
-
-    crawlerFormatter = VariableFormatter("[{asctime}] - {sessionID} - {message}", style = "{", defaultVariables = {
-        "sessionID": "GLOBAL"
-    })
-
-    crawlerFileHandler = logging.FileHandler(logDir / "crawl.log")
-    crawlerFileHandler.setFormatter(crawlerFormatter)
-
-    jsonCrawlerFileHandler = logging.FileHandler(logDir / "crawl.json")
-    jsonCrawlerFileHandler.setFormatter(JSONFormatter({"sensor": sensorID}))
-
-    crawlerLogger = logging.getLogger(LOGGER_NAMES.CRAWLER)
-    crawlerLogger.addHandler(crawlerFileHandler)
-    crawlerLogger.addHandler(jsonCrawlerFileHandler)
-    crawlerLogger.setLevel(logging.INFO)
-
-    log.prepareSSLLogger(logDir / "ssl.log")
-
-
-def logConfiguration(config: MITMConfig):
-    logging.getLogger(LOGGER_NAMES.MITM).info("Target: %(target)s:%(port)d", {"target": config.targetHost, "port": config.targetPort})
-    logging.getLogger(LOGGER_NAMES.MITM).info("Output directory: %(outputDirectory)s", {"outputDirectory": config.outDir.absolute()})
+from pyrdp.mitm.cli import logConfiguration, parseTarget, prepareLoggers, validateKeyAndCertificate
 
 
 def main():
@@ -112,9 +54,7 @@ def main():
     outDir.mkdir(exist_ok = True)
 
     logLevel = getattr(logging, args.log_level)
-
-    prepareLoggers(logLevel, args.log_filter, args.sensor_id, outDir)
-    pyrdpLogger = logging.getLogger(LOGGER_NAMES.MITM)
+    pyrdpLogger = prepareLoggers(logLevel, args.log_filter, args.sensor_id, outDir)
 
     targetHost, targetPort = parseTarget(args.target)
     key, certificate = validateKeyAndCertificate(args.private_key, args.certificate)

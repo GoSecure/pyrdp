@@ -4,6 +4,7 @@
 # Licensed under the GPLv3 or later.
 #
 import asyncio
+import logging
 from pathlib import Path
 
 # need to install this reactor before importing other twisted code
@@ -18,7 +19,7 @@ from zope.interface import implementer
 
 from pyrdp.core.mitm import MITMServerFactory
 from pyrdp.mitm import MITMConfig
-from pyrdp.mitm.cli import parseTarget, validateKeyAndCertificate
+from pyrdp.mitm.cli import parseTarget, prepareLoggers, validateKeyAndCertificate
 
 
 class Options(usage.Options):
@@ -30,7 +31,12 @@ class Options(usage.Options):
         ["private-key", "k", None, "Path to private key (for SSL)"],
         ["certificate", "c", None, "Path to certificate (for SSL)"],
         ["username", "u", None, "Username that will replace the client's username"],
-        ["password", "p", None, "Password that will replace the client's password"]]
+        ["password", "p", None, "Password that will replace the client's password"],
+        ["log-level", "L", "INFO", "Console logging level. Logs saved to file are always verbose. "
+                                   "Choices: INFO, DEBUG, WARNING, ERROR, CRITICAL"],
+        ["log-filter", "F", "", "Only show logs from this logger name (accepts '*' wildcards)"],
+        ["sensor-id", "s", "PyRDP", "Sensor ID (to differentiate multiple instances "
+                                    "of the MITM where logs are aggregated at one place)"]]
 
 
 @implementer(IServiceMaker, IPlugin)
@@ -43,6 +49,11 @@ class PyRdpMitmServiceMaker(object):
         """
         Construct a TCPServer from a MITMServerFactory
         """
+        outDir = Path(options["output"])
+        outDir.mkdir(exist_ok = True)
+
+        logLevel = options["log-level"]
+        prepareLoggers(logLevel, options["log-filter"], options["sensor-id"], outDir)
 
         # Warning: only implemented a minimal subset of available config
         #          see bin/pyrdp-mitm.py for the full list
@@ -58,8 +69,7 @@ class PyRdpMitmServiceMaker(object):
 
         config.replacementUsername = options["username"]
         config.replacementPassword = options["password"]
-        config.outDir = Path(options["output"])
-        config.outDir.mkdir(exist_ok = True)
+        config.outDir = outDir
 
         return internet.TCPServer(int(options["listen"]), MITMServerFactory(config))
 
