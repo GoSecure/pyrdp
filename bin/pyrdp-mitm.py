@@ -5,22 +5,17 @@
 # Copyright (C) 2018-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-
 import asyncio
-from base64 import b64encode
-
-import OpenSSL
-from twisted.internet import asyncioreactor
-
-from pyrdp.core.ssl import ServerTLSContext
-
-asyncioreactor.install(asyncio.get_event_loop())
-
 import argparse
 import logging.handlers
 import os
 import sys
 from pathlib import Path
+from base64 import b64encode
+
+# need to install this reactor before importing other twisted code
+from twisted.internet import asyncioreactor
+asyncioreactor.install(asyncio.get_event_loop())
 
 from twisted.internet import reactor
 
@@ -212,19 +207,6 @@ def main():
         pyrdpLogger.error("--payload-delay was provided but no payload was set.")
         sys.exit(1)
 
-
-    try:
-        # Check if OpenSSL accepts the private key and certificate.
-        ServerTLSContext(config.privateKeyFileName, config.certificateFileName)
-    except OpenSSL.SSL.Error as error:
-        log.error(
-            "An error occurred when creating the server TLS context. " +
-            "There may be a problem with your private key or certificate (e.g: signature algorithm too weak). " +
-            "Here is the exception: %(error)s",
-            {"error": error}
-        )
-
-        sys.exit(1)
 
     logConfiguration(config)
 

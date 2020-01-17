@@ -15,6 +15,10 @@ from logging import Logger
 from typing import Tuple
 
 import appdirs
+import OpenSSL
+
+from pyrdp.core.ssl import ServerTLSContext
+
 
 def decodeUTF16LE(data: bytes) -> str:
     """
@@ -75,8 +79,21 @@ def validateKeyAndCertificate(private_key: str, certificate: str) -> Tuple[str, 
         handleKeyAndCertificate(key, cert)
     else:
         key, cert = private_key, certificate
-    return key, cert
 
+    try:
+        # Check if OpenSSL accepts the private key and certificate.
+        ServerTLSContext(key, cert)
+    except OpenSSL.SSL.Error as error:
+        from pyrdp.logging import log
+        log.error(
+            "An error occurred when creating the server TLS context. " +
+            "There may be a problem with your private key or certificate (e.g: signature algorithm too weak). " +
+            "Here is the exception: %(error)s",
+            {"error": error}
+        )
+        sys.exit(1)
+
+    return key, cert
 
 def handleKeyAndCertificate(key: str, certificate: str):
     """

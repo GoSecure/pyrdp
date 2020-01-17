@@ -6,8 +6,7 @@
 import asyncio
 from pathlib import Path
 
-from zope.interface import implementer
-
+# need to install this reactor before importing other twisted code
 from twisted.internet import asyncioreactor
 asyncioreactor.install(asyncio.get_event_loop())
 
@@ -15,6 +14,7 @@ from twisted.python import usage
 from twisted.plugin import IPlugin
 from twisted.application.service import IServiceMaker
 from twisted.application import internet
+from zope.interface import implementer
 
 from pyrdp.core import parseTarget, validateKeyAndCertificate
 from pyrdp.core.mitm import MITMServerFactory
