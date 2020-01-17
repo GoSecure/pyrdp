@@ -53,6 +53,7 @@ In August 2019, PyRDP was demo'ed at BlackHat Arsenal ([slides](https://docs.goo
     + [Using a custom private key](#using-a-custom-private-key)
     + [Other cloner arguments](#other-cloner-arguments)
   * [Using PyRDP as a Library](#using-pyrdp-as-a-library)
+  * [Using PyRDP with twistd](#using-pyrdp-with-twistd)
   * [Using PyRDP with Bettercap](#using-pyrdp-with-bettercap)
   * [Docker Specific Usage Instructions](#docker-specific-usage-instructions)
     + [Mapping a Listening Port](#mapping-a-listening-port)
@@ -364,6 +365,21 @@ Run `pyrdp-clonecert.py --help` for a full list of arguments.
 ### Using PyRDP as a Library
 If you're interested in experimenting with RDP and making your own tools, head over to our
 [documentation section](docs/README.md) for more information.
+
+### Using PyRDP with twistd
+The PyRDP MITM component was also implemented as a twistd plugin. This enables
+you to run it in debug mode and allows you to get an interactive debugging repl
+(pdb) if you send a `SIGUSR2` to the twistd process.
+
+```
+twistd --debug pyrdp -t <target>
+```
+
+Then to get the repl:
+
+```
+killall -SIGUSR2 twistd
+```
 
 ### Using PyRDP with Bettercap
 We developped our own Bettercap module, `rdp.proxy`, to man-in-the-middle all RDP connections
