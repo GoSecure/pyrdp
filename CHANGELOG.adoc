@@ -10,6 +10,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 === Enhancements
 
+* Added a `twistd` plugin ({uri-repo}174[#174], {uri-issue}177[#177])
 * Further Docker image size improvements ({uri-repo}173[#173] and more)
 * Default Docker Compose command now `pyrdp-mitm -h` to avoid confusing crash on `docker-compose up` ({uri-repo}173[#173])
 * Documentation updates and fixes ({uri-repo}165[#165], {uri-repo}166[#166], {uri-repo}172[#172])
