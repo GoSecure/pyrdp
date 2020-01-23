@@ -23,3 +23,6 @@ docs/*.html
 
 # pyrdp-specific
 pyrdp_output/
+
+# twisted
+/twisted/plugins/dropin.cache
