@@ -131,7 +131,11 @@ class RDPMITM:
 
         if config.recordReplays:
             date = datetime.datetime.now()
-            replayFileName = "rdp_replay_{}_{}.pyrdp".format(date.strftime('%Y%m%d_%H-%M-%S'), date.microsecond // 1000)
+            replayFileName = "rdp_replay_{}_{}_{}.pyrdp"\
+                    .format(date.strftime('%Y%m%d_%H-%M-%S'),
+                            date.microsecond // 1000,
+                            self.log.sessionID)
+            self.recorder.setRecordFilename(replayFileName)
             self.recorder.addTransport(FileLayer(self.config.replayDir / replayFileName))
 
         if config.enableCrawler:

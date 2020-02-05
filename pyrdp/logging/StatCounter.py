@@ -4,8 +4,10 @@
 # Licensed under the GPLv3 or later.
 #
 
+import collections
 import time
 from logging import LoggerAdapter
+from typing import Optional
 
 
 class STAT:
@@ -154,10 +156,18 @@ class StatCounter:
         if self.stats[STAT.TOTAL_OUTPUT] > 0:
             self.stats[STAT.CLIENT_SERVER_RATIO] = self.stats[STAT.TOTAL_INPUT] / self.stats[STAT.TOTAL_OUTPUT]
 
-    def logReport(self, log: LoggerAdapter):
+    def logReport(self, log: LoggerAdapter, more_info: Optional[collections.Mapping] = None):
         """
         Create an INFO log message to log the Connection report using the keys in self.stats.
         :param log: Logger to use to log the report
+        :param more_info: A dictionary-like object of more information to merge
+                          in the connection report
         """
-        keys = ", ".join([f"{key}: %({key})s" for key in self.stats.keys()])
-        log.info(f"Connection report: {keys}", self.stats)
+        # merge in the additional data if required
+        if isinstance(more_info, collections.Mapping):
+            report_data = {**self.stats, **more_info}
+        else:
+            report_data = self.stats
+
+        keys = ", ".join([f"{key}: %({key})s" for key in report_data.keys()])
+        log.info(f"Connection report: {keys}", report_data)
