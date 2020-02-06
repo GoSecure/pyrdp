@@ -33,9 +33,17 @@ class Recorder:
         }
 
         self.topLayers = []
+        self.recordFilename = None
 
         for transport in transports:
             self.addTransport(transport)
+
+    def setRecordFilename(self, filename: str):
+        """
+        Sets the filename used for the session recording.
+        :param filename: the filename
+        """
+        self.recordFilename = filename
 
     def addTransport(self, transportLayer: LayerChainItem):
         player = PlayerLayer()
