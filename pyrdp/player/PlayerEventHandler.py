@@ -49,7 +49,7 @@ class PlayerEventHandler(QObject, Observer):
 
     def writeText(self, text: str):
         self.text.moveCursor(QTextCursor.End)
-        self.text.insertPlainText(text)
+        self.text.insertPlainText(text.rstrip("\x00"))
 
     def writeSeparator(self):
         self.writeText("\n--------------------\n")
