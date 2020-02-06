@@ -10,6 +10,8 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 === Enhancements
 
+* Added `sessionID` to replay filename ({uri-issue}180[#180])
+* Added `replayfilename` to the connection report log entry ({uri-issue}180[#180])
 * Added a `twistd` plugin ({uri-issue}174[#174], {uri-issue}177[#177])
 * Further Docker image size improvements ({uri-issue}173[#173] and more)
 * Default Docker Compose command now `pyrdp-mitm -h` to avoid confusing crash on `docker-compose up` ({uri-issue}173[#173])
@@ -18,6 +20,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 === Bug fixes
 
 * Python 3.8 supported by fixing a logging.Formatter misuse ({uri-issue}176[#176])
+* Fixed stack traces in the player when attempting to print strings with ending null character ({uri-issue}182[#182])
 * Remove NLA argument from `pyrdp-mitm`.
   It was never supported and thus misleading.
 
