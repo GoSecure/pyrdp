@@ -75,6 +75,9 @@ class MITMConfig:
         self.disableActiveClipboardStealing: bool = False
         """ If set to False, use PassiveClipboardStealer instead of ActiveClipboardStealer."""
 
+        self.useGdi: bool = False
+        """Whether to allow the client to use the GDI rendering pipeline extension."""
+
     @property
     def replayDir(self) -> Path:
         """

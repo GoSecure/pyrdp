@@ -59,22 +59,26 @@ class SlowPathMITM(BasePathMITM):
         :param pdu: the confirm active PDU
         """
 
-        # Disable virtual channel compression
-        if CapabilityType.CAPSTYPE_VIRTUALCHANNEL in pdu.parsedCapabilitySets:
-            pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].flags = VirtualChannelCompressionFlag.VCCAPS_NO_COMPR
-
         if self.state.config.downgrade:
-            # Force RDP server to send bitmap events instead of order events.
-            pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderFlags = OrderFlag.NEGOTIATEORDERSUPPORT | OrderFlag.ZEROBOUNDSDELTASSUPPORT
-            pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderSupport = b"\x00" * 32
 
-            # Override the bitmap cache capability set with null values.
-            if CapabilityType.CAPSTYPE_BITMAPCACHE in pdu.parsedCapabilitySets:
-                pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAPCACHE] = Capability(CapabilityType.CAPSTYPE_BITMAPCACHE, b"\x00" * 36)
+            # Only disable GDI if not explicitly requested.
+            if not self.state.config.useGdi:
+                # Force RDP server to send bitmap events instead of order events.
+                pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderFlags = OrderFlag.NEGOTIATEORDERSUPPORT | OrderFlag.ZEROBOUNDSDELTASSUPPORT
+                pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderSupport = b"\x00" * 32
+
+                # Override the bitmap cache capability set with null values.
+                if CapabilityType.CAPSTYPE_BITMAPCACHE in pdu.parsedCapabilitySets:
+                    pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAPCACHE] = Capability(CapabilityType.CAPSTYPE_BITMAPCACHE, b"\x00" * 36)
 
             # Disable surface commands
             if CapabilityType.CAPSETTYPE_SURFACE_COMMANDS in pdu.parsedCapabilitySets:
                 pdu.parsedCapabilitySets[CapabilityType.CAPSETTYPE_SURFACE_COMMANDS].cmdFlags = 0
+
+        # Disable virtual channel compression
+        if CapabilityType.CAPSTYPE_VIRTUALCHANNEL in pdu.parsedCapabilitySets:
+            pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].flags = VirtualChannelCompressionFlag.VCCAPS_NO_COMPR
+
 
     def onDemandActive(self, pdu: DemandActivePDU):
         """

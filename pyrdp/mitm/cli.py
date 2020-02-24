@@ -150,6 +150,7 @@ def buildArgParser():
     parser.add_argument("--no-downgrade", help="Disables downgrading of unsupported extensions. This makes PyRDP harder to fingerprint but might impact the player's ability to replay captured traffic.", action="store_true")
     parser.add_argument("--no-files", help="Do not extract files transferred between the client and server.", action="store_true")
     parser.add_argument("--transparent", help="Spoof source IP for connections to the server (See README)", action="store_true")
+    parser.add_argument("--gdi", help="Enable drawing orders extensions (MS-RDPEGDI) support", action="store_true")
 
     return parser
 
@@ -201,6 +202,7 @@ def configure(cmdline=None) -> MITMConfig:
     config.transparent = args.transparent
     config.extractFiles = not args.no_files
     config.disableActiveClipboardStealing = args.disable_active_clipboard
+    config.enableGdi = args.gdi
 
     payload = None
     powershell = None

@@ -13,7 +13,7 @@ from pyrdp.layer import FastPathLayer, SecurityLayer, TLSSecurityLayer
 from pyrdp.parser import createFastPathParser
 from pyrdp.pdu import ClientChannelDefinition
 from pyrdp.security import RC4CrypterProxy, SecuritySettings
-from pyrdp.mitm.config import MITMConfig
+from pyrdp.mitm import MITMConfig
 
 
 class RDPMITMState:
@@ -97,6 +97,5 @@ class RDPMITMState:
         :param mode: the mode of the layer (client or server)
         """
 
-        parser = createFastPathParser(
-            self.useTLS, self.securitySettings.encryptionMethod, self.crypters[mode], mode)
+        parser = createFastPathParser(self.useTLS, self.securitySettings.encryptionMethod, self.crypters[mode], mode)
         return FastPathLayer(parser)
