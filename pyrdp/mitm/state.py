@@ -20,9 +20,11 @@ class RDPMITMState:
     State object for the RDP MITM. This is for data that needs to be shared across components.
     """
 
-    def __init__(self):
+    def __init__(self, config):
         self.requestedProtocols: Optional[NegotiationProtocols] = None
         """The original request protocols"""
+
+        self.config = config
 
         self.useTLS = False
         """Whether the connection uses TLS or not"""
