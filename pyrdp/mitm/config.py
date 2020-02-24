@@ -41,6 +41,13 @@ class MITMConfig:
         self.outDir: Path = None
         """The output directory"""
 
+        self.allowGDI: bool = False
+        """
+        Whether to let the video channel pass through unintercepted.
+        This can greatly increase performance and avoid fingerprinting
+        at the cost of being unable to record or view the screen.
+        """
+
         self.recordReplays: bool = True
         """Whether replays should be recorded or not"""
 

@@ -48,6 +48,7 @@ def main():
     parser.add_argument("--crawler-match-file", help="File to be used by the crawler to chose what to download when scraping the client shared drives.", default=None)
     parser.add_argument("--crawler-ignore-file", help="File to be used by the crawler to chose what folders to avoid when scraping the client shared drives.", default=None)
     parser.add_argument("--no-replay", help="Disable replay recording", action="store_true")
+    parser.add_argument("--gdi", help="Allow GDI passthrough (No video decoding)", action="store_true")
 
     args = parser.parse_args()
     outDir = Path(args.output)
@@ -75,6 +76,7 @@ def main():
     config.crawlerMatchFileName = args.crawler_match_file
     config.crawlerIgnoreFileName = args.crawler_ignore_file
     config.recordReplays = not args.no_replay
+    config.allowGDI = args.gdi
 
 
     payload = None
