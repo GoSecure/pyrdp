@@ -38,6 +38,8 @@ class Options(usage.Options):
         ["sensor-id", "s", "PyRDP", "Sensor ID (to differentiate multiple instances "
                                     "of the MITM where logs are aggregated at one place)"]]
 
+    optFlags = [["gdi", None, 'Allows GDI passthrough']]
+
 
 @implementer(IServiceMaker, IPlugin)
 class PyRdpMitmServiceMaker(object):
@@ -61,6 +63,7 @@ class PyRdpMitmServiceMaker(object):
         targetHost, targetPort = parseTarget(options["target"])
         config.targetHost = targetHost
         config.targetPort = targetPort
+        config.allowGdi = options["gdi"]
 
         key, certificate = validateKeyAndCertificate(options["private-key"],
                                                      options["certificate"])
