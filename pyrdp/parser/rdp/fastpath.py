@@ -8,16 +8,19 @@ from binascii import hexlify
 from io import BytesIO
 
 from pyrdp.core import Uint16BE, Uint16LE, Uint8
-from pyrdp.enum import DrawingOrderControlFlags, EncryptionMethod, FastPathInputType, \
+from pyrdp.enum import EncryptionMethod, FastPathInputType, \
     FastPathOutputCompressionType, FastPathOutputType, FastPathSecurityFlags, FIPSVersion, ParserMode
-from pyrdp.logging import log
-from pyrdp.parser.parser import Parser
-from pyrdp.parser.rdp.bitmap import BitmapParser
-from pyrdp.parser.rdp.security import BasicSecurityParser
 from pyrdp.pdu import FastPathBitmapEvent, FastPathEventRaw, FastPathMouseEvent, FastPathOrdersEvent, FastPathPDU, \
-    FastPathScanCodeEvent, SecondaryDrawingOrder
+    FastPathScanCodeEvent
 from pyrdp.pdu.rdp.fastpath import FastPathEvent, FastPathOutputEvent, FastPathUnicodeEvent
 from pyrdp.security import RC4Crypter, RC4CrypterProxy
+
+from pyrdp.parser.parser import Parser
+from pyrdp.parser.rdp.bitmap import BitmapParser
+from pyrdp.parser.rdp.orders import OrdersParser
+from pyrdp.parser.rdp.security import BasicSecurityParser
+
+from pyrdp.logging import log
 
 
 class BasicFastPathParser(BasicSecurityParser):
@@ -81,7 +84,7 @@ class BasicFastPathParser(BasicSecurityParser):
         while len(data) > 0:
             eventLength = self.readParser.getEventLength(data)
             eventData = data[: eventLength]
-            data = data[eventLength :]
+            data = data[eventLength:]
 
             try:
                 event = self.readParser.parse(eventData)
@@ -235,7 +238,6 @@ class FastPathInputParser(Parser):
         FastPathInputType.FASTPATH_INPUT_EVENT_QOE_TIMESTAMP: 5,
     }
 
-
     def getEventLength(self, data: bytes) -> int:
         if isinstance(data, FastPathEventRaw):
             return len(data.data)
@@ -252,12 +254,11 @@ class FastPathInputParser(Parser):
 
         raise ValueError("Unsupported event type?")
 
-
     def parse(self, data: bytes) -> FastPathEvent:
         stream = BytesIO(data)
         eventHeader = Uint8.unpack(stream.read(1))
         eventCode = (eventHeader & 0b11100000) >> 5
-        eventFlags= eventHeader & 0b00011111
+        eventFlags = eventHeader & 0b00011111
 
         if eventCode == FastPathInputType.FASTPATH_INPUT_EVENT_SCANCODE:
             return self.parseScanCodeEvent(eventFlags, eventHeader, stream)
@@ -268,18 +269,15 @@ class FastPathInputParser(Parser):
 
         return FastPathEventRaw(data)
 
-
     def parseScanCodeEvent(self, eventFlags: int, eventHeader: int, stream: BytesIO) -> FastPathScanCodeEvent:
         scanCode = Uint8.unpack(stream.read(1))
         return FastPathScanCodeEvent(eventHeader, scanCode, eventFlags & 1 != 0)
-
 
     def parseMouseEvent(self, eventHeader: int, stream: BytesIO) -> FastPathMouseEvent:
         pointerFlags = Uint16LE.unpack(stream)
         mouseX = Uint16LE.unpack(stream)
         mouseY = Uint16LE.unpack(stream)
         return FastPathMouseEvent(eventHeader, pointerFlags, mouseX, mouseY)
-
 
     def parseUnicodeEvent(self, eventHeader: int, stream: BytesIO) -> FastPathUnicodeEvent:
         released = eventHeader & 1 != 0
@@ -291,7 +289,6 @@ class FastPathInputParser(Parser):
             pass
 
         return FastPathUnicodeEvent(text, released)
-
 
     def write(self, event: FastPathEvent) -> bytes:
         if isinstance(event, FastPathEventRaw):
@@ -305,13 +302,11 @@ class FastPathInputParser(Parser):
 
         raise ValueError("Invalid FastPath event: {}".format(event))
 
-
     def writeScanCodeEvent(self, event: FastPathScanCodeEvent) -> bytes:
         stream = BytesIO()
         Uint8.pack(event.rawHeaderByte | int(event.isReleased), stream)
         Uint8.pack(event.scanCode, stream)
         return stream.getvalue()
-
 
     def writeMouseEvent(self, event: FastPathMouseEvent) -> bytes:
         stream = BytesIO()
@@ -320,7 +315,6 @@ class FastPathInputParser(Parser):
         Uint16LE.pack(event.mouseX, stream)
         Uint16LE.pack(event.mouseY, stream)
         return stream.getvalue()
-
 
     def writeUnicodeEvent(self, event: FastPathUnicodeEvent):
         stream = BytesIO()
@@ -338,6 +332,7 @@ class FastPathOutputParser(Parser):
     def __init__(self):
         super().__init__()
         self.bitmapParser = BitmapParser()
+        self.orderParser = OrdersParser()
 
     def getEventLength(self, event: FastPathOutputEvent) -> int:
         if isinstance(event, bytes):
@@ -353,7 +348,7 @@ class FastPathOutputParser(Parser):
             size += 1
 
         if isinstance(event, FastPathOrdersEvent):
-            size += 2 + len(event.orderData)
+            size += len(event.payload)
         elif isinstance(event, FastPathBitmapEvent):
             size += len(event.payload)
         elif isinstance(event, FastPathOutputEvent):
@@ -368,29 +363,34 @@ class FastPathOutputParser(Parser):
         return (header >> 6) & FastPathOutputCompressionType.FASTPATH_OUTPUT_COMPRESSION_USED != 0
 
     def parse(self, data: bytes) -> FastPathOutputEvent:
+        """
+        Parse TS_FP_UPDATE.
+
+        https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/a1c4caa8-00ed-45bb-a06e-5177473766d3
+        """
         stream = BytesIO(data)
         header = Uint8.unpack(stream)
 
-        compressionFlags = None
-
-        if self.isCompressed(header):
-            compressionFlags = Uint8.unpack(stream)
-
+        # https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/a1c4caa8-00ed-45bb-a06e-5177473766d3
+        updateCode = header & 0xf
+        fragmentation = (header & 0b00110000) >> 4
+        compressionFlags = Uint8.unpack(stream) if self.isCompressed(header) else None
         size = Uint16LE.unpack(stream)
 
-        eventType = header & 0xf
-        fragmentation = header & 0b00110000 != 0
-
+        # TODO: Handle fragmentation
         if fragmentation:
-            log.debug("Fragmentation is present in output fastpath event packets."
-                      " Not parsing it and saving to FastPathOutputUpdateEvent.")
+            # 0x01: LAST, 0x02: FIRST, 0x03: NEXT
+            # log.warning('TS_FP_UPDATE Fragmentation: %02x' % fragmentation)
             return FastPathOutputEvent(header, compressionFlags, payload=stream.read(size))
 
-        if eventType == FastPathOutputType.FASTPATH_UPDATETYPE_BITMAP:
+        # Dispatch to the appropriate sub-parser.
+        if updateCode == FastPathOutputType.FASTPATH_UPDATETYPE_BITMAP:
             return self.parseBitmapEventRaw(stream, header, compressionFlags, size)
-        elif eventType == FastPathOutputType.FASTPATH_UPDATETYPE_ORDERS:
+        elif updateCode == FastPathOutputType.FASTPATH_UPDATETYPE_ORDERS:
             return self.parseOrdersEvent(stream, header, compressionFlags, size)
 
+        # We don't know how to parse this UPDATE PDU, just let it be.
+        # log.warning('Unsupported Fast-Path Update Type: %s' % FastPathOutputType.getText(updateCode))
         read = stream.read(size)
         return FastPathOutputEvent(header, compressionFlags, read)
 
@@ -409,33 +409,21 @@ class FastPathOutputParser(Parser):
         stream.write(event.payload)
 
     def parseOrdersEvent(self, stream: BytesIO, header: int, compressionFlags: int, size: int) -> FastPathOrdersEvent:
-        orderCount = Uint16LE.unpack(stream)
-        orderData = stream.read(size - 2)
+        """
+        Parse the order events from a TS_FP_UPDATE_ORDERS.
+        This is specified in MS-RDPEGDI.
+        """
+        payload = stream.read(size)
+        assert len(payload) == size
 
-        assert len(orderData) == size - 2
-
-        ordersEvent = FastPathOrdersEvent(header, compressionFlags, orderCount, orderData)
-        controlFlags = Uint8.unpack(orderData[0])
-
-        if controlFlags & (DrawingOrderControlFlags.TS_SECONDARY | DrawingOrderControlFlags.TS_STANDARD)\
-                == (DrawingOrderControlFlags.TS_SECONDARY | DrawingOrderControlFlags.TS_STANDARD):
-            ordersEvent.secondaryDrawingOrders = self.parseSecondaryDrawingOrder(orderData)
-        elif controlFlags & DrawingOrderControlFlags.TS_SECONDARY:
-            pass
-
-        return ordersEvent
-
-    def parseSecondaryDrawingOrder(self, orderData: bytes) -> SecondaryDrawingOrder:
-        stream = BytesIO(orderData)
-        controlFlags = Uint8.unpack(stream.read(1))
-        orderLength = Uint16LE.unpack(stream.read(2))
-        extraFlags = Uint16LE.unpack(stream.read(2))
-        orderType = Uint8.unpack(stream.read(1))
-        return SecondaryDrawingOrder(controlFlags, orderLength, extraFlags, orderType)
+        orders = FastPathOrdersEvent(header, compressionFlags, payload)
+        # This could be disabled in MITM for performance since the video
+        # is not modified.
+        return self.orderParser.parse(orders, BytesIO(payload))
 
     def writeOrdersEvent(self, stream, event):
-        Uint16LE.pack(event.orderCount, stream)
-        stream.write(event.orderData)
+        # Just write the saved raw bytes as-is.
+        stream.write(event.payload)
 
     def write(self, event: FastPathOutputEvent) -> bytes:
 

@@ -29,7 +29,7 @@ from pyrdp.pdu.rdp.connection import ClientChannelDefinition, ClientClusterData,
     ServerNetworkData, ServerSecurityData
 from pyrdp.pdu.rdp.fastpath import FastPathBitmapEvent, FastPathEvent, FastPathEventRaw, FastPathInputEvent, \
     FastPathMouseEvent, FastPathOrdersEvent, FastPathOutputEvent, FastPathOutputEvent, FastPathPDU, \
-    FastPathScanCodeEvent, FastPathUnicodeEvent, SecondaryDrawingOrder
+    FastPathScanCodeEvent, FastPathUnicodeEvent
 from pyrdp.pdu.rdp.input import ExtendedMouseEvent, KeyboardEvent, MouseEvent, SlowPathInput, SynchronizeEvent, \
     UnicodeKeyboardEvent, UnusedEvent
 from pyrdp.pdu.rdp.licensing import LicenseBinaryBlob, LicenseErrorAlertPDU, LicensingPDU

@@ -34,7 +34,6 @@ class FastPathPDU(SegmentationPDU):
     def __repr__(self) -> str:
         return str([str(e.__class__) for e in self.events])
 
-
 class FastPathEventRaw(FastPathEvent):
     def __init__(self, data: bytes):
         super().__init__()
@@ -97,23 +96,30 @@ class FastPathBitmapEvent(FastPathOutputEvent):
 
 class FastPathOrdersEvent(FastPathOutputEvent):
     """
+    Encapsulate drawing orders.
+    
+    This is a specialization of TS_FP_UDPATE_ORDERS.
+
     https://msdn.microsoft.com/en-us/library/cc241573.aspx
     """
-    def __init__(self, header: int, compressionFlags: Optional[int], orderCount: int, orderData: bytes):
-        super().__init__(header, compressionFlags)
+    def __init__(self, header: int, compressionFlags: Optional[int], payload: bytes):
+        # Keep the payload to make writing easier, since in most cases
+        # there is no need to actually modify the drawing orders.
+
+        # NOTE: This could be further optimized by not even parsing
+        # the orders in MITM mode.
+        super().__init__(header, compressionFlags, payload=payload)
         self.compressionFlags = compressionFlags
-        self.orderCount = orderCount
-        self.orderData = orderData
-        self.secondaryDrawingOrders = None
+        # self.secondaryDrawingOrders = None # TODO
 
 
-class SecondaryDrawingOrder:
-    """
-    https://msdn.microsoft.com/en-us/library/cc241611.aspx
-    """
-    def __init__(self, controlFlags: int, orderLength: int, extraFlags: int, orderType: int):
-        super().__init__()
-        self.controlFlags = controlFlags
-        self.orderLength = orderLength
-        self.extraFlags = extraFlags
-        self.orderType = orderType
+# class SecondaryDrawingOrder:
+#     """
+#     https://msdn.microsoft.com/en-us/library/cc241611.aspx
+#     """
+#     def __init__(self, controlFlags: int, orderLength: int, extraFlags: int, orderType: int):
+#         super().__init__()
+#         self.controlFlags = controlFlags
+#         self.orderLength = orderLength
+#         self.extraFlags = extraFlags
+#         self.orderType = orderType
