@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-import argparse
 #
 # This file is part of the PyRDP project.
 # Copyright (C) 2018-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+import argparse
 import asyncio
 import logging
 import os
@@ -15,7 +15,6 @@ from pathlib import Path
 
 # need to install this reactor before importing other twisted code
 from twisted.internet import asyncioreactor
-
 asyncioreactor.install(asyncio.get_event_loop())
 
 from twisted.internet import reactor
