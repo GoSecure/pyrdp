@@ -62,6 +62,9 @@ class MITMConfig:
         self.crawlerIgnoreFileName: str = None
         """Path to the crawler ignore configuration file"""
 
+        self.disableActiveClipboardStealing: bool = False
+        """ If set to False, use PassiveClipboardStealer instead of ActiveClipboardStealer."""
+
     @property
     def replayDir(self) -> Path:
         """
