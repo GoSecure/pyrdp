@@ -16,10 +16,13 @@ from pyrdp.enum import BitmapFlags, CapabilityType, DeviceType, FastPathFragment
 from pyrdp.logging import log
 from pyrdp.parser import BasicFastPathParser, BitmapParser, ClientConnectionParser, ClientInfoParser, ClipboardParser, \
     FastPathOutputParser, SlowPathParser
-from pyrdp.pdu import BitmapUpdateData, ConfirmActivePDU, FastPathBitmapEvent, FastPathMouseEvent, FastPathOutputEvent, \
+from pyrdp.pdu import BitmapUpdateData, ConfirmActivePDU, FastPathBitmapEvent, FastPathOrdersEvent, FastPathMouseEvent, FastPathOutputEvent, \
     FastPathScanCodeEvent, FastPathUnicodeEvent, FormatDataResponsePDU, InputPDU, KeyboardEvent, MouseEvent, \
     PlayerDeviceMappingPDU, PlayerPDU, UpdatePDU
 from pyrdp.ui import QRemoteDesktop, RDPBitmapToQtImage
+
+from .gdi import GdiLoggingFrontend
+from pyrdp.parser.rdp.orders import OrdersParser
 
 
 class PlayerEventHandler(QObject, Observer):
@@ -45,6 +48,9 @@ class PlayerEventHandler(QObject, Observer):
             PlayerPDUType.DEVICE_MAPPING: self.onDeviceMapping,
         }
 
+        # TODO: WIP
+        self.gdi = GdiLoggingFrontend()
+        self.orders = OrdersParser(self.gdi)
 
     def writeText(self, text: str):
         self.text.moveCursor(QTextCursor.End)
@@ -53,8 +59,7 @@ class PlayerEventHandler(QObject, Observer):
     def writeSeparator(self):
         self.writeText("\n--------------------\n")
 
-
-    def onPDUReceived(self, pdu: PlayerPDU, isMainThread = False):
+    def onPDUReceived(self, pdu: PlayerPDU, isMainThread=False):
         if not isMainThread:
             self.viewer.mainThreadHook.emit(lambda: self.onPDUReceived(pdu, True))
             return
@@ -63,7 +68,6 @@ class PlayerEventHandler(QObject, Observer):
 
         if pdu.header in self.handlers:
             self.handlers[pdu.header](pdu)
-
 
     def onClientData(self, pdu: PlayerPDU):
         """
@@ -92,10 +96,8 @@ class PlayerEventHandler(QObject, Observer):
 
         self.writeSeparator()
 
-
     def onConnectionClose(self, _: PlayerPDU):
         self.writeText("\n<Connection closed>")
-
 
     def onClipboardData(self, pdu: PlayerPDU):
         parser = ClipboardParser()
@@ -109,7 +111,6 @@ class PlayerEventHandler(QObject, Observer):
         self.writeSeparator()
         self.writeText(f"CLIPBOARD DATA: {clipboardData}")
         self.writeSeparator()
-
 
     def onSlowPathPDU(self, pdu: PlayerPDU):
         parser = SlowPathParser()
@@ -130,26 +131,20 @@ class PlayerEventHandler(QObject, Observer):
                 elif isinstance(event, KeyboardEvent):
                     self.onScanCode(event.keyCode, event.flags & KeyboardFlag.KBDFLAGS_DOWN == 0, event.flags & KeyboardFlag.KBDFLAGS_EXTENDED != 0)
 
-
     def onFastPathOutput(self, pdu: PlayerPDU):
         parser = BasicFastPathParser(ParserMode.CLIENT)
         pdu = parser.parse(pdu.payload)
 
-        for event in pdu.events:
-            reassembledEvent = self.reassembleEvent(event)
+        for fragment in pdu.events:
+            event = self.mergeFragments(fragment)
 
-            if reassembledEvent is not None:
-                if isinstance(reassembledEvent, FastPathBitmapEvent):
-                    self.onFastPathBitmap(reassembledEvent)
+            if event is not None:
+                if isinstance(event, FastPathBitmapEvent):
+                    self.onFastPathBitmap(event)
+                elif isinstance(event, FastPathOrdersEvent):
+                    self.onFastPathOrders(event)
 
-    def reassembleEvent(self, event: FastPathOutputEvent) -> Optional[Union[FastPathBitmapEvent, FastPathOutputEvent]]:
-        """
-        Handles FastPath event reassembly as described in
-        https://msdn.microsoft.com/en-us/library/cc240622.aspx
-        :param event: A potentially segmented fastpath output event
-        :return: a FastPathBitmapEvent if a complete PDU has been reassembled, otherwise None. If the event is not
-        fragmented, it is returned as is.
-        """
+    def mergeFragments(self, event: FastPathOutputEvent) -> FastPathOutputEvent:
         fragmentationFlag = FastPathFragmentation((event.header & 0b00110000) >> 4)
 
         if fragmentationFlag == FastPathFragmentation.FASTPATH_FRAGMENT_SINGLE:
@@ -162,8 +157,9 @@ class PlayerEventHandler(QObject, Observer):
             self.buffer += event.payload
             event.payload = self.buffer
 
-            return FastPathOutputParser().parseBitmapEvent(event)
+            return event
 
+        # Partial fragment, don't parse it yet.
         return None
 
     def onFastPathBitmap(self, event: FastPathBitmapEvent):
@@ -173,6 +169,8 @@ class PlayerEventHandler(QObject, Observer):
         for bitmapData in parsedEvent.bitmapUpdateData:
             self.handleBitmap(bitmapData)
 
+    def onFastPathOrders(self, event: FastPathOrdersEvent):
+        self.orders.parse(event)
 
     def onFastPathInput(self, pdu: PlayerPDU):
         parser = BasicFastPathParser(ParserMode.SERVER)
@@ -187,10 +185,8 @@ class PlayerEventHandler(QObject, Observer):
             elif isinstance(event, FastPathScanCodeEvent):
                 self.onScanCode(event.scanCode, event.isReleased, event.rawHeaderByte & scancode.KBDFLAGS_EXTENDED != 0)
 
-
     def onUnicode(self, event: FastPathUnicodeEvent):
         self.writeText(str(event.text))
-
 
     def onMouse(self, event: FastPathMouseEvent):
         if event.pointerFlags & PointerFlag.PTRFLAGS_DOWN:
@@ -208,7 +204,6 @@ class PlayerEventHandler(QObject, Observer):
 
     def onMousePosition(self, x: int, y: int):
         self.viewer.setMousePosition(x, y)
-
 
     def onScanCode(self, scanCode: int, isReleased: bool, isExtended: bool):
         """
@@ -230,7 +225,6 @@ class PlayerEventHandler(QObject, Observer):
         elif scanCode == 0x3A and not isReleased:
             self.capsLockOn = not self.capsLockOn
 
-
     def handleBitmap(self, bitmapData: BitmapUpdateData):
         image = RDPBitmapToQtImage(
             bitmapData.width,
@@ -246,7 +240,6 @@ class PlayerEventHandler(QObject, Observer):
             image,
             bitmapData.destRight - bitmapData.destLeft + 1,
             bitmapData.destBottom - bitmapData.destTop + 1)
-
 
     def onDeviceMapping(self, pdu: PlayerDeviceMappingPDU):
         self.writeText(f"\n<{DeviceType.getPrettyName(pdu.deviceType)} mapped: {pdu.name}>")

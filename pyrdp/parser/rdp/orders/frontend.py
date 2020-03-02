@@ -8,29 +8,14 @@ Drawing Order Context.
 
 """
 
-from .primary import PrimaryContext as Primary
-
-from .alternate import CreateOffscreenBitmap, SwitchSurface, CreateNineGridBitmap, \
+from pyrdp.parser.rdp.orders.alternate import CreateOffscreenBitmap, SwitchSurface, CreateNineGridBitmap, \
     StreamBitmapFirst, StreamBitmapNext, GdiPlusFirst, GdiPlusNext, GdiPlusEnd, GdiPlusCacheFirst, \
     GdiPlusCacheNext, GdiPlusCacheEnd, FrameMarker
 
 
-class GdiContext:
+class GdiFrontend:
     """
-    Keeps track of the internal drawing order state.
-
-    This class is used by the OrdersParser to manage the state of the
-    GDI stack and update it when messages are parsed.
-    """
-
-    def __init__(self):
-        """Create a default GDI context."""
-        self.primary: Primary = Primary()
-
-
-class GdiContextObserver:
-    """
-    Interface for objects that monitor the GdiContext.
+    Interface for objects that implement GDI.
 
     This class provides abstract methods to be used by modules
     interested in listening and acting upon context updates.
@@ -39,9 +24,8 @@ class GdiContextObserver:
 
     NOTE: Unimplemented methods will act as No-Op.
     """
-    # REFACTOR: Split into 3 separate observers?
+    # REFACTOR: Move to core, this isn't really relevant to the parser.
 
-    # Primary Handlers
     def dstBlt(self, state):
         pass
 

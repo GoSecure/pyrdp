@@ -332,7 +332,6 @@ class FastPathOutputParser(Parser):
     def __init__(self):
         super().__init__()
         self.bitmapParser = BitmapParser()
-        self.orderParser = OrdersParser()
 
     def getEventLength(self, event: FastPathOutputEvent) -> int:
         if isinstance(event, bytes):
@@ -373,15 +372,9 @@ class FastPathOutputParser(Parser):
 
         # https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/a1c4caa8-00ed-45bb-a06e-5177473766d3
         updateCode = header & 0xf
-        fragmentation = (header & 0b00110000) >> 4
+        # fragmentation = (header & 0b00110000) >> 4
         compressionFlags = Uint8.unpack(stream) if self.isCompressed(header) else None
         size = Uint16LE.unpack(stream)
-
-        # TODO: Handle fragmentation
-        if fragmentation:
-            # 0x01: LAST, 0x02: FIRST, 0x03: NEXT
-            # log.warning('TS_FP_UPDATE Fragmentation: %02x' % fragmentation)
-            return FastPathOutputEvent(header, compressionFlags, payload=stream.read(size))
 
         # Dispatch to the appropriate sub-parser.
         if updateCode == FastPathOutputType.FASTPATH_UPDATETYPE_BITMAP:
@@ -389,8 +382,6 @@ class FastPathOutputParser(Parser):
         elif updateCode == FastPathOutputType.FASTPATH_UPDATETYPE_ORDERS:
             return self.parseOrdersEvent(stream, header, compressionFlags, size)
 
-        # We don't know how to parse this UPDATE PDU, just let it be.
-        # log.warning('Unsupported Fast-Path Update Type: %s' % FastPathOutputType.getText(updateCode))
         read = stream.read(size)
         return FastPathOutputEvent(header, compressionFlags, read)
 
@@ -417,9 +408,7 @@ class FastPathOutputParser(Parser):
         assert len(payload) == size
 
         orders = FastPathOrdersEvent(header, compressionFlags, payload)
-        # This could be disabled in MITM for performance since the video
-        # is not modified.
-        return self.orderParser.parse(orders, BytesIO(payload))
+        return orders
 
     def writeOrdersEvent(self, stream, event):
         # Just write the saved raw bytes as-is.

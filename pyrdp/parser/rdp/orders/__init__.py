@@ -8,7 +8,7 @@ Types and methods proper to the MS-RDPEGDI extension.
 """
 
 from pyrdp.parser.rdp.orders.parse import OrdersParser
-from pyrdp.parser.rdp.orders.context import GdiContextObserver
+from pyrdp.parser.rdp.orders.frontend import GdiFrontend
 from .primary import PrimaryContext
 
-__all__ = [OrdersParser, PrimaryContext, GdiContextObserver]
+__all__ = [OrdersParser, PrimaryContext, GdiFrontend]

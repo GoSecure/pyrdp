@@ -15,7 +15,7 @@ from pyrdp.core.packing import Uint8, Uint16LE
 from pyrdp.pdu.rdp.fastpath import FastPathOrdersEvent
 from pyrdp.enum.orders import DrawingOrderControlFlags as ControlFlags
 
-from .context import GdiContextObserver
+from .frontend import GdiFrontend
 
 from .secondary import CacheBitmapV1, CacheColorTable, CacheGlyph, CacheBitmapV2, CacheBrush, CacheBitmapV3
 from .alternate import CreateOffscreenBitmap, SwitchSurface, CreateNineGridBitmap, \
@@ -37,21 +37,23 @@ class OrdersParser:
     Drawing Order Parser.
     """
 
-    def __init__(self, observer: GdiContextObserver = None):
+    def __init__(self, frontend: GdiFrontend):
         """
         Create a drawing order parser.
 
-        :param GdiContextObserver observer: The object to notify of context updates.
+        :param GdiFrontend frontend: The frontend that will process GDI messages.
         """
         self.orders: FastPathOrdersEvent = None
-        self.notify: GdiContextObserver = observer if observer else GdiContextObserver()
+        self.notify: GdiFrontend = frontend
         self.ctx = Context()
 
-    def parse(self, orders: FastPathOrdersEvent, s: BytesIO):
+    def parse(self, orders: FastPathOrdersEvent):
         """
         Entrypoint for parsing TS_FP_UPDATE_ORDERS.
         """
         self.orders = orders
+
+        s = BytesIO(orders.payload)
 
         numberOrders = Uint16LE.unpack(s)
         for _ in range(numberOrders):
