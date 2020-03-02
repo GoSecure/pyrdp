@@ -23,6 +23,11 @@ docs/*.html
 
 # pyrdp-specific
 pyrdp_output/
+*.cert
+*.pyrdp
+*.log
+*.key
+mitm.json
 
 # twisted
 /twisted/plugins/dropin.cache

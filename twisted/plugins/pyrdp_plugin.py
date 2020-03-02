@@ -4,11 +4,11 @@
 # Licensed under the GPLv3 or later.
 #
 import asyncio
-import logging
 from pathlib import Path
 
 # need to install this reactor before importing other twisted code
 from twisted.internet import asyncioreactor
+
 asyncioreactor.install(asyncio.get_event_loop())
 
 from twisted.python import usage
@@ -37,6 +37,7 @@ class Options(usage.Options):
         ["log-filter", "F", "", "Only show logs from this logger name (accepts '*' wildcards)"],
         ["sensor-id", "s", "PyRDP", "Sensor ID (to differentiate multiple instances "
                                     "of the MITM where logs are aggregated at one place)"]]
+    optFlags = [["disable-active-clipboard", None, "Disables the active clipboard stealing to request clipboard content upon connection."]]
 
 
 @implementer(IServiceMaker, IPlugin)
@@ -61,6 +62,8 @@ class PyRdpMitmServiceMaker(object):
         targetHost, targetPort = parseTarget(options["target"])
         config.targetHost = targetHost
         config.targetPort = targetPort
+
+        config.disableActiveClipboardStealing = options["disable-active-clipboard"]
 
         key, certificate = validateKeyAndCertificate(options["private-key"],
                                                      options["certificate"])

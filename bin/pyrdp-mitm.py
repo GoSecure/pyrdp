@@ -5,13 +5,13 @@
 # Copyright (C) 2018-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-import asyncio
 import argparse
+import asyncio
 import logging
 import os
 import sys
-from pathlib import Path
 from base64 import b64encode
+from pathlib import Path
 
 # need to install this reactor before importing other twisted code
 from twisted.internet import asyncioreactor
@@ -44,6 +44,7 @@ def main():
     parser.add_argument("--payload-powershell-file", help="PowerShell script to run automatically upon connection (as -EncodedCommand)", default=None)
     parser.add_argument("--payload-delay", help="Time to wait after a new connection before sending the payload, in milliseconds", default=None)
     parser.add_argument("--payload-duration", help="Amount of time for which input / output should be dropped, in milliseconds. This can be used to hide the payload screen.", default=None)
+    parser.add_argument("--disable-active-clipboard", help="Disables the active clipboard stealing to request clipboard content upon connection.", action="store_true")
     parser.add_argument("--crawl", help="Enable automatic shared drive scraping", action="store_true")
     parser.add_argument("--crawler-match-file", help="File to be used by the crawler to chose what to download when scraping the client shared drives.", default=None)
     parser.add_argument("--crawler-ignore-file", help="File to be used by the crawler to chose what folders to avoid when scraping the client shared drives.", default=None)
@@ -75,6 +76,7 @@ def main():
     config.crawlerMatchFileName = args.crawler_match_file
     config.crawlerIgnoreFileName = args.crawler_ignore_file
     config.recordReplays = not args.no_replay
+    config.disableActiveClipboardStealing = args.disable_active_clipboard
 
 
     payload = None
