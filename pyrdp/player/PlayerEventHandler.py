@@ -81,7 +81,6 @@ class PlayerEventHandler(QObject, Observer):
         self.writeText(f"HOST: {clientName}\n")
         self.writeSeparator()
 
-
     def onClientInfo(self, pdu: PlayerPDU):
         parser = ClientInfoParser()
         clientInfoPDU = parser.parse(pdu.payload)
@@ -119,6 +118,8 @@ class PlayerEventHandler(QObject, Observer):
         if isinstance(pdu, ConfirmActivePDU):
             bitmapCapability = pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP]
             self.viewer.resize(bitmapCapability.desktopWidth, bitmapCapability.desktopHeight)
+            self.orders.onCapabilities(pdu.parsedCapabilitySets)
+
         elif isinstance(pdu, UpdatePDU) and pdu.updateType == SlowPathUpdateType.SLOWPATH_UPDATETYPE_BITMAP:
             updates = BitmapParser().parseBitmapUpdateData(pdu.updateData)
 

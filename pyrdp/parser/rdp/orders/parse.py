@@ -14,8 +14,11 @@ from io import BytesIO
 from pyrdp.core.packing import Uint8, Uint16LE
 from pyrdp.pdu.rdp.fastpath import FastPathOrdersEvent
 from pyrdp.enum.orders import DrawingOrderControlFlags as ControlFlags
+from pyrdp.enum.rdp import GlyphSupport
+from pyrdp.pdu.rdp.capability import CapabilityType
 
 from .frontend import GdiFrontend
+from .common import Glyph, GlyphV2
 
 from .secondary import CacheBitmapV1, CacheColorTable, CacheGlyph, CacheBitmapV2, CacheBrush, CacheBitmapV3
 from .alternate import CreateOffscreenBitmap, SwitchSurface, CreateNineGridBitmap, \
@@ -46,6 +49,14 @@ class OrdersParser:
         self.orders: FastPathOrdersEvent = None
         self.notify: GdiFrontend = frontend
         self.ctx = Context()
+        self.glyphLevel: GlyphSupport = GlyphSupport.GLYPH_SUPPORT_NONE
+
+    def onCapabilities(self, caps):
+        """Update the parser to take into account the capabilities reported by the client."""
+
+        if CapabilityType.CAPSTYPE_GLYPHCACHE in caps:
+            glyphLevel = caps[CapabilityType.CAPSTYPE_GLYPHCACHE].glyphSupportLevel
+            self.glyphLevel = GlyphSupport(glyphLevel)
 
     def parse(self, orders: FastPathOrdersEvent):
         """
@@ -193,12 +204,13 @@ class OrdersParser:
 
     def _parse_cache_glyph(self, s: BytesIO, orderType: int, flags: int):
         """CACHE_GLYPH"""
-        # FIXME: Need to know from capabilities whether the server is sending V1 or V2 glyph caches.
-        #        currently only V1 is implemented.
-        if True:  # glyphV1
-            self.notify.cacheGlyph(CacheGlyph.parse(s, flags))
-        # else:
-        #     self.notify.cacheGlyphV2(CacheGlyphV2.parse(s, flags))
+        if self.glyphLevel == GlyphSupport.GLYPH_SUPPORT_NONE:
+            LOG.warn("Received CACHE_GLYPH but the client reported it doesn't support it!")
+            # Ignore it.
+        elif self.glyphLevel == GlyphSupport.GLYPH_SUPPORT_ENCODE:
+            self.notify.cacheGlyph(CacheGlyph.parse(s, flags, GlyphV2))
+        else:
+            self.notify.cacheGlyph(CacheGlyph.parse(s, flags, Glyph))
 
     def _parse_cache_bitmap_v2(self, s: BytesIO, orderType: int, flags: int):
         """CACHE_BITMAP_V2"""

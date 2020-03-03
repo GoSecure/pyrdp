@@ -104,13 +104,21 @@ class CacheColorTable:
 
 class CacheGlyph:
     @staticmethod
-    def parse(s: BytesIO, flags: int) -> 'CacheGlyph':
+    def parse(s: BytesIO, flags: int, glyph) -> 'CacheGlyph':
+        """
+        Parse a CACHE_GLYPH order.
+
+        :param s: The byte stream to parse
+        :param flags: The UPDATE PDU controlFlags
+        :param glyph: One of Glyph or GlyphV2 classes to select the parsing strategy
+        """
+
         self = CacheGlyph()
 
         self.cacheId = Uint8.unpack(s)
         cGlyphs = Uint8.unpack(s)
 
-        self.glyphs = [Glyph.parse(s) for _ in range(cGlyphs)]
+        self.glyphs = [glyph.parse(s) for _ in range(cGlyphs)]
 
         if flags & CG_GLYPH_UNICODE_PRESENT and cGlyphs > 0:
             self.unicode = read_utf16_str(s, cGlyphs)
