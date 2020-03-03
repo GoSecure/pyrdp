@@ -1,12 +1,18 @@
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2019 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
 """
-Constants and state for Secondary Drawing Orders.
+Constants, state and parsing primitives for Secondary Drawing Orders.
 """
 from io import BytesIO
 
 from pyrdp.core.packing import Uint8, Uint16LE, Uint32LE
 from pyrdp.enum.orders import Secondary
 from pyrdp.enum.rdp import GeneralExtraFlag
-from .common import read_color, read_utf16_str, read_encoded_uint16, read_encoded_uint32, Glyph
+from .common import read_color, read_utf16_str, read_encoded_uint16, read_encoded_uint32
 
 CBR2_BPP = [0, 0, 0, 8, 16, 24, 32]
 BPP_CBR2 = [0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
@@ -127,6 +133,20 @@ class CacheGlyph:
 
 
 class CacheBitmapV2:
+    def __init__(self):
+        self.cacheId = 0
+        self.cacheIndex = 0
+
+        self.flags = 0
+        self.bpp = 0
+        self.key1 = self.key2 = 0
+        self.height = self.width = 0
+
+        self.cbCompFirstRowSize = 0
+        self.cbCompMainBodySize = 0
+        self.cbScanWidth = 0
+        self.cbUncompressedSize = 0
+
     @staticmethod
     def parse(s: BytesIO, orderType: int, flags: int) -> 'CacheBitmapV2':
         self = CacheBitmapV2()
@@ -165,6 +185,10 @@ class CacheBitmapV2:
         self.data = s.read(bitmapLength)
 
         return self
+
+    def __str__(self):
+        return (f'<CacheBitmapV2 Res={self.width}x{self.height}x{self.bpp} Len={len(self.data)}'
+                f' CacheId={self.cacheId} CacheIndex={self.cacheIndex}>')
 
 
 class CacheBrush:
@@ -219,19 +243,30 @@ class CacheBitmapV3:
         self.cacheId = flags & 0x00000003
         self.flags = (flags & 0x0000FF80) >> 7
         bitsPerPixelId = (flags & 0x00000078) >> 3
+
+        # The spec says this should never be 0, but it is...
         self.bpp = CBR23_BPP[bitsPerPixelId]
 
         self.cacheIndex = Uint16LE.unpack(s)
         self.key1 = Uint32LE.unpack(s)
         self.key2 = Uint32LE.unpack(s)
+        self.bpp = Uint8.unpack(s)
 
-        s.read(2)  # Reserved (2 bytes)
+        compressed = Uint8.unpack(s)
+        s.read(1)  # Reserved (1 bytes)
 
         self.codecId = Uint8.unpack(s)
         self.width = Uint16LE.unpack(s)
         self.height = Uint16LE.unpack(s)
         dataLen = Uint32LE.unpack(s)
 
+        if compressed:  # TS_COMPRESSED_BITMAP_HEADER_EX present.
+            s.read(24)  # Non-essential.
+
         self.data = s.read(dataLen)
 
         return self
+
+    def __str__(self):
+        return (f'<CacheBitmapV3 {self.width}x{self.height}x{self.bpp} Size={len(self.data)}'
+                f' Cache={self.cacheId}:{self.cacheIndex} Codec={self.codecId}>')

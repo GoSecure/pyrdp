@@ -4,8 +4,6 @@
 # Licensed under the GPLv3 or later.
 #
 
-from typing import Optional, Union
-
 from PySide2.QtCore import QObject
 from PySide2.QtGui import QTextCursor
 from PySide2.QtWidgets import QTextEdit
@@ -21,8 +19,10 @@ from pyrdp.pdu import BitmapUpdateData, ConfirmActivePDU, FastPathBitmapEvent, F
     PlayerDeviceMappingPDU, PlayerPDU, UpdatePDU
 from pyrdp.ui import QRemoteDesktop, RDPBitmapToQtImage
 
-from .gdi import GdiLoggingFrontend
+from .gdi import GdiQtFrontend
 from pyrdp.parser.rdp.orders import OrdersParser
+
+from binascii import hexlify
 
 
 class PlayerEventHandler(QObject, Observer):
@@ -48,9 +48,8 @@ class PlayerEventHandler(QObject, Observer):
             PlayerPDUType.DEVICE_MAPPING: self.onDeviceMapping,
         }
 
-        # TODO: WIP
-        self.gdi = GdiLoggingFrontend()
-        self.orders = OrdersParser(self.gdi)
+        self.gdi: GdiQtFrontend = None
+        self.orders: OrdersParser = None
 
     def writeText(self, text: str):
         self.text.moveCursor(QTextCursor.End)
@@ -118,8 +117,12 @@ class PlayerEventHandler(QObject, Observer):
         if isinstance(pdu, ConfirmActivePDU):
             bitmapCapability = pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAP]
             self.viewer.resize(bitmapCapability.desktopWidth, bitmapCapability.desktopHeight)
-            self.orders.onCapabilities(pdu.parsedCapabilitySets)
 
+            # Enable MS-RDPEGDI parsing and rendering.
+            if CapabilityType.CAPSTYPE_ORDER in pdu.parsedCapabilitySets:
+                self.gdi = GdiQtFrontend(self.viewer)
+                self.orders = OrdersParser(self.gdi)
+                self.orders.onCapabilities(pdu.parsedCapabilitySets)
         elif isinstance(pdu, UpdatePDU) and pdu.updateType == SlowPathUpdateType.SLOWPATH_UPDATETYPE_BITMAP:
             updates = BitmapParser().parseBitmapUpdateData(pdu.updateData)
 
@@ -143,6 +146,10 @@ class PlayerEventHandler(QObject, Observer):
                 if isinstance(event, FastPathBitmapEvent):
                     self.onFastPathBitmap(event)
                 elif isinstance(event, FastPathOrdersEvent):
+                    if self.orders is None:
+                        # TODO: Lazily instantiate drawing order parser here and process it anyway.
+                        log.error('Received Unexpected Drawing Orders!')
+                        return
                     self.onFastPathOrders(event)
 
     def mergeFragments(self, event: FastPathOutputEvent) -> FastPathOutputEvent:
@@ -171,7 +178,11 @@ class PlayerEventHandler(QObject, Observer):
             self.handleBitmap(bitmapData)
 
     def onFastPathOrders(self, event: FastPathOrdersEvent):
-        self.orders.parse(event)
+        try:
+            self.orders.parse(event)
+        except Exception as e:
+            log.warn('Failed to parse a drawing order: ' + e)
+            log.warn('Payload = ' + hexlify(event.payload))
 
     def onFastPathInput(self, pdu: PlayerPDU):
         parser = BasicFastPathParser(ParserMode.SERVER)

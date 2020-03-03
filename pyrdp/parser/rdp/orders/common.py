@@ -1,5 +1,11 @@
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2019 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
 """
-Common String Reading Utilities
+Common stream reading utilities
 """
 from io import BytesIO
 from pyrdp.core.packing import Uint8, Uint16LE, Uint32LE

@@ -5,7 +5,6 @@
 #
 """
 Drawing Order Context.
-
 """
 
 from pyrdp.parser.rdp.orders.alternate import CreateOffscreenBitmap, SwitchSurface, CreateNineGridBitmap, \

@@ -134,21 +134,19 @@ class QRemoteDesktop(QWidget):
         :param parent: parent widget
         """
         super().__init__(parent)
-        #set correct size
+        # Set correct size
         self.resize(width, height)
-        #bind mouse event
+        # Bind mouse event
         self.setMouseTracking(True)
-        #buffer image
+        # Buffer image
         self._buffer = QImage(width, height, QImage.Format_RGB32)
         self.mouseX = width // 2
         self.mouseY = height // 2
 
         self.mainThreadHook.connect(self.runOnMainThread)
 
-
     def runOnMainThread(self, target: callable):
         target()
-
 
     def notifyImage(self, x: int, y: int, qimage: QImage, width: int, height: int):
         """
@@ -160,11 +158,11 @@ class QRemoteDesktop(QWidget):
         :param height: height of the new image
         """
 
-        #fill buffer image
+        # Fill buffer image
         qp = QPainter(self._buffer)
         qp.drawImage(x, y, qimage, 0, 0, width, height)
 
-        #force update
+        # Force update
         self.update()
 
     def setMousePosition(self, x: int, y: int):

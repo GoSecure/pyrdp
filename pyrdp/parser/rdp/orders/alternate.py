@@ -1,5 +1,11 @@
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2019 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
 """
-Constants and state for Alternate Secondary Drawing Orders.
+Constants, state and parsing primitives for Alternate Secondary Drawing Orders.
 """
 from io import BytesIO
 
@@ -36,7 +42,10 @@ class SwitchSurface:
         self = SwitchSurface()
 
         self.id = Uint16LE.unpack(s)
-        return id
+        return self
+
+    def __str__(self):
+        return f'<SwitchSurface Id={self.id}>'
 
 
 class CreateNineGridBitmap:
@@ -111,6 +120,9 @@ class GdiPlusFirst:
 
         return self
 
+    def __str__(self):
+        return f'<GdiPlusFirst Size={len(self.data)} Total={self.totalSize}, EmfSize={self.totalEmfSize}>'
+
 
 class GdiPlusNext:
     @staticmethod
@@ -123,6 +135,9 @@ class GdiPlusNext:
         self.data = s.read(cbSize)
 
         return self
+
+    def __str__(self):
+        return f'<GdiPlusNext Size={len(self.data)}>'
 
 
 class GdiPlusEnd:
@@ -193,6 +208,10 @@ class FrameMarker:
         self.action = Uint32LE.unpack(s)
 
         return self
+
+    def __str__(self):
+        a = 'BEGIN' if self.action == 0 else 'END'
+        return f'<Frame {a}>'
 
 # class Window:
 #     @staticmethod

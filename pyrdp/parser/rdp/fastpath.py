@@ -17,7 +17,6 @@ from pyrdp.security import RC4Crypter, RC4CrypterProxy
 
 from pyrdp.parser.parser import Parser
 from pyrdp.parser.rdp.bitmap import BitmapParser
-from pyrdp.parser.rdp.orders import OrdersParser
 from pyrdp.parser.rdp.security import BasicSecurityParser
 
 from pyrdp.logging import log

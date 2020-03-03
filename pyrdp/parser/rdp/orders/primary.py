@@ -1,5 +1,11 @@
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2019 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
 """
-Constants and state for Primary Drawing Orders.
+Constants, state and parsing primitives for Primary Drawing Orders.
 """
 from io import BytesIO
 
@@ -344,6 +350,10 @@ class PatBlt:
 
 
 class ScrBlt:
+    """
+    2.2.2.2.1.1.2.7
+    """
+
     def __init__(self, ctx: PrimaryContext):
         self.ctx = ctx
 
@@ -372,6 +382,10 @@ class ScrBlt:
             self.nYSrc = read_coord(s, self.ctx.deltaCoords, self.nYSrc)
 
         return self
+
+    def __str__(self):
+        return (f'<ScrBlt Src=({self.nXSrc},{self.nYSrc}) OP={self.bRop}'
+                f' Dst=({self.nLeftRect}, {self.nTopRect}, {self.nWidth}, {self.nHeight})')
 
 
 class DrawNineGrid:
@@ -539,8 +553,13 @@ class SaveBitmap:
 class MemBlt:
     def __init__(self, ctx: PrimaryContext):
         self.ctx = ctx
-        self.leftRect = self.topRect = self.width = self.height = 0
-        self.x = self.y = 0
+
+        # Blit rectangle.
+        self.left = self.top = self.width = self.height = 0
+
+        # Source buffer offsets.
+        self.xSrc = self.ySrc = 0
+
         self.cacheIndex = 0
         self.cacheId = 0
         self.colorIndex = 0
@@ -551,19 +570,19 @@ class MemBlt:
         if ctx.field(1):
             self.cacheId = Uint16LE.unpack(s)
         if ctx.field(2):
-            self.leftRect = read_coord(s, ctx.deltaCoords, self.leftRect)
+            self.left = read_coord(s, ctx.deltaCoords, self.left)
         if ctx.field(3):
-            self.topRect = read_coord(s, ctx.deltaCoords, self.topRect)
+            self.top = read_coord(s, ctx.deltaCoords, self.top)
         if ctx.field(4):
             self.width = read_coord(s, ctx.deltaCoords, self.width)
         if ctx.field(5):
-            self.height = read_coord(s, ctx.deltaCoords, self.leftRect)
+            self.height = read_coord(s, ctx.deltaCoords, self.height)
         if ctx.field(6):
             self.rop = Uint8.unpack(s)
         if ctx.field(7):
-            self.x = read_coord(s, ctx.deltaCoords, self.x)
+            self.xSrc = read_coord(s, ctx.deltaCoords, self.xSrc)
         if ctx.field(8):
-            self.y = read_coord(s, ctx.deltaCoords, self.y)
+            self.ySrc = read_coord(s, ctx.deltaCoords, self.ySrc)
         if ctx.field(9):
             self.cacheIndex = Uint16LE.unpack(s)
 
@@ -571,6 +590,10 @@ class MemBlt:
         self.cacheId = self.cacheId & 0xFF
 
         return self
+
+    def __str__(self):
+        return (f'<MemBlt ({self.xSrc},{self.ySrc}) OP={self.rop} L={self.left} T={self.top} W={self.width} H={self.height}'
+                f' cacheIndex={self.cacheIndex} cacheId={self.cacheId} colorIdx={self.colorIndex}>')
 
 
 class Mem3Blt:
