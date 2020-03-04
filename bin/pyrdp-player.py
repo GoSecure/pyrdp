@@ -67,6 +67,9 @@ def main():
     if args.output:
         cfg.set('vars', 'output_dir', args.output)
 
+    outDir = Path(cfg.get('vars', 'output_dir'))
+    outDir.mkdir(exist_ok=True)
+
     configureLoggers(cfg)
     logger = logging.getLogger(LOGGER_NAMES.PYRDP)
 
