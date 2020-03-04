@@ -1,13 +1,20 @@
 #!/usr/bin/python3
+
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2018, 2020 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
 import argparse
 from pathlib import Path
 
-from progressbar import progressbar
 from scapy.all import *
 
-from pyrdp.logging import SessionLogger, LOGGER_NAMES
-from pyrdp.mitm import RDPMITM, MITMConfig
+from pyrdp.logging import LOGGER_NAMES, SessionLogger
+from pyrdp.mitm import MITMConfig, RDPMITM
 from pyrdp.mitm.MITMRecorder import MITMRecorder
+from pyrdp.mitm.state import RDPMITMState
 from pyrdp.recording import FileLayer
 
 
@@ -62,14 +69,13 @@ class RDPReplayer(RDPMITM):
         # We'll set up the recorder ourselves
         config.recordReplays = False
 
-        super().__init__(log, config)
+        replay_transport = FileLayer(output_path)
+        state = RDPMITMState()
+        super().__init__(log, log, config, state, CustomMITMRecorder([replay_transport], state))
 
         self.client.tcp.sendBytes = sendBytesStub
         self.server.tcp.sendBytes = sendBytesStub
         self.state.useTLS = True
-
-        replay_transport = FileLayer(output_path)
-        self.recorder = CustomMITMRecorder([replay_transport], self.state)
 
     def start(self):
         pass
@@ -81,7 +87,7 @@ class RDPReplayer(RDPMITM):
             self.server.tcp.dataReceived(data)
 
     def setTimeStamp(self, timeStamp: float):
-        self.recorder.setTimeStamp(int(timeStamp))
+        self.recorder.setTimeStamp(int(timeStamp * 1000))
 
     def connectToServer(self):
         pass
@@ -112,7 +118,7 @@ def main():
 
     replayer = RDPReplayer(output_path)
 
-    for packet in progressbar(packets):
+    for packet in packets.res:
         # The packets start with a Wireshark exported PDU structure
         source, destination, data = parseExportedPdu(packet)
 
@@ -120,10 +126,10 @@ def main():
             continue
 
         try:
-            replayer.setTimeStamp(packet.time)
+            replayer.setTimeStamp(float(packet.time))
             replayer.recv(data, source == client_ip)
-        except NotImplementedError:
-            pass
+        except NotImplementedError as e:
+            raise e
 
     replayer.tcp.recordConnectionClose()
 
