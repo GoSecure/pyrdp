@@ -15,7 +15,7 @@ from pyrdp.parser.rdp.pointer import PointerEventParser
 from pyrdp.pdu import BitmapCapability, Capability, ConfirmActivePDU, ControlPDU, DemandActivePDU, GeneralCapability, \
     GlyphCacheCapability, InputPDU, MultifragmentUpdateCapability, OffscreenBitmapCacheCapability, OrderCapability, PDU, \
     PlaySoundPDU, PointerCapability, PointerPDU, SetErrorInfoPDU, ShareControlHeader, ShareDataHeader, SlowPathPDU, \
-    SlowPathUnparsedPDU, SuppressOutputPDU, SynchronizePDU, UpdatePDU, VirtualChannelCapability
+    SlowPathUnparsedPDU, SuppressOutputPDU, SynchronizePDU, UpdatePDU, VirtualChannelCapability, PersistentCacheKeysPDU
 from pyrdp.pdu.rdp.capability import SurfaceCommandsCapability
 
 
@@ -37,6 +37,7 @@ class SlowPathParser(Parser):
             SlowPathDataType.PDUTYPE2_PLAY_SOUND: self.parsePlaySound,
             SlowPathDataType.PDUTYPE2_SUPPRESS_OUTPUT: self.parseSuppressOutput,
             SlowPathDataType.PDUTYPE2_UPDATE: self.parseUpdate,
+            SlowPathDataType.PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST: self.parsePersistentCacheKeys,
         }
 
         self.dataWriters = {
@@ -48,6 +49,7 @@ class SlowPathParser(Parser):
             SlowPathDataType.PDUTYPE2_PLAY_SOUND: self.writePlaySound,
             SlowPathDataType.PDUTYPE2_SUPPRESS_OUTPUT: self.writeSuppressOutput,
             SlowPathDataType.PDUTYPE2_UPDATE: self.writeUpdate,
+            SlowPathDataType.PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST: self.writePersistentCacheKeys,
         }
 
     def parse(self, data: bytes) -> PDU:
@@ -625,3 +627,40 @@ class SlowPathParser(Parser):
 
         Uint16LE.pack(len(substream.getvalue()) + 4, stream)
         stream.write(substream.getvalue())
+
+    def parsePersistentCacheKeys(self, stream: BytesIO, header):
+        num0 = Uint16LE.unpack(stream)
+        num1 = Uint16LE.unpack(stream)
+        num2 = Uint16LE.unpack(stream)
+        num3 = Uint16LE.unpack(stream)
+        num4 = Uint16LE.unpack(stream)
+
+        total0 = Uint16LE.unpack(stream)
+        total1 = Uint16LE.unpack(stream)
+        total2 = Uint16LE.unpack(stream)
+        total3 = Uint16LE.unpack(stream)
+        total4 = Uint16LE.unpack(stream)
+        bBitMask = Uint8.unpack(stream)
+
+        stream.read(3)  # Padding
+
+        keys = stream.read(64 * (num0 + num1 + num2 + num3 + num4))
+        return PersistentCacheKeysPDU(header, num0, num1, num2, num3, num4,
+                                      total0, total1, total2, total3, total4, keys, bBitMask)
+
+    def writePersistentCacheKeys(self, s: BytesIO, pdu: PersistentCacheKeysPDU):
+        # Only send the first PDU with an empty list and drop the rest.
+        # TODO: Find a way to cleanly drop the entire packet instead.
+        Uint16LE.pack(0, s)
+        Uint16LE.pack(0, s)
+        Uint16LE.pack(0, s)
+        Uint16LE.pack(0, s)
+        Uint16LE.pack(0, s)
+
+        Uint16LE.pack(0, s)
+        Uint16LE.pack(0, s)
+        Uint16LE.pack(0, s)
+        Uint16LE.pack(0, s)
+        Uint16LE.pack(0, s)
+        Uint8.pack(pdu.mask, s)
+        s.write(b'\x00'*3)

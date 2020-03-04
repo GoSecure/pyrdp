@@ -39,7 +39,7 @@ from pyrdp.pdu.rdp.pointer import Point, PointerCacheEvent, PointerColorEvent, P
 from pyrdp.pdu.rdp.security import SecurityExchangePDU, SecurityPDU
 from pyrdp.pdu.rdp.slowpath import ConfirmActivePDU, ControlPDU, DemandActivePDU, InputPDU, PlaySoundPDU, PointerPDU, \
     SetErrorInfoPDU, ShareControlHeader, ShareDataHeader, SlowPathPDU, SlowPathUnparsedPDU, SuppressOutputPDU, \
-    SynchronizePDU, UpdatePDU
+    SynchronizePDU, UpdatePDU, PersistentCacheKeysPDU
 from pyrdp.pdu.rdp.virtual_channel.clipboard import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU, \
     FormatListPDU, FormatListResponsePDU, FormatName, LongFormatName, ServerMonitorReadyPDU, ShortFormatName
 from pyrdp.pdu.rdp.virtual_channel.device_redirection import DeviceAnnounce, DeviceCloseRequestPDU, \

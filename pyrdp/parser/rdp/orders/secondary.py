@@ -11,8 +11,8 @@ from io import BytesIO
 
 from pyrdp.core.packing import Uint8, Uint16LE, Uint32LE
 from pyrdp.enum.orders import Secondary
-from pyrdp.enum.rdp import GeneralExtraFlag
-from .common import read_color, read_utf16_str, read_encoded_uint16, read_encoded_uint32
+from pyrdp.enum.rdp import GeneralExtraFlag, GlyphSupport
+from .common import read_color, read_utf16_str, read_encoded_uint16, read_encoded_uint32, Glyph, GlyphV2
 
 CBR2_BPP = [0, 0, 0, 8, 16, 24, 32]
 BPP_CBR2 = [0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
@@ -35,6 +35,12 @@ BITMAP_CACHE_WAITING_LIST_INDEX = 0x7FFF
 CG_GLYPH_UNICODE_PRESENT = 0x100
 
 CACHED_BRUSH = 0x80
+
+
+def inflate_brush(packed: bytes) -> bytes:
+    """Convert a packed 8 pixels-per-byte brush to 1 byte per pixel."""
+    assert len(packed) == 8
+    return bytes([(b >> n) & 1 for b in packed for n in range(8)])
 
 
 def decompress_brush(s: BytesIO, bpp: int) -> bytes:
@@ -68,10 +74,24 @@ def decompress_brush(s: BytesIO, bpp: int) -> bytes:
     return brush
 
 
-class CacheBitmapV1:
+class CacheBitmap:
+    """
+    Common type between all cached bitmaps.
+    """
+
+    def __init__(self, rev: int):
+        self.rev = rev
+        self.bpp = 0
+        self.cacheId = 0
+        self.cacheIndex = 0
+        self.width = self.height = 0
+        self.data = b''
+
+
+class CacheBitmapV1(CacheBitmap):
     @staticmethod
-    def parse(s: BytesIO, orderType: int, flags: int) -> 'CacheBitmapV1':
-        self = CacheBitmapV1()
+    def parse(s: BytesIO, orderType: int, flags: int) -> CacheBitmap:
+        self = CacheBitmapV1(1)
 
         self.cacheId = Uint8.unpack(s)
 
@@ -82,7 +102,7 @@ class CacheBitmapV1:
         self.bpp = Uint8.unpack(s)
 
         bitmapLength = Uint16LE.unpack(s)
-        self.cacheIdx = Uint16LE.unpack(s)
+        self.cacheIndex = Uint16LE.unpack(s)
 
         if orderType & Secondary.CACHE_BITMAP_COMPRESSED and \
            not flags & GeneralExtraFlag.NO_BITMAP_COMPRESSION_HDR:
@@ -93,13 +113,17 @@ class CacheBitmapV1:
 
         return self
 
+    def __str__(self):
+        return (f'<CacheBitmapV1 {self.width}x{self.height}x{self.bpp}'
+                f' Cache={self.cacheId}:{self.cacheIndex}>')
+
 
 class CacheColorTable:
     @staticmethod
     def parse(s: BytesIO) -> 'CacheColorTable':
         self = CacheColorTable()
 
-        self.cacheIdx = Uint8.unpack(s)
+        self.cacheIndex = Uint8.unpack(s)
         numberColors = Uint16LE.unpack(s)
 
         assert numberColors == 256
@@ -110,7 +134,7 @@ class CacheColorTable:
 
 class CacheGlyph:
     @staticmethod
-    def parse(s: BytesIO, flags: int, glyph) -> 'CacheGlyph':
+    def parse(s: BytesIO, flags: int, glyph: GlyphSupport) -> 'CacheGlyph':
         """
         Parse a CACHE_GLYPH order.
 
@@ -121,24 +145,28 @@ class CacheGlyph:
 
         self = CacheGlyph()
 
-        self.cacheId = Uint8.unpack(s)
-        cGlyphs = Uint8.unpack(s)
+        if GlyphSupport.GLYPH_SUPPORT_ENCODE:
+            self.cacheId = flags & 0x0F
+            cGlyphs = flags >> 8
+            unicodePresent = (flags >> 4 & 0x0F) & 0x01
+            self.glyphs = [GlyphV2.parse(s) for _ in range(cGlyphs)]
+        else:
+            self.cacheId = Uint8.unpack(s)
+            cGlyphs = Uint8.unpack(s)
+            unicodePresent = flags & CG_GLYPH_UNICODE_PRESENT
+            self.glyphs = [Glyph.parse(s) for _ in range(cGlyphs)]
 
-        self.glyphs = [glyph.parse(s) for _ in range(cGlyphs)]
-
-        if flags & CG_GLYPH_UNICODE_PRESENT and cGlyphs > 0:
+        if unicodePresent and cGlyphs > 0:
             self.unicode = read_utf16_str(s, cGlyphs)
 
         return self
 
 
-class CacheBitmapV2:
+class CacheBitmapV2(CacheBitmap):
     def __init__(self):
-        self.cacheId = 0
-        self.cacheIndex = 0
+        super().__init__(2)
 
         self.flags = 0
-        self.bpp = 0
         self.key1 = self.key2 = 0
         self.height = self.width = 0
 
@@ -148,7 +176,7 @@ class CacheBitmapV2:
         self.cbUncompressedSize = 0
 
     @staticmethod
-    def parse(s: BytesIO, orderType: int, flags: int) -> 'CacheBitmapV2':
+    def parse(s: BytesIO, orderType: int, flags: int) -> CacheBitmap:
         self = CacheBitmapV2()
 
         self.cacheId = flags & 0x0003
@@ -187,58 +215,14 @@ class CacheBitmapV2:
         return self
 
     def __str__(self):
-        return (f'<CacheBitmapV2 Res={self.width}x{self.height}x{self.bpp} Len={len(self.data)}'
-                f' CacheId={self.cacheId} CacheIndex={self.cacheIndex}>')
+        return (f'<CacheBitmapV2 {self.width}x{self.height}x{self.bpp}'
+                f' Cache={self.cacheId}:{self.cacheIndex}>')
 
 
-class CacheBrush:
+class CacheBitmapV3(CacheBitmap):
     @staticmethod
-    def parse(s: BytesIO) -> 'CacheBrush':
-        self = CacheBrush()
-
-        self.cacheIndex = Uint8.unpack(s)
-
-        iBitmapFormat = Uint8.unpack(s)
-        assert iBitmapFormat >= 0 and iBitmapFormat < len(BMF_BPP)
-
-        self.bpp = BMF_BPP[iBitmapFormat]
-
-        cx = self.width = Uint8.unpack(s)
-        cy = self.height = Uint8.unpack(s)
-
-        style = Uint8.unpack(s)
-        assert style == 0  # (2.2.2.2.1.2.7 Appendix 4)
-
-        iBytes = Uint8.unpack(s)
-
-        compressed = False
-        if cx == 8 and cy == 8 and self.bpp == 1:  # 8x8 mono bitmap
-            self.data = s.read(8)[::-1]
-        else:
-            if self.bpp == 8 and iBytes == 20:
-                compressed = True
-            elif self.bpp == 16 and iBytes == 24:
-                compressed = True
-            elif self.bpp == 24 and iBytes == 32:
-                compressed = True
-
-            if compressed:
-                self.data = decompress_brush(s, self.bpp)
-            else:
-                self.data = bytes(256)  # Preallocate
-                scanline = (self.bpp // 8) * 8
-                for i in range(7):
-                    # TODO: Verify correctness
-                    o = (7-i)*scanline
-                    self.data[o:o+8] = s.read(scanline)
-
-        return self
-
-
-class CacheBitmapV3:
-    @staticmethod
-    def parse(s: BytesIO, flags: int) -> 'CacheBitmapV3':
-        self = CacheBitmapV3()
+    def parse(s: BytesIO, flags: int) -> CacheBitmap:
+        self = CacheBitmapV3(3)
 
         self.cacheId = flags & 0x00000003
         self.flags = (flags & 0x0000FF80) >> 7
@@ -268,5 +252,49 @@ class CacheBitmapV3:
         return self
 
     def __str__(self):
-        return (f'<CacheBitmapV3 {self.width}x{self.height}x{self.bpp} Size={len(self.data)}'
+        return (f'<CacheBitmapV3 {self.width}x{self.height}x{self.bpp}'
                 f' Cache={self.cacheId}:{self.cacheIndex} Codec={self.codecId}>')
+
+
+class CacheBrush:
+    @staticmethod
+    def parse(s: BytesIO) -> 'CacheBrush':
+        self = CacheBrush()
+
+        self.cacheIndex = Uint8.unpack(s)
+
+        iBitmapFormat = Uint8.unpack(s)
+        assert iBitmapFormat >= 0 and iBitmapFormat < len(BMF_BPP)
+
+        self.bpp = BMF_BPP[iBitmapFormat]
+
+        cx = self.width = Uint8.unpack(s)
+        cy = self.height = Uint8.unpack(s)
+
+        Uint8.unpack(s)  # Unusued (style)
+        # assert style == 0  # (2.2.2.2.1.2.7 Appendix 4) ... Not respected (:
+
+        iBytes = Uint8.unpack(s)
+
+        compressed = False
+        if cx == 8 and cy == 8 and self.bpp == 1:  # 8x8 mono bitmap
+            self.data = s.read(8)[::-1]
+        else:
+            if self.bpp == 8 and iBytes == 20:
+                compressed = True
+            elif self.bpp == 16 and iBytes == 24:
+                compressed = True
+            elif self.bpp == 24 and iBytes == 32:
+                compressed = True
+
+            if compressed:
+                self.data = decompress_brush(s, self.bpp)
+            else:
+                self.data = bytes(256)  # Preallocate
+                scanline = (self.bpp // 8) * 8
+                for i in range(7):
+                    # TODO: Verify correctness
+                    o = (7-i)*scanline
+                    self.data[o:o+8] = s.read(scanline)
+
+        return self

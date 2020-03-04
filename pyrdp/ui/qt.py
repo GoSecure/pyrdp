@@ -139,7 +139,7 @@ class QRemoteDesktop(QWidget):
         # Bind mouse event
         self.setMouseTracking(True)
         # Buffer image
-        self._buffer = QImage(width, height, QImage.Format_RGB32)
+        self._buffer = QImage(width, height, QImage.Format_ARGB32_Premultiplied)
         self.mouseX = width // 2
         self.mouseY = height // 2
 
@@ -147,6 +147,10 @@ class QRemoteDesktop(QWidget):
 
     def runOnMainThread(self, target: callable):
         target()
+
+    @property
+    def screen(self):
+        return self._buffer
 
     def notifyImage(self, x: int, y: int, qimage: QImage, width: int, height: int):
         """

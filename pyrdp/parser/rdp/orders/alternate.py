@@ -31,9 +31,12 @@ class CreateOffscreenBitmap:
             cIndices = Uint16LE.unpack(s)
             self.delete = [Uint16LE.unpack(s) for _ in range(cIndices)]
         else:
-            self.delete = None
+            self.delete = []
 
         return self
+
+    def __str__(self):
+        return f'<CreateOffscreenBitmap {self.cx}x{self.cy} Id={self.id} Del={len(self.delete)}>'
 
 
 class SwitchSurface:
@@ -56,14 +59,16 @@ class CreateNineGridBitmap:
         self.bpp = Uint8.unpack(s)
         self.id = Uint16LE.unpack(s)
 
-        # NOTE: According to 2.2.2.2.1.3.4 There should be cx:16 and cy:16 here??
+        self.cx = Uint16LE.unpack(s)
+        self.cy = Uint16LE.unpack(s)
 
+        # NineGridInfo
         self.flFlags = Uint32LE.unpack(s)
         self.ulLeftWidth = Uint16LE.unpack(s)
         self.ulRightWidth = Uint16LE.unpack(s)
         self.ulTopHeight = Uint16LE.unpack(s)
         self.ulBottomHeight = Uint16LE.unpack(s)
-        self.rgb = read_color(s)  # FIXME: Bring this in
+        self.rgb = read_color(s)
 
         return self
 
@@ -75,8 +80,8 @@ class StreamBitmapFirst:
 
         self.flags = Uint8.unpack(s)
         self.bpp = Uint8.unpack(s)
-        self.type = Uint16LE.unpack(s)
 
+        self.type = Uint16LE.unpack(s)
         self.width = Uint16LE.unpack(s)
         self.height = Uint16LE.unpack(s)
 

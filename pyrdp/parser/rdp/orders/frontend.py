@@ -11,6 +11,25 @@ from pyrdp.parser.rdp.orders.alternate import CreateOffscreenBitmap, SwitchSurfa
     StreamBitmapFirst, StreamBitmapNext, GdiPlusFirst, GdiPlusNext, GdiPlusEnd, GdiPlusCacheFirst, \
     GdiPlusCacheNext, GdiPlusCacheEnd, FrameMarker
 
+from .common import Bounds
+from pyrdp.enum import IntEnum
+
+
+class BrushStyle(IntEnum):
+    SOLID = 0x00
+    NULL = 0x01
+    HATCHED = 0x02
+    PATTERN = 0x03
+
+
+class HatchStyle(IntEnum):
+    HORIZONTAL = 0x00
+    VERTICAL = 0x01
+    FDIAGONAL = 0x02
+    BDIAGNOAL = 0x03
+    CROSS = 0x04
+    DIAGCROSS = 0x05
+
 
 class GdiFrontend:
     """
@@ -24,6 +43,12 @@ class GdiFrontend:
     NOTE: Unimplemented methods will act as No-Op.
     """
     # REFACTOR: Move to core, this isn't really relevant to the parser.
+
+    def onBounds(self, b: Bounds):
+        """
+        Called by the parser to configure the bounding rectangle.
+        """
+        pass
 
     def dstBlt(self, state):
         pass

@@ -19,7 +19,6 @@ from pyrdp.enum.rdp import GlyphSupport
 from pyrdp.pdu.rdp.capability import CapabilityType
 
 from .frontend import GdiFrontend
-from .common import Glyph, GlyphV2
 
 from .secondary import CacheBitmapV1, CacheColorTable, CacheGlyph, CacheBitmapV2, CacheBrush, CacheBitmapV3
 from .alternate import CreateOffscreenBitmap, SwitchSurface, CreateNineGridBitmap, \
@@ -47,7 +46,7 @@ class OrdersParser:
 
         :param GdiFrontend frontend: The frontend that will process GDI messages.
         """
-        self.orders: FastPathOrdersEvent = None
+
         self.notify: GdiFrontend = frontend
         self.ctx = Context()
         self.glyphLevel: GlyphSupport = GlyphSupport.GLYPH_SUPPORT_NONE
@@ -63,13 +62,15 @@ class OrdersParser:
         """
         Entrypoint for parsing TS_FP_UPDATE_ORDERS.
         """
-        self.orders = orders
 
         s = BytesIO(orders.payload)
 
         numberOrders = Uint16LE.unpack(s)
-        for _ in range(numberOrders):
-            self._parse_order(s)
+        try:
+            for _ in range(numberOrders):
+                self._parse_order(s)
+        except:
+            LOG.warning('Failed to parse drawing order PDU: %s', orders)
 
         return orders
 
@@ -88,10 +89,10 @@ class OrdersParser:
     def _parse_primary(self, s: BytesIO, flags: int):
 
         orderType = self.ctx.update(s, flags)
+        self.notify.onBounds(self.ctx.bounds if self.ctx.bounded else None)
 
-        fp = _pri[orderType]
-        LOG.debug('[PRIMARY] %s', _repr(fp))
-        fp(self, s)
+        assert orderType >= 0 and orderType < len(_pri)
+        _pri[orderType](self, s)
 
     def _parse_dstblt(self, s: BytesIO):
         """DSTBLT"""
@@ -119,7 +120,7 @@ class OrdersParser:
 
     def _parse_opaque_rect(self, s: BytesIO):
         """OPAQUE_RECT"""
-        self.notify.opaqueRec(self.ctx.opaqueRect.update(s))
+        self.notify.opaqueRect(self.ctx.opaqueRect.update(s))
 
     def _parse_save_bitmap(self, s: BytesIO):
         """SAVE_BITMAP"""
@@ -184,16 +185,12 @@ class OrdersParser:
     # Secondary drawing orders.
     # ----------------------------------------------------------------------
     def _parse_secondary(self, s: BytesIO, flags: int):
-        orderLength = Uint16LE.unpack(s)  # Unused?
+        Uint16LE.unpack(s)  # orderLength (unused)
         extraFlags = Uint16LE.unpack(s)
         orderType = Uint8.unpack(s)
-        # nxt = orderLength + 7
 
         assert orderType >= 0 and orderType < len(_sec)
-
-        fp = _sec[orderType]
-        LOG.debug('[SECONDARY] %s (len=%d)', _repr(fp), orderLength)
-        fp(self, s, orderType, extraFlags)
+        _sec[orderType](self, s, orderType, extraFlags)
 
     def _parse_cache_bitmap_v1(self, s: BytesIO, orderType: int, flags: int):
         """CACHE_BITMAP_V1"""
@@ -208,10 +205,8 @@ class OrdersParser:
         if self.glyphLevel == GlyphSupport.GLYPH_SUPPORT_NONE:
             LOG.warn("Received CACHE_GLYPH but the client reported it doesn't support it!")
             # Ignore it.
-        elif self.glyphLevel == GlyphSupport.GLYPH_SUPPORT_ENCODE:
-            self.notify.cacheGlyph(CacheGlyph.parse(s, flags, GlyphV2))
         else:
-            self.notify.cacheGlyph(CacheGlyph.parse(s, flags, Glyph))
+            self.notify.cacheGlyph(CacheGlyph.parse(s, flags, self.glyphLevel))
 
     def _parse_cache_bitmap_v2(self, s: BytesIO, orderType: int, flags: int):
         """CACHE_BITMAP_V2"""
@@ -232,9 +227,7 @@ class OrdersParser:
 
         assert orderType >= 0 and orderType < len(_alt)
 
-        fp = _alt[orderType]
-        LOG.debug('[ALTSEC] %s', _repr(fp))
-        fp(self, s)
+        _alt[orderType](self, s)
 
     def _parse_create_offscreen_bitmap(self, s: BytesIO):
         """CREATE_OFFSCREEN_BITMAP"""
@@ -258,27 +251,27 @@ class OrdersParser:
 
     def _parse_gdiplus_first(self, s: BytesIO):
         """GDIPLUS_FIRST"""
-        self.notify.GdiPlusFirst(GdiPlusFirst.parse(s))
+        self.notify.gdiPlusFirst(GdiPlusFirst.parse(s))
 
     def _parse_gdiplus_next(self, s: BytesIO):
         """GDIPLUS_NEXT"""
-        self.notify.GdiPlusNext(GdiPlusNext.parse(s))
+        self.notify.drawGdiPlusNext(GdiPlusNext.parse(s))
 
     def _parse_gdiplus_end(self, s: BytesIO):
         """GDIPLUS_END"""
-        self.notify.GdiPlusEnd(GdiPlusEnd.parse(s))
+        self.notify.drawGdiPlusEnd(GdiPlusEnd.parse(s))
 
     def _parse_gdiplus_cache_first(self, s: BytesIO):
         """GDIPLUS_CACHE_FIRST"""
-        self.notify.GdiPlusCacheFirst(GdiPlusCacheFirst.parse(s))
+        self.notify.drawGdiPlusCacheFirst(GdiPlusCacheFirst.parse(s))
 
     def _parse_gdiplus_cache_next(self, s: BytesIO):
         """GDIPLUS_CACHE_NEXT"""
-        self.notify.GdiPlusCacheNext(GdiPlusCacheNext.parse(s))
+        self.notify.drawGdiPlusCacheNext(GdiPlusCacheNext.parse(s))
 
     def _parse_gdiplus_cache_end(self, s: BytesIO):
         """GDIPLUS_CACHE_END"""
-        self.notify.GdiPlusCacheEnd(GdiPlusCacheEnd.parse(s))
+        self.notify.drawGdiPlusCacheEnd(GdiPlusCacheEnd.parse(s))
 
     def _parse_window(self, s: BytesIO):
         """WINDOW"""
