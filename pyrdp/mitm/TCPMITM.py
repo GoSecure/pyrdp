@@ -89,7 +89,11 @@ class TCPMITM:
         self.statCounter.stop()
         self.recordConnectionClose()
         self.log.info("Client connection closed. %(reason)s", {"reason": reason.value})
-        self.statCounter.logReport(self.log)
+        if self.recorder.recordFilename:
+            self.statCounter.logReport(self.log, {"replayFilename":
+                                                  self.recorder.recordFilename})
+        else:
+            self.statCounter.logReport(self.log)
         self.serverConnector.close()
         self.server.disconnect(True)
 

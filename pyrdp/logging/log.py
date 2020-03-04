@@ -11,19 +11,21 @@ from pyrdp.logging.formatters import SSLSecretFormatter
 
 
 class LOGGER_NAMES:
+    # Root logger
     PYRDP = "pyrdp"
     MITM = f"{PYRDP}.mitm"
     MITM_CONNECTIONS = f"{MITM}.connections"
     PLAYER = f"{PYRDP}.player"
     PLAYER_UI = f"{PLAYER}.ui"
 
+    # Independent logger
+    CRAWLER = "crawler"
 
 def getSSLLogger():
     """
     Get the SSL logger.
     """
     return logging.getLogger("ssl")
-
 
 def prepareSSLLogger(path: Path):
     """
@@ -44,7 +46,6 @@ def prepareSSLLogger(path: Path):
     logger.addHandler(fileHandler)
     logger.addHandler(streamHandler)
     logger.setLevel(logging.INFO)
-
 
 def info(*args):
     logging.getLogger(LOGGER_NAMES.PYRDP).info(*args)

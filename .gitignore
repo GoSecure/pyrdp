@@ -1,24 +1,33 @@
+# python
 *.pyc
 venv*/
+/*.prof
+
+# IDE stuff
 .project
 .pydevproject
-README.md~
-*.so
-*.os
+.idea/
+*~
+.vscode
+
+# packaging
 dist/
 build/
 rdpy.egg-info/
 pyrdp.egg-info/
-*.log
-out/
-log/
+rle*.so
+
+# AsciiDoc
+CHANGELOG.html
+docs/*.html
+
+# pyrdp-specific
 pyrdp_output/
-.idea/
-.vscode
+*.cert
+*.pyrdp
 *.log
-test.bin
-saved_files/
-pyrdp_log/
-bin/_*
-cert.cert
-private.key
+*.key
+mitm.json
+
+# twisted
+/twisted/plugins/dropin.cache

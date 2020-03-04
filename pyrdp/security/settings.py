@@ -1,16 +1,16 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018, 2019 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
 import Crypto.Random
-from Crypto.PublicKey import RSA
+from Crypto.PublicKey.RSA import RsaKey
 
 from pyrdp.core import ObservedBy, Observer, Subject
 from pyrdp.enum import EncryptionMethod
 from pyrdp.exceptions import StateError
-from pyrdp.security.crypto import RC4Crypter
+from pyrdp.security.crypto import RC4Crypter, RSA
 
 
 class SecuritySettingsObserver(Observer):
@@ -67,8 +67,9 @@ class SecuritySettings(Subject):
         """
         Encrypt the client random using the public key.
         """
-        # Client random is stored as little-endian but crypto functions expect it to be in big-endian format.
-        return self.serverPublicKey.encrypt(self.clientRandom[:: -1], 0)[0][:: -1]
+        # plaintext is stored as little-endian but crypto functions expect it to be in big-endian format.
+        return RSA(self.serverPublicKey).encrypt(self.clientRandom[:: -1])[:: -1]
+
 
     def setEncryptionMethod(self, encryptionMethod: EncryptionMethod):
         """
@@ -77,7 +78,7 @@ class SecuritySettings(Subject):
         """
         self.encryptionMethod = encryptionMethod
 
-    def setServerPublicKey(self, serverPublicKey: RSA.pubkey.pubkey):
+    def setServerPublicKey(self, serverPublicKey: RsaKey):
         """
         Set the server's public key.
         :param serverPublicKey: the server's public key.

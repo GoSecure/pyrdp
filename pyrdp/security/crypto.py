@@ -1,8 +1,11 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018, 2019 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+
+from Crypto.PublicKey.RSA import RsaKey
+from Crypto.Util.number import bytes_to_long, long_to_bytes
 
 from pyrdp.security import rc4
 from pyrdp.security.key import macData, macSaltedData, generateKeys, updateKey
@@ -12,6 +15,39 @@ from pyrdp.enum import EncryptionMethod
 Cryptographic utility functions
 """
 
+# Adapted from https://github.com/dlitz/pycrypto/blob/master/lib/Crypto/PublicKey/_slowmath.py
+class RSA:
+    """
+    Class for encrypting or decrypting data with RSA
+    Not meant to be a safe implementation. We only need raw RSA without padding.
+    """
+
+    def __init__(self, key: RsaKey):
+        self.key = key
+
+    def encrypt(self, plaintext: bytes) -> bytes:
+        m = bytes_to_long(plaintext)
+        ciphertext = pow(m, self.key.e, self.key.n)
+        return long_to_bytes(ciphertext)
+
+    def decrypt(self, ciphertext: bytes) -> bytes:
+        c = bytes_to_long(ciphertext)
+
+        # compute c**d (mod n)
+        if (hasattr(self.key, 'p') and hasattr(self.key, 'q') and hasattr(self.key, 'u')):
+            m1 = pow(c, self.key.d % (self.key.p - 1), self.key.p)
+            m2 = pow(c, self.key.d % (self.key.q - 1), self.key.q)
+            h = m2 - m1
+
+            if (h < 0):
+                h = h + self.key.q
+            h = h * self.key.u % self.key.q
+
+            plaintext = h * self.key.p + m1
+        else:
+            plaintext = pow(c, self.key.d, self.key.n)
+
+        return long_to_bytes(plaintext)
 
 class RC4:
     """

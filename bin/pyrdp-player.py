@@ -17,12 +17,12 @@ import argparse
 import logging
 import logging.handlers
 import sys
+import os
 
 from PySide2.QtWidgets import QApplication
 
 from pyrdp.logging import LOGGER_NAMES, NotifyHandler
 from pyrdp.player import MainWindow
-
 
 def prepareLoggers(logLevel: int, outDir: Path):
     logDir = outDir / "logs"
@@ -42,12 +42,15 @@ def prepareLoggers(logLevel: int, outDir: Path):
     pyrdpLogger.addHandler(fileHandler)
     pyrdpLogger.setLevel(logLevel)
 
-    notifyHandler = NotifyHandler()
-    notifyHandler.setFormatter(notificationFormatter)
+    # https://docs.python.org/3/library/os.html
+    if os.name != "nt":
+        notifyHandler = NotifyHandler()
+        notifyHandler.setFormatter(notificationFormatter)
 
-    uiLogger = logging.getLogger(LOGGER_NAMES.PLAYER_UI)
-    uiLogger.addHandler(notifyHandler)
-
+        uiLogger = logging.getLogger(LOGGER_NAMES.PLAYER_UI)
+        uiLogger.addHandler(notifyHandler)
+    else:
+        pyrdpLogger.warning("Notifications are not supported for your platform, they will be disabled.")
 
 def main():
     """

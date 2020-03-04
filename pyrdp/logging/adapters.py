@@ -19,6 +19,7 @@ class SessionLogger(logging.LoggerAdapter):
         :param sessionID: session ID value.
         """
         super().__init__(logger, {"sessionID": sessionID})
+        self.sessionID = sessionID
 
     def createChild(self, childName: str, sessionID: str = None) -> 'SessionLogger':
         """

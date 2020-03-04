@@ -9,12 +9,11 @@ from queue import Queue
 from typing import Dict
 
 from PySide2.QtCore import Qt, Signal
-from PySide2.QtWidgets import QApplication, QMessageBox, QWidget
+from PySide2.QtWidgets import QApplication, QFileIconProvider, QMessageBox, QWidget
 
 from pyrdp.player.BaseWindow import BaseWindow
 from pyrdp.player.LiveTab import LiveTab
 from pyrdp.player.LiveThread import LiveThread
-
 
 class LiveWindow(BaseWindow):
     """
@@ -42,6 +41,7 @@ class LiveWindow(BaseWindow):
 
     def createLivePlayerTab(self):
         tab = LiveTab()
+        tab.addIconToTab.connect(self.addIconToTab)
         tab.renameTab.connect(self.renameLivePlayerTab)
         tab.connectionClosed.connect(self.onConnectionClosed)
         self.addTab(tab, "New connection")
@@ -51,6 +51,11 @@ class LiveWindow(BaseWindow):
 
         self.updateCountSignal.emit()
         self.queue.put(tab)
+
+    def addIconToTab(self, tab: LiveTab):
+        index = self.indexOf(tab)
+        icon = QFileIconProvider().icon(QFileIconProvider.IconType.Drive)
+        self.setTabIcon(index, icon)
 
     def renameLivePlayerTab(self, tab: LiveTab, name: str):
         index = self.indexOf(tab)

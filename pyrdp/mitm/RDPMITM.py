@@ -13,27 +13,30 @@ from twisted.internet.protocol import Protocol
 from pyrdp.core import AsyncIOSequencer, AwaitableClientFactory
 from pyrdp.core.ssl import ClientTLSContext, ServerTLSContext
 from pyrdp.enum import MCSChannelName, ParserMode, PlayerPDUType, ScanCode, SegmentationPDUType
-from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, LayerChainItem, RawLayer, VirtualChannelLayer
+from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, LayerChainItem, RawLayer, \
+    VirtualChannelLayer
 from pyrdp.logging import RC4LoggingObserver
 from pyrdp.logging.adapters import SessionLogger
-from pyrdp.logging.observers import FastPathLogger, LayerLogger, MCSLogger, SecurityLogger, SlowPathLogger, X224Logger
+from pyrdp.logging.observers import FastPathLogger, LayerLogger, MCSLogger, SecurityLogger, \
+    SlowPathLogger, X224Logger
 from pyrdp.logging.StatCounter import StatCounter
 from pyrdp.mcs import MCSClientChannel, MCSServerChannel
 from pyrdp.mitm.AttackerMITM import AttackerMITM
-from pyrdp.mitm.ClipboardMITM import ActiveClipboardStealer
+from pyrdp.mitm.ClipboardMITM import ActiveClipboardStealer, PassiveClipboardStealer
 from pyrdp.mitm.config import MITMConfig
 from pyrdp.mitm.DeviceRedirectionMITM import DeviceRedirectionMITM
 from pyrdp.mitm.FastPathMITM import FastPathMITM
+from pyrdp.mitm.FileCrawlerMITM import FileCrawlerMITM
 from pyrdp.mitm.layerset import RDPLayerSet
 from pyrdp.mitm.MCSMITM import MCSMITM
 from pyrdp.mitm.MITMRecorder import MITMRecorder
+from pyrdp.mitm.PlayerLayerSet import TwistedPlayerLayerSet
 from pyrdp.mitm.SecurityMITM import SecurityMITM
 from pyrdp.mitm.SlowPathMITM import SlowPathMITM
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.mitm.TCPMITM import TCPMITM
 from pyrdp.mitm.VirtualChannelMITM import VirtualChannelMITM
 from pyrdp.mitm.X224MITM import X224MITM
-from pyrdp.mitm.PlayerLayerSet import TwistedPlayerLayerSet
 from pyrdp.recording import FileLayer, RecordingFastPathObserver, RecordingSlowPathObserver
 
 
@@ -42,25 +45,25 @@ class RDPMITM:
     Main MITM class. The job of this class is to orchestrate the components for all the protocols.
     """
 
-    def __init__(self, log: SessionLogger, config: MITMConfig):
+    def __init__(self, mainLogger: SessionLogger, crawlerLogger: SessionLogger, config: MITMConfig):
         """
         :param log: base logger to use for the connection
         :param config: the MITM configuration
         """
 
-        self.log = log
+        self.log = mainLogger
         """Base logger for the connection"""
 
-        self.clientLog = log.createChild("client")
+        self.clientLog = mainLogger.createChild("client")
         """Base logger for the client side"""
 
-        self.serverLog = log.createChild("server")
+        self.serverLog = mainLogger.createChild("server")
         """Base logger for the server side"""
 
-        self.attackerLog = log.createChild("attacker")
+        self.attackerLog = mainLogger.createChild("attacker")
         """Base logger for the attacker side"""
 
-        self.rc4Log = log.createChild("rc4")
+        self.rc4Log = mainLogger.createChild("rc4")
         """Logger for RC4 secrets"""
 
         self.config = config
@@ -108,6 +111,8 @@ class RDPMITM:
 
         self.attacker: AttackerMITM = None
 
+        self.crawler: FileCrawlerMITM = None
+
         self.client.x224.addObserver(X224Logger(self.getClientLog("x224")))
         self.client.mcs.addObserver(MCSLogger(self.getClientLog("mcs")))
         self.client.slowPath.addObserver(SlowPathLogger(self.getClientLog("slowpath")))
@@ -128,8 +133,15 @@ class RDPMITM:
 
         if config.recordReplays:
             date = datetime.datetime.now()
-            replayFileName = "rdp_replay_{}_{}.pyrdp".format(date.strftime('%Y%m%d_%H-%M-%S'), date.microsecond // 1000)
+            replayFileName = "rdp_replay_{}_{}_{}.pyrdp"\
+                    .format(date.strftime('%Y%m%d_%H-%M-%S'),
+                            date.microsecond // 1000,
+                            self.log.sessionID)
+            self.recorder.setRecordFilename(replayFileName)
             self.recorder.addTransport(FileLayer(self.config.replayDir / replayFileName))
+
+        if config.enableCrawler:
+            self.crawler: FileCrawlerMITM = FileCrawlerMITM(self.getClientLog(MCSChannelName.DEVICE_REDIRECTION).createChild("crawler"), crawlerLogger, self.config, self.state)
 
     def getProtocol(self) -> Protocol:
         """
@@ -272,8 +284,12 @@ class RDPMITM:
         LayerChainItem.chain(client, clientSecurity, clientVirtualChannel, clientLayer)
         LayerChainItem.chain(server, serverSecurity, serverVirtualChannel, serverLayer)
 
-        mitm = ActiveClipboardStealer(clientLayer, serverLayer, self.getLog(MCSChannelName.CLIPBOARD), self.recorder,
-                                      self.statCounter)
+        if self.config.disableActiveClipboardStealing:
+            mitm = PassiveClipboardStealer(clientLayer, serverLayer, self.getLog(MCSChannelName.CLIPBOARD),
+                                           self.recorder, self.statCounter)
+        else:
+            mitm = ActiveClipboardStealer(clientLayer, serverLayer, self.getLog(MCSChannelName.CLIPBOARD),
+                                          self.recorder, self.statCounter)
         self.channelMITMs[client.channelID] = mitm
 
     def buildDeviceChannel(self, client: MCSServerChannel, server: MCSClientChannel):
@@ -298,6 +314,9 @@ class RDPMITM:
 
         deviceRedirection = DeviceRedirectionMITM(clientLayer, serverLayer, self.getLog(MCSChannelName.DEVICE_REDIRECTION), self.config, self.statCounter, self.state)
         self.channelMITMs[client.channelID] = deviceRedirection
+
+        if self.config.enableCrawler:
+            self.crawler.setDeviceRedirectionComponent(deviceRedirection)
 
         if self.attacker:
             self.attacker.setDeviceRedirectionComponent(deviceRedirection)

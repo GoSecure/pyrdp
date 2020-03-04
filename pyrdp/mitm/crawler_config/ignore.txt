@@ -1,0 +1,44 @@
+# Non-interesting / big Windows root folders
+/$Recycle.Bin
+/Boot
+/Recovery
+/BGinfo
+/PerfLogs
+
+# Dev packages folders
+*/node_modules
+*/vendor
+
+# Default files on Windows
+*/AppData/Local/Packages
+*/Common Files
+*/internet explorer
+*/Microsoft*
+*/UNP
+*/USOShared
+*/Windows*
+
+# Default VM folders
+*/Oracle
+*/PuppetLabs
+*/Puppet Labs
+
+# Package managers
+*/chocolatey
+
+# Non-interesting / big Linux root folders
+/bin
+/boot
+/dev
+/lib
+/lib64
+/lost+found
+/media
+/mnt
+/proc
+/run
+/sbin
+/snap
+/sys
+/tmp
+/usr

@@ -12,13 +12,14 @@ import setuptools
 from distutils.core import Extension, setup
 
 setup(name='pyrdp',
-    version='0.2.0',
+    version='0.4.2dev',
     description='Remote Desktop Protocol Man-in-the-Middle and library for Python 3',
     long_description="""Remote Desktop Protocol Man-in-the-Middle and library for Python 3""",
     author='Émilio Gonzalez, Francis Labelle',
     author_email='egg997@gmail.com, flabelle@gosecure.ca',
     url='https://github.com/GoSecure/pyrdp',
     packages=setuptools.find_packages(include=["pyrdp", "pyrdp.*"]),
+    package_data={"pyrdp": ["mitm/crawler_config/*.txt"]},
     ext_modules=[Extension('rle', ['ext/rle.c'])],
     scripts=[
         'bin/pyrdp-clonecert.py',
@@ -29,12 +30,10 @@ setup(name='pyrdp',
     install_requires=[
         'appdirs',
         'cryptography',
-        'dbus-python',
         'names',
-        'notify2',
         'progressbar2',
         'pyasn1',
-        'pycrypto',
+        'pycryptodome',
         'pyopenssl',
         'PySide2',
         'pytz',
@@ -42,5 +41,7 @@ setup(name='pyrdp',
         'scapy',
         'service_identity',
         'twisted',
+        'dbus-python;platform_system!="Windows"',
+        'notify2;platform_system!="Windows"'
     ],
 )

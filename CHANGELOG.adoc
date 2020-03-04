@@ -6,23 +6,104 @@
 This document provides a high-level view of the changes introduced in {project-name} by release.
 For a detailed view of what has changed, refer to the {uri-repo}/commits/master[commit history] on GitHub.
 
-== _Unreleased_
+== <master> - <unreleased>
+
+=== Enhancements
+
+* Added `sessionID` to replay filename ({uri-issue}180[#180])
+* Added `replayfilename` to the connection report log entry ({uri-issue}180[#180])
+* Added a `twistd` plugin ({uri-issue}174[#174], {uri-issue}177[#177])
+* Further Docker image size improvements ({uri-issue}173[#173] and more)
+* Default Docker Compose command now `pyrdp-mitm -h` to avoid confusing crash on `docker-compose up` ({uri-issue}173[#173])
+* Documentation updates and fixes ({uri-issue}165[#165], {uri-issue}166[#166], {uri-issue}172[#172])
+* Added `--disable-active-clipboard` switch to prevent clipboard request injection
+
 
 === Bug fixes
 
-* Fixed issue with `virtualenv` setup ({uri-issue}110[#110])
+* Python 3.8 supported by fixing a logging.Formatter misuse ({uri-issue}176[#176])
+* Fixed stack traces in the player when attempting to print strings with ending null character ({uri-issue}182[#182])
+* Remove NLA argument from `pyrdp-mitm`.
+  It was never supported and thus misleading.
 
 
-////
+== 0.4.1 - 2019-11-03
 
-Enhancements::
+Now with 100% public docker image!
+
+=== Enhancements
+
+* Improvements to our docker image ({uri-issue}156[#156], {uri-issue}157[#157], {uri-issue}160[#160])
+* Logging when Restricted Admin Mode is enabled on clients
+* Documentation improvements
+
+=== Bug fixes
+
+* Fixed libGL.so.1 missing in docker image ({uri-issue}138[#138], {uri-issue}159[#159])
 
 === Release meta
 
-* Released on:
-* Released by:
-* Release beer:
-////
+* Released by: Olivier Bilodeau
+* Release beer: Archibald's Triple Américaine limited edition from YUL Airport
+
+=== Credits
+
+Thanks to the following people who contributed to this release:
+
+Émilio Gonzalez, Francis Labelle, Olivier Bilodeau, Ondrej Gersl
+
+
+== 0.4.0 - 2019-09-01
+
+Release just in time for our Derbycon talk!
+
+=== Enhancements
+
+* Add recursive folder download from the PyRDP Player and a queue to download files ({uri-issue}140[#140])
+* Add file crawler to automatically download files from the client drive using pattern files ({uri-issue}141[#141])
+
+=== Credits
+
+Thanks to the following people who contributed to this release:
+
+Maxime Carbonneau
+
+
+== 0.3.0 - 2019-08-31
+
+A special BlackHat USA Arsenal 2019 release!
+
+* https://docs.google.com/presentation/d/17P_l2n-hgCehQ5eTWilru4IXXHnGIRTj4ftoW4BiX5A/edit?usp=sharing[BlackHat USA Arsenal 2019 slides]
+
+
+=== Enhancements
+
+* Added Windows support ({uri-issue}129[#129])
+* Improved documentation for operation with Bettercap ({uri-issue}107[#107])
+* Added a heuristics-based credential logger to enable credentials collection at scale ({uri-issue}106[#106])
+* Dependency update: Replaced pycrypto with pycryptodome ({uri-issue}128[#128])
+* UX improvements to the PyRDP-Player ({uri-issue}119[#119], {uri-issue}124[#124])
+* Improved handling of X224 Negotiation Failures like NLA ({uri-issue}102[#102])
+* Accept and log connections from scanners better ({uri-issue}136[#136])
+* Added BlueKeep specific detection and logging ({uri-issue}114[#114])
+* Added a log entry that summarizes a connection, useful to hunt specific connections ({uri-issue}117[#117])
+* Logging minor improvements ({uri-issue}123[#123], {uri-issue}112[#112])
+
+
+=== Bug fixes
+
+* Added support for RDP v10.7 in the connection handshake ({uri-issue}135[#135])
+* Fixed issue with `virtualenv` setup ({uri-issue}110[#110])
+* Fixed connections to Windows servers with RDS enabled ({uri-issue}118[#118])
+* Shared Folders: Fixed a case where DOSName had no nullbyte ({uri-issue}121[#121])
+
+
+=== Credits
+
+Thanks to the following people who contributed to this release:
+
+Maxime Carbonneau, Émilio Gonzalez, Francis Labelle and Olivier Bilodeau
+
 
 
 == 0.2.0 - 2019-05-15
