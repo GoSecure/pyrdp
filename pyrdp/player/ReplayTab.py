@@ -52,6 +52,9 @@ class ReplayTab(BaseTab):
         self.player = PlayerLayer()
         self.player.addObserver(self.eventHandler)
 
+    def play(self):
+        self.controlBar.play.emit()
+
     def readEvent(self, position: int):
         """
         Read an event from the file at the given position.

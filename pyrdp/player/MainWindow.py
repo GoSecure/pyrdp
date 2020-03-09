@@ -94,8 +94,13 @@ class MainWindow(QMainWindow):
         optionsMenu.addAction(focusTabAction)
         optionsMenu.addAction(closeTabOnCtrlW)
 
-        for fileName in filesToRead:
-            self.replayWindow.openFile(fileName)
+        # If there's only one replay, play it immediately.
+        if len(filesToRead) == 1:
+            self.tabManager.setCurrentWidget(self.replayWindow)
+            self.replayWindow.openFile(filesToRead[0], autoplay=True)
+        else:
+            for f in filesToRead:
+                self.replayWindow.openFile(f)
 
     def onOpenFile(self):
         fileNames, _ = QFileDialog.getOpenFileNames(self, "Open File(s)")

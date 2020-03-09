@@ -20,7 +20,7 @@ class ReplayWindow(BaseWindow):
     def __init__(self, options: Dict[str, object], parent: QWidget = None):
         super().__init__(options, parent)
 
-    def openFile(self, fileName: str):
+    def openFile(self, fileName: str, autoplay: bool = False):
         """
         Open a replay file and open a new tab.
         :param fileName: replay path.
@@ -28,3 +28,5 @@ class ReplayWindow(BaseWindow):
         tab = ReplayTab(fileName)
         self.addTab(tab, fileName)
         self.log.debug("Loading replay file %(arg1)s", {"arg1": fileName})
+        if autoplay:
+            tab.play()
