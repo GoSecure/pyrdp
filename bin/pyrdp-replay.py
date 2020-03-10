@@ -8,6 +8,7 @@
 
 import argparse
 from pathlib import Path
+import struct
 
 from progressbar import progressbar
 from scapy.all import *
@@ -132,7 +133,11 @@ def main():
         except NotImplementedError as e:
             raise e
 
-    replayer.tcp.recordConnectionClose()
+    try:
+        replayer.tcp.recordConnectionClose()
+    except struct.error as e:
+        print("Couldn't close the connection cleanly. "
+              "Are you sure you got source and destination correct?")
 
 
 if __name__ == "__main__":
