@@ -103,10 +103,13 @@ class RDPReplayer(RDPMITM):
 
 def main():
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("input", help="Path to PCAP file with exported PDUs")
-    arg_parser.add_argument("client", help="Client IP")
-    arg_parser.add_argument("server", help="Server IP")
-    arg_parser.add_argument("output", help="Output file path")
+    arg_parser.add_argument("input", help="Path to PCAP file with exported PDUs. "
+                                          "Using Wireshark: File -> Export PDUs to File "
+                                          "then pick OSI Layer 7 and click Ok and "
+                                          "save the result as a pcap file.")
+    arg_parser.add_argument("client", help="Client IP address")
+    arg_parser.add_argument("server", help="Server IP address (usually it's the MITM IP address)")
+    arg_parser.add_argument("output", help="Output file that will be playable in pyrdp-player.py")
     arguments = arg_parser.parse_args(sys.argv[1 :])
 
     logging.basicConfig(level=logging.CRITICAL)
