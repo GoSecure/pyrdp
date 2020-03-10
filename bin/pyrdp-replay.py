@@ -9,6 +9,7 @@
 import argparse
 from pathlib import Path
 
+from progressbar import progressbar
 from scapy.all import *
 
 from pyrdp.logging import LOGGER_NAMES, SessionLogger
@@ -118,7 +119,7 @@ def main():
 
     replayer = RDPReplayer(output_path)
 
-    for packet in packets.res:
+    for packet in progressbar(packets):
         # The packets start with a Wireshark exported PDU structure
         source, destination, data = parseExportedPdu(packet)
 
