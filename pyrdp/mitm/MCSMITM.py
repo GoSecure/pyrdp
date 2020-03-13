@@ -88,7 +88,7 @@ class MCSMITM:
         rdpClientDataPDU.securityData.encryptionMethods &= ~EncryptionMethod.ENCRYPTION_FIPS
         rdpClientDataPDU.securityData.extEncryptionMethods &= ~EncryptionMethod.ENCRYPTION_FIPS
 
-        if not self.state.config.downgrade:
+        if self.state.config.downgrade:
             #  This disables the support for the Graphics pipeline extension, which is a completely different way to
             #  transfer graphics from server to client. https://msdn.microsoft.com/en-us/library/dn366933.aspx
             rdpClientDataPDU.coreData.earlyCapabilityFlags &= ~ClientCapabilityFlag.RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL
