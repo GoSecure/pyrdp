@@ -126,10 +126,16 @@ Finally, you can install the project with Pip:
 
 ```
 pip3 install -U pip setuptools wheel
+
+# Without GUI dependencies
 pip3 install -U -e .
+
+# With GUI dependencies
+pip3 install -U -e '.[GUI]'
 ```
 
-This should install all the dependencies required to run PyRDP.
+This should install the dependencies required to run PyRDP. If you choose to install without GUI dependencies,
+it will not be possible to use `pyrdp-player` without headless mode (`--headless`)
 
 If you ever want to leave your virtual environment, you can simply deactivate it:
 

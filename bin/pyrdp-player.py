@@ -19,12 +19,16 @@ import logging.handlers
 import sys
 import os
 
-from PySide2.QtWidgets import QApplication
+try:
+    from PySide2.QtWidgets import QApplication
+    from pyrdp.player import MainWindow
+    HAS_GUI = True
+except ModuleNotFoundError:
+    HAS_GUI = False
 
 from pyrdp.logging import LOGGER_NAMES, NotifyHandler
-from pyrdp.player import MainWindow
 
-def prepareLoggers(logLevel: int, outDir: Path):
+def prepareLoggers(logLevel: int, outDir: Path, headless: bool):
     logDir = outDir / "logs"
     logDir.mkdir(exist_ok = True)
 
@@ -42,15 +46,20 @@ def prepareLoggers(logLevel: int, outDir: Path):
     pyrdpLogger.addHandler(fileHandler)
     pyrdpLogger.setLevel(logLevel)
 
-    # https://docs.python.org/3/library/os.html
-    if os.name != "nt":
-        notifyHandler = NotifyHandler()
-        notifyHandler.setFormatter(notificationFormatter)
+    if not headless and HAS_GUI:
+        # https://docs.python.org/3/library/os.html
+        if os.name != "nt":
+            try:
+                notifyHandler = NotifyHandler()
+                notifyHandler.setFormatter(notificationFormatter)
 
-        uiLogger = logging.getLogger(LOGGER_NAMES.PLAYER_UI)
-        uiLogger.addHandler(notifyHandler)
-    else:
-        pyrdpLogger.warning("Notifications are not supported for your platform, they will be disabled.")
+                uiLogger = logging.getLogger(LOGGER_NAMES.PLAYER_UI)
+                uiLogger.addHandler(notifyHandler)
+            except Exception:
+                # No notification daemon or DBus, can't use notifications.
+                pass
+        else:
+            pyrdpLogger.warning("Notifications are not supported for your platform, they will be disabled.")
 
 def main():
     """
@@ -63,13 +72,18 @@ def main():
     parser.add_argument("-p", "--port", help="Bind port (default: 3000)", default=3000)
     parser.add_argument("-o", "--output", help="Output folder", default="pyrdp_output")
     parser.add_argument("-L", "--log-level", help="Log level", default="INFO", choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"], nargs="?")
+    parser.add_argument("--headless", help="Parse a replay without rendering the user interface.", action="store_true")
 
     args = parser.parse_args()
     outDir = Path(args.output)
     outDir.mkdir(exist_ok = True)
 
     logLevel = getattr(logging, args.log_level)
-    prepareLoggers(logLevel, outDir)
+    prepareLoggers(logLevel, outDir, args.headless)
+
+    if not HAS_GUI and not args.headless:
+        logging.error('Headless mode is not specified and PySide2 is not installed. Install PySide2 to use the graphical user interface.')
+        exit(127)
 
     app = QApplication(sys.argv)
     mainWindow = MainWindow(args.bind, int(args.port), args.replay)
