@@ -85,11 +85,22 @@ def main():
         logging.error('Headless mode is not specified and PySide2 is not installed. Install PySide2 to use the graphical user interface.')
         exit(127)
 
-    app = QApplication(sys.argv)
-    mainWindow = MainWindow(args.bind, int(args.port), args.replay)
-    mainWindow.show()
+    if not args.headless:
+        app = QApplication(sys.argv)
+        mainWindow = MainWindow(args.bind, int(args.port), args.replay)
+        mainWindow.show()
 
-    return app.exec_()
+        return app.exec_()
+    else:
+        logging.info('Starting PyRDP Player in headless mode.')
+        from pyrdp.player import HeadlessEventHandler
+        from pyrdp.player import Replay
+        processEvents = HeadlessEventHandler()
+        for replay in args.replay:
+            processEvents.output.write(f'== REPLAY FILE: {replay}\n')
+            fd = open(replay, "rb")
+            replay = Replay(fd, handler=processEvents)
+            processEvents.output.write('\n-- END --------------------------------\n')
 
 
 if __name__ == '__main__':
