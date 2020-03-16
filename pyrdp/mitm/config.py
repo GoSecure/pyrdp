@@ -44,6 +44,9 @@ class MITMConfig:
         self.recordReplays: bool = True
         """Whether replays should be recorded or not"""
 
+        self.downgrade: bool = True
+        """Whether to actively downgrade unsupported extensions."""
+
         self.payload: str = ""
         """Payload to send automatically upon connection"""
 

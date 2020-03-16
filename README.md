@@ -43,6 +43,7 @@ In August 2019, PyRDP was demo'ed at BlackHat Arsenal ([slides](https://docs.goo
       - [Choosing when to start the payload](#choosing-when-to-start-the-payload)
       - [Choosing when to resume normal activity](#choosing-when-to-resume-normal-activity)
     + [Other MITM arguments](#other-mitm-arguments)
+      - [--no-downgrade](#--no-downgrade)
   * [Using the PyRDP Player](#using-the-pyrdp-player)
     + [Playing a replay file](#playing-a-replay-file)
     + [Listening for live connections](#listening-for-live-connections)
@@ -305,6 +306,30 @@ After 5 seconds, input / output is restored back to normal.
 
 #### Other MITM arguments
 Run `pyrdp-mitm.py --help` for a full list of arguments.
+
+##### `--no-downgrade`
+
+This argument is useful when running PyRDP in Honeypot scenarios to avoid scanner fingerprinting.
+When the switch is enabled, PyRDP will not downgrade unsupported extensions and let the traffic through
+transparently. The player will likely not be able to successfully replay video traffic, but the following 
+supported channels should still be accessible:
+
+- Keystroke recording
+- Mouse position updates
+- Clipboard access (passively)
+- Drive access (passively)
+
+This feature is still a work in progress and some downgrading is currently unavoidable to allow the connection 
+to be established. The following are currently not affected by this switch and will still be disabled:
+
+- FIPS Encryption
+- Non-TLS encryption protocols
+- ClientInfo compression
+- Virtual Channel compression
+
+**NOTE**: If being able to eventually replay the full session is important, a good solution is to record the raw 
+RDP traffic using Wireshark and keep the TLS master secrets. Whenever PyRDP adds support for additional extensions, 
+it would then become possible to extract a valid RDP replay file from the raw network capture.
 
 ### Using the PyRDP Player
 Use `pyrdp-player.py` to run the player.

@@ -13,6 +13,7 @@ from pyrdp.layer import FastPathLayer, SecurityLayer, TLSSecurityLayer
 from pyrdp.parser import createFastPathParser
 from pyrdp.pdu import ClientChannelDefinition
 from pyrdp.security import RC4CrypterProxy, SecuritySettings
+from pyrdp.mitm.config import MITMConfig
 
 
 class RDPMITMState:
@@ -20,9 +21,12 @@ class RDPMITMState:
     State object for the RDP MITM. This is for data that needs to be shared across components.
     """
 
-    def __init__(self):
+    def __init__(self, config: MITMConfig):
         self.requestedProtocols: Optional[NegotiationProtocols] = None
         """The original request protocols"""
+
+        self.config = config
+        """The MITM configuration."""
 
         self.useTLS = False
         """Whether the connection uses TLS or not"""
@@ -93,5 +97,6 @@ class RDPMITMState:
         :param mode: the mode of the layer (client or server)
         """
 
-        parser = createFastPathParser(self.useTLS, self.securitySettings.encryptionMethod, self.crypters[mode], mode)
+        parser = createFastPathParser(
+            self.useTLS, self.securitySettings.encryptionMethod, self.crypters[mode], mode)
         return FastPathLayer(parser)

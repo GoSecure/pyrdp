@@ -17,6 +17,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Default Docker Compose command now `pyrdp-mitm -h` to avoid confusing crash on `docker-compose up` ({uri-issue}173[#173])
 * Documentation updates and fixes ({uri-issue}165[#165], {uri-issue}166[#166], {uri-issue}172[#172])
 * Added `--disable-active-clipboard` switch to prevent clipboard request injection
+* Added `--no-downgrade` switch to prevent protocol downgrading where possible {uri-issue}189[#189]
 
 
 === Bug fixes

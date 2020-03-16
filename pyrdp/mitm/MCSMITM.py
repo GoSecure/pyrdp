@@ -88,22 +88,23 @@ class MCSMITM:
         rdpClientDataPDU.securityData.encryptionMethods &= ~EncryptionMethod.ENCRYPTION_FIPS
         rdpClientDataPDU.securityData.extEncryptionMethods &= ~EncryptionMethod.ENCRYPTION_FIPS
 
-        #  This disables the support for the Graphics pipeline extension, which is a completely different way to
-        #  transfer graphics from server to client. https://msdn.microsoft.com/en-us/library/dn366933.aspx
-        rdpClientDataPDU.coreData.earlyCapabilityFlags &= ~ClientCapabilityFlag.RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL
+        if self.state.config.downgrade:
+            #  This disables the support for the Graphics pipeline extension, which is a completely different way to
+            #  transfer graphics from server to client. https://msdn.microsoft.com/en-us/library/dn366933.aspx
+            rdpClientDataPDU.coreData.earlyCapabilityFlags &= ~ClientCapabilityFlag.RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL
 
-        #  Remove 24bpp and 32bpp support, fall back to 16bpp.
-        #  2018-12-14: This is only there because there is a bug in the pyrdp player where 24bpp
-        #  decompression in rle.c causes random crashes. If this bug is fixed, we could remove this.
-        rdpClientDataPDU.coreData.supportedColorDepths &= ~SupportedColorDepth.RNS_UD_32BPP_SUPPORT
-        rdpClientDataPDU.coreData.supportedColorDepths &= ~SupportedColorDepth.RNS_UD_24BPP_SUPPORT
-        rdpClientDataPDU.coreData.highColorDepth &= ~HighColorDepth.HIGH_COLOR_24BPP
+            #  Remove 24bpp and 32bpp support, fall back to 16bpp.
+            #  2018-12-14: This is only there because there is a bug in the pyrdp player where 24bpp
+            #  decompression in rle.c causes random crashes. If this bug is fixed, we could remove this.
+            rdpClientDataPDU.coreData.supportedColorDepths &= ~SupportedColorDepth.RNS_UD_32BPP_SUPPORT
+            rdpClientDataPDU.coreData.supportedColorDepths &= ~SupportedColorDepth.RNS_UD_24BPP_SUPPORT
+            rdpClientDataPDU.coreData.highColorDepth &= ~HighColorDepth.HIGH_COLOR_24BPP
 
-        if rdpClientDataPDU.coreData.highColorDepth == 0:
-            # Means the requested color depth was 24bpp, fallback to 16bpp
-            rdpClientDataPDU.coreData.highColorDepth |= HighColorDepth.HIGH_COLOR_16BPP
+            if rdpClientDataPDU.coreData.highColorDepth == 0:
+                # Means the requested color depth was 24bpp, fallback to 16bpp
+                rdpClientDataPDU.coreData.highColorDepth |= HighColorDepth.HIGH_COLOR_16BPP
 
-        rdpClientDataPDU.coreData.earlyCapabilityFlags &= ~ClientCapabilityFlag.RNS_UD_CS_WANT_32BPP_SESSION
+            rdpClientDataPDU.coreData.earlyCapabilityFlags &= ~ClientCapabilityFlag.RNS_UD_CS_WANT_32BPP_SESSION
 
         self.recorder.record(rdpClientDataPDU, PlayerPDUType.CLIENT_DATA)
 
