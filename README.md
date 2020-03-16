@@ -43,6 +43,7 @@ In August 2019, PyRDP was demo'ed at BlackHat Arsenal ([slides](https://docs.goo
       - [Choosing when to start the payload](#choosing-when-to-start-the-payload)
       - [Choosing when to resume normal activity](#choosing-when-to-resume-normal-activity)
     + [Other MITM arguments](#other-mitm-arguments)
+      - [--no-downgrade](#--no-downgrade)
   * [Using the PyRDP Player](#using-the-pyrdp-player)
     + [Playing a replay file](#playing-a-replay-file)
     + [Listening for live connections](#listening-for-live-connections)
