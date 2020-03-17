@@ -6,6 +6,7 @@
 
 from pathlib import Path
 from typing import Optional
+from pyrdp.core import settings
 
 
 class MITMConfig:
@@ -84,3 +85,8 @@ class MITMConfig:
         Get the directory for intercepted files.
         """
         return self.outDir / "files"
+
+"""
+The default MITM configuration.
+"""
+DEFAULTS =  settings.load(Path(__file__).parent.absolute() / "mitm.default.ini")

@@ -19,9 +19,11 @@ asyncioreactor.install(asyncio.get_event_loop())
 
 from twisted.internet import reactor
 
+from pyrdp.core import settings
 from pyrdp.core.mitm import MITMServerFactory
-from pyrdp.mitm import MITMConfig
-from pyrdp.mitm.cli import logConfiguration, parseTarget, prepareLoggers, validateKeyAndCertificate
+from pyrdp.mitm import MITMConfig, DEFAULTS
+from pyrdp.mitm.cli import logConfiguration, parseTarget, validateKeyAndCertificate
+from pyrdp.logging import configure as configureLoggers, LOGGER_NAMES
 
 
 def main():
@@ -56,13 +58,26 @@ def main():
     outDir = Path(args.output)
     outDir.mkdir(exist_ok = True)
 
-    logLevel = getattr(logging, args.log_level)
-    pyrdpLogger = prepareLoggers(logLevel, args.log_filter, args.sensor_id, outDir)
+    # Load configuration file
+    cfg = settings.load(settings.CONFIG_DIR + '/mitm.ini', DEFAULTS)
+
+    # Override some of the switches based on command line arguments.
+    if args.output:
+        cfg.set('vars', 'output_dir', args.output)
+    if args.log_filter:
+        cfg.set('logs', 'filter', args.log_filter)
+    if args.log_level:
+        cfg.set('vars', 'level', args.log_level)
+
+    # Configure the logging API
+    configureLoggers(cfg)
+    pyrdpLogger = logging.getLogger(LOGGER_NAMES.PYRDP)
 
     targetHost, targetPort = parseTarget(args.target)
     key, certificate = validateKeyAndCertificate(args.private_key, args.certificate)
 
     listenPort = int(args.listen)
+
 
     config = MITMConfig()
     config.targetHost = targetHost
