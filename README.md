@@ -391,8 +391,7 @@ remove the `ip rule`.
 
 Tells the MITM to allow clients to use [Graphics Device Interface Acceleration][gdi] Extensions to stream
 drawing orders instead of raw bitmaps. The advantage of this mode is a significant reduction in required bandwidth
-for high resolution connections. PyRDP player support has been recently added and it is possible that some issues
-exist. As a result, this is currently an opt-in setting.
+for high resolution connections.
 
 [gdi]: https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpegdi/745f2eee-d110-464c-8aca-06fc1814f6ad
 
