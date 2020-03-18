@@ -9,11 +9,11 @@ from io import TextIOBase
 from sys import stdout
 
 from pyrdp.logging import log
-from pyrdp.enum import DeviceType, KeyboardFlag, ParserMode, PlayerPDUType
+from pyrdp.enum import DeviceType, KeyboardFlag, ParserMode, PlayerPDUType, PointerFlag
 from pyrdp.parser import BasicFastPathParser, ClientConnectionParser, ClientInfoParser, ClipboardParser, SlowPathParser
 from pyrdp.pdu import FastPathScanCodeEvent, FastPathUnicodeEvent, FormatDataResponsePDU, InputPDU, KeyboardEvent, FastPathMouseEvent, MouseEvent, \
     PlayerDeviceMappingPDU, PlayerPDU
-from pyrdp.player import keyboard
+from pyrdp.enum.scancode import getKeyName, KBDFLAGS_EXTENDED
 from pyrdp.core import decodeUTF16LE, Observer
 
 
@@ -121,20 +121,30 @@ class HeadlessEventHandler(Observer):
             elif isinstance(event, FastPathMouseEvent):
                 self.onMouse(event)
             elif isinstance(event, FastPathScanCodeEvent):
-                ext = event.rawHeaderByte & keyboard.KBDFLAGS_EXTENDED != 0
+                ext = event.rawHeaderByte & KBDFLAGS_EXTENDED != 0
                 self.onScanCode(event.scanCode, event.isReleased, ext)
 
     def onUnicode(self, event: FastPathUnicodeEvent):
         self.writeText(str(event.text))
 
     def onMouse(self, event: FastPathMouseEvent):
+        if event.pointerFlags & PointerFlag.PTRFLAGS_DOWN:
+            if event.pointerFlags & PointerFlag.PTRFLAGS_BUTTON1:
+                button = 'Left'
+            elif event.pointerFlags & PointerFlag.PTRFLAGS_BUTTON2:
+                button = 'Right'
+            elif event.pointerFlags & PointerFlag.PTRFLAGS_BUTTON3:
+                button = 'Middle'
+            else:
+                button = 'Unknown'
+            self.writeText(f'\n<Click ({button}) @ ({event.mouseX}, {event.mouseY})>')
         self.onMousePosition(event.mouseX, event.mouseY)
 
     def onMousePosition(self, x: int, y: int):
         pass
 
     def onScanCode(self, scanCode: int, isReleased: bool, isExtended: bool):
-        keyName = keyboard.getKeyName(scanCode, isExtended, self.shiftPressed, self.capsLockOn)
+        keyName = getKeyName(scanCode, isExtended, self.shiftPressed, self.capsLockOn)
 
         if len(keyName) == 1:
             if not isReleased:

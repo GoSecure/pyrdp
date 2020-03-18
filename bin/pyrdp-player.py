@@ -2,15 +2,19 @@
 
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018, 2019 GoSecure Inc.
+# Copyright (C) 2018-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
+
+# asyncio needs to be imported first to ensure that the reactor is
+# installed properly. Do not re-order.
 import asyncio
-
 from twisted.internet import asyncioreactor
-
 asyncioreactor.install(asyncio.get_event_loop())
+
+from pyrdp.player import HAS_GUI
+from pyrdp.logging import LOGGER_NAMES, NotifyHandler
 
 from pathlib import Path
 import argparse
@@ -19,14 +23,10 @@ import logging.handlers
 import sys
 import os
 
-try:
-    from PySide2.QtWidgets import QApplication
+if HAS_GUI:
     from pyrdp.player import MainWindow
-    HAS_GUI = True
-except ModuleNotFoundError:
-    HAS_GUI = False
+    from PySide2.QtWidgets import QApplication
 
-from pyrdp.logging import LOGGER_NAMES, NotifyHandler
 
 def prepareLoggers(logLevel: int, outDir: Path, headless: bool):
     logDir = outDir / "logs"
@@ -60,6 +60,7 @@ def prepareLoggers(logLevel: int, outDir: Path, headless: bool):
                 pass
         else:
             pyrdpLogger.warning("Notifications are not supported for your platform, they will be disabled.")
+    return pyrdpLogger
 
 def main():
     """
@@ -79,11 +80,11 @@ def main():
     outDir.mkdir(exist_ok = True)
 
     logLevel = getattr(logging, args.log_level)
-    prepareLoggers(logLevel, outDir, args.headless)
+    logger = prepareLoggers(logLevel, outDir, args.headless)
 
     if not HAS_GUI and not args.headless:
-        logging.error('Headless mode is not specified and PySide2 is not installed. Install PySide2 to use the graphical user interface.')
-        exit(127)
+        logger.error('Headless mode is not specified and PySide2 is not installed. Install PySide2 to use the graphical user interface.')
+        sys.exit(127)
 
     if not args.headless:
         app = QApplication(sys.argv)
@@ -92,9 +93,9 @@ def main():
 
         return app.exec_()
     else:
-        logging.info('Starting PyRDP Player in headless mode.')
+        logger.info('Starting PyRDP Player in headless mode.')
         from pyrdp.player import HeadlessEventHandler
-        from pyrdp.player import Replay
+        from pyrdp.player.Replay import Replay
         processEvents = HeadlessEventHandler()
         for replay in args.replay:
             processEvents.output.write(f'== REPLAY FILE: {replay}\n')

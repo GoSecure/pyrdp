@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018, 2019 GoSecure Inc.
+# Copyright (C) 2018-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -12,14 +12,13 @@ from PySide2.QtWidgets import QTextEdit
 
 from pyrdp.core import decodeUTF16LE, Observer
 from pyrdp.enum import BitmapFlags, CapabilityType, DeviceType, FastPathFragmentation, KeyboardFlag, ParserMode, \
-    PlayerPDUType, SlowPathUpdateType
+    PlayerPDUType, SlowPathUpdateType, scancode, PointerFlag
 from pyrdp.logging import log
 from pyrdp.parser import BasicFastPathParser, BitmapParser, ClientConnectionParser, ClientInfoParser, ClipboardParser, \
     FastPathOutputParser, SlowPathParser
 from pyrdp.pdu import BitmapUpdateData, ConfirmActivePDU, FastPathBitmapEvent, FastPathMouseEvent, FastPathOutputEvent, \
     FastPathScanCodeEvent, FastPathUnicodeEvent, FormatDataResponsePDU, InputPDU, KeyboardEvent, MouseEvent, \
     PlayerDeviceMappingPDU, PlayerPDU, UpdatePDU
-from pyrdp.player import keyboard
 from pyrdp.ui import QRemoteDesktop, RDPBitmapToQtImage
 
 
@@ -186,7 +185,7 @@ class PlayerEventHandler(QObject, Observer):
             elif isinstance(event, FastPathMouseEvent):
                 self.onMouse(event)
             elif isinstance(event, FastPathScanCodeEvent):
-                self.onScanCode(event.scanCode, event.isReleased, event.rawHeaderByte & keyboard.KBDFLAGS_EXTENDED != 0)
+                self.onScanCode(event.scanCode, event.isReleased, event.rawHeaderByte & scancode.KBDFLAGS_EXTENDED != 0)
 
 
     def onUnicode(self, event: FastPathUnicodeEvent):
@@ -194,6 +193,17 @@ class PlayerEventHandler(QObject, Observer):
 
 
     def onMouse(self, event: FastPathMouseEvent):
+        if event.pointerFlags & PointerFlag.PTRFLAGS_DOWN:
+            if event.pointerFlags & PointerFlag.PTRFLAGS_BUTTON1:
+                button = 'Left'
+            elif event.pointerFlags & PointerFlag.PTRFLAGS_BUTTON2:
+                button = 'Right'
+            elif event.pointerFlags & PointerFlag.PTRFLAGS_BUTTON3:
+                button = 'Middle'
+            else:
+                button = 'Unknown'
+            self.writeText(f'\n<Click ({button}) @ ({event.mouseX}, {event.mouseY})>')
+
         self.onMousePosition(event.mouseX, event.mouseY)
 
     def onMousePosition(self, x: int, y: int):
@@ -204,7 +214,7 @@ class PlayerEventHandler(QObject, Observer):
         """
         Handle scan code.
         """
-        keyName = keyboard.getKeyName(scanCode, isExtended, self.shiftPressed, self.capsLockOn)
+        keyName = scancode.getKeyName(scanCode, isExtended, self.shiftPressed, self.capsLockOn)
 
         if len(keyName) == 1:
             if not isReleased:
