@@ -27,7 +27,7 @@ class ClientTLSContext(ssl.ClientContextFactory):
     """
 
     def getContext(self):
-        context = SSL.Context(SSL.TLSv1_METHOD)
+        context = SSL.Context(SSL.TLSv1_2_METHOD)
         context.set_options(SSL.OP_DONT_INSERT_EMPTY_FRAGMENTS)
         context.set_options(SSL.OP_TLS_BLOCK_PADDING_BUG)
         return context
