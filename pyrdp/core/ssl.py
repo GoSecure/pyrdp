@@ -47,5 +47,5 @@ class ServerTLSContext(ssl.DefaultOpenSSLContextFactory):
                 self.set_options(SSL.OP_DONT_INSERT_EMPTY_FRAGMENTS)
                 self.set_options(SSL.OP_TLS_BLOCK_PADDING_BUG)
 
-        ssl.DefaultOpenSSLContextFactory.__init__(self, privateKeyFileName, certificateFileName, SSL.SSLv23_METHOD,
+        ssl.DefaultOpenSSLContextFactory.__init__(self, privateKeyFileName, certificateFileName, SSL.TLSv1_2_METHOD,
                                                   TPDUSSLContext)
