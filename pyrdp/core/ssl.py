@@ -33,6 +33,10 @@ class ClientTLSContext(ssl.ClientContextFactory):
         context = SSL.Context(SSL.SSLv23_METHOD)
         context.set_options(SSL.OP_DONT_INSERT_EMPTY_FRAGMENTS)
         context.set_options(SSL.OP_TLS_BLOCK_PADDING_BUG)
+
+        # We disable TLS 1.3 because the way to decrypt TLS 1.3 traffic differs from
+        # previous TLS versions and is not yet supported by PyRDP.
+        context.set_options(SSL.OP_NO_TLSv1_3)
         return context
 
 
@@ -49,6 +53,9 @@ class ServerTLSContext(ssl.DefaultOpenSSLContextFactory):
                 SSL.Context.__init__(self, method)
                 self.set_options(SSL.OP_DONT_INSERT_EMPTY_FRAGMENTS)
                 self.set_options(SSL.OP_TLS_BLOCK_PADDING_BUG)
+
+                # See comment in ClientTLSContext
+                self.set_options(SSL.OP_NO_TLSv1_3)
 
         # See comment in ClientTLSContext
         ssl.DefaultOpenSSLContextFactory.__init__(self, privateKeyFileName, certificateFileName, SSL.SSLv23_METHOD,
