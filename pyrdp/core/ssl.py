@@ -27,7 +27,10 @@ class ClientTLSContext(ssl.ClientContextFactory):
     """
 
     def getContext(self):
-        context = SSL.Context(SSL.TLSv1_2_METHOD)
+        # Allow the MITM to connect to an RDP Server with ANY TLS version supported by the installed
+        # OpenSSL version. See https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=784153
+        # It was removed from OpenSSL, but PyOpenSSL has not changed their constant names yet.
+        context = SSL.Context(SSL.SSLv23_METHOD)
         context.set_options(SSL.OP_DONT_INSERT_EMPTY_FRAGMENTS)
         context.set_options(SSL.OP_TLS_BLOCK_PADDING_BUG)
         return context
@@ -47,5 +50,6 @@ class ServerTLSContext(ssl.DefaultOpenSSLContextFactory):
                 self.set_options(SSL.OP_DONT_INSERT_EMPTY_FRAGMENTS)
                 self.set_options(SSL.OP_TLS_BLOCK_PADDING_BUG)
 
-        ssl.DefaultOpenSSLContextFactory.__init__(self, privateKeyFileName, certificateFileName, SSL.TLSv1_2_METHOD,
+        # See comment in ClientTLSContext
+        ssl.DefaultOpenSSLContextFactory.__init__(self, privateKeyFileName, certificateFileName, SSL.SSLv23_METHOD,
                                                   TPDUSSLContext)
