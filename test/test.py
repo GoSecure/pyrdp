@@ -121,7 +121,7 @@ class TestMITM(RDPMITM):
         config.outDir = output_directory
 
         # replay_transport = FileLayer(output_path)
-        state = RDPMITMState()
+        state = RDPMITMState(config)
         super().__init__(log, log, config, state, CustomMITMRecorder([], state))
 
         self.client.tcp.sendBytes = sendBytesStub
