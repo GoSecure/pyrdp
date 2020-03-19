@@ -35,5 +35,5 @@ jobs:
       run: pip install -U -e .
 
     - name: Integration Test with a prerecorded PCAP.
-      working-directory: ./test
+      working-directory: ./
       run: python test.py
