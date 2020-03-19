@@ -1,0 +1,37 @@
+name: Continuous Integration
+
+on: [push, pull_request]
+
+jobs:
+  docker-build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build Docker image
+        run: docker build .
+
+  Install and test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.7' # Version range or exact version of a Python version to use, using semvers version range syntax.
+        architecture: 'x64'
+
+    - name: Python version
+      run: python3 --version
+    - name: Pip version
+      run: pip --version
+
+    - name: Install setuptools
+      run: sudo apt install python3-setuptools
+    - name: Install PyRDP
+      working-directory: .
+      run: pip install -U -e .
+
+    - name: Integration Test with a prerecorded PCAP.
+      working-directory: ./test
+      run: python test.py
