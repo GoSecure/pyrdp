@@ -9,7 +9,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build Docker image
-        run: docker build .
+      run: docker build .
 
   Install and test:
     runs-on: ubuntu-latest
