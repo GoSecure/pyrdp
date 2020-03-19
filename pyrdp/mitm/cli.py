@@ -202,7 +202,7 @@ def configure(cmdline=None) -> MITMConfig:
     config.transparent = args.transparent
     config.extractFiles = not args.no_files
     config.disableActiveClipboardStealing = args.disable_active_clipboard
-    config.enableGdi = args.gdi
+    config.useGdi = args.gdi
 
     payload = None
     powershell = None
