@@ -88,13 +88,14 @@ class TestIOObserver(Observer):
 
     def onPDUReceived(self, pdu: FastPathPDU):
         for event in pdu.events:
-            if isinstance(event, FastPathMouseEvent):
-                if event.pointerFlags & PointerFlag.PTRFLAGS_DOWN and event.pointerFlags & PointerFlag.PTRFLAGS_BUTTON1:
-                    self.leftMouseClicks += 1
-                if event.pointerFlags & PointerFlag.PTRFLAGS_DOWN and event.pointerFlags & PointerFlag.PTRFLAGS_BUTTON2:
-                    self.rightMouseClicks += 1
-                if event.pointerFlags & PointerFlag.PTRFLAGS_DOWN and event.pointerFlags & PointerFlag.PTRFLAGS_BUTTON3:
-                    self.mouseWheelClicks += 1
+            if not isinstance(event, FastPathMouseEvent) or not event.pointerFlags & PointerFlag.PTRFLAGS_DOWN:
+                continue
+            if event.pointerFlags & PointerFlag.PTRFLAGS_BUTTON1:
+                self.leftMouseClicks += 1
+            if event.pointerFlags & PointerFlag.PTRFLAGS_BUTTON2:
+                self.rightMouseClicks += 1
+            if event.pointerFlags & PointerFlag.PTRFLAGS_BUTTON3:
+                self.mouseWheelClicks += 1
 
 
 
@@ -196,37 +197,30 @@ def main():
         # The packets start with a Wireshark exported PDU structure
         source, destination, destination_port, data = parseExportedPdu(packet)
 
-        try:
-            test_mitm.setTimeStamp(float(packet.time))
-            if source == client_ip and destination == mitm_ip and destination_port == 3389:
-                test_mitm.recvFromClient(data)
-            elif source == server_ip and destination == mitm_ip:
-                test_mitm.recvFromServer(data)
-            elif source == mitm_ip and destination == client_ip and destination_port != 3389:
-                test_mitm.sendToClient(data)
-            elif source == mitm_ip and destination == server_ip:
-                test_mitm.sendToServer(data)
-            else:
-                assert False
-        except NotImplementedError as e:
-            raise e
+        test_mitm.setTimeStamp(float(packet.time))
+        if source == client_ip and destination == mitm_ip and destination_port == 3389:
+            test_mitm.recvFromClient(data)
+        elif source == server_ip and destination == mitm_ip:
+            test_mitm.recvFromServer(data)
+        elif source == mitm_ip and destination == client_ip and destination_port != 3389:
+            test_mitm.sendToClient(data)
+        elif source == mitm_ip and destination == server_ip:
+            test_mitm.sendToServer(data)
+        else:
+            assert False
 
-    try:
-        test_mitm.tcp.recordConnectionClose()
-    except struct.error as e:
-        print("Couldn't close the connection cleanly. "
-              "Are you sure you got source and destination correct?")
+    test_mitm.tcp.recordConnectionClose()
 
     assert test_mitm.builtIOChannel, "PyRDP did not build IO Channel."
     assert test_mitm.builtCliprdrChannel, "PyRDP did not build the Clipboard Channel."
     assert test_mitm.builtRDPDRChannel, "PyRDP did not build the RDPDR Channel."
 
-    logging.critical("Channel building assertions PASSED")
+    logging.info("Channel building assertions PASSED")
 
     for key, value in test_mitm.clipboardObserver.expectedClipboardData.items():
         assert value, f"Expected to receive {key} in a clipboardPDU but the clipboard observer did not receive it."
 
-    logging.critical("Clipboard content assertions PASSED")
+    logging.info("Clipboard content assertions PASSED")
 
     expectedLeftMouseClicks = 20
     actualLeftMouseClicks = test_mitm.inputObserver.leftMouseClicks
@@ -238,11 +232,11 @@ def main():
     assert actualRightMouseClicks == expectedRightMouseClicks, f"Wrong number of right mouse clicks registered. Expected {expectedRightMouseClicks}, got {actualRightMouseClicks}"
     assert actualMouseWheelClicks == expectedMouseWheelClicks, f"Wrong number of mouse wheel clicks registered. Expected {expectedMouseWheelClicks}, got {actualMouseWheelClicks}"
 
-    logging.critical("Mouse clicks assertions PASSED")
+    logging.info("Mouse clicks assertions PASSED")
 
     assert "arrrray" in test_mitm.state.inputBuffer, f"'arrrray' not found in the MITM state input buffer, but was typed during the session. Input buffer: '{test_mitm.state.inputBuffer}'"
 
-    logging.critical("Keyboard typing assertion PASSED")
+    logging.info("Keyboard typing assertion PASSED")
 
 
 if __name__ == "__main__":
