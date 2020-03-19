@@ -36,4 +36,4 @@ jobs:
 
     - name: Integration Test with a prerecorded PCAP.
       working-directory: ./
-      run: python test.py
+      run: python test/test.py
