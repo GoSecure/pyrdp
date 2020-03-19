@@ -50,6 +50,7 @@ def main():
     parser.add_argument("--crawler-ignore-file", help="File to be used by the crawler to chose what folders to avoid when scraping the client shared drives.", default=None)
     parser.add_argument("--no-replay", help="Disable replay recording", action="store_true")
     parser.add_argument("--no-downgrade", help="Disables downgrading of unsupported extensions. This makes PyRDP harder to fingerprint but might impact the player's ability to replay captured traffic.", action="store_true")
+    parser.add_argument("--no-files", help="Do not extract files transferred between the client and server.", action="store_true")
 
     args = parser.parse_args()
     outDir = Path(args.output)
@@ -78,6 +79,7 @@ def main():
     config.crawlerIgnoreFileName = args.crawler_ignore_file
     config.recordReplays = not args.no_replay
     config.downgrade = not args.no_downgrade
+    config.extractFiles = not args.no_files
     config.disableActiveClipboardStealing = args.disable_active_clipboard
 
 

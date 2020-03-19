@@ -312,7 +312,7 @@ class RDPMITM:
         LayerChainItem.chain(client, clientSecurity, clientVirtualChannel, clientLayer)
         LayerChainItem.chain(server, serverSecurity, serverVirtualChannel, serverLayer)
 
-        deviceRedirection = DeviceRedirectionMITM(clientLayer, serverLayer, self.getLog(MCSChannelName.DEVICE_REDIRECTION), self.config, self.statCounter, self.state)
+        deviceRedirection = DeviceRedirectionMITM(clientLayer, serverLayer, self.getLog(MCSChannelName.DEVICE_REDIRECTION), self.statCounter, self.state)
         self.channelMITMs[client.channelID] = deviceRedirection
 
         if self.config.enableCrawler:
