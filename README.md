@@ -19,11 +19,7 @@ It features a few tools:
 - RDP Certificate Cloner:
     - Create a self-signed X509 certificate with the same fields as an RDP server's certificate
 
-We have used this tool as part of an RDP honeypot which records sessions and saves a copy of the malware dropped on our
-target machine.
-
-PyRDP was [first introduced in a blogpost](https://www.gosecure.net/blog/2018/12/19/rdp-man-in-the-middle-smile-youre-on-camera) in which we [demonstrated that we can catch a real threat actor in action](https://www.youtube.com/watch?v=eB7RC9FmL6Q). In May 2019 a [presentation by its authors](https://docs.google.com/presentation/d/1avcn8Sh2b3IE7AA0G9l7Cj5F1pxqizUm98IbXUo2cvY/edit#slide=id.g404b70030f_0_581) was given at NorthSec and two demos were performed. [The first one covered](https://youtu.be/5JztJzi-m48) credential logging, clipboard stealing, client-side file browsing and a session take-over. [The second one covered](https://youtu.be/bU67tj1RkMA) the execution of cmd or powershell payloads when a client successfully authenticates.
-In August 2019, PyRDP was demo'ed at BlackHat Arsenal ([slides](https://docs.google.com/presentation/d/17P_l2n-hgCehQ5eTWilru4IXXHnGIRTj4ftoW4BiX5A/edit?usp=sharing)).
+PyRDP was [introduced in 2018](https://www.gosecure.net/blog/2018/12/19/rdp-man-in-the-middle-smile-youre-on-camera) in which we [demonstrated that we can catch a real threat actor in action](https://www.youtube.com/watch?v=eB7RC9FmL6Q). This tool is being developed with both pentest and malware research use cases in mind.
 
 ## Table of Contents
 - [Supported Systems](#supported-systems)
@@ -60,7 +56,7 @@ In August 2019, PyRDP was demo'ed at BlackHat Arsenal ([slides](https://docs.goo
     + [Mapping a Listening Port](#mapping-a-listening-port)
     + [Logs and Artifacts Storage](#logs-and-artifacts-storage)
     + [Using the GUI Player in Docker](#using-the-gui-player-in-docker)
-- [PyRDP Presentations](#pyrdp-presentations)
+- [PyRDP Lore](#pyrdp-lore)
 - [Contributing to PyRDP](#contributing-to-pyrdp)
 - [Acknowledgements](#acknowledgements)
 
@@ -461,7 +457,17 @@ Keep in mind that exposing the host's network to docker can compromise the isola
 If you plan on using the player, X11 forwarding using an SSH connection would be a more secure way.
 
 
-## PyRDP Presentations
+## PyRDP Lore
+
+* [Introduction blog post](https://www.gosecure.net/blog/2018/12/19/rdp-man-in-the-middle-smile-youre-on-camera) in which we [demonstrated that we can catch a real threat actor in action](https://www.youtube.com/watch?v=eB7RC9FmL6Q)
+* [Talk at NorthSec 2019](https://docs.google.com/presentation/d/1avcn8Sh2b3IE7AA0G9l7Cj5F1pxqizUm98IbXUo2cvY/edit#slide=id.g404b70030f_0_581) where two demos were performed:
+  * [First demo](https://youtu.be/5JztJzi-m48): credential logging, clipboard stealing, client-side file browsing and a session take-over
+  * [Second demo](https://youtu.be/bU67tj1RkMA): the execution of cmd or powershell payloads when a client successfully authenticates
+* [PyRDP Logo](/docs/pyrdp-logo.png) licensed under CC-BY-SA 4.0.
+* [BlackHat USA Arsenal 2019 Slides](https://docs.google.com/presentation/d/17P_l2n-hgCehQ5eTWilru4IXXHnGIRTj4ftoW4BiX5A/edit?usp=sharing)
+* [DerbyCon 2019 Slides](https://docs.google.com/presentation/d/1UAiN2EZwDcmBjLe_t5HXB0LzbNclU3nnigC-XM4neIU/edit?usp=sharing) ([Video](https://www.youtube.com/watch?v=zgt3N6Nrnss))
+* [Blog: PyRDP on Autopilot](https://www.gosecure.net/blog/2020/02/26/pyrdp-on-autopilot-unattended-credential-harvesting-and-client-side-file-stealing/)
+
 
 ## Contributing to PyRDP
 See our [contribution guidelines](CONTRIBUTING.md).
