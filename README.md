@@ -40,6 +40,7 @@ PyRDP was [introduced in 2018](https://www.gosecure.net/blog/2018/12/19/rdp-man-
       - [Choosing when to resume normal activity](#choosing-when-to-resume-normal-activity)
     + [Other MITM arguments](#other-mitm-arguments)
       - [--no-downgrade](#--no-downgrade)
+      - [--transparent](#--transparent)
   * [Using the PyRDP Player](#using-the-pyrdp-player)
     + [Playing a replay file](#playing-a-replay-file)
     + [Listening for live connections](#listening-for-live-connections)
@@ -331,6 +332,60 @@ to be established. The following are currently not affected by this switch and w
 **NOTE**: If being able to eventually replay the full session is important, a good solution is to record the raw 
 RDP traffic using Wireshark and keep the TLS master secrets. Whenever PyRDP adds support for additional extensions, 
 it would then become possible to extract a valid RDP replay file from the raw network capture.
+
+##### `--transparent`
+
+Tells PyRDP to attempt to spoof the source IP address of the client so that the server sees the real IP
+address instead of the MITM one.  This option is only useful in certain scenarios where the MITM is physically
+a gateway between clients and the server and sees all traffic. It requires root privileges, only works on
+Linux and requires manual firewall configuration to ensure that traffic is router properly. The following is
+an example configuration:
+
+```
+# Additional configuration required on the MITM (example)
+#  +--------+           +------+             +--------+
+#  | CLIENT | <-- 1 --> | MITM | <--- 2 ---> | SERVER |
+#  +--------+           +------+             +--------+
+#   10.6.6.6            10.1.1.1              10.2.2.2
+
+# The IP of the RDP server which will receive proxied connections.
+SERVER_IP=10.2.2.2
+
+# The mark number to use in iptables (should be fine as-is)
+MARK=1
+
+# The routing table ID for custom rules (should be fine as-is)
+TABLE_ID=100
+
+# Create a custom routing table for pyrdp traffic
+echo "$TABLE_ID    pyrdp" >> /etc/iproute2/rt_tables
+
+# Route RDP traffic intended for the target server to local PyRDP (1)
+iptables -t nat \
+    -A PREROUTING \
+    -d $SERVER_IP \
+    -p tcp -m tcp --dport 3389 \
+    -j REDIRECT --to-port 3389
+
+# Mark RDP traffic intended for clients (2)
+iptables -t mangle -A PREROUTING \
+    -s $SERVER_IP \
+    -m tcp -p tcp --sport 3389 \
+    -j MARK --set-mark $MARK
+
+# Set route lookup to the pyrdp table for marked packets.
+ip rule add fwmark $MARK lookup $TABLE_ID
+
+# Add a custom route that redirects traffic intended for the outside world to loopback
+# So that server-client traffic passes through PyRDP
+# This table will only ever be used by RDP so it should not be problematic
+ip route add local dev lo table $TABLE_ID
+```
+
+This setup is a base example and might be much more complex depending on your environment and constraints.
+To cleanup, you should delete the created routes, remove the custom routing table from `rt_tables` and
+remove the `ip rule`.
+
 
 ### Using the PyRDP Player
 Use `pyrdp-player.py` to run the player.

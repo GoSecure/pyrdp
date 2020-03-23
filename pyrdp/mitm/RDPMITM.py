@@ -10,7 +10,7 @@ import datetime
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol
 
-from pyrdp.core import AsyncIOSequencer, AwaitableClientFactory
+from pyrdp.core import AsyncIOSequencer, AwaitableClientFactory, connectTransparent
 from pyrdp.core.ssl import ClientTLSContext, ServerTLSContext
 from pyrdp.enum import MCSChannelName, ParserMode, PlayerPDUType, ScanCode, SegmentationPDUType
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, LayerChainItem, RawLayer, \
@@ -178,7 +178,11 @@ class RDPMITM:
         """
 
         serverFactory = AwaitableClientFactory(self.server.tcp)
-        reactor.connectTCP(self.config.targetHost, self.config.targetPort, serverFactory)
+        if self.config.transparent:
+            src = self.client.tcp.transport.client
+            connectTransparent(self.config.targetHost, self.config.targetPort, serverFactory, bindAddress=(src[0], 0))
+        else:
+            reactor.connectTCP(self.config.targetHost, self.config.targetPort, serverFactory)
 
         await serverFactory.connected.wait()
 

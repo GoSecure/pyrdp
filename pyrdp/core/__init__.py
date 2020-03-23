@@ -15,4 +15,4 @@ from pyrdp.core.sequencer import AsyncIOSequencer, Sequencer
 from pyrdp.core.stream import ByteStream, StrictStream
 from pyrdp.core.subject import ObservedBy, Subject
 from pyrdp.core.timer import Timer
-from pyrdp.core.twisted import AwaitableClientFactory
+from pyrdp.core.twisted import AwaitableClientFactory, connectTransparent
