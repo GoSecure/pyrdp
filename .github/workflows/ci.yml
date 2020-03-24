@@ -39,7 +39,7 @@ jobs:
 
     - name: Integration Test with a prerecorded PCAP.
       working-directory: ./
-      run: coverage test/test.py
+      run: coverage run test/test.py
 
     - name: Coverage
       run: coverage report --fail-under=50
