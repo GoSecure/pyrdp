@@ -10,7 +10,7 @@ import socket
 import logging
 
 from twisted.internet.protocol import ClientFactory, Protocol
-from twisted.internet import tcp, fdesc
+from twisted.internet import tcp, fdesc, reactor
 
 LOG = logging.getLogger(__name__)
 
@@ -65,7 +65,6 @@ class TransparentConnector(tcp.Connector):
 
 
 def connectTransparent(host, port, factory, timeout=30, bindAddress=None):
-    from twisted.internet import reactor
     """Create a transparent proxy connection managed by Twisted."""
     c = TransparentConnector(host, port, factory, timeout, bindAddress, reactor)
     c.connect()

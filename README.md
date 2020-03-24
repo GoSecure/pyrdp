@@ -341,7 +341,7 @@ a gateway between clients and the server and sees all traffic. It requires root 
 Linux and requires manual firewall configuration to ensure that traffic is router properly. The following is
 an example configuration:
 
-```
+```bash
 # Additional configuration required on the MITM (example)
 #  +--------+           +------+             +--------+
 #  | CLIENT | <-- 1 --> | MITM | <--- 2 ---> | SERVER |
