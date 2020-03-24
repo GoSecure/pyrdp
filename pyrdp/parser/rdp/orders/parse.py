@@ -26,7 +26,7 @@ from .alternate import CreateOffscreenBitmap, SwitchSurface, CreateNineGridBitma
     GdiPlusCacheNext, GdiPlusCacheEnd, FrameMarker
 from .primary import PrimaryContext as Context
 
-LOG = logging.getLogger('pyrdp.fastpath.rdp.orders')
+LOG = logging.getLogger(__name__)
 
 
 def _repr(n):

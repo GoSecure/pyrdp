@@ -29,7 +29,7 @@ from .raster import set_rop3, set_rop2
 from PySide2.QtCore import Qt, QPoint
 from PySide2.QtGui import QImage, QPainter, QColor, QPixmap, QBrush, QPen, QPolygon
 
-LOG = logging.getLogger(LOGGER_NAMES.PLAYER + '.gdi')
+LOG = logging.getLogger(__name__)
 
 SCREEN_BITMAP_SURFACE = 0xFFFF
 BITMAPCACHE_SCREEN_ID = 0xFF
