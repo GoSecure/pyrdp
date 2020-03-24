@@ -22,7 +22,7 @@ jobs:
         architecture: 'x64'
 
     - name: Python version
-      run: python3 --version
+      run: python --version
     - name: Pip version
       run: pip --version
 
@@ -49,7 +49,7 @@ jobs:
           architecture: 'x64'
 
       - name: Python version
-        run: python3 --version
+        run: python --version
       - name: Pip version
         run: pip --version
 
