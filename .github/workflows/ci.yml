@@ -34,9 +34,17 @@ jobs:
       working-directory: .
       run: pip install -U -e .
 
+    - name: Install ci dependencies
+      run: pip install -r requirements-ci.txt
+
     - name: Integration Test with a prerecorded PCAP.
       working-directory: ./
-      run: python test/test.py
+      run: coverage test/test.py
+
+    - name: Coverage
+      run: coverage report --fail-under=50
+
+
 
   install-and-test-windows:
     runs-on: windows-latest

@@ -5,10 +5,11 @@
 # Copyright (C) 2018, 2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+import logging
 import zipfile
 from pathlib import Path
 
-from scapy.all import *
+from scapy.all import packet, rdpcap
 
 from pyrdp.core import Observer
 from pyrdp.enum import PointerFlag
