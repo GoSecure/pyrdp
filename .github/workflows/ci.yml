@@ -11,7 +11,7 @@ jobs:
     - name: Build Docker image
       run: docker build .
 
-  install-and-test:
+  install-and-test-ubuntu:
     runs-on: ubuntu-latest
 
     steps:
@@ -37,3 +37,28 @@ jobs:
     - name: Integration Test with a prerecorded PCAP.
       working-directory: ./
       run: python test/test.py
+
+  install-and-test-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.7' # Version range or exact version of a Python version to use, using semvers version range syntax.
+          architecture: 'x64'
+
+      - name: Python version
+        run: python3 --version
+      - name: Pip version
+        run: pip --version
+
+      - name: Install setuptools
+        run: sudo apt install python3-setuptools
+      - name: Install PyRDP
+        working-directory: .
+        run: pip install -U -e .
+
+      - name: Integration Test with a prerecorded PCAP.
+        working-directory: ./
+        run: python test/test.py
