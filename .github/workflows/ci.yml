@@ -11,7 +11,7 @@ jobs:
     - name: Build Docker image
       run: docker build .
 
-  Install-and-test:
+  install-and-test:
     runs-on: ubuntu-latest
 
     steps:
