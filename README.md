@@ -68,8 +68,6 @@ This tool has been tested to work on Python 3.6 on Linux (Ubuntu 18.04) and Wind
 
 ## Installing
 
-_Note: PyRDP cannot be installed on 32bit systems. See: [this issue.](https://github.com/GoSecure/pyrdp/issues/150)_
-
 ### Using the Docker Image
 
 This is the easiest installation method if you have docker installed and working.
