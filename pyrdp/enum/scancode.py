@@ -22,6 +22,10 @@ from collections import namedtuple
 
 ScanCodeTuple = namedtuple("ScanCode", "code extended")
 
+# https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/089d362b-31eb-4a1a-b6fa-92fe61bb5dbf
+KBDFLAGS_EXTENDED = 2
+
+
 class ScanCode:
     """
     Enumeration for RDP scan codes. Values are a tuple of (scanCode: int, isExtended: bool).
@@ -182,3 +186,135 @@ class ScanCode:
     BROWSER_FAVORITES = ScanCodeTuple(0x66, True)  # VK_BROWSER_FAVORITES
     BROWSER_HOME = ScanCodeTuple(0x32, True)       # VK_BROWSER_HOME
     LAUNCH_MAIL = ScanCodeTuple(0x6C, True)        # VK_LAUNCH_MAIL
+
+
+"""
+Scancode to key name mapping.
+
+Each scancode is an array containing the variant when pressed in
+position 0 and the variant when shift is being held in position 1.
+
+# Example
+```python
+assert SCANCODE_NAMES[0x10][0] == 'q'
+assert SCANCODE_NAMES[0x10][1] == 'Q'
+```
+
+For scancodes that do not have a different a different name,
+`scancode[0] == scancode[1]`
+"""
+SCANCODE_NAMES = {
+    0x01: ['Escape', 'Escape'],
+    0x02: ['1',  '!'],
+    0x03: ['2',  '@'],
+    0x04: ['3',  '#'],
+    0x05: ['4',  '$'],
+    0x06: ['5',  '%'],
+    0x07: ['6',  '^'],
+    0x08: ['7',  '&'],
+    0x09: ['8',  '*'],
+    0x0A: ['9',  '('],
+    0x0B: ['0',  ')'],
+    0x0C: ['-',  '_'],
+    0x0D: ['=',  '+'],
+    0x0E: ['Backspace',  'Backspace'],
+    0x0F: ['Tab',  'Tab'],
+    0x10: ['q',  'Q'],
+    0x11: ['w',  'W'],
+    0x12: ['e',  'E'],
+    0x13: ['r',  'R'],
+    0x14: ['t',  'T'],
+    0x15: ['y',  'Y'],
+    0x16: ['u',  'U'],
+    0x17: ['i',  'I'],
+    0x18: ['o',  'O'],
+    0x19: ['p',  'P'],
+    0x1A: ['[',  '{'],
+    0x1B: [']',  '}'],
+    0x1C: ['Return',  'Return'],
+    0x1D: ['Control',  'Control'],
+    0x1E: ['a',  'A'],
+    0x1F: ['s',  'S'],
+    0x20: ['d',  'D'],
+    0x21: ['f',  'F'],
+    0x22: ['g',  'G'],
+    0x23: ['h',  'H'],
+    0x24: ['j',  'J'],
+    0x25: ['k',  'K'],
+    0x26: ['l',  'L'],
+    0x27: [';',  ':'],
+    0x28: ["'",  '"'],
+    0x29: ['`',  '~'],
+    0x2A: ['Shift',  'Shift'],
+    0x2B: ['\\',  '|'],
+    0x2C: ['z',  'Z'],
+    0x2D: ['x',  'X'],
+    0x2E: ['c',  'C'],
+    0x2F: ['v',  'V'],
+    0x30: ['b',  'B'],
+    0x31: ['n',  'N'],
+    0x32: ['m',  'M'],
+    0x33: [',',  '<'],
+    0x34: ['.',  '>'],
+    0x35: ['/',  '?'],
+    0x36: ['Shift',  'Shift'],
+    0x38: ['Alt',    'AltGr'],
+    0x39: ['Space',  'Space'],
+    0x3A: ['CapsLock',  'CapsLock'],
+    0x3B: ['F1',  'F1'],
+    0x3C: ['F2',  'F2'],
+    0x3D: ['F3',  'F3'],
+    0x3E: ['F4',  'F4'],
+    0x3F: ['F5',  'F5'],
+    0x40: ['F6',  'F6'],
+    0x41: ['F7',  'F7'],
+    0x42: ['F8',  'F8'],
+    0x43: ['F9',  'F9'],
+    0x44: ['F10',  'F10'],
+    0x45: ['NumLock',  'NumLock'],
+    0x46: ['ScrollLock',  'ScrollLock'],
+    0x47: ['Home',  'Home'],
+    0x48: ['Up',  'Up'],
+    0x49: ['PageUp',  'PageUp'],
+    0x4B: ['Left',  'Left'],
+    0x4D: ['Right',  'Right'],
+    0x4F: ['End',  'End'],
+    0x50: ['Down',  'Down'],
+    0x51: ['PageDown',  'PageDown'],
+    0x52: ['Insert',  'Insert'],
+    0x53: ['Delete',  'Delete'],
+    0x54: ['SysReq',  'SysReq'],
+    0x57: ['F11',  'F11'],
+    0x58: ['F12',  'F12'],
+    0x5B: ['Meta',  'Meta'],
+    0x5D: ['Menu',  'Menu'],
+    0x5F: ['Sleep',  'Sleep'],
+    0x62: ['Zoom',  'Zoom'],
+    0x63: ['Help',  'Help'],
+    0x64: ['F13',  'F13'],
+    0x65: ['F14',  'F14'],
+    0x66: ['F15',  'F15'],
+    0x67: ['F16',  'F16'],
+    0x68: ['F17',  'F17'],
+    0x69: ['F18',  'F18'],
+    0x6A: ['F19',  'F19'],
+    0x6B: ['F20',  'F20'],
+    0x6C: ['F21',  'F21'],
+    0x6D: ['F22',  'F22'],
+    0x6E: ['F23',  'F23'],
+    0x6F: ['F24',  'F24'],
+    0x70: ['Hiragana',  'Hiragana'],
+    0x71: ['Kanji',  'Kanji'],
+    0x72: ['Hangul',  'Hangul'],
+    0x5C: ['Windows', 'Windows'],
+}
+
+
+def getKeyName(scanCode: int, isExtended: bool, shiftPressed: bool, capsLockOn: bool) -> str:
+    if scanCode in SCANCODE_NAMES:
+        code = SCANCODE_NAMES[scanCode]
+    else:
+        return f"Unknown scan code {hex(scanCode)}"
+
+    key = code[1] if shiftPressed else code[0]
+    return f'{key}' if len(key) > 1 else key

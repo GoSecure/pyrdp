@@ -2,15 +2,19 @@
 
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018, 2019 GoSecure Inc.
+# Copyright (C) 2018-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
+
+# asyncio needs to be imported first to ensure that the reactor is
+# installed properly. Do not re-order.
 import asyncio
-
 from twisted.internet import asyncioreactor
-
 asyncioreactor.install(asyncio.get_event_loop())
+
+from pyrdp.player import HAS_GUI
+from pyrdp.logging import LOGGER_NAMES, NotifyHandler
 
 from pathlib import Path
 import argparse
@@ -19,12 +23,12 @@ import logging.handlers
 import sys
 import os
 
-from PySide2.QtWidgets import QApplication
+if HAS_GUI:
+    from pyrdp.player import MainWindow
+    from PySide2.QtWidgets import QApplication
 
-from pyrdp.logging import LOGGER_NAMES, NotifyHandler
-from pyrdp.player import MainWindow
 
-def prepareLoggers(logLevel: int, outDir: Path):
+def prepareLoggers(logLevel: int, outDir: Path, headless: bool):
     logDir = outDir / "logs"
     logDir.mkdir(exist_ok = True)
 
@@ -42,15 +46,21 @@ def prepareLoggers(logLevel: int, outDir: Path):
     pyrdpLogger.addHandler(fileHandler)
     pyrdpLogger.setLevel(logLevel)
 
-    # https://docs.python.org/3/library/os.html
-    if os.name != "nt":
-        notifyHandler = NotifyHandler()
-        notifyHandler.setFormatter(notificationFormatter)
+    if not headless and HAS_GUI:
+        # https://docs.python.org/3/library/os.html
+        if os.name != "nt":
+            try:
+                notifyHandler = NotifyHandler()
+                notifyHandler.setFormatter(notificationFormatter)
 
-        uiLogger = logging.getLogger(LOGGER_NAMES.PLAYER_UI)
-        uiLogger.addHandler(notifyHandler)
-    else:
-        pyrdpLogger.warning("Notifications are not supported for your platform, they will be disabled.")
+                uiLogger = logging.getLogger(LOGGER_NAMES.PLAYER_UI)
+                uiLogger.addHandler(notifyHandler)
+            except Exception:
+                # No notification daemon or DBus, can't use notifications.
+                pass
+        else:
+            pyrdpLogger.warning("Notifications are not supported for your platform, they will be disabled.")
+    return pyrdpLogger
 
 def main():
     """
@@ -63,19 +73,35 @@ def main():
     parser.add_argument("-p", "--port", help="Bind port (default: 3000)", default=3000)
     parser.add_argument("-o", "--output", help="Output folder", default="pyrdp_output")
     parser.add_argument("-L", "--log-level", help="Log level", default="INFO", choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"], nargs="?")
+    parser.add_argument("--headless", help="Parse a replay without rendering the user interface.", action="store_true")
 
     args = parser.parse_args()
     outDir = Path(args.output)
     outDir.mkdir(exist_ok = True)
 
     logLevel = getattr(logging, args.log_level)
-    prepareLoggers(logLevel, outDir)
+    logger = prepareLoggers(logLevel, outDir, args.headless)
 
-    app = QApplication(sys.argv)
-    mainWindow = MainWindow(args.bind, int(args.port), args.replay)
-    mainWindow.show()
+    if not HAS_GUI and not args.headless:
+        logger.error('Headless mode is not specified and PySide2 is not installed. Install PySide2 to use the graphical user interface.')
+        sys.exit(127)
 
-    return app.exec_()
+    if not args.headless:
+        app = QApplication(sys.argv)
+        mainWindow = MainWindow(args.bind, int(args.port), args.replay)
+        mainWindow.show()
+
+        return app.exec_()
+    else:
+        logger.info('Starting PyRDP Player in headless mode.')
+        from pyrdp.player import HeadlessEventHandler
+        from pyrdp.player.Replay import Replay
+        processEvents = HeadlessEventHandler()
+        for replay in args.replay:
+            processEvents.output.write(f'== REPLAY FILE: {replay}\n')
+            fd = open(replay, "rb")
+            replay = Replay(fd, handler=processEvents)
+            processEvents.output.write('\n-- END --------------------------------\n')
 
 
 if __name__ == '__main__':

@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -8,9 +8,6 @@ from typing import Optional
 
 from PySide2.QtCore import Qt
 from PySide2.QtGui import QKeyEvent
-
-# https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/089d362b-31eb-4a1a-b6fa-92fe61bb5dbf
-KBDFLAGS_EXTENDED = 2
 
 SCANCODE_MAPPING = {
     Qt.Key.Key_Escape: 0x01,
@@ -204,6 +201,7 @@ def findKeyForScanCode(scanCode: int) -> Optional[Qt.Key]:
 
 
 def getKeyName(scanCode: int, isExtended: bool, shiftPressed: bool, capsLockOn: bool) -> str:
+
     if not isExtended:
         key = findKeyForScanCode(scanCode)
     elif scanCode == SCANCODE_MAPPING[Qt.Key.Key_Control]:

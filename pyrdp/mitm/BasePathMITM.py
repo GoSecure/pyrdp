@@ -1,12 +1,12 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
 from pyrdp.mitm.state import RDPMITMState
-from pyrdp.player import keyboard
 from pyrdp.enum import ScanCode
+from pyrdp.enum.scancode import getKeyName
 from pyrdp.pdu.pdu import PDU
 from pyrdp.layer.layer import Layer
 from pyrdp.logging.StatCounter import StatCounter, STAT
@@ -32,7 +32,7 @@ class BasePathMITM:
         """
         Handle scan code.
         """
-        keyName = keyboard.getKeyName(scanCode, isExtended, self.state.shiftPressed, self.state.capsLockOn)
+        keyName = getKeyName(scanCode, isExtended, self.state.shiftPressed, self.state.capsLockOn)
         scanCodeTuple = (scanCode, isExtended)
 
         # Left or right shift
