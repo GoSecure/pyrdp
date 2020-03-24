@@ -5,7 +5,7 @@
 # Copyright (C) 2018, 2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-
+import zipfile
 from pathlib import Path
 
 from scapy.all import *
@@ -180,7 +180,8 @@ class TestMITM(RDPMITM):
 
 
 def main():
-    input_path = "test/files/test_session.pcap"
+    input_path = "test/files/test_session.zip"
+    pcap_path = "test/files/test_session.pcap"
     client_ip = "192.168.38.1"
     mitm_ip = "192.168.38.1"
     server_ip = "192.168.38.129"
@@ -189,7 +190,11 @@ def main():
     logging.basicConfig(level=logging.CRITICAL)
     logging.getLogger("scapy").setLevel(logging.ERROR)
 
-    packets = rdpcap(input_path)
+    # Unzip the pcap
+    with zipfile.ZipFile(input_path, 'r') as zip_ref:
+        zip_ref.extractall("test/files")
+
+    packets = rdpcap(pcap_path)
 
     test_mitm = TestMITM(output_path)
 

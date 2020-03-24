@@ -4,6 +4,9 @@
 venv*/
 /*.prof
 
+# Zip the pcap instead
+*.pcap
+
 # IDE stuff
 .project
 .pydevproject
