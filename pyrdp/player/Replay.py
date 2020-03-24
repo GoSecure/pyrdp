@@ -10,6 +10,7 @@ from typing import BinaryIO, Dict, List
 
 from pyrdp.layer import PlayerLayer
 from pyrdp.pdu import PlayerPDU
+from pyrdp.core import Observer
 
 
 class Replay:
@@ -17,7 +18,7 @@ class Replay:
     Class containing information on a replay's events.
     """
 
-    def __init__(self, file: BinaryIO):
+    def __init__(self, file: BinaryIO, handler: Observer = None):
         self.events: Dict[int, List[int]] = {}
 
         # Remember the current file position
@@ -36,9 +37,14 @@ class Replay:
         def registerEvent(pdu: PlayerPDU):
             events[pdu.timestamp].append(currentMessagePosition)
 
-        # The layer will take care of parsing for us
         player = PlayerLayer()
-        player.createObserver(onPDUReceived = registerEvent)
+        if not handler:
+            # Register the offset of every event in the file.
+            player.createObserver(onPDUReceived=registerEvent)
+        else:
+            # A handler for events was provided, eagerly process
+            # all events.
+            player.addObserver(handler)
 
         # Parse all events in the file
         while file.tell() < size:

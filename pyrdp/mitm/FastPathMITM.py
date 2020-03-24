@@ -8,8 +8,7 @@ from pyrdp.layer import FastPathLayer
 from pyrdp.logging.StatCounter import StatCounter, STAT
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.pdu import FastPathPDU, FastPathScanCodeEvent
-from pyrdp.player import keyboard
-from pyrdp.enum import ScanCode
+from pyrdp.enum import scancode
 from pyrdp.mitm.BasePathMITM import BasePathMITM
 
 class FastPathMITM(BasePathMITM):
@@ -42,7 +41,7 @@ class FastPathMITM(BasePathMITM):
         if not self.state.loggedIn:
             for event in pdu.events:
                 if isinstance(event, FastPathScanCodeEvent):
-                    self.onScanCode(event.scanCode, event.isReleased, event.rawHeaderByte & keyboard.KBDFLAGS_EXTENDED != 0)
+                    self.onScanCode(event.scanCode, event.isReleased, event.rawHeaderByte & scancode.KBDFLAGS_EXTENDED != 0)
 
     def onServerPDUReceived(self, pdu: FastPathPDU):
         self.statCounter.increment(STAT.IO_OUTPUT_FASTPATH)

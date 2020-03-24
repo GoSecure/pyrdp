@@ -1,5 +1,6 @@
 # python
 *.pyc
+*.pyd
 venv*/
 /*.prof
 

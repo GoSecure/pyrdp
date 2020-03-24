@@ -33,12 +33,12 @@ setup(name='pyrdp',
         'pyasn1',
         'pycryptodome',
         'pyopenssl==19.1',
-        'PySide2',
         'pytz',
         'rsa',
         'service_identity',
         'twisted',
-        'dbus-python;platform_system!="Windows"',
-        'notify2;platform_system!="Windows"'
     ],
+    extras_require={
+        "GUI": ['PySide2', 'dbus-python;platform_system!="Windows"', 'notify2;platform_system!="Windows"']
+    }
 )

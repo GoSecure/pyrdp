@@ -10,9 +10,13 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 === Enhancements
 
+* `pyrdp-player` can now run in headless mode (`--headless`).
+  All GUI dependencies are now optional enabling further Docker image size reduction.
+  See {uri-issue}151[#151], {uri-issue}163[#163] and {uri-issue}190[#190].
 * Added `sessionID` to replay filename ({uri-issue}180[#180])
 * Added `replayfilename` to the connection report log entry ({uri-issue}180[#180])
 * Added a `twistd` plugin ({uri-issue}174[#174], {uri-issue}177[#177])
+* Support for 32-bit x86 operating systems now that the GUI is optional ({uri-issue}150[#150])
 * Further Docker image size improvements ({uri-issue}173[#173] and more)
 * Default Docker Compose command now `pyrdp-mitm -h` to avoid confusing crash on `docker-compose up` ({uri-issue}173[#173])
 * Documentation updates and fixes ({uri-issue}165[#165], {uri-issue}166[#166], {uri-issue}172[#172])
