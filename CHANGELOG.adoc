@@ -23,13 +23,16 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Added `--disable-active-clipboard` switch to prevent clipboard request injection
 * Added `--no-downgrade` switch to prevent protocol downgrading where possible {uri-issue}189[#189]
 
-
 === Bug fixes
 
 * Python 3.8 supported by fixing a logging.Formatter misuse ({uri-issue}176[#176])
 * Fixed stack traces in the player when attempting to print strings with ending null character ({uri-issue}182[#182])
 * Remove NLA argument from `pyrdp-mitm`.
   It was never supported and thus misleading.
+
+=== Infrastructure
+
+* Added continuous integration leveraging GitHub Actions that builds the docker image and runs an integration test on both Ubuntu and Windows ({uri-issue}194[#194])
 
 
 == 0.4.1 - 2019-11-03
