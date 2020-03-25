@@ -17,8 +17,6 @@ try:
     from pyrdp.player.LiveThread import LiveThread
     from pyrdp.player.LiveWindow import LiveWindow
     from pyrdp.player.MainWindow import MainWindow
-    from pyrdp.player.PlayerEventHandler import PlayerEventHandler
-    from pyrdp.player.RenderingEventHandler import RenderingEventHandler
     from pyrdp.player.QTimerSequencer import QTimerSequencer
     from pyrdp.player.ReplayBar import ReplayBar
     from pyrdp.player.ReplayTab import ReplayTab

@@ -90,6 +90,7 @@ class ReplayTab(BaseTab):
     def onClose(self):
         self.thread.close()
         self.thread.wait()
+        self.eventHandler.cleanup()
 
     def setScaleToWindow(self, status: int):
         """

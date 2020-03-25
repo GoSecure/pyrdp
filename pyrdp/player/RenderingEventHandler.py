@@ -35,8 +35,10 @@ class RenderingEventHandler(BaseEventHandler):
     def onFastPathOutput(self, event: FastPathOutputEvent):
         if isinstance(event, FastPathBitmapEvent):
             parsed = self._fastPath.parseBitmapEvent(event)
+            self.onBeginRender()
             for bmp in parsed.bitmapUpdateData:
                 self.onBitmap(bmp)
+            self.onFinishRender()
 
         elif isinstance(event, FastPathOrdersEvent):
             if self.orders is None:
@@ -47,8 +49,10 @@ class RenderingEventHandler(BaseEventHandler):
     def onSlowPathUpdate(self, pdu: UpdatePDU):
         if pdu.updateType == SlowPathUpdateType.SLOWPATH_UPDATETYPE_BITMAP:
             updates = self._bitmap.parseBitmapUpdateData(pdu.updateData)
+            self.onBeginRender()
             for bmp in updates:
                 self.onBitmap(bmp)
+            self.onFinishRender()
 
     def onBitmap(self, bitmapData: BitmapUpdateData):
         image = RDPBitmapToQtImage(
@@ -65,3 +69,9 @@ class RenderingEventHandler(BaseEventHandler):
             image,
             bitmapData.destRight - bitmapData.destLeft + 1,
             bitmapData.destBottom - bitmapData.destTop + 1)
+
+    def onBeginRender(self):
+        pass
+
+    def onFinishRender(self):
+        pass

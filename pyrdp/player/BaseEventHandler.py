@@ -54,6 +54,20 @@ class BaseEventHandler(Observer):
         (w, h) = (bmp.desktopWidth, bmp.desktopHeight)
         self.writeText(f'<Resolution: {w}x{h}>')
 
+    def cleanup(self):
+        """
+        Called when this handler is no longer needed.
+
+        This callback can be used to perform any handler specific
+        cleanup that is necessary after a data stream is done processing.
+
+        For playback streams, this means that the replay file is over and will
+        no longer be played back. (Essentially, the tab has been closed.)
+
+        For live streams, this means that the connection has been terminated.
+        """
+        pass
+
     def onPDUReceived(self, pdu: PlayerPDU):
         if pdu.header in self.handlers:
             self.handlers[pdu.header](pdu)
@@ -129,29 +143,6 @@ class BaseEventHandler(Observer):
             if reassembledEvent is not None:
                 self.onFastPathOutput(reassembledEvent)
 
-    def reassembleEvent(self, event: FastPathOutputEvent) -> Optional[FastPathOutputEvent]:
-        """
-        Handles FastPath event reassembly as described in
-        https://msdn.microsoft.com/en-us/library/cc240622.aspx
-        :param event: A potentially segmented fastpath output event
-        :return: a FastPathBitmapEvent if a complete PDU has been reassembled, otherwise None. If the event is not
-        fragmented, it is returned as is.
-        """
-        fragmentationFlag = FastPathFragmentation((event.header & 0b00110000) >> 4)
-
-        if fragmentationFlag == FastPathFragmentation.FASTPATH_FRAGMENT_SINGLE:
-            return event
-        elif fragmentationFlag == FastPathFragmentation.FASTPATH_FRAGMENT_FIRST:
-            self.buffer = event.payload
-        elif fragmentationFlag == FastPathFragmentation.FASTPATH_FRAGMENT_NEXT:
-            self.buffer += event.payload
-        elif fragmentationFlag == FastPathFragmentation.FASTPATH_FRAGMENT_LAST:
-            self.buffer += event.payload
-            event.payload = self.buffer
-            return event
-
-        return None
-
     def onFastPathOutput(self, event: FastPathOutputEvent):
         pass
 
@@ -221,3 +212,26 @@ class BaseEventHandler(Observer):
 
     def onDeviceMapping(self, pdu: PlayerDeviceMappingPDU):
         self.writeText(f"\n<{DeviceType.getPrettyName(pdu.deviceType)} mapped: {pdu.name}>")
+
+    def reassembleEvent(self, event: FastPathOutputEvent) -> Optional[FastPathOutputEvent]:
+        """
+        Handles FastPath event reassembly as described in
+        https://msdn.microsoft.com/en-us/library/cc240622.aspx
+        :param event: A potentially segmented fastpath output event
+        :return: a FastPathBitmapEvent if a complete PDU has been reassembled, otherwise None. If the event is not
+        fragmented, it is returned as is.
+        """
+        fragmentationFlag = FastPathFragmentation((event.header & 0b00110000) >> 4)
+
+        if fragmentationFlag == FastPathFragmentation.FASTPATH_FRAGMENT_SINGLE:
+            return event
+        elif fragmentationFlag == FastPathFragmentation.FASTPATH_FRAGMENT_FIRST:
+            self.buffer = event.payload
+        elif fragmentationFlag == FastPathFragmentation.FASTPATH_FRAGMENT_NEXT:
+            self.buffer += event.payload
+        elif fragmentationFlag == FastPathFragmentation.FASTPATH_FRAGMENT_LAST:
+            self.buffer += event.payload
+            event.payload = self.buffer
+            return event
+
+        return None
