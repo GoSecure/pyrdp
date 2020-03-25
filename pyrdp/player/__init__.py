@@ -4,8 +4,9 @@
 # Licensed under the GPLv3 or later.
 #
 
-from pyrdp.player.HeadlessEventHandler import HeadlessEventHandler
 from pyrdp.player.Replay import Replay
+from .BaseEventHandler import BaseEventHandler
+from .HeadlessEventHandler import HeadlessEventHandler
 
 # UI-Specific imports. These might fail when UI dependencies are not
 # present.
@@ -17,6 +18,7 @@ try:
     from pyrdp.player.LiveWindow import LiveWindow
     from pyrdp.player.MainWindow import MainWindow
     from pyrdp.player.PlayerEventHandler import PlayerEventHandler
+    from pyrdp.player.RenderingEventHandler import RenderingEventHandler
     from pyrdp.player.QTimerSequencer import QTimerSequencer
     from pyrdp.player.ReplayBar import ReplayBar
     from pyrdp.player.ReplayTab import ReplayTab

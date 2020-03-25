@@ -13,6 +13,7 @@ from pyrdp.parser.rdp.client_info import ClientInfoParser
 from pyrdp.parser.rdp.connection import ClientConnectionParser, ServerConnectionParser
 from pyrdp.parser.rdp.fastpath import BasicFastPathParser, createFastPathParser, FastPathInputParser, \
     FastPathOutputParser, FIPSFastPathParser, SignedFastPathParser
+from pyrdp.parser.rdp.orders import OrdersParser
 from pyrdp.parser.rdp.input import SlowPathInputParser
 from pyrdp.parser.rdp.licensing import LicensingParser
 from pyrdp.parser.rdp.negotiation import NegotiationRequestParser, NegotiationResponseParser
