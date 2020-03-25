@@ -37,7 +37,8 @@ from pyrdp.mitm.state import RDPMITMState
 from pyrdp.mitm.TCPMITM import TCPMITM
 from pyrdp.mitm.VirtualChannelMITM import VirtualChannelMITM
 from pyrdp.mitm.X224MITM import X224MITM
-from pyrdp.recording import FileLayer, RecordingFastPathObserver, RecordingSlowPathObserver
+from pyrdp.recording import FileLayer, RecordingFastPathObserver, RecordingSlowPathObserver, \
+    Recorder
 
 
 class RDPMITM:
@@ -45,7 +46,7 @@ class RDPMITM:
     Main MITM class. The job of this class is to orchestrate the components for all the protocols.
     """
 
-    def __init__(self, mainLogger: SessionLogger, crawlerLogger: SessionLogger, config: MITMConfig):
+    def __init__(self, mainLogger: SessionLogger, crawlerLogger: SessionLogger, config: MITMConfig, state: RDPMITMState=None, recorder: Recorder=None):
         """
         :param log: base logger to use for the connection
         :param config: the MITM configuration
@@ -72,7 +73,7 @@ class RDPMITM:
         self.statCounter = StatCounter()
         """Class to keep track of connection-related statistics such as # of mouse events, # of output events, etc."""
 
-        self.state = RDPMITMState(config)
+        self.state = state if state is not None else RDPMITMState(self.config)
         """The MITM state"""
 
         self.client = RDPLayerSet()
@@ -84,7 +85,7 @@ class RDPMITM:
         self.player = TwistedPlayerLayerSet()
         """Layers on the attacker side"""
 
-        self.recorder = MITMRecorder([], self.state)
+        self.recorder = recorder if recorder is not None else MITMRecorder([], self.state)
         """Recorder for this connection"""
 
         self.channelMITMs = {}

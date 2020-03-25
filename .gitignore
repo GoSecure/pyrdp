@@ -3,6 +3,10 @@
 *.pyd
 venv*/
 /*.prof
+.coverage
+
+# Zip the pcap instead
+*.pcap
 
 # IDE stuff
 .project
