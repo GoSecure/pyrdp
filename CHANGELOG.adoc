@@ -34,7 +34,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 === Infrastructure
 
-* Added continuous integration leveraging GitHub Actions that builds the docker image and runs an integration test on both Ubuntu and Windows ({uri-issue}194[#194])
+* Added continuous integration leveraging GitHub Actions that builds the docker image and runs an integration test on both Ubuntu and Windows ({uri-issue}194[#194], {uri-issue}201[#201])
 
 
 == 0.4.1 - 2019-11-03
