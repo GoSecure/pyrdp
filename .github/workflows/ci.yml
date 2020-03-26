@@ -43,7 +43,7 @@ jobs:
 
     - name: pyrdp-mitm.py initialization test
       working-directory: ./
-      run: coverage run --append pyrdp-mitm.py --test localhost
+      run: coverage run --append bin/pyrdp-mitm.py --test localhost
 
     - name: Coverage
       working-directory: ./
