@@ -49,6 +49,7 @@ PyRDP was [introduced in 2018](https://www.gosecure.net/blog/2018/12/19/rdp-man-
     + [Cloning a certificate](#cloning-a-certificate)
     + [Using a custom private key](#using-a-custom-private-key)
     + [Other cloner arguments](#other-cloner-arguments)
+  * [Configuring PyRDP](#configuring-pyrdp)
   * [Using PyRDP as a Library](#using-pyrdp-as-a-library)
   * [Using PyRDP with twistd](#using-pyrdp-with-twistd)
   * [Using PyRDP with Bettercap](#using-pyrdp-with-bettercap)
@@ -386,6 +387,17 @@ pyrdp-clonecert.py 192.168.1.10 cert.pem -i input_key.pem
 
 #### Other cloner arguments
 Run `pyrdp-clonecert.py --help` for a full list of arguments.
+
+### Configuring PyRDP
+
+Most of the PyRDP configurations are done through command line switches, but it is also possible to use a
+configuration file for certain settings such as log configuration.
+
+The default configuration files used by PyRDP are located in [mitm.default.ini](pyrdp/mitm/mitm.default.ini)
+and [player.default.ini](pyrdp/player/player.default.ini). Both files are thoroughly documented and can serve
+as a basis for further configuration.
+
+In the future there are plans to support other aspects of PyRDP configuration through those configuration files.
 
 ### Using PyRDP as a Library
 If you're interested in experimenting with RDP and making your own tools, head over to our

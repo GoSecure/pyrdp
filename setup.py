@@ -19,7 +19,10 @@ setup(name='pyrdp',
     author_email='egg997@gmail.com, flabelle@gosecure.ca',
     url='https://github.com/GoSecure/pyrdp',
     packages=setuptools.find_packages(include=["pyrdp", "pyrdp.*"]),
-    package_data={"pyrdp": ["mitm/crawler_config/*.txt"]},
+    package_data={
+        "pyrdp": ["mitm/crawler_config/*.txt"],
+        "": ["*.default.ini"]
+    },
     ext_modules=[Extension('rle', ['ext/rle.c'])],
     scripts=[
         'bin/pyrdp-clonecert.py',
