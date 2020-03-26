@@ -77,7 +77,7 @@ class DeviceRedirectionMITM(Subject):
         self.fileMapPath = self.config.outDir / "mapping.json"
         self.forgedRequests: Dict[int, DeviceRedirectionMITM.ForgedRequest] = {}
 
-        if state.config.extractFiles:
+        if self.config.extractFiles:
             self.responseHandlers: Dict[MajorFunction, callable] = {
                 MajorFunction.IRP_MJ_CREATE: self.handleCreateResponse,
                 MajorFunction.IRP_MJ_READ: self.handleReadResponse,
@@ -328,7 +328,7 @@ class DeviceRedirectionMITM(Subject):
         """
 
         if not self.config.extractFiles:
-            self.log.warning('Ignored attempt to forge file reads because file extraction is disabled.')
+            self.log.info('Ignored attempt to forge file reads because file extraction is disabled.')
             return
 
         self.statCounter.increment(STAT.DEVICE_REDIRECTION_FORGED_FILE_READ)
@@ -351,7 +351,7 @@ class DeviceRedirectionMITM(Subject):
         """
 
         if not self.config.extractFiles:
-            self.log.warning('Ignored attempt to forge directory listing because file extraction is disabled.')
+            self.log.info('Ignored attempt to forge directory listing because file extraction is disabled.')
             return
 
         self.statCounter.increment(STAT.DEVICE_REDIRECTION_FORGED_DIRECTORY_LISTING)
