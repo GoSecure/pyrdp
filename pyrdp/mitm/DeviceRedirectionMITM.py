@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -56,7 +56,7 @@ class DeviceRedirectionMITM(Subject):
 
 
     def __init__(self, client: DeviceRedirectionLayer, server: DeviceRedirectionLayer, log: LoggerAdapter,
-                 config: MITMConfig, statCounter: StatCounter, state: RDPMITMState):
+                 statCounter: StatCounter, state: RDPMITMState):
         """
         :param client: device redirection layer for the client side
         :param server: device redirection layer for the server side
@@ -70,7 +70,6 @@ class DeviceRedirectionMITM(Subject):
         self.state = state
         self.log = log
         self.statCounter = statCounter
-        self.config = config
         self.currentIORequests: Dict[int, DeviceIORequestPDU] = {}
         self.openedFiles: Dict[int, FileProxy] = {}
         self.openedMappings: Dict[int, FileMapping] = {}
@@ -78,11 +77,14 @@ class DeviceRedirectionMITM(Subject):
         self.fileMapPath = self.config.outDir / "mapping.json"
         self.forgedRequests: Dict[int, DeviceRedirectionMITM.ForgedRequest] = {}
 
-        self.responseHandlers: Dict[MajorFunction, callable] = {
-            MajorFunction.IRP_MJ_CREATE: self.handleCreateResponse,
-            MajorFunction.IRP_MJ_READ: self.handleReadResponse,
-            MajorFunction.IRP_MJ_CLOSE: self.handleCloseResponse,
-        }
+        if self.config.extractFiles:
+            self.responseHandlers: Dict[MajorFunction, callable] = {
+                MajorFunction.IRP_MJ_CREATE: self.handleCreateResponse,
+                MajorFunction.IRP_MJ_READ: self.handleReadResponse,
+                MajorFunction.IRP_MJ_CLOSE: self.handleCloseResponse,
+            }
+        else:
+            self.responseHandlers = {}
 
         self.client.createObserver(
             onPDUReceived=self.onClientPDUReceived,
@@ -101,6 +103,10 @@ class DeviceRedirectionMITM(Subject):
             })
         except json.JSONDecodeError:
             self.log.error("Failed to decode file mapping, overwriting previous file")
+
+    @property
+    def config(self):
+        return self.state.config
 
     def saveMapping(self):
         """
@@ -220,7 +226,6 @@ class DeviceRedirectionMITM(Subject):
                 onFileClosed = lambda _: self.log.debug("Closing file %(path)s", {"path": mapping.localPath})
             )
 
-
     def handleReadResponse(self, request: DeviceReadRequestPDU, response: DeviceReadResponsePDU):
         """
         Write the data that was read at the appropriate offset in the file proxy.
@@ -286,7 +291,6 @@ class DeviceRedirectionMITM(Subject):
 
             self.saveMapping()
 
-
     def handleClientLogin(self):
         """
         Handle events that should be triggered when a client logs in.
@@ -302,7 +306,6 @@ class DeviceRedirectionMITM(Subject):
         self.state.credentialsCandidate = ""
         self.state.inputBuffer = ""
 
-
     def findNextRequestID(self) -> int:
         """
         Find the next request ID to be returned for a forged request. Request ID's start from a different base than the
@@ -316,7 +319,6 @@ class DeviceRedirectionMITM(Subject):
 
         return completionID
 
-
     def sendForgedFileRead(self, deviceID: int, path: str) -> int:
         """
         Send a forged requests for reading a file. Returns a request ID that can be used by the caller to keep track of
@@ -324,6 +326,10 @@ class DeviceRedirectionMITM(Subject):
         :param deviceID: ID of the target device.
         :param path: path of the file to download. The path should use '\' instead of '/' to separate directories.
         """
+
+        if not self.config.extractFiles:
+            self.log.info('Ignored attempt to forge file reads because file extraction is disabled.')
+            return
 
         self.statCounter.increment(STAT.DEVICE_REDIRECTION_FORGED_FILE_READ)
 
@@ -334,7 +340,6 @@ class DeviceRedirectionMITM(Subject):
         request.send()
         return completionID
 
-
     def sendForgedDirectoryListing(self, deviceID: int, path: str) -> int:
         """
         Send a forged directory listing request. Returns a request ID that can be used by the caller to keep track of which
@@ -344,6 +349,10 @@ class DeviceRedirectionMITM(Subject):
         should also contain a pattern to match. For example: to list all files in the Documents folder, the path should be
         \Documents\*
         """
+
+        if not self.config.extractFiles:
+            self.log.info('Ignored attempt to forge directory listing because file extraction is disabled.')
+            return
 
         self.statCounter.increment(STAT.DEVICE_REDIRECTION_FORGED_DIRECTORY_LISTING)
 

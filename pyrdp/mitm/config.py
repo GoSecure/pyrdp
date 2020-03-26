@@ -41,6 +41,9 @@ class MITMConfig:
         self.outDir: Path = None
         """The output directory"""
 
+        self.extractFiles: bool = True
+        """Whether to extract file transferred between the client and server."""
+
         self.recordReplays: bool = True
         """Whether replays should be recorded or not"""
 
