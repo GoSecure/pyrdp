@@ -21,6 +21,9 @@ class MITMConfig:
         self.targetPort: int = None
         """The RDP server's port"""
 
+        self.listenPort: int = 3389
+        """The port to bind for listening."""
+
         self.certificateFileName: str = None
         """Path to the TLS certificate"""
 
