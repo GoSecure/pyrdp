@@ -15,15 +15,17 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
   See {uri-issue}151[#151], {uri-issue}163[#163] and {uri-issue}190[#190].
 * Loosen up TLS version checks to allow a broader set of clients and server ({uri-issue}192[#192], {uri-issue}193[#193])
 * Explicitly disabled TLS 1.3 for now since we don't (can't?) record TLS 1.3 master secrets yet ({uri-issue}116[#116], {uri-issue}193[#193])
+* All logging can be customized using configuration files ({uri-issue}191[#191])
 * Added `sessionID` to replay filename ({uri-issue}180[#180])
 * Added `replayfilename` to the connection report log entry ({uri-issue}180[#180])
-* Added a `twistd` plugin ({uri-issue}174[#174], {uri-issue}177[#177])
+* Added a `twistd` plugin ({uri-issue}174[#174], {uri-issue}177[#177], {uri-issue}191[#191])
 * Support for 32-bit x86 operating systems now that the GUI is optional ({uri-issue}150[#150])
 * Further Docker image size improvements ({uri-issue}173[#173] and more)
 * Default Docker Compose command now `pyrdp-mitm -h` to avoid confusing crash on `docker-compose up` ({uri-issue}173[#173])
 * Documentation updates and fixes ({uri-issue}165[#165], {uri-issue}166[#166], {uri-issue}172[#172])
 * Added `--disable-active-clipboard` switch to prevent clipboard request injection
 * Added `--no-downgrade` switch to prevent protocol downgrading where possible {uri-issue}189[#189]
+* Added `--no-files` switch to prevent extracting transferred files {uri-issue}195[#195]
 
 === Bug fixes
 
@@ -34,7 +36,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 === Infrastructure
 
-* Added continuous integration leveraging GitHub Actions that builds the docker image and runs an integration test on both Ubuntu and Windows ({uri-issue}194[#194])
+* Added continuous integration leveraging GitHub Actions that builds the docker image and runs an integration test on both Ubuntu and Windows ({uri-issue}194[#194], {uri-issue}201[#201])
 
 
 == 0.4.1 - 2019-11-03

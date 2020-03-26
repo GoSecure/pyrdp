@@ -6,6 +6,7 @@
 
 from pathlib import Path
 from typing import Optional
+from pyrdp.core import settings
 
 
 class MITMConfig:
@@ -19,6 +20,9 @@ class MITMConfig:
 
         self.targetPort: int = None
         """The RDP server's port"""
+
+        self.listenPort: int = 3389
+        """The port to bind for listening."""
 
         self.certificateFileName: str = None
         """Path to the TLS certificate"""
@@ -40,6 +44,9 @@ class MITMConfig:
 
         self.outDir: Path = None
         """The output directory"""
+
+        self.extractFiles: bool = True
+        """Whether to extract file transferred between the client and server."""
 
         self.recordReplays: bool = True
         """Whether replays should be recorded or not"""
@@ -81,3 +88,8 @@ class MITMConfig:
         Get the directory for intercepted files.
         """
         return self.outDir / "files"
+
+"""
+The default MITM configuration.
+"""
+DEFAULTS =  settings.load(Path(__file__).parent.absolute() / "mitm.default.ini")

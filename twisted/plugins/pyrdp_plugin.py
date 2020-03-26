@@ -5,6 +5,7 @@
 #
 import asyncio
 from pathlib import Path
+import sys
 
 # need to install this reactor before importing other twisted code
 from twisted.internet import asyncioreactor
@@ -19,25 +20,14 @@ from zope.interface import implementer
 
 from pyrdp.core.mitm import MITMServerFactory
 from pyrdp.mitm import MITMConfig
-from pyrdp.mitm.cli import parseTarget, prepareLoggers, validateKeyAndCertificate
+from pyrdp.mitm.cli import configure
 
 
 class Options(usage.Options):
-    # Warning: keep in sync with bin/pyrdp-mitm.py
-    optParameters = [
-        ["listen", "l", "3389", "Port number to listen on (default: 3389)"],
-        ["target", "t", None, "IP:port of the target RDP machine (ex: 192.168.1.10:3390)"],
-        ["output", "o", "pyrdp_output", "Output folder for logs and recordings"],
-        ["private-key", "k", None, "Path to private key (for SSL)"],
-        ["certificate", "c", None, "Path to certificate (for SSL)"],
-        ["username", "u", None, "Username that will replace the client's username"],
-        ["password", "p", None, "Password that will replace the client's password"],
-        ["log-level", "L", "INFO", "Console logging level. Logs saved to file are always verbose. "
-                                   "Choices: INFO, DEBUG, WARNING, ERROR, CRITICAL"],
-        ["log-filter", "F", "", "Only show logs from this logger name (accepts '*' wildcards)"],
-        ["sensor-id", "s", "PyRDP", "Sensor ID (to differentiate multiple instances "
-                                    "of the MITM where logs are aggregated at one place)"]]
-    optFlags = [["disable-active-clipboard", None, "Disables the active clipboard stealing to request clipboard content upon connection."]]
+    optFlags = []
+    optParameters = []
+    def parseOptions(self, args):
+        self['config'] = configure(args)
 
 
 @implementer(IServiceMaker, IPlugin)
@@ -50,31 +40,7 @@ class PyRdpMitmServiceMaker(object):
         """
         Construct a TCPServer from a MITMServerFactory
         """
-        outDir = Path(options["output"])
-        outDir.mkdir(exist_ok = True)
-
-        logLevel = options["log-level"]
-        prepareLoggers(logLevel, options["log-filter"], options["sensor-id"], outDir)
-
-        # Warning: only implemented a minimal subset of available config
-        #          see bin/pyrdp-mitm.py for the full list
-        config = MITMConfig()
-        targetHost, targetPort = parseTarget(options["target"])
-        config.targetHost = targetHost
-        config.targetPort = targetPort
-
-        config.disableActiveClipboardStealing = options["disable-active-clipboard"]
-
-        key, certificate = validateKeyAndCertificate(options["private-key"],
-                                                     options["certificate"])
-        config.privateKeyFileName = key
-        config.certificateFileName = certificate
-
-        config.replacementUsername = options["username"]
-        config.replacementPassword = options["password"]
-        config.outDir = outDir
-
-        return internet.TCPServer(int(options["listen"]), MITMServerFactory(config))
-
+        config = options['config']
+        return internet.TCPServer(config.listenPort, MITMServerFactory(config))
 
 serviceMaker = PyRdpMitmServiceMaker()
