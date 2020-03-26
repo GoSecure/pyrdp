@@ -1,6 +1,12 @@
 name: Continuous Integration
 
-on: [push, pull_request]
+on:
+  pull_request:
+    branches:
+      - '**'
+  push:
+    branches:
+      - master
 
 jobs:
   docker-build:
