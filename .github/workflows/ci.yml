@@ -9,7 +9,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build Docker image
-        run: docker build .
+      run: docker build .
 
   install-and-test-ubuntu:
     runs-on: ubuntu-latest
@@ -17,33 +17,33 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v1
-        with:
-          python-version: '3.7' # Version range or exact version of a Python version to use, using semvers version range syntax.
-          architecture: 'x64'
+      with:
+        python-version: '3.7' # Version range or exact version of a Python version to use, using semvers version range syntax.
+        architecture: 'x64'
 
     - name: Python version
-        run: python --version
+      run: python --version
     - name: Pip version
-        run: pip --version
+      run: pip --version
 
     - name: Install setuptools
-        run: sudo apt install python3-setuptools
+      run: sudo apt install python3-setuptools
     - name: Install PyRDP dependencies
-        run: sudo apt install libdbus-1-dev libdbus-glib-1-dev libgl1-mesa-glx git python3-dev
+      run: sudo apt install libdbus-1-dev libdbus-glib-1-dev libgl1-mesa-glx git python3-dev
     - name: Install PyRDP
-        working-directory: .
-        run: pip install -U -e .
+      working-directory: .
+      run: pip install -U -e .
 
     - name: Install ci dependencies
-        run: pip install -r requirements-ci.txt
+      run: pip install -r requirements-ci.txt
 
     - name: Integration Test with a prerecorded PCAP.
-        working-directory: ./
-        run: coverage run test/test.py
+      working-directory: ./
+      run: coverage run test/test.py
 
     - name: pyrdp-mitm.py initialization test
-        working-directory: ./
-        run: coverage run --append pyrdp-mitm.py --test localhost
+      working-directory: ./
+      run: coverage run --append pyrdp-mitm.py --test localhost
 
     - name: Coverage
       working-directory: ./
@@ -57,21 +57,21 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v1
-          with:
-            python-version: '3.7' # Version range or exact version of a Python version to use, using semvers version range syntax.
-            architecture: 'x64'
+        with:
+          python-version: '3.7' # Version range or exact version of a Python version to use, using semvers version range syntax.
+          architecture: 'x64'
 
       - name: Python version
-          run: python --version
+        run: python --version
       - name: Pip version
-          run: pip --version
+        run: pip --version
       - name: Install PyRDP
-          working-directory: .
-          run: pip install -U -e .
+        working-directory: .
+        run: pip install -U -e .
 
       - name: Integration Test with a prerecorded PCAP.
-          working-directory: ./
-          run: python test/test.py
+        working-directory: ./
+        run: python test/test.py
       - name: pyrdp-mitm.py initialization test
-          working-directory: ./
-          run: bin/pyrdp-mitm.py --test localhost
+        working-directory: ./
+        run: bin/pyrdp-mitm.py --test localhost
