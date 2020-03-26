@@ -50,10 +50,11 @@ def main():
     parser.add_argument("--crawler-ignore-file", help="File to be used by the crawler to chose what folders to avoid when scraping the client shared drives.", default=None)
     parser.add_argument("--no-replay", help="Disable replay recording", action="store_true")
     parser.add_argument("--no-downgrade", help="Disables downgrading of unsupported extensions. This makes PyRDP harder to fingerprint but might impact the player's ability to replay captured traffic.", action="store_true")
+    parser.add_argument("--test", help="Test the initialization of the program. Initialize the MITM, then exit without listening for connections.", action="store_true")
 
     args = parser.parse_args()
     outDir = Path(args.output)
-    outDir.mkdir(exist_ok = True)
+    outDir.mkdir(exist_ok=True)
 
     logLevel = getattr(logging, args.log_level)
     pyrdpLogger = prepareLoggers(logLevel, args.log_filter, args.sensor_id, outDir)
@@ -79,7 +80,6 @@ def main():
     config.recordReplays = not args.no_replay
     config.downgrade = not args.no_downgrade
     config.disableActiveClipboardStealing = args.disable_active_clipboard
-
 
     payload = None
     powershell = None
@@ -120,7 +120,6 @@ def main():
             pyrdpLogger.error("--payload-duration must be provided if a payload is provided.")
             sys.exit(1)
 
-
         try:
             config.payloadDelay = int(args.payload_delay)
         except ValueError:
@@ -134,7 +133,6 @@ def main():
         if config.payloadDelay < 1000:
             pyrdpLogger.warning("You have provided a payload delay of less than 1 second. We recommend you use a slightly longer delay to make sure it runs properly.")
 
-
         try:
             config.payloadDuration = int(args.payload_duration)
         except ValueError:
@@ -145,21 +143,24 @@ def main():
             pyrdpLogger.error("Payload duration must not be negative.")
             sys.exit(1)
 
-
         config.payload = payload
     elif args.payload_delay is not None:
         pyrdpLogger.error("--payload-delay was provided but no payload was set.")
         sys.exit(1)
 
-
     logConfiguration(config)
 
     reactor.listenTCP(listenPort, MITMServerFactory(config))
     pyrdpLogger.info("MITM Server listening on port %(port)d", {"port": listenPort})
+
+    if args.test:
+        exit(0)
+
     reactor.run()
 
     pyrdpLogger.info("MITM terminated")
     logConfiguration(config)
+
 
 if __name__ == "__main__":
     main()

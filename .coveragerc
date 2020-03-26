@@ -1,9 +1,9 @@
 [run]
 branch = True
-include =
-    pyrdp/*
-    twisted/*
-    bin/*
+source =
+    pyrdp
+    twisted
+    bin
 
 [report]
 # Regexes for lines to exclude from consideration
