@@ -44,10 +44,13 @@ jobs:
     - name: pyrdp-mitm.py initialization test
       working-directory: ./
       run: coverage run --append bin/pyrdp-mitm.py --test localhost
+    - name: pyrdp-player.py read a replay in headless mode test
+      working-directory: ./
+      run: coverage run --append bin/pyrdp-player.py --headless test/files/test_session.replay
 
     - name: Coverage
       working-directory: ./
-      run: coverage report --fail-under=45
+      run: coverage report --fail-under=50
 
 
 
@@ -75,3 +78,6 @@ jobs:
       - name: pyrdp-mitm.py initialization test
         working-directory: ./
         run: bin/pyrdp-mitm.py --test localhost
+      - name: pyrdp-player.py read a replay in headless mode test
+        working-directory: ./
+        run: bin/pyrdp-player.py --headless test/files/test_session.replay
