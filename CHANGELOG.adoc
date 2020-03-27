@@ -14,7 +14,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
   All GUI dependencies are now optional enabling further Docker image size reduction.
   See {uri-issue}151[#151], {uri-issue}163[#163] and {uri-issue}190[#190].
 * Added a transparent proxy mode where source or destination packets are unaltered from the client or the server's perspective.
-  Read link:README.md##--transparent[the feature's documentation for setup and details.].
+  Read link:README.md#--transparent[the feature's documentation for setup and details.].
   Also see {uri-issue}197[#197].
 * Loosen up TLS version checks to allow a broader set of clients and server ({uri-issue}192[#192], {uri-issue}193[#193])
 * Explicitly disabled TLS 1.3 for now since we don't (can't?) record TLS 1.3 master secrets yet ({uri-issue}116[#116], {uri-issue}193[#193])
