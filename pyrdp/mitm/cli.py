@@ -13,16 +13,16 @@ import logging
 import logging.handlers
 import os
 import sys
-from typing import Tuple
-from pathlib import Path
 from base64 import b64encode
+from pathlib import Path
+from typing import Tuple
 
 import OpenSSL
 
-from pyrdp.core.ssl import ServerTLSContext
 from pyrdp.core import settings
-from pyrdp.logging import LOGGER_NAMES, configure as configureLoggers
-from pyrdp.mitm.config import MITMConfig, DEFAULTS
+from pyrdp.core.ssl import ServerTLSContext
+from pyrdp.logging import configure as configureLoggers, LOGGER_NAMES
+from pyrdp.mitm.config import DEFAULTS, MITMConfig
 
 
 def parseTarget(target: str) -> Tuple[str, int]:
@@ -173,11 +173,11 @@ def configure(cmdline=None) -> MITMConfig:
     if args.log_level:
         cfg.set('vars', 'level', args.log_level)
 
-    configureLoggers(cfg)
-    logger = logging.getLogger(LOGGER_NAMES.PYRDP)
-
     outDir = Path(cfg.get('vars', 'output_dir'))
     outDir.mkdir(exist_ok=True)
+
+    configureLoggers(cfg)
+    logger = logging.getLogger(LOGGER_NAMES.PYRDP)
 
     targetHost, targetPort = parseTarget(args.target)
     key, certificate = validateKeyAndCertificate(args.private_key, args.certificate)
