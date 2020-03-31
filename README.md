@@ -379,7 +379,7 @@ ip rule add fwmark $MARK lookup $TABLE_ID
 # Add a custom route that redirects traffic intended for the outside world to loopback
 # So that server-client traffic passes through PyRDP
 # This table will only ever be used by RDP so it should not be problematic
-ip route add local dev lo table $TABLE_ID
+ip route add local default dev lo table $TABLE_ID
 ```
 
 This setup is a base example and might be much more complex depending on your environment and constraints.
