@@ -25,6 +25,8 @@ from progressbar import progressbar
 from scapy.all import *  # noqa
 load_layer('tls')  # noqa
 
+TLS_HDR_LEN = 24  # Hopefully this doesn't change between TLS versions.
+
 
 class CustomMITMRecorder(MITMRecorder):
     currentTimeStamp: int = None
@@ -161,60 +163,76 @@ class Decrypted:
 
     def __next__(self):
         p = next(self.ipkt)
-        while p is not None:
-            ip = p.getlayer(IP)
-            tcp = p.getlayer(TCP)
+        ip = p.getlayer(IP)
+        tcp = p.getlayer(TCP)
 
-            if len(tcp.payload) == 0:
-                return p  # Not application data.
+        if len(tcp.payload) == 0:
+            return p  # Not application data.
 
-            if not self.src:
-                # First packet in the stream, establish sending and receiving ends.
-                self.src = self.last = ip.src
-                self.dst = ip.dst
-                # Create the TLS session context.
-                self.tls = tlsSession(ipsrc=ip.src, ipdst=ip.dst, sport=tcp.sport, dport=tcp.dport, connection_end='server')
+        if not self.src:
+            # First packet in the stream, establish sending and receiving ends.
+            self.src = self.last = ip.src
+            self.dst = ip.dst
+            # Create the TLS session context.
+            self.tls = tlsSession(ipsrc=ip.src, ipdst=ip.dst, sport=tcp.sport, dport=tcp.dport, connection_end='server')
 
-            # Mirror the session if the packet is flowing in the opposite direction.
-            if self.tls.ipsrc != ip.src:
-                self.tls = self.tls.mirror()
+        # Mirror the session if the packet is flowing in the opposite direction.
+        if self.tls.ipsrc != ip.src:
+            self.tls = self.tls.mirror()
 
-            try:
-                # Convert the payload to TLS if necessary.
-                frame = TLS(p.load, tls_session=self.tls)
-                tcp.remove_payload()
-                tcp.add_payload(frame)
-                self.tlsSession = frame.tls_session  # Update TLS Context.
-            except AttributeError:
-                if not self.client:
-                    # ClientHelo is not sent yet: This is not TLS data.
-                    return p  # Not a TLS packet.
-                else:
-                    # ClientHello was sent, this is likely a reassembled packet.
-                    # We dissect TLS by hand so we need to skip the reassembled parts.
-                    p = next(self.ipkt)
-                    continue
+        try:
+            # Convert the payload to TLS if necessary.
+            frame = TLS(p.load, tls_session=self.tls)
+        except AttributeError as e:
+            if not self.client:
+                # ClientHelo is not sent yet: This is not TLS data.
+                return p
+            else:
+                # Should be TLS data.
+                raise e
 
-            # FIXME: Rather, check if the message is included in it to be sure.
-            msg = frame.msg[0]
-            if isinstance(msg, TLSClientHello):
-                self.client = pkcs_i2osp(msg.gmt_unix_time, 4) + msg.random_bytes
-            elif isinstance(msg, TLSServerHello):
-                self.server = pkcs_i2osp(msg.gmt_unix_time, 4) + msg.random_bytes
+        # Perform PDU reassembly.
+        if TLSApplicationData in frame:
+            payload = p.load
+            # There could be multiple nested TLS records within the
+            # same TCP packet. In that case we need to consume packets
+            # until The last layer is complete, otherwise it becomes
+            # extremely difficult to decrypt the rest of the stream.
+            tls = frame.lastlayer()
+            while tls.len - tls.deciphered_len - TLS_HDR_LEN > 0:
+                fragment = next(self.ipkt)
 
-                # Now is a good time to derive the encryption keys.
-            elif isinstance(msg, TLSNewSessionTicket):
-                self.tls.rcs.derive_keys(client_random=self.client,
-                                        server_random=self.server,
-                                        master_secret=self.secret)
+                if Raw not in fragment:
+                    continue  # Skip TCP control.
 
-                self.tls.wcs.derive_keys(client_random=self.client,
-                                        server_random=self.server,
-                                        master_secret=self.secret)
-            return p
+                payload += fragment.load
+                frame = TLS(payload, tls_session=self.tls)
+                tls = frame.lastlayer()
 
-        # If we reach this, the last packet in the trace is a reassembled PDU.
-        return None
+        # Send a super big "frame" to the consumer, they will be responsible for
+        # processing individual records.
+        # FIXME: Maybe rebuild each TLSApplicationData to be a message in a single record?
+        tcp.remove_payload()
+        tcp.add_payload(frame)
+        self.tlsSession = frame.tls_session  # Update TLS Context.
+
+        # FIXME: Rather, check if the message is included in it to be sure?
+        msg = frame.msg[0]
+        if isinstance(msg, TLSClientHello):
+            self.client = pkcs_i2osp(msg.gmt_unix_time, 4) + msg.random_bytes
+        elif isinstance(msg, TLSServerHello):
+            self.server = pkcs_i2osp(msg.gmt_unix_time, 4) + msg.random_bytes
+
+        elif isinstance(msg, TLSNewSessionTicket):
+            # Session established, set master secret.
+            self.tls.rcs.derive_keys(client_random=self.client,
+                                    server_random=self.server,
+                                    master_secret=self.secret)
+
+            self.tls.wcs.derive_keys(client_random=self.client,
+                                    server_random=self.server,
+                                    master_secret=self.secret)
+        return p
 
 
 def decrypted(stream: PacketList, master_secret: bytes) -> Decrypted:
@@ -222,37 +240,58 @@ def decrypted(stream: PacketList, master_secret: bytes) -> Decrypted:
     return Decrypted(stream, master_secret)
 
 
-def processStream(stream: Decrypted, outfile: str):
-    """Process a TCP stream into a replay file."""
+def processPlaintext(stream: PacketList, outfile: str):
+    """Process a plaintext EXPORTED PDU RDP export to a replay."""
+    replayer = RDPReplayer(outfile)
+    srv = None
+    for packet in progressbar(stream):
+        src = ".".join(str(b) for b in packet.load[12:16])
+        dst = ".".join(str(b) for b in packet.load[20:24])
+        data = packet.load[60:]
+
+        if not srv:
+            srv = dst
+
+        replayer.setTimeStamp(float(packet.time))
+        replayer.recv(data, src == srv)
+        pass
+
+
+def processTLS(stream: Decrypted, outfile: str):
+    """Process an encrypted TCP stream into a replay file."""
     # print(f'Processing {stream.src} <> {stream.dst}')
     replayer = RDPReplayer(outfile)
     srv = None  # The RDP server's IP.
 
-    for packet in progressbar((stream)):
+    for n, packet in enumerate(stream):
         ip = packet.getlayer(IP)
-        tcp = packet.getlayer(TCP)
-        data = b''
 
         if not srv:
             srv = ip.dst
             continue
 
-        if TLS in tcp and TLSApplicationData not in tcp:
+        if TLS in packet and TLSApplicationData not in packet:
             # This is not TLS application data, skip it, as PyRDP's
             # network stack cannot parse TLS handshakes.
             continue
 
         # Reassemble TLSApplicationData chunks into a single payload.
-        for i, l in enumerate(tcp.layers()):
-            layer = tcp.getlayer(i)
-            if isinstance(layer, TLS):
-                data += b''.join(map(lambda x: x.data, filter(lambda m: isinstance(m, TLSApplicationData), layer.msg)))
+        ts = float(packet.time)
+        data = b''
+        for i, l in enumerate(packet.layers()):
+            layer = packet.getlayer(i)
+            if not isinstance(layer, TLS):
+                continue
+            for m in filter(lambda m: isinstance(m, TLSApplicationData) and len(m.data) > 0, layer.msg):
+                data += m.data
 
         if len(data) == 0:
-            continue  # Packet contains no application data.
-        replayer.setTimeStamp(float(packet.time))
-        replayer.recv(data, ip.src == srv)
+            continue
 
+        d = 'CLIENT' if ip.src != srv else 'SERVER'
+        print(f'{d} | PACKET> #{n:05d} Len={len(data):010d} - {hexlify(data[:40]).decode()}')
+        replayer.setTimeStamp(ts)
+        replayer.recv(data, ip.src != srv)
     try:
         replayer.tcp.recordConnectionClose()
     except struct.error:
@@ -273,6 +312,7 @@ def main():
 
     logging.basicConfig(level=logging.CRITICAL)
     logging.getLogger("scapy").setLevel(logging.ERROR)
+    # logging.getLogger("pyrdp").setLevel(logging.DEBUG)
 
     # -- PCAPS ------------------------------------------------
     secrets = loadSecrets(args.secrets) if args.secrets else {}
@@ -282,23 +322,22 @@ def main():
     sessions = pcap.sessions(tcp_both)
     streams = []
     for sid, stream in sessions.items():
+        # FIXME: Plaintext crashes here.
         ip = stream[0].getlayer(IP)
         name = f'{ip.src} -> {ip.dst}'
-
+        info =(ip.src, ip.dst, stream[0].time)
         print(f"    -> {name}:", end ='', flush=True)
+
         rnd = findClientRandom(stream)
         if rnd not in secrets and rnd != '':
             print(' unknown master secret')
             continue  # Encrypted, but we don't have the secret.
-
         if rnd == '':
             print(' plaintext?')
-            # print('[*] (TODO) Trying to extract as plaintext')
-            continue
-
-        master_secret = secrets[rnd]['master']
-        print(' master secret available (!)')
-        streams.append(((ip.src, ip.dst, stream[0].time), decrypted(stream, master_secret)))
+            streams.append((info, stream))
+        else:
+            print(' master secret available (!)')
+            streams.append((info, decrypted(stream, secrets[rnd]['master'])))
 
     if args.list:
         return
@@ -306,14 +345,16 @@ def main():
     for (src, dst, ts), s in streams:
         if len(args.src) > 0 and src not in args.src:
             continue
-        if len(args.dst) >0 and dst not in args.dst:
+        if len(args.dst) > 0 and dst not in args.dst:
             continue
-
         try:
             print(f'[*] Processing {src} -> {dst}')
             ts = time.strftime('%Y%M%d%H%m%S', time.gmtime(ts))
             outfile = OUTFILE_FORMAT.format(**{'prefix': 'converted-', 'timestamp': ts, 'src': src, 'dst': dst, 'ext': 'pyrdp'})
-            processStream(s, outfile)
+            if isinstance(s, Decrypted):
+                processTLS(s, outfile)
+            else:
+                processPlaintext(s, outfile)
             print(f"\n[+] Successfully wrote '{outfile}'")
         except Exception as e:
             print('\n[-] Failed to extract stream. Verify that all packets are in the trace and that the master secret is the right one.')
