@@ -181,15 +181,12 @@ class Decrypted:
             self.tls = self.tls.mirror()
 
         try:
-            # Convert the payload to TLS if necessary.
             frame = TLS(p.load, tls_session=self.tls)
         except AttributeError as e:
             if not self.client:
-                # ClientHelo is not sent yet: This is not TLS data.
-                return p
+                return p  # ClientHelo is not sent yet: This is not TLS data.
             else:
-                # Should be TLS data.
-                raise e
+                raise e  # Should be TLS data.
 
         # Perform PDU reassembly.
         if TLSApplicationData in frame:
@@ -209,9 +206,7 @@ class Decrypted:
                 frame = TLS(payload, tls_session=self.tls)
                 tls = frame.lastlayer()
 
-        # Send a super big "frame" to the consumer, they will be responsible for
-        # processing individual records.
-        # FIXME: Maybe rebuild each TLSApplicationData to be a message in a single record?
+        # FIXME: Maybe rebuild each TLSApplicationData to be a message entry in a single record?
         tcp.remove_payload()
         tcp.add_payload(frame)
         self.tlsSession = frame.tls_session  # Update TLS Context.
@@ -243,17 +238,17 @@ def decrypted(stream: PacketList, master_secret: bytes) -> Decrypted:
 def processPlaintext(stream: PacketList, outfile: str):
     """Process a plaintext EXPORTED PDU RDP export to a replay."""
     replayer = RDPReplayer(outfile)
-    srv = None
+    client = None
     for packet in progressbar(stream):
         src = ".".join(str(b) for b in packet.load[12:16])
         dst = ".".join(str(b) for b in packet.load[20:24])
         data = packet.load[60:]
 
-        if not srv:
-            srv = dst
+        if not client:
+            client = src
 
         replayer.setTimeStamp(float(packet.time))
-        replayer.recv(data, src == srv)
+        replayer.recv(data, src == client)
         pass
 
 
@@ -261,37 +256,27 @@ def processTLS(stream: Decrypted, outfile: str):
     """Process an encrypted TCP stream into a replay file."""
     # print(f'Processing {stream.src} <> {stream.dst}')
     replayer = RDPReplayer(outfile)
-    srv = None  # The RDP server's IP.
+    client = None  # The RDP client's IP.
 
     for n, packet in enumerate(stream):
         ip = packet.getlayer(IP)
 
-        if not srv:
-            srv = ip.dst
+        if not client:
+            client = ip.src
             continue
 
-        if TLS in packet and TLSApplicationData not in packet:
+        if TLSApplicationData not in packet:
             # This is not TLS application data, skip it, as PyRDP's
             # network stack cannot parse TLS handshakes.
             continue
 
-        # Reassemble TLSApplicationData chunks into a single payload.
         ts = float(packet.time)
-        data = b''
-        for i, l in enumerate(packet.layers()):
-            layer = packet.getlayer(i)
-            if not isinstance(layer, TLS):
-                continue
-            for m in filter(lambda m: isinstance(m, TLSApplicationData) and len(m.data) > 0, layer.msg):
-                data += m.data
-
-        if len(data) == 0:
-            continue
-
-        d = 'CLIENT' if ip.src != srv else 'SERVER'
-        print(f'{d} | PACKET> #{n:05d} Len={len(data):010d} - {hexlify(data[:40]).decode()}')
-        replayer.setTimeStamp(ts)
-        replayer.recv(data, ip.src != srv)
+        for payload in packet[TLS].iterpayloads():
+            if TLSApplicationData not in payload:
+                continue  # Not application data.
+            for m in payload.msg:
+                replayer.setTimeStamp(ts)
+                replayer.recv(m.data, ip.src == client)
     try:
         replayer.tcp.recordConnectionClose()
     except struct.error:
