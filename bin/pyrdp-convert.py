@@ -235,21 +235,41 @@ def decrypted(stream: PacketList, master_secret: bytes) -> Decrypted:
     return Decrypted(stream, master_secret)
 
 
-def processPlaintext(stream: PacketList, outfile: str):
+def getStreamInfo(s: PacketList) -> (str, str, float, bool):
+    """Attempt to retrieve an (src, dst, ts, isPlaintext) tuple for a data stream."""
+    packet = s[0]
+    if IP in packet:
+        # FIXME: Technically the IP traffic could be plaintext too.
+        return (packet[IP].src, packet[IP].dst, packet.time, False)
+    elif Ether not in packet:
+        # No Ethernet layer, so assume exported PDUs.
+        src = ".".join(str(b) for b in packet.load[12:16])
+        dst = ".".join(str(b) for b in packet.load[20:24])
+        return (src, dst, float(packet.time) / 1000, True)
+    raise Exception('Invalid stream type. Must be TCP/TLS or EXPORTED PDU.')
+
+
+def processPlaintext(stream: PacketList, outfile: str, info):
     """Process a plaintext EXPORTED PDU RDP export to a replay."""
     replayer = RDPReplayer(outfile)
-    client = None
+    (client, server, _, _) = info
     for packet in progressbar(stream):
         src = ".".join(str(b) for b in packet.load[12:16])
         dst = ".".join(str(b) for b in packet.load[20:24])
         data = packet.load[60:]
 
-        if not client:
-            client = src
+        if src not in [client, server] or dst not in [client, server]:
+            continue
 
+        # FIXME: The absolute time is completely wrong here because replayer multiplies by 1000.
         replayer.setTimeStamp(float(packet.time))
         replayer.recv(data, src == client)
-        pass
+
+    try:
+        replayer.tcp.recordConnectionClose()
+    except struct.error:
+        print("Couldn't close the connection cleanly. "
+              "Are you sure you got source and destination correct?")
 
 
 def processTLS(stream: Decrypted, outfile: str):
@@ -258,7 +278,7 @@ def processTLS(stream: Decrypted, outfile: str):
     replayer = RDPReplayer(outfile)
     client = None  # The RDP client's IP.
 
-    for n, packet in enumerate(stream):
+    for packet in progressbar(stream):
         ip = packet.getlayer(IP)
 
         if not client:
@@ -306,20 +326,19 @@ def main():
     pcap = sniff(offline=args.input)
     sessions = pcap.sessions(tcp_both)
     streams = []
-    for sid, stream in sessions.items():
-        # FIXME: Plaintext crashes here.
-        ip = stream[0].getlayer(IP)
-        name = f'{ip.src} -> {ip.dst}'
-        info =(ip.src, ip.dst, stream[0].time)
-        print(f"    -> {name}:", end ='', flush=True)
+    for stream in sessions.values():
+        (src, dst, ts, plaintext) = info = getStreamInfo(stream)
+        name = f'{src} -> {dst}'
+        print(f"    - {src} -> {dst}:", end ='', flush=True)
+
+        if plaintext:
+            print(' plaintext')
+            streams.append((info, stream))
+            continue
 
         rnd = findClientRandom(stream)
         if rnd not in secrets and rnd != '':
             print(' unknown master secret')
-            continue  # Encrypted, but we don't have the secret.
-        if rnd == '':
-            print(' plaintext?')
-            streams.append((info, stream))
         else:
             print(' master secret available (!)')
             streams.append((info, decrypted(stream, secrets[rnd]['master'])))
@@ -327,7 +346,7 @@ def main():
     if args.list:
         return
 
-    for (src, dst, ts), s in streams:
+    for (src, dst, ts, plaintext), s in streams:
         if len(args.src) > 0 and src not in args.src:
             continue
         if len(args.dst) > 0 and dst not in args.dst:
@@ -336,10 +355,12 @@ def main():
             print(f'[*] Processing {src} -> {dst}')
             ts = time.strftime('%Y%M%d%H%m%S', time.gmtime(ts))
             outfile = OUTFILE_FORMAT.format(**{'prefix': 'converted-', 'timestamp': ts, 'src': src, 'dst': dst, 'ext': 'pyrdp'})
-            if isinstance(s, Decrypted):
-                processTLS(s, outfile)
+
+            if plaintext:
+                processPlaintext(s, outfile, info)
             else:
-                processPlaintext(s, outfile)
+                processTLS(s, outfile)
+
             print(f"\n[+] Successfully wrote '{outfile}'")
         except Exception as e:
             print('\n[-] Failed to extract stream. Verify that all packets are in the trace and that the master secret is the right one.')
