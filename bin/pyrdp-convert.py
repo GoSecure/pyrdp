@@ -274,7 +274,6 @@ def processPlaintext(stream: PacketList, outfile: str, info):
 
 def processTLS(stream: Decrypted, outfile: str):
     """Process an encrypted TCP stream into a replay file."""
-    # print(f'Processing {stream.src} <> {stream.dst}')
     replayer = RDPReplayer(outfile)
     client = None  # The RDP client's IP.
 
@@ -317,7 +316,6 @@ def main():
 
     logging.basicConfig(level=logging.CRITICAL)
     logging.getLogger("scapy").setLevel(logging.ERROR)
-    # logging.getLogger("pyrdp").setLevel(logging.DEBUG)
 
     # -- PCAPS ------------------------------------------------
     secrets = loadSecrets(args.secrets) if args.secrets else {}
@@ -346,6 +344,14 @@ def main():
     if args.list:
         return
 
+    prefix = ''
+    if args.output:
+        outdir = Path(args.output)
+        if outdir.is_dir():
+            prefix = str(outdir.absolute()) + '/'
+        else:
+            prefix = str(outdir.parent.absolute() / outdir.stem) + '-'
+
     for (src, dst, ts, plaintext), s in streams:
         if len(args.src) > 0 and src not in args.src:
             continue
@@ -354,7 +360,7 @@ def main():
         try:
             print(f'[*] Processing {src} -> {dst}')
             ts = time.strftime('%Y%M%d%H%m%S', time.gmtime(ts))
-            outfile = OUTFILE_FORMAT.format(**{'prefix': 'converted-', 'timestamp': ts, 'src': src, 'dst': dst, 'ext': 'pyrdp'})
+            outfile = OUTFILE_FORMAT.format(**{'prefix': prefix, 'timestamp': ts, 'src': src, 'dst': dst, 'ext': 'pyrdp'})
 
             if plaintext:
                 processPlaintext(s, outfile, info)
