@@ -14,6 +14,7 @@ from pyrdp.recording import FileLayer
 from pyrdp.player.BaseEventHandler import BaseEventHandler
 from pyrdp.player.Mp4EventHandler import Mp4EventHandler
 from pyrdp.player.Replay import Replay
+from pyrdp.layer import PlayerLayer, LayerChainItem
 
 import argparse
 from binascii import unhexlify, hexlify
@@ -31,20 +32,18 @@ load_layer('tls')  # noqa
 TLS_HDR_LEN = 24  # Hopefully this doesn't change between TLS versions.
 OUTFILE_FORMAT = '{prefix}{timestamp}_{src}-{dst}.{ext}'
 
+class Mp4Layer(LayerChainItem):
+    def __init__(self, sink: Mp4EventHandler):
+        self.sink = sink
+        self.player = PlayerLayer()
+        self.player.addObserver(sink)
+
+    def sendBytes(self, data: bytes):
+        self.player.recv(data)
+
 
 class CustomMITMRecorder(MITMRecorder):
     currentTimeStamp: int = None
-    sink: BaseEventHandler = None
-
-    def __init__(self, transports, state: RDPMITMState, sink: BaseEventHandler = None):
-        if sink:
-            self.sink = sink
-        super().__init__(transports, state)
-
-    def record(self, pdu, messageType, forceRecording: bool = False):
-        if self.sink and pdu:
-            self.sink.onPDUReceived(pdu)
-        super().record(pdu, messageType, forceRecording)
 
     def getCurrentTimeStamp(self) -> int:
         return self.currentTimeStamp
@@ -64,7 +63,7 @@ class RDPReplayerConfig(MITMConfig):
 
 
 class RDPReplayer(RDPMITM):
-    def __init__(self, output_path: str):
+    def __init__(self, output_path: str, mp4: bool = False):
         def sendBytesStub(_: bytes):
             pass
 
@@ -79,9 +78,15 @@ class RDPReplayer(RDPMITM):
         # We'll set up the recorder ourselves
         config.recordReplays = False
 
-        replay_transport = FileLayer(output_path)
+        transport = FileLayer(output_path)
         state = RDPMITMState(config)
-        super().__init__(log, log, config, state, CustomMITMRecorder([replay_transport], state))
+
+        sink = None
+        if mp4:
+            sink = Mp4EventHandler(output_path)
+            transport = Mp4Layer(sink)
+
+        super().__init__(log, log, config, state, CustomMITMRecorder([transport], state))
 
         self.client.tcp.sendBytes = sendBytesStub
         self.server.tcp.sendBytes = sendBytesStub
@@ -115,6 +120,7 @@ def tcp_both(p) -> str:
     if 'TCP' in p:
         return str(sorted(['TCP', p[IP].src, p[TCP].sport, p[IP].dst, p[TCP].dport], key=str))
     return 'Other'
+
 
 def findClientRandom(stream: PacketList, limit: int = 10) -> str:
     """Find the client random offset and value of a stream."""
@@ -265,7 +271,8 @@ class Converter():
         self.args = args
 
         self.prefix = ''
-        self.ext = 'pyrdp'
+        self.ext = 'mp4' if args.format == 'mp4' else 'pyrdp'
+
         self.secrets = loadSecrets(args.secrets) if args.secrets else {}
 
         if args.output:
@@ -277,7 +284,8 @@ class Converter():
 
     def processPlaintext(self, stream: PacketList, outfile: str, info):
         """Process a plaintext EXPORTED PDU RDP export to a replay."""
-        replayer = RDPReplayer(outfile)
+
+        replayer = RDPReplayer(outfile, mp4=self.args.format == 'mp4')
         (client, server, _, _) = info
         for packet in progressbar.progressbar(stream):
             src = ".".join(str(b) for b in packet.load[12:16])
@@ -297,10 +305,10 @@ class Converter():
             print("Couldn't close the connection cleanly. "
                 "Are you sure you got source and destination correct?")
 
-
     def processTLS(self, stream: Decrypted, outfile: str):
         """Process an encrypted TCP stream into a replay file."""
-        replayer = RDPReplayer(outfile)
+
+        replayer = RDPReplayer(outfile, mp4=self.args.format == 'mp4')
         client = None  # The RDP client's IP.
 
         for packet in progressbar.progressbar(stream):
@@ -327,7 +335,6 @@ class Converter():
         except struct.error:
             print("Couldn't close the connection cleanly. "
                 "Are you sure you got source and destination correct?")
-
 
     def processPcap(self, infile: Path):
         print(f"[*] Analyzing PCAP '{infile}' ...")
