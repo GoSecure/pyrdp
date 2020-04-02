@@ -33,14 +33,21 @@ class Mp4Sink:
 
 class Mp4EventHandler(RenderingEventHandler):
 
-    def __init__(self, filename: str, fps=30):
-        """Construct an event handler that outputs to an Mp4 file."""
+    def __init__(self, filename: str, fps=30, progress=None):
+        """
+        Construct an event handler that outputs to an Mp4 file.
+
+        :param filename: The output file to write to.
+        :param fps: The frame rate (30 recommended).
+        :param progress: An optional callback (sig: `() -> ()`) whenever a frame is muxed.
+        """
 
         self.sink = Mp4Sink()
         self.filename = filename
         self.mp4 = f = av.open(filename, 'w')
         self.stream = f.add_stream('h264', rate=fps)
         self.stream.pix_fmt = 'yuv420p'
+        self.progress = progress
         self.scale = False
         self.mouse = (0, 0)
         self.fps = fps
@@ -79,6 +86,8 @@ class Mp4EventHandler(RenderingEventHandler):
 
         self.log.info('Flushing to disk: %s', self.filename)
         for pkt in self.stream.encode():
+            if self.progress:
+                self.progress()
             self.mp4.mux(pkt)
         self.log.info('Export completed.')
 
@@ -128,4 +137,6 @@ class Mp4EventHandler(RenderingEventHandler):
         # Output frame.
         frame = av.VideoFrame.from_image(ImageQt.fromqimage(surface))
         for packet in self.stream.encode(frame):
+            if self.progress:
+                self.progress()
             self.mp4.mux(packet)

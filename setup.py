@@ -29,7 +29,6 @@ setup(name='pyrdp',
         'bin/pyrdp-mitm.py',
         'bin/pyrdp-player.py',
         'bin/pyrdp-convert.py',
-        'bin/pyrdp-replay.py'
     ],
     install_requires=[
         'appdirs>=1,<2',

@@ -11,6 +11,9 @@ from pyrdp.mitm import MITMConfig, RDPMITM
 from pyrdp.mitm.MITMRecorder import MITMRecorder
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.recording import FileLayer
+from pyrdp.player.BaseEventHandler import BaseEventHandler
+from pyrdp.player.Mp4EventHandler import Mp4EventHandler
+from pyrdp.player.Replay import Replay
 
 import argparse
 from binascii import unhexlify, hexlify
@@ -19,17 +22,29 @@ from pathlib import Path
 import struct
 import time
 
-from progressbar import progressbar
+import progressbar
 
 # No choice but to import * here for load_layer to work properly.
 from scapy.all import *  # noqa
 load_layer('tls')  # noqa
 
 TLS_HDR_LEN = 24  # Hopefully this doesn't change between TLS versions.
+OUTFILE_FORMAT = '{prefix}{timestamp}_{src}-{dst}.{ext}'
 
 
 class CustomMITMRecorder(MITMRecorder):
     currentTimeStamp: int = None
+    sink: BaseEventHandler = None
+
+    def __init__(self, transports, state: RDPMITMState, sink: BaseEventHandler = None):
+        if sink:
+            self.sink = sink
+        super().__init__(transports, state)
+
+    def record(self, pdu, messageType, forceRecording: bool = False):
+        if self.sink and pdu:
+            self.sink.onPDUReceived(pdu)
+        super().record(pdu, messageType, forceRecording)
 
     def getCurrentTimeStamp(self) -> int:
         return self.currentTimeStamp
@@ -93,9 +108,13 @@ class RDPReplayer(RDPMITM):
     def sendPayload(self):
         pass
 
-# The name format of output files.
-OUTFILE_FORMAT = '{prefix}{timestamp}_{src}-{dst}.{ext}'
 
+def tcp_both(p) -> str:
+    """Session extractor which merges both sides of a TCP channel."""
+
+    if 'TCP' in p:
+        return str(sorted(['TCP', p[IP].src, p[TCP].sport, p[IP].dst, p[TCP].dport], key=str))
+    return 'Other'
 
 def findClientRandom(stream: PacketList, limit: int = 10) -> str:
     """Find the client random offset and value of a stream."""
@@ -111,14 +130,6 @@ def findClientRandom(stream: PacketList, limit: int = 10) -> str:
         except Exception:
             pass  # Not a TLS packet.
     return ''
-
-
-def tcp_both(p) -> str:
-    """Session extractor which merges both sides of a TCP channel."""
-
-    if 'TCP' in p:
-        return str(sorted(['TCP', p[IP].src, p[TCP].sport, p[IP].dst, p[TCP].dport], key=str))
-    return 'Other'
 
 
 def loadSecrets(filename: str) -> dict:
@@ -249,61 +260,155 @@ def getStreamInfo(s: PacketList) -> (str, str, float, bool):
     raise Exception('Invalid stream type. Must be TCP/TLS or EXPORTED PDU.')
 
 
-def processPlaintext(stream: PacketList, outfile: str, info):
-    """Process a plaintext EXPORTED PDU RDP export to a replay."""
-    replayer = RDPReplayer(outfile)
-    (client, server, _, _) = info
-    for packet in progressbar(stream):
-        src = ".".join(str(b) for b in packet.load[12:16])
-        dst = ".".join(str(b) for b in packet.load[20:24])
-        data = packet.load[60:]
+class Converter():
+    def __init__(self, args):
+        self.args = args
 
-        if src not in [client, server] or dst not in [client, server]:
-            continue
+        self.prefix = ''
+        self.ext = 'pyrdp'
+        self.secrets = loadSecrets(args.secrets) if args.secrets else {}
 
-        # FIXME: The absolute time is completely wrong here because replayer multiplies by 1000.
-        replayer.setTimeStamp(float(packet.time))
-        replayer.recv(data, src == client)
+        if args.output:
+            outdir = Path(args.output)
+            if outdir.is_dir():
+                self.prefix = str(outdir.absolute()) + '/'
+            else:
+                self.prefix = str(outdir.parent.absolute() / outdir.stem) + '-'
 
-    try:
-        replayer.tcp.recordConnectionClose()
-    except struct.error:
-        print("Couldn't close the connection cleanly. "
-              "Are you sure you got source and destination correct?")
+    def processPlaintext(self, stream: PacketList, outfile: str, info):
+        """Process a plaintext EXPORTED PDU RDP export to a replay."""
+        replayer = RDPReplayer(outfile)
+        (client, server, _, _) = info
+        for packet in progressbar.progressbar(stream):
+            src = ".".join(str(b) for b in packet.load[12:16])
+            dst = ".".join(str(b) for b in packet.load[20:24])
+            data = packet.load[60:]
 
+            if src not in [client, server] or dst not in [client, server]:
+                continue
 
-def processTLS(stream: Decrypted, outfile: str):
-    """Process an encrypted TCP stream into a replay file."""
-    replayer = RDPReplayer(outfile)
-    client = None  # The RDP client's IP.
+            # FIXME: The absolute time is completely wrong here because replayer multiplies by 1000.
+            replayer.setTimeStamp(float(packet.time))
+            replayer.recv(data, src == client)
 
-    for packet in progressbar(stream):
-        ip = packet.getlayer(IP)
-
-        if not client:
-            client = ip.src
-            continue
-
-        if TLSApplicationData not in packet:
-            # This is not TLS application data, skip it, as PyRDP's
-            # network stack cannot parse TLS handshakes.
-            continue
-
-        ts = float(packet.time)
-        for payload in packet[TLS].iterpayloads():
-            if TLSApplicationData not in payload:
-                continue  # Not application data.
-            for m in payload.msg:
-                replayer.setTimeStamp(ts)
-                replayer.recv(m.data, ip.src == client)
-    try:
-        replayer.tcp.recordConnectionClose()
-    except struct.error:
-        print("Couldn't close the connection cleanly. "
-              "Are you sure you got source and destination correct?")
+        try:
+            replayer.tcp.recordConnectionClose()
+        except struct.error:
+            print("Couldn't close the connection cleanly. "
+                "Are you sure you got source and destination correct?")
 
 
-def main():
+    def processTLS(self, stream: Decrypted, outfile: str):
+        """Process an encrypted TCP stream into a replay file."""
+        replayer = RDPReplayer(outfile)
+        client = None  # The RDP client's IP.
+
+        for packet in progressbar.progressbar(stream):
+            ip = packet.getlayer(IP)
+
+            if not client:
+                client = ip.src
+                continue
+
+            if TLSApplicationData not in packet:
+                # This is not TLS application data, skip it, as PyRDP's
+                # network stack cannot parse TLS handshakes.
+                continue
+
+            ts = float(packet.time)
+            for payload in packet[TLS].iterpayloads():
+                if TLSApplicationData not in payload:
+                    continue  # Not application data.
+                for m in payload.msg:
+                    replayer.setTimeStamp(ts)
+                    replayer.recv(m.data, ip.src == client)
+        try:
+            replayer.tcp.recordConnectionClose()
+        except struct.error:
+            print("Couldn't close the connection cleanly. "
+                "Are you sure you got source and destination correct?")
+
+
+    def processPcap(self, infile: Path):
+        print(f"[*] Analyzing PCAP '{infile}' ...")
+        pcap = sniff(offline=str(infile))
+
+        args = self.args
+
+        sessions = pcap.sessions(tcp_both)
+        streams = []
+        for stream in sessions.values():
+            (src, dst, ts, plaintext) = info = getStreamInfo(stream)
+            name = f'{src} -> {dst}'
+            print(f"    - {src} -> {dst}:", end ='', flush=True)
+
+            if plaintext:
+                print(' plaintext')
+                streams.append((info, stream))
+                continue
+
+            rnd = findClientRandom(stream)
+            if rnd not in self.secrets and rnd != '':
+                print(' unknown master secret')
+            else:
+                print(' master secret available (!)')
+                streams.append((info, decrypted(stream, self.secrets[rnd]['master'])))
+
+        if args.list:
+            return  # List only.
+
+        for (src, dst, ts, plaintext), s in streams:
+            if len(args.src) > 0 and src not in args.src:
+                continue
+            if len(args.dst) > 0 and dst not in args.dst:
+                continue
+            try:
+                print(f'[*] Processing {src} -> {dst}')
+                ts = time.strftime('%Y%M%d%H%m%S', time.gmtime(ts))
+                outfile = OUTFILE_FORMAT.format(**{'prefix': self.prefix,
+                                                   'timestamp': ts,
+                                                   'src': src, 'dst': dst,
+                                                   'ext': 'pyrdp'})
+
+                if plaintext:
+                    sefl.processPlaintext(s, outfile, info)
+                else:
+                    self.processTLS(s, outfile)
+
+                print(f"\n[+] Successfully wrote '{outfile}'")
+            except Exception as e:
+                print(f'\n[-] Failed: {e}')
+
+    def processReplay(self, infile: Path):
+
+        widgets = [
+            progressbar.FormatLabel('Encoding MP4 '),
+            progressbar.BouncingBar(),
+            progressbar.FormatLabel(' Elapsed: %(elapsed)s'),
+        ]
+        with progressbar.ProgressBar(widgets=widgets) as progress:
+            print(f"[*] Converting '{infile}' to MP4.")
+            outfile = self.prefix + infile.stem + '.mp4'
+            sink = Mp4EventHandler(outfile, progress=lambda: progress.update(0))
+            fd = open(infile, "rb")
+            replay = Replay(fd, handler=sink)
+            print(f"\n[+] Succesfully wrote '{outfile}'")
+            sink.cleanup()
+            fd.close()
+
+    def run(self):
+        args = self.args
+        infile = Path(args.input)
+
+        if infile.suffix in ['.pcap', '.pcapng', '.cap']:
+            self.processPcap(infile)
+        elif infile.suffix in ['.pyrdp']:
+            self.processReplay(infile)
+        else:
+            print('Unknown file extension. (Supported: .cap, .pcap, .pcapng, .pyrdp)')
+
+
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('input', help='Path to a .pcap, .pcapng, or .pyrdp file')
     parser.add_argument('-l', '--list', help='Print the list of sessions in the capture without processing anything', action='store_true')
@@ -317,62 +422,5 @@ def main():
     logging.basicConfig(level=logging.CRITICAL)
     logging.getLogger("scapy").setLevel(logging.ERROR)
 
-    # -- PCAPS ------------------------------------------------
-    secrets = loadSecrets(args.secrets) if args.secrets else {}
-
-    print('[*] Analyzing network trace...')
-    pcap = sniff(offline=args.input)
-    sessions = pcap.sessions(tcp_both)
-    streams = []
-    for stream in sessions.values():
-        (src, dst, ts, plaintext) = info = getStreamInfo(stream)
-        name = f'{src} -> {dst}'
-        print(f"    - {src} -> {dst}:", end ='', flush=True)
-
-        if plaintext:
-            print(' plaintext')
-            streams.append((info, stream))
-            continue
-
-        rnd = findClientRandom(stream)
-        if rnd not in secrets and rnd != '':
-            print(' unknown master secret')
-        else:
-            print(' master secret available (!)')
-            streams.append((info, decrypted(stream, secrets[rnd]['master'])))
-
-    if args.list:
-        return
-
-    prefix = ''
-    if args.output:
-        outdir = Path(args.output)
-        if outdir.is_dir():
-            prefix = str(outdir.absolute()) + '/'
-        else:
-            prefix = str(outdir.parent.absolute() / outdir.stem) + '-'
-
-    for (src, dst, ts, plaintext), s in streams:
-        if len(args.src) > 0 and src not in args.src:
-            continue
-        if len(args.dst) > 0 and dst not in args.dst:
-            continue
-        try:
-            print(f'[*] Processing {src} -> {dst}')
-            ts = time.strftime('%Y%M%d%H%m%S', time.gmtime(ts))
-            outfile = OUTFILE_FORMAT.format(**{'prefix': prefix, 'timestamp': ts, 'src': src, 'dst': dst, 'ext': 'pyrdp'})
-
-            if plaintext:
-                processPlaintext(s, outfile, info)
-            else:
-                processTLS(s, outfile)
-
-            print(f"\n[+] Successfully wrote '{outfile}'")
-        except Exception as e:
-            print('\n[-] Failed to extract stream. Verify that all packets are in the trace and that the master secret is the right one.')
-            raise e
-    # -- /PCAPS -----------------------------------------------
-
-
-if __name__ == "__main__":
-    main()
+    c = Converter(args)
+    c.run()
