@@ -41,7 +41,6 @@ def main():
     reactor.adoptStreamPort(s.fileno(), socket.AF_INET, MITMServerFactory(config))
     s.close()  # reactor creates a copy of the fd.
 
-
     logger.info("MITM Server listening on port %(port)d", {"port": config.listenPort})
 
     reactor.run()
