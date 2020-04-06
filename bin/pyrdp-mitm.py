@@ -18,14 +18,32 @@ from pyrdp.core.mitm import MITMServerFactory
 from pyrdp.mitm import MITMConfig, DEFAULTS
 from pyrdp.mitm.cli import showConfiguration, configure
 from pyrdp.logging import LOGGER_NAMES
+import socket
 
 
 def main():
     config = configure()
-    reactor.listenTCP(config.listenPort, MITMServerFactory(config))
     logger = logging.getLogger(LOGGER_NAMES.PYRDP)
 
+    # Create a listening socket to accept connections.
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setblocking(0)
+
+    if config.transparent:
+        try:
+            if not s.getsockopt(socket.SOL_IP, socket.IP_TRANSPARENT):
+                s.setsockopt(socket.SOL_IP, socket.IP_TRANSPARENT, 1)
+        except Exception:
+            logger.warning('Unable to set transparent socket. Are you running as root?')
+
+    s.bind(('0.0.0.0', config.listenPort))
+    s.listen()  # Non-blocking.
+    reactor.adoptStreamPort(s.fileno(), socket.AF_INET, MITMServerFactory(config))
+    s.close()  # reactor creates a copy of the fd.
+
+
     logger.info("MITM Server listening on port %(port)d", {"port": config.listenPort})
+
     reactor.run()
 
     logger.info("MITM terminated")
