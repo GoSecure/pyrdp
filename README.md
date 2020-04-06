@@ -19,7 +19,14 @@ It features a few tools:
 - RDP Certificate Cloner:
     - Create a self-signed X509 certificate with the same fields as an RDP server's certificate
 
-PyRDP was [introduced in 2018](https://www.gosecure.net/blog/2018/12/19/rdp-man-in-the-middle-smile-youre-on-camera) in which we [demonstrated that we can catch a real threat actor in action](https://www.youtube.com/watch?v=eB7RC9FmL6Q). This tool is being developed with both pentest and malware research use cases in mind.
+PyRDP was [introduced in 2018](https://www.gosecure.net/blog/2018/12/19/rdp-man-in-the-middle-smile-youre-on-camera) in
+which we [demonstrated that we can catch a real threat actor in
+action](https://www.youtube.com/watch?v=eB7RC9FmL6Q). This tool is being developed with both pentest and malware
+research use cases in mind.
+
+
+![PyRDP Player Replaying an RDP session](docs/screens/replay.png)
+
 
 ## Table of Contents
 - [Supported Systems](#supported-systems)
@@ -66,7 +73,8 @@ PyRDP was [introduced in 2018](https://www.gosecure.net/blog/2018/12/19/rdp-man-
 ## Supported Systems
 PyRDP should work on Python 3.6 and up.
 
-This tool has been tested to work on Python 3.6 on Linux (Ubuntu 18.04) and Windows (See section [Installing on Windows](#installing-on-windows)). It has not been tested on OSX.
+This tool has been tested to work on Python 3.6 on Linux (Ubuntu 18.04) and Windows (See section [Installing on
+Windows](#installing-on-windows)). It has not been tested on OSX.
 
 ## Installing
 
