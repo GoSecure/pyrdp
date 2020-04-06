@@ -341,7 +341,7 @@ a gateway between clients and the server and sees all traffic.
 [Specific examples can be found here.](docs/transparent-proxy.md)
 
 **NOTE**: This requires root privileges, only works on Linux and requires manual firewall configuration to ensure 
-that traffic is router properly.
+that traffic is routed properly.
 
 
 ### Using the PyRDP Player
