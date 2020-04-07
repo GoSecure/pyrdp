@@ -197,6 +197,16 @@ arp -i br0 -s 10.13.37.1 08:00:27:59:05:f0
 arp -i br0 -s 10.13.37.111 08:00:27:59:05:fe
 ```
 
+Lastly, the MITM networking stack needs to know which traffic to route through the bridge, and this can complicate
+things significantly if a management interface is required. The simplest option is to have a route for the
+bridged subnet:
+
+```
+ip route add 10.13.37.0/24 dev br0
+```
+
+Other scenarios might require creativity with route configuration and are left to the reader's imagination.
+
 # Useful References
 
 * TPROXY documentation: https://powerdns.org/tproxydoc/tproxy.md.html
