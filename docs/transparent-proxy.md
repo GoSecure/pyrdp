@@ -207,6 +207,52 @@ ip route add 10.13.37.0/24 dev br0
 
 Other scenarios might require creativity with route configuration and are left to the reader's imagination.
 
+## Network Namespacing: Isolating MITM Interfaces
+
+In order to make things easier to manage, it's a good idea to isolate the L2 bridge and interception from the rest of
+the system to avoid accidental leaks due to misconfigured routes or unexpected protocols.
+
+This can be achieved very cleanly using a feature of the Linux kernel called `namespaces`. The idea is to have a
+separate namespace for the PyRDP process and the intercepted bridge. This can be done as follows (paraphrased from the
+[github issue][204]):
+
+```bash
+# Creates the 'mitm' namespace
+ip netns add mitm
+# Assign the input and output interfaces to the created namespace. 
+# They will disappear from the host and stop working so be careful not to lock yourself out of the server.
+ip link set dev enp0s3 netns mitm
+ip link set dev enp0s8 netns mitm
+
+# Enable the loopback interface
+ip link set dev lo up
+
+# Spawn a bash shell inside the network namespace.
+# The MITM can then be configured (as described in previous sections) inside the namespace.
+ip netns exec mitm /bin/bash
+
+# Setup the bridge for L2 interception of traffic between the two interfaces.
+ip link add name br0 type bridge
+ip link set br0 up
+ip link set enp0s3 up
+ip link set enp0s8 up
+ip link set enp0s3 master br0
+ip link set enp0s8 master br0
+# Set forward delay to 0
+brctl setfd br0 0
+```
+
+When using namespaces, all of the configuration for the MITM (from the previous sections) must be done while inside the
+namespace, and PyRDP must also be run from within the namespace. This creates a very clean logical split between the
+MITM host and PyRDP. You will need a third management interface for the host to remain reachable.
+
+It might also be a good idea to disable outbound ARP requests to prevent the host from accidentally sending ARP requests
+to the bridge:
+
+```bash
+arptables -A OUTPUT -o br0 -j DROP
+```
+
 # Useful References
 
 * TPROXY documentation: https://powerdns.org/tproxydoc/tproxy.md.html
@@ -216,3 +262,7 @@ Other scenarios might require creativity with route configuration and are left t
 * `ebtables` reference: https://ebtables.netfilter.org/
 * https://github.com/rkok/bridge-mitm-tools
 * https://wiki.squid-cache.org/Features/Tproxy4#Timeouts_with_Squid_running_as_a_bridge_or_multiple-NIC
+* PyRDP Issue containing more details: https://github.com/GoSecure/pyrdp/issues/204
+
+
+[204]: https://github.com/GoSecure/pyrdp/issues/204#issuecomment-610758979
