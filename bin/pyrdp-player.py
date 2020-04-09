@@ -80,6 +80,7 @@ def main():
     if not args.headless:
         app = QApplication(sys.argv)
         mainWindow = MainWindow(args.bind, int(args.port), args.replay)
+        mainWindow.showMaximized()
         mainWindow.show()
 
         return app.exec_()
