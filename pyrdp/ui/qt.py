@@ -195,9 +195,10 @@ class QRemoteDesktop(QWidget):
 
     def resize(self, width: int, height: int):
         """
-        Resize widget
-        :param width: new width of the widget
-        :param height: new height of the widget
+        Resize the image buffer. This is called when the clientData is parsed, which
+        contains the screen size used for the connection.
+        :param width: new width of the replay client's screen
+        :param height: new height of the replay client's screen.
         """
         self._buffer = QImage(width, height, QImage.Format_ARGB32_Premultiplied)
         self.sessionWidth = width
