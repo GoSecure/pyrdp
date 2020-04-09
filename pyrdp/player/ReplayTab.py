@@ -3,7 +3,7 @@
 # Copyright (C) 2019 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-
+from PySide2.QtGui import QResizeEvent
 from PySide2.QtWidgets import QApplication, QWidget
 
 from pyrdp.layer import PlayerLayer
@@ -99,7 +99,7 @@ class ReplayTab(BaseTab):
         self.parentResized(self.parent().width(), self.parent().height())
         self.widget.setScaleToWindow(status)
 
-    def parentResized(self, width: int, height: int):
+    def parentResized(self, event: QResizeEvent):
         """
         Called when the main PyRDP window is resized to allow to scale the current
         RDP session being displayed.

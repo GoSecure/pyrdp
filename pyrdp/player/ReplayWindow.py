@@ -37,4 +37,4 @@ class ReplayWindow(BaseWindow):
     def resizeEvent(self, event: QResizeEvent):
         super().resizeEvent(event)
         for i in range(self.count()):
-            self.widget(i).parentResized(event.size().width(), event.size().height())
+            self.widget(i).parentResized(event)
