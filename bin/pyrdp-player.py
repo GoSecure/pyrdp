@@ -7,9 +7,9 @@
 #
 
 # asyncio needs to be imported first to ensure that the reactor is
-# installed properly. Do not re-order.
+# installed properly. ***DO NOT RE-ORDER***.
+import asyncio  # noqa
 
-import asyncio   # noqa
 from twisted.internet import asyncioreactor
 
 asyncioreactor.install(asyncio.get_event_loop())
