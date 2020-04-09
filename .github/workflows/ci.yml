@@ -63,7 +63,7 @@ jobs:
 
     - name: Coverage
       working-directory: ./
-      run: coverage report --fail-under=50
+      run: coverage report --fail-under=40
 
 
 
