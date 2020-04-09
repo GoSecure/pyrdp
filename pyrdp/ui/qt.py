@@ -139,6 +139,8 @@ class QRemoteDesktop(QWidget):
         self.width = width
         self.height = height
 
+        self.scaleToWindow = False
+
         # set correct size
         self.resize(width, height)
         # bind mouse event
@@ -183,6 +185,9 @@ class QRemoteDesktop(QWidget):
         self.scaleValue = scale
         self.resize(self.width, self.height)
 
+    def setScaleToWindow(self, status):
+        self.scaleToWindow = status > 0
+
     def resize(self, width: int, height: int):
         """
         Resize widget
@@ -192,17 +197,18 @@ class QRemoteDesktop(QWidget):
         self._buffer = QImage(width, height, QImage.Format_RGB32)
         self.width = width
         self.height = height
-        super().resize(width * self.scaleValue, height * self.scaleValue)
+        super().resize(width, height)
 
     def paintEvent(self, e: QEvent):
         """
         Call when Qt renderer engine estimate that is needed
         :param e: the event
         """
+        scaleValue = self.scaleValue if self.scaleToWindow else 1
         qp = QPainter(self)
-        qp.drawImage(0, 0, self._buffer.scaled(self.width * self.scaleValue, self.height * self.scaleValue, aspectMode=Qt.KeepAspectRatio))
+        qp.drawImage(0, 0, self._buffer.scaled(self.width * scaleValue, self.height * scaleValue, aspectMode=Qt.KeepAspectRatio))
         qp.setBrush(QColor.fromRgb(255, 255, 0, 180))
-        qp.drawEllipse(QPoint(self.mouseX * self.scaleValue, self.mouseY * self.scaleValue), 5, 5)
+        qp.drawEllipse(QPoint(self.mouseX * scaleValue, self.mouseY * scaleValue), 5, 5)
 
     def clear(self):
         self._buffer = QImage(self._buffer.width(), self._buffer.height(), QImage.Format_RGB32)
