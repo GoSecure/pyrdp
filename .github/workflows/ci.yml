@@ -50,6 +50,13 @@ jobs:
     - name: pyrdp-mitm.py initialization integration test
       working-directory: ./
       run: coverage run --append test/test_mitm_initialization.py dummy_value
+
+    - name: Extract test session replay
+      uses: DuckSoft/extract-7z-action@v1.0
+      with:
+        - pathSource: test/files/test_session_replay.zip
+        - pathTarget: test/files/test_session.replay
+
     - name: pyrdp-player.py read a replay in headless mode test
       working-directory: ./
       run: coverage run --append bin/pyrdp-player.py --headless test/files/test_session.replay
