@@ -145,13 +145,13 @@ class QRemoteDesktop(QWidget):
 
         self.scaleToWindow = False
 
+        # Buffer image
         self._buffer: QImage = QImage(width, height, QImage.Format_ARGB32_Premultiplied)
 
         # Set correct size
         self.resize(width, height)
         # Bind mouse event
         self.setMouseTracking(True)
-        # Buffer image
         self.mouseX = width // 2
         self.mouseY = height // 2
 
