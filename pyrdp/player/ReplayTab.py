@@ -103,8 +103,7 @@ class ReplayTab(BaseTab):
         """
         Called when the main PyRDP window is resized to allow to scale the current
         RDP session being displayed.
-        :param width: The new width of the main window
-        :param height: The new height of the main window
+        :param event: The event of the parent that has been resized
         """
         newScale = (self.scrollViewer.height() - self.scrollViewer.horizontalScrollBar().height()) / self.widget.sessionHeight
         self.widget.scale(newScale)
