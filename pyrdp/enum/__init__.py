@@ -1,8 +1,9 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+# flake8: noqa
 
 from pyrdp.enum.core import ParserMode
 from pyrdp.enum.gcc import GCCPDUType
@@ -10,6 +11,7 @@ from pyrdp.enum.mcs import MCSChannelID, MCSChannelName, MCSPDUType, MCSResult
 from pyrdp.enum.negotiation import NegotiationRequestFlags, NegotiationType
 from pyrdp.enum.player import MouseButton, PlayerPDUType
 from pyrdp.enum.rdp import *
+from pyrdp.enum.orders import DrawingOrderControlFlags
 from pyrdp.enum.scancode import ScanCode, ScanCodeTuple
 from pyrdp.enum.segmentation import SegmentationPDUType
 from pyrdp.enum.virtual_channel.clipboard import ClipboardFormatName, ClipboardFormatNumber, ClipboardMessageFlags, \

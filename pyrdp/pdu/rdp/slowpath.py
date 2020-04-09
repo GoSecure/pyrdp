@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -20,7 +20,8 @@ class ShareControlHeader(PDU):
 
 
 class ShareDataHeader(ShareControlHeader):
-    def __init__(self, pduType, version, source, shareID, streamID, uncompressedLength, subtype, compressedType, compressedLength):
+    def __init__(self, pduType, version, source, shareID, streamID,
+                 uncompressedLength, subtype, compressedType, compressedLength):
         ShareControlHeader.__init__(self, pduType, version, source)
         self.shareID = shareID
         self.streamID = streamID
@@ -123,7 +124,8 @@ class PointerPDU(SlowPathPDU):
 
 
 class SuppressOutputPDU(SlowPathPDU):
-    def __init__(self, header, allowDisplayUpdates, left: Optional[int], top: Optional[int], right: Optional[int], bottom: Optional[int]):
+    def __init__(self, header, allowDisplayUpdates,
+                 left: Optional[int], top: Optional[int], right: Optional[int], bottom: Optional[int]):
 
         super().__init__(header)
         self.allowDisplayUpdates = bool(allowDisplayUpdates)
@@ -138,3 +140,22 @@ class UpdatePDU(SlowPathPDU):
         super().__init__(header)
         self.updateType = updateType
         self.updateData = updateData
+
+
+class PersistentCacheKeysPDU(SlowPathPDU):
+    def __init__(self, header, num0, num1, num2, num3, num4, total0, total1, total2, total3, total4, keys, mask):
+        super().__init__(header)
+        self.num0 = num0
+        self.num1 = num1
+        self.num2 = num2
+        self.num3 = num3
+        self.num4 = num4
+
+        self.total0 = total0
+        self.total1 = total1
+        self.total2 = total2
+        self.total3 = total3
+        self.total4 = total4
+
+        self.keys = keys
+        self.mask = mask
