@@ -1,13 +1,11 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
 """
 Parse Drawing Orders.
-
-TODO: Log unsupported orders.
 """
 import logging
 from io import BytesIO
@@ -69,7 +67,7 @@ class OrdersParser:
         try:
             for _ in range(numberOrders):
                 self._parse_order(s)
-        except:
+        except Exception:
             LOG.warning('Failed to parse drawing order PDU: %s', orders)
 
         return orders
@@ -319,8 +317,6 @@ _pri = [
     OrdersParser._parse_glyph_index,           # 0x1B
 ]
 
-assert len(_pri) == 0x1C
-
 _sec = [
     OrdersParser._parse_cache_bitmap_v1,    # 0x00 : Uncompressed
     OrdersParser._parse_cache_color_table,  # 0x01
@@ -332,8 +328,6 @@ _sec = [
     OrdersParser._parse_cache_brush,        # 0x07
     OrdersParser._parse_cache_bitmap_v3,    # 0x08
 ]
-
-assert len(_sec) == 0x09
 
 _alt = [
     OrdersParser._parse_switch_surface,           # 0x00
@@ -351,5 +345,3 @@ _alt = [
     OrdersParser._parse_compdesk_first,           # 0x0C
     OrdersParser._parse_frame_marker,             # 0x0D
 ]
-
-assert len(_alt) == 0x0E

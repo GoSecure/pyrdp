@@ -1,6 +1,6 @@
 #
 # Copyright (c) 2014-2015 Sylvain Peyrefitte
-# Copyright (c) 2018 GoSecure Inc.
+# Copyright (c) 2018-2020 GoSecure Inc.
 #
 # This file is part of rdpy.
 #

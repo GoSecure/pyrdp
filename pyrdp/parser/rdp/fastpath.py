@@ -150,7 +150,7 @@ class SignedFastPathParser(BasicFastPathParser):
         header = Uint8.unpack(stream)
         eventCount = self.parseEventCount(header)
         pduLength = self.parseLength(stream)
-        _signature = stream.read(8)
+        stream.read(8)  # signature (unused)
 
         if eventCount == 0:
             eventCount = Uint8.unpack(stream)
@@ -196,10 +196,10 @@ class FIPSFastPathParser(SignedFastPathParser):
         header = Uint8.unpack(stream)
         eventCount = self.parseEventCount(header)
         pduLength = self.parseLength(stream)
-        _fipsLength = Uint16LE.unpack(stream)
-        _version = Uint8.unpack(stream)
-        _padLength = Uint8.unpack(stream)
-        _signature = stream.read(8)
+        Uint16LE.unpack(stream)  # fipsLength (unused)
+        Uint8.unpack(stream)  # version (unused)
+        Uint8.unpack(stream)  # padLength (unused)
+        stream.read(8)  # signature (unused)
 
         if eventCount == 0:
             eventCount = Uint8.unpack(stream)
@@ -384,16 +384,20 @@ class FastPathOutputParser(Parser):
         read = stream.read(size)
         return FastPathOutputEvent(header, compressionFlags, read)
 
-    def parseBitmapEventRaw(self, stream: BytesIO, header: int, compressionFlags: int, size: int) -> FastPathBitmapEvent:
+    def parseBitmapEventRaw(self, stream: BytesIO, header: int, compressionFlags: int, size: int) \
+            -> FastPathBitmapEvent:
         return FastPathBitmapEvent(header, compressionFlags, [], stream.read(size))
 
     def parseBitmapEvent(self, fastPathBitmapEvent: FastPathOutputEvent) -> FastPathBitmapEvent:
         rawBitmapUpdateData = fastPathBitmapEvent.payload
         stream = BytesIO(rawBitmapUpdateData)
-        updateType = Uint16LE.unpack(stream.read(2))
+        Uint16LE.unpack(stream.read(2))  # updateType (unused)
         bitmapData = self.bitmapParser.parseBitmapUpdateData(stream.read())
 
-        return FastPathBitmapEvent(fastPathBitmapEvent.header, fastPathBitmapEvent.compressionFlags, bitmapData, rawBitmapUpdateData)
+        return FastPathBitmapEvent(fastPathBitmapEvent.header,
+                                   fastPathBitmapEvent.compressionFlags,
+                                   bitmapData,
+                                   rawBitmapUpdateData)
 
     def writeBitmapEvent(self, stream: BytesIO, event: FastPathBitmapEvent):
         stream.write(event.payload)
@@ -440,7 +444,8 @@ class FastPathOutputParser(Parser):
 def createFastPathParser(tls: bool,
                          encryptionMethod: EncryptionMethod,
                          crypter: typing.Union[RC4Crypter, RC4CrypterProxy],
-                         mode: ParserMode) -> typing.Union[BasicFastPathParser, SignedFastPathParser, FIPSFastPathParser]:
+                         mode: ParserMode) \
+        -> typing.Union[BasicFastPathParser, SignedFastPathParser, FIPSFastPathParser]:
     """
     Create a fast-path parser based on which encryption method is used.
     :param tls: whether TLS is used or not.
@@ -450,7 +455,9 @@ def createFastPathParser(tls: bool,
     """
     if tls:
         return BasicFastPathParser(mode)
-    elif encryptionMethod in [EncryptionMethod.ENCRYPTION_40BIT, EncryptionMethod.ENCRYPTION_56BIT, EncryptionMethod.ENCRYPTION_128BIT]:
+    elif encryptionMethod in [EncryptionMethod.ENCRYPTION_40BIT,
+                              EncryptionMethod.ENCRYPTION_56BIT,
+                              EncryptionMethod.ENCRYPTION_128BIT]:
         return SignedFastPathParser(crypter, mode)
     elif encryptionMethod == EncryptionMethod.ENCRYPTION_FIPS:
         return FIPSFastPathParser(crypter, mode)

@@ -1,15 +1,16 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
-from pyrdp.enum import CapabilityType, KeyboardFlag, OrderFlag, VirtualChannelCompressionFlag
+from pyrdp.enum import CapabilityType, KeyboardFlag, OrderFlag, VirtualChannelCompressionFlag, Order
 from pyrdp.layer import SlowPathLayer, SlowPathObserver
 from pyrdp.logging.StatCounter import StatCounter, STAT
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.pdu import Capability, ConfirmActivePDU, DemandActivePDU, InputPDU, KeyboardEvent, SlowPathPDU
 from pyrdp.mitm.BasePathMITM import BasePathMITM
+
 
 class SlowPathMITM(BasePathMITM):
     """
@@ -24,8 +25,8 @@ class SlowPathMITM(BasePathMITM):
         super().__init__(state, client, server, statCounter)
 
         self.clientObserver = self.client.createObserver(
-            onPDUReceived = self.onClientPDUReceived,
-            onConfirmActive = self.onConfirmActive
+            onPDUReceived=self.onClientPDUReceived,
+            onConfirmActive=self.onConfirmActive
         )
 
         self.serverObserver = self.server.createObserver(
@@ -44,7 +45,8 @@ class SlowPathMITM(BasePathMITM):
             if isinstance(pdu, InputPDU):
                 for event in pdu.events:
                     if isinstance(event, KeyboardEvent):
-                        self.onScanCode(event.keyCode, event.flags & KeyboardFlag.KBDFLAGS_DOWN == 0, event.flags & KeyboardFlag.KBDFLAGS_EXTENDED != 0)
+                        self.onScanCode(event.keyCode, event.flags & KeyboardFlag.KBDFLAGS_DOWN == 0,
+                                        event.flags & KeyboardFlag.KBDFLAGS_EXTENDED != 0)
 
     def onServerPDUReceived(self, pdu: SlowPathPDU):
         self.statCounter.increment(STAT.IO_OUTPUT_SLOWPATH)
@@ -68,18 +70,20 @@ class SlowPathMITM(BasePathMITM):
             # Disable GDI if not explicitly requested.
             if not self.state.config.useGdi:
                 # Force RDP server to send bitmap events instead of order events.
-                pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderFlags = OrderFlag.NEGOTIATEORDERSUPPORT | OrderFlag.ZEROBOUNDSDELTASSUPPORT
+                pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderFlags = \
+                    OrderFlag.NEGOTIATEORDERSUPPORT | OrderFlag.ZEROBOUNDSDELTASSUPPORT
                 pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER].orderSupport = b"\x00" * 32
 
                 # Override the bitmap cache capability set with null values.
                 if CapabilityType.CAPSTYPE_BITMAPCACHE in pdu.parsedCapabilitySets:
-                    pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAPCACHE] = Capability(CapabilityType.CAPSTYPE_BITMAPCACHE, b"\x00" * 36)
+                    pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_BITMAPCACHE] = Capability(
+                        CapabilityType.CAPSTYPE_BITMAPCACHE, b"\x00" * 36)
             else:
                 # Disable NineGrid support (Not implemented in Player)
                 if CapabilityType.CAPSTYPE_ORDER in pdu.parsedCapabilitySets:
                     orders = pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER]
                     supported = bytearray(orders.orderSupport)
-                    supported[0x7] = 0  # Spoof disable NineGrid support.
+                    supported[Order.TS_NEG_DRAWNINEGRID_INDEX] = 0
                     orders.orderSupport = supported
 
                 if CapabilityType.CAPSTYPE_DRAWNINEGRIDCACHE in pdu.parsedCapabilitySets:
@@ -87,7 +91,8 @@ class SlowPathMITM(BasePathMITM):
 
         # Disable virtual channel compression
         if CapabilityType.CAPSTYPE_VIRTUALCHANNEL in pdu.parsedCapabilitySets:
-            pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].flags = VirtualChannelCompressionFlag.VCCAPS_NO_COMPR
+            pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].flags = \
+                VirtualChannelCompressionFlag.VCCAPS_NO_COMPR
 
     def onDemandActive(self, pdu: DemandActivePDU):
         """
@@ -98,7 +103,8 @@ class SlowPathMITM(BasePathMITM):
         if CapabilityType.CAPSTYPE_ORDER in pdu.parsedCapabilitySets:
             orders = pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER]
             supported = bytearray(orders.orderSupport)
-            supported[0x7] = 0  # DRAWNINEGRID = False
+            supported[Order.TS_NEG_DRAWNINEGRID_INDEX] = 0
             orders.orderSupport = supported
 
-        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].flags = VirtualChannelCompressionFlag.VCCAPS_NO_COMPR
+        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].flags = \
+            VirtualChannelCompressionFlag.VCCAPS_NO_COMPR

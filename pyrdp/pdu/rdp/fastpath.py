@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -50,6 +50,7 @@ class FastPathOutputEvent(FastPathEvent):
     """
     https://msdn.microsoft.com/en-us/library/cc240622.aspx
     """
+
     def __init__(self, header: int, compressionFlags: Optional[int], payload: bytes = b""):
         super().__init__(payload)
         self.header = header
@@ -90,7 +91,8 @@ class FastPathUnicodeEvent(FastPathInputEvent):
 
 
 class FastPathBitmapEvent(FastPathOutputEvent):
-    def __init__(self, header: int, compressionFlags: Optional[int], bitmapUpdateData: List[BitmapUpdateData], payload: bytes):
+    def __init__(self, header: int, compressionFlags: Optional[int],
+                 bitmapUpdateData: List[BitmapUpdateData], payload: bytes):
         super().__init__(header, compressionFlags, payload)
         self.bitmapUpdateData = bitmapUpdateData
 
@@ -101,6 +103,7 @@ class FastPathOrdersEvent(FastPathOutputEvent):
 
     https://msdn.microsoft.com/en-us/library/cc241573.aspx
     """
+
     def __init__(self, header: int, compressionFlags: Optional[int], payload: bytes):
         super().__init__(header, compressionFlags, payload=payload)
         self.compressionFlags = compressionFlags

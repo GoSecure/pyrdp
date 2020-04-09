@@ -393,6 +393,9 @@ Tells the MITM to allow clients to use [Graphics Device Interface Acceleration][
 drawing orders instead of raw bitmaps. The advantage of this mode is a significant reduction in required bandwidth
 for high resolution connections.
 
+Note that some GDI drawing orders are currently unimplemented because they appear to be unused.
+If you have a replay which contains any unsupported or untested order, do not hesitate to share it with the project maintainers so that support can be added as required. (Make sure that the trace does not contain sensitive information)
+
 [gdi]: https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpegdi/745f2eee-d110-464c-8aca-06fc1814f6ad
 
 ### Using the PyRDP Player

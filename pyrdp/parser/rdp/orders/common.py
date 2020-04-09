@@ -1,11 +1,14 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
 """
-Common stream reading utilities
+Common stream reading utilities.
+
+All section numbers reference MS-RDPEGDI sections:
+https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpegdi/745f2eee-d110-464c-8aca-06fc1814f6ad
 """
 from io import BytesIO
 from pyrdp.core.packing import Uint8, Int8, Uint16LE, Int16LE, Uint32LE
@@ -167,4 +170,4 @@ class Bounds:
             self.bottom += Int8.unpack(s)
 
     def __str__(self):
-        return f'<Bounds {self.left}, {self.top}, {self.right - self.left}, {self.bottom - self.top}'
+        return f'<Bounds {self.left}, {self.top}, {self.right - self.left}, {self.bottom - self.top}>'

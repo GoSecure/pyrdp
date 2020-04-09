@@ -1,3 +1,9 @@
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2020 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
 from PySide2.QtGui import QPainter
 
 # All raster operations defined by [MS-RDPEGDI] Section 2.2.2.2.1.1.1.7
@@ -347,6 +353,9 @@ def set_rop2(op: int, painter: QPainter):
 def rop_slow(code: str, dst, src, pal):
     """
     Slow but generic fallback implementation of raster operations.
+
+    This is not implemented currently as Qt directly supports most of the raster operations 
+    that RDP servers send.
 
     This function implements the RPN-notation described in [MS-RDPEGDI][1]
     with a generic stack machine. It is much slower than having a hardcoded

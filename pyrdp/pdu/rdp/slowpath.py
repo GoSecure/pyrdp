@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -20,7 +20,8 @@ class ShareControlHeader(PDU):
 
 
 class ShareDataHeader(ShareControlHeader):
-    def __init__(self, pduType, version, source, shareID, streamID, uncompressedLength, subtype, compressedType, compressedLength):
+    def __init__(self, pduType, version, source, shareID, streamID,
+                 uncompressedLength, subtype, compressedType, compressedLength):
         ShareControlHeader.__init__(self, pduType, version, source)
         self.shareID = shareID
         self.streamID = streamID
@@ -123,7 +124,8 @@ class PointerPDU(SlowPathPDU):
 
 
 class SuppressOutputPDU(SlowPathPDU):
-    def __init__(self, header, allowDisplayUpdates, left: Optional[int], top: Optional[int], right: Optional[int], bottom: Optional[int]):
+    def __init__(self, header, allowDisplayUpdates,
+                 left: Optional[int], top: Optional[int], right: Optional[int], bottom: Optional[int]):
 
         super().__init__(header)
         self.allowDisplayUpdates = bool(allowDisplayUpdates)

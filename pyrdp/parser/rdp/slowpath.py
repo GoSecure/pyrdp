@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -13,9 +13,10 @@ from pyrdp.parser.parser import Parser
 from pyrdp.parser.rdp.input import SlowPathInputParser
 from pyrdp.parser.rdp.pointer import PointerEventParser
 from pyrdp.pdu import BitmapCapability, Capability, ConfirmActivePDU, ControlPDU, DemandActivePDU, GeneralCapability, \
-    GlyphCacheCapability, InputPDU, MultifragmentUpdateCapability, OffscreenBitmapCacheCapability, OrderCapability, PDU, \
-    PlaySoundPDU, PointerCapability, PointerPDU, SetErrorInfoPDU, ShareControlHeader, ShareDataHeader, SlowPathPDU, \
-    SlowPathUnparsedPDU, SuppressOutputPDU, SynchronizePDU, UpdatePDU, VirtualChannelCapability, PersistentCacheKeysPDU
+    GlyphCacheCapability, InputPDU, MultifragmentUpdateCapability, OffscreenBitmapCacheCapability, OrderCapability, \
+    PDU, PlaySoundPDU, PointerCapability, PointerPDU, SetErrorInfoPDU, ShareControlHeader, ShareDataHeader, \
+    SlowPathPDU, SlowPathUnparsedPDU, SuppressOutputPDU, SynchronizePDU, UpdatePDU, VirtualChannelCapability, \
+    PersistentCacheKeysPDU
 from pyrdp.pdu.rdp.capability import SurfaceCommandsCapability
 
 
@@ -105,7 +106,7 @@ class SlowPathParser(Parser):
             self.dataWriters[pdu.header.subtype](stream, pdu)
 
     def parseShareControlHeader(self, stream: BytesIO):
-        length = Uint16LE.unpack(stream)
+        Uint16LE.unpack(stream)  # length (unused)
         pduType = Uint16LE.unpack(stream)
         source = Uint16LE.unpack(stream)
         return ShareControlHeader(SlowPathPDUType(pduType & 0xf), (pduType >> 4), source)
@@ -124,7 +125,10 @@ class SlowPathParser(Parser):
         pduSubtype = Uint8.unpack(stream)
         compressedType = Uint8.unpack(stream)
         compressedLength = Uint16LE.unpack(stream)
-        return ShareDataHeader(controlHeader.pduType, controlHeader.version, controlHeader.source, shareID, streamID, uncompressedLength, SlowPathDataType(pduSubtype), compressedType, compressedLength)
+        return ShareDataHeader(controlHeader.pduType,
+                               controlHeader.version, controlHeader.source,
+                               shareID, streamID, uncompressedLength,
+                               SlowPathDataType(pduSubtype), compressedType, compressedLength)
 
     def writeShareDataHeader(self, stream: BytesIO, header, dataLength):
         substream = BytesIO()
@@ -146,12 +150,13 @@ class SlowPathParser(Parser):
         lengthCombinedCapabilities = Uint16LE.unpack(stream)
         sourceDescriptor = stream.read(lengthSourceDescriptor)
         numberCapabilities = Uint16LE.unpack(stream)
-        pad2Octets = stream.read(2)
+        stream.read(2)  # Padding
         capabilitySets = stream.read(lengthCombinedCapabilities - 4)
         sessionID = Uint32LE.unpack(stream)
         parsedCapabilitySets = self.parseCapabilitySets(capabilitySets, numberCapabilities)
 
-        return DemandActivePDU(header, shareID, sourceDescriptor, numberCapabilities, capabilitySets, sessionID, parsedCapabilitySets)
+        return DemandActivePDU(header, shareID, sourceDescriptor, numberCapabilities,
+                               capabilitySets, sessionID, parsedCapabilitySets)
 
     def writeDemandActive(self, stream: BytesIO, pdu: DemandActivePDU):
         Uint32LE.pack(pdu.shareID, stream)

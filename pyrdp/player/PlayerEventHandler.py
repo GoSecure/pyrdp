@@ -14,9 +14,9 @@ from pyrdp.enum import BitmapFlags, CapabilityType, DeviceType, FastPathFragment
 from pyrdp.logging import log
 from pyrdp.parser import BasicFastPathParser, BitmapParser, ClientConnectionParser, ClientInfoParser, ClipboardParser, \
     FastPathOutputParser, SlowPathParser
-from pyrdp.pdu import BitmapUpdateData, ConfirmActivePDU, FastPathBitmapEvent, FastPathOrdersEvent, FastPathMouseEvent, FastPathOutputEvent, \
-    FastPathScanCodeEvent, FastPathUnicodeEvent, FormatDataResponsePDU, InputPDU, KeyboardEvent, MouseEvent, \
-    PlayerDeviceMappingPDU, PlayerPDU, UpdatePDU
+from pyrdp.pdu import BitmapUpdateData, ConfirmActivePDU, FastPathBitmapEvent, FastPathOrdersEvent, \
+    FastPathMouseEvent, FastPathOutputEvent, FastPathScanCodeEvent, FastPathUnicodeEvent, FormatDataResponsePDU, \
+    InputPDU, KeyboardEvent, MouseEvent, PlayerDeviceMappingPDU, PlayerPDU, UpdatePDU
 from pyrdp.ui import QRemoteDesktop, RDPBitmapToQtImage
 
 from .gdi import GdiQtFrontend
@@ -131,7 +131,8 @@ class PlayerEventHandler(QObject, Observer):
                 if isinstance(event, MouseEvent):
                     self.onMousePosition(event.x, event.y)
                 elif isinstance(event, KeyboardEvent):
-                    self.onScanCode(event.keyCode, event.flags & KeyboardFlag.KBDFLAGS_DOWN == 0, event.flags & KeyboardFlag.KBDFLAGS_EXTENDED != 0)
+                    self.onScanCode(event.keyCode, event.flags & KeyboardFlag.KBDFLAGS_DOWN ==
+                                    0, event.flags & KeyboardFlag.KBDFLAGS_EXTENDED != 0)
 
     def onFastPathOutput(self, pdu: PlayerPDU):
         parser = BasicFastPathParser(ParserMode.CLIENT)
@@ -150,6 +151,16 @@ class PlayerEventHandler(QObject, Observer):
                     self.onFastPathOrders(event)
 
     def mergeFragments(self, event: FastPathOutputEvent) -> FastPathOutputEvent:
+        """
+        Handles FastPath fragment reassembly.
+
+        This is documented at https://msdn.microsoft.com/en-us/library/cc240622.aspx.
+
+        :param event: A potentially fragmented FastPath output event
+        :return:      The reassembled FastPath PDU once available, or None if the PDU is a fragment fragmented and is
+                      not fully reassembled yet.
+                      If the event is not fragmented, it is returned with no further processing.
+        """
         fragmentationFlag = FastPathFragmentation((event.header & 0b00110000) >> 4)
 
         if fragmentationFlag == FastPathFragmentation.FASTPATH_FRAGMENT_SINGLE:

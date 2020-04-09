@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -92,7 +92,8 @@ class MITMConfig:
         """
         return self.outDir / "files"
 
+
 """
 The default MITM configuration.
 """
-DEFAULTS =  settings.load(Path(__file__).parent.absolute() / "mitm.default.ini")
+DEFAULTS = settings.load(Path(__file__).parent.absolute() / "mitm.default.ini")

@@ -1,12 +1,11 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
 import logging
 import typing
-from pyrdp.logging import LOGGER_NAMES
 
 from pyrdp.parser.rdp.orders import GdiFrontend
 from pyrdp.parser.rdp.orders.common import Bounds

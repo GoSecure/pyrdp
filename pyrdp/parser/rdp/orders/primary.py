@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -14,7 +14,7 @@ from pyrdp.core.packing import Uint8, Int8, Int16LE, Uint16LE, Uint32LE
 from .common import GlyphV2, Bounds
 from .secondary import BMF_BPP, CACHED_BRUSH
 
-# This follows the PrimaryDrawOrderType enum
+# This follows the PrimaryDrawOrderType enum.
 ORDERTYPE_FIELDBYTES = [1, 2, 1, 0, 0, 0, 0, 1, 1, 2, 1, 1, 0, 2, 3, 1, 2, 2, 2, 2, 1, 2, 1, 0, 2, 1, 2, 3]
 
 BACKMODE_TRANSPARENT = 0x01
@@ -575,8 +575,9 @@ class MemBlt:
         return self
 
     def __str__(self):
-        return (f'<MemBlt ({self.xSrc},{self.ySrc}) OP={self.rop} L={self.left} T={self.top} W={self.width} H={self.height}'
-                f' cacheIndex={self.cacheIndex} cacheId={self.cacheId} colorIdx={self.colorIndex}>')
+        return (f'<MemBlt ({self.xSrc},{self.ySrc}) OP={self.rop} L={self.left} T={self.top}'
+                f' W={self.width} H={self.height} cacheIndex={self.cacheIndex} cacheId={self.cacheId}'
+                f' colorIdx={self.colorIndex}>')
 
 
 class Mem3Blt:
