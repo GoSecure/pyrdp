@@ -35,7 +35,7 @@ class MainWindow(QMainWindow):
             "closeTabOnCtrlW": True     # Allow user to toggle Ctrl+W passthrough.
         }
 
-        self.liveWindow = LiveWindow(bind_address, port, self.updateCountSignal, self.options, mainWindow=self)
+        self.liveWindow = LiveWindow(bind_address, port, self.updateCountSignal, self.options)
         self.replayWindow = ReplayWindow(self.options, mainWindow=self)
         self.tabManager = QTabWidget()
         self.tabManager.addTab(self.liveWindow, "Live connections")
