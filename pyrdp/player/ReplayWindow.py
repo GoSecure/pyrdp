@@ -9,7 +9,6 @@ from typing import Dict
 from PySide2.QtGui import QResizeEvent
 from PySide2.QtWidgets import QWidget
 
-from pyrdp.player import MainWindow
 from pyrdp.player.BaseWindow import BaseWindow
 from pyrdp.player.ReplayTab import ReplayTab
 
@@ -19,9 +18,8 @@ class ReplayWindow(BaseWindow):
     Class for managing replay tabs.
     """
 
-    def __init__(self, options: Dict[str, object], mainWindow: MainWindow, parent: QWidget):
+    def __init__(self, options: Dict[str, object], parent: QWidget):
         super().__init__(options, parent=parent)
-        self.mainWindow = mainWindow
 
     def openFile(self, fileName: str, autoplay: bool = False):
         """

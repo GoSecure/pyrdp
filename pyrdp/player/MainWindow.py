@@ -35,7 +35,7 @@ class MainWindow(QMainWindow):
         }
 
         self.liveWindow = LiveWindow(bind_address, port, self.updateCountSignal, self.options, parent=self)
-        self.replayWindow = ReplayWindow(self.options, mainWindow=self, parent=self)
+        self.replayWindow = ReplayWindow(self.options, parent=self)
         self.tabManager = QTabWidget()
         self.tabManager.addTab(self.liveWindow, "Live connections")
         self.tabManager.addTab(self.replayWindow, "Replays")
