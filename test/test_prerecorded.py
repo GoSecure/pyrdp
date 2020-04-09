@@ -6,7 +6,6 @@
 # Licensed under the GPLv3 or later.
 #
 import logging
-import zipfile
 from pathlib import Path
 
 from scapy.all import packet, rdpcap
@@ -181,7 +180,6 @@ class TestMITM(RDPMITM):
 
 
 def main():
-    input_path = "test/files/test_session.zip"
     pcap_path = "test/files/test_session.pcap"
     client_ip = "192.168.38.1"
     mitm_ip = "192.168.38.1"
@@ -190,10 +188,6 @@ def main():
 
     logging.basicConfig(level=logging.CRITICAL)
     logging.getLogger("scapy").setLevel(logging.ERROR)
-
-    # Unzip the pcap
-    with zipfile.ZipFile(input_path, 'r') as zip_ref:
-        zip_ref.extractall("test/files")
 
     packets = rdpcap(pcap_path)
 

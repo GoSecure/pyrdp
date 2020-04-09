@@ -43,6 +43,12 @@ jobs:
     - name: Install ci dependencies
       run: pip install -r requirements-ci.txt
 
+    - name: Extract test session pcap
+      uses: DuckSoft/extract-7z-action@v1.0
+      with:
+        pathSource: test/files/test_session.zip
+        pathTarget: test/files
+
     - name: Integration Test with a prerecorded PCAP.
       working-directory: ./
       run: coverage run test/test_prerecorded.py
@@ -85,9 +91,16 @@ jobs:
         working-directory: .
         run: pip install -U -e .
 
+      - name: Extract test session pcap
+        uses: DuckSoft/extract-7z-action@v1.0
+        with:
+          pathSource: test/files/test_session.zip
+          pathTarget: test/files
+
       - name: Integration Test with a prerecorded PCAP.
         working-directory: ./
         run: python test/test_prerecorded.py
+
       - name: pyrdp-mitm.py initialization test
         working-directory: ./
         run: bin/pyrdp-mitm.py --test localhost
