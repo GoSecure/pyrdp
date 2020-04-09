@@ -1,6 +1,6 @@
 #
 # Copyright (c) 2014-2015 Sylvain Peyrefitte
-# Copyright (c) 2018 GoSecure Inc.
+# Copyright (c) 2018-2020 GoSecure Inc.
 #
 # This file is part of rdpy.
 #
@@ -141,12 +141,12 @@ class QRemoteDesktop(QWidget):
 
         self.scaleToWindow = False
 
-        # set correct size
+        # Set correct size
         self.resize(width, height)
-        # bind mouse event
+        # Bind mouse event
         self.setMouseTracking(True)
-        # buffer image
-        self._buffer = QImage(width, height, QImage.Format_RGB32)
+        # Buffer image
+        self._buffer = QImage(width, height, QImage.Format_ARGB32_Premultiplied)
         self.mouseX = width // 2
         self.mouseY = height // 2
 
@@ -155,6 +155,9 @@ class QRemoteDesktop(QWidget):
     def runOnMainThread(self, target: callable):
         target()
 
+    @property
+    def screen(self):
+        return self._buffer
     def notifyImage(self, x: int, y: int, qimage: QImage, width: int, height: int):
         """
         Draw an image on the buffer.
@@ -165,11 +168,11 @@ class QRemoteDesktop(QWidget):
         :param height: height of the new image
         """
 
-        # fill buffer image
+        # Fill buffer image
         qp = QPainter(self._buffer)
         qp.drawImage(x, y, qimage, 0, 0, width, height)
 
-        # force update
+        # Force update
         self.update()
 
     def setMousePosition(self, x: int, y: int):

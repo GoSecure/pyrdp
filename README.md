@@ -41,6 +41,7 @@ PyRDP was [introduced in 2018](https://www.gosecure.net/blog/2018/12/19/rdp-man-
     + [Other MITM arguments](#other-mitm-arguments)
       - [--no-downgrade](#--no-downgrade)
       - [--transparent](#--transparent)
+      - [`--gdi`: Accelerated Graphics Pipeline](#--gdi-accelerated-graphics-pipeline)
   * [Using the PyRDP Player](#using-the-pyrdp-player)
     + [Playing a replay file](#playing-a-replay-file)
     + [Listening for live connections](#listening-for-live-connections)
@@ -386,6 +387,16 @@ This setup is a base example and might be much more complex depending on your en
 To cleanup, you should delete the created routes, remove the custom routing table from `rt_tables` and
 remove the `ip rule`.
 
+##### `--gdi`: Accelerated Graphics Pipeline
+
+Tells the MITM to allow clients to use [Graphics Device Interface Acceleration][gdi] Extensions to stream
+drawing orders instead of raw bitmaps. The advantage of this mode is a significant reduction in required bandwidth
+for high resolution connections.
+
+Note that some GDI drawing orders are currently unimplemented because they appear to be unused.
+If you have a replay which contains any unsupported or untested order, do not hesitate to share it with the project maintainers so that support can be added as required. (Make sure that the trace does not contain sensitive information)
+
+[gdi]: https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpegdi/745f2eee-d110-464c-8aca-06fc1814f6ad
 
 ### Using the PyRDP Player
 Use `pyrdp-player.py` to run the player.

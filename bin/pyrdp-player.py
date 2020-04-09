@@ -8,22 +8,23 @@
 
 # asyncio needs to be imported first to ensure that the reactor is
 # installed properly. Do not re-order.
-import asyncio
 
+import asyncio   # noqa
 from twisted.internet import asyncioreactor
 
 asyncioreactor.install(asyncio.get_event_loop())
 
-from pyrdp.core import settings
-from pyrdp.logging import LOGGER_NAMES, NotifyHandler, configure as configureLoggers
-from pyrdp.player import HAS_GUI
-from pyrdp.player.config import DEFAULTS
+from pyrdp.core import settings  # noqa
+from pyrdp.logging import LOGGER_NAMES, NotifyHandler, configure as configureLoggers  # noqa
+from pyrdp.player import HAS_GUI  # noqa
+from pyrdp.player.config import DEFAULTS  # noqa
 
-import argparse
-import logging
-import logging.handlers
-import sys
-import os
+from pathlib import Path  # noqa
+import argparse  # noqa
+import logging  # noqa
+import logging.handlers  # noqa
+import sys  # noqa
+import os  # noqa
 
 if HAS_GUI:
     from pyrdp.player import MainWindow
@@ -35,7 +36,7 @@ def enableNotifications(logger):
     # https://docs.python.org/3/library/os.html
     if os.name != "nt":
         notifyHandler = NotifyHandler()
-        notifyHandler.setFormatter(logging.Formatter("[{asctime}] - {message}", style = "{"))
+        notifyHandler.setFormatter(logging.Formatter("[{asctime}] - {message}", style="{"))
 
         uiLogger = logging.getLogger(LOGGER_NAMES.PLAYER_UI)
         uiLogger.addHandler(notifyHandler)
@@ -53,8 +54,10 @@ def main():
     parser.add_argument("-b", "--bind", help="Bind address (default: 127.0.0.1)", default="127.0.0.1")
     parser.add_argument("-p", "--port", help="Bind port (default: 3000)", default=3000)
     parser.add_argument("-o", "--output", help="Output folder", default="pyrdp_output")
-    parser.add_argument("-L", "--log-level", help="Log level", default=None, choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"], nargs="?")
-    parser.add_argument("-F", "--log-filter", help="Only show logs from this logger name (accepts '*' wildcards)", default=None)
+    parser.add_argument("-L", "--log-level", help="Log level", default=None,
+                        choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"], nargs="?")
+    parser.add_argument("-F", "--log-filter",
+                        help="Only show logs from this logger name (accepts '*' wildcards)", default=None)
     parser.add_argument("--headless", help="Parse a replay without rendering the user interface.", action="store_true")
     args = parser.parse_args()
 
@@ -68,6 +71,9 @@ def main():
     if args.output:
         cfg.set('vars', 'output_dir', args.output)
 
+    outDir = Path(cfg.get('vars', 'output_dir'))
+    outDir.mkdir(exist_ok=True)
+
     configureLoggers(cfg)
     logger = logging.getLogger(LOGGER_NAMES.PYRDP)
 
@@ -75,7 +81,8 @@ def main():
         enableNotifications(logger)
 
     if not HAS_GUI and not args.headless:
-        logger.error('Headless mode is not specified and PySide2 is not installed. Install PySide2 to use the graphical user interface.')
+        logger.error('Headless mode is not specified and PySide2 is not installed.'
+                     ' Install PySide2 to use the graphical user interface.')
         sys.exit(127)
 
     if not args.headless:

@@ -1,8 +1,11 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018, 2019 GoSecure Inc.
+# Copyright (C) 2018-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+
+# Disable line-too-long lints.
+# flake8: noqa
 
 from enum import IntEnum, IntFlag
 
@@ -60,9 +63,11 @@ class SecurityHeaderType(IntEnum):
     # Header type used for Client Info and Licensing PDUs if no encryption is used
     DEFAULT = 1
 
+
 class FastPathSecurityFlags:
     FASTPATH_OUTPUT_SECURE_CHECKSUM = 0x40
     FASTPATH_OUTPUT_ENCRYPTED = 0x80
+
 
 class FastPathInputType(IntEnum):
     FASTPATH_INPUT_EVENT_SCANCODE = 0
@@ -74,6 +79,9 @@ class FastPathInputType(IntEnum):
 
 
 class FastPathOutputType(IntEnum):
+    """
+    https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/a1c4caa8-00ed-45bb-a06e-5177473766d3
+    """
     FASTPATH_UPDATETYPE_ORDERS = 0
     FASTPATH_UPDATETYPE_BITMAP = 1
     FASTPATH_UPDATETYPE_PALETTE = 2
@@ -85,6 +93,23 @@ class FastPathOutputType(IntEnum):
     FASTPATH_UPDATETYPE_COLOR = 9
     FASTPATH_UPDATETYPE_CACHED = 10
     FASTPATH_UPDATETYPE_POINTER = 11
+
+    @staticmethod
+    def getText(updateType: 'FastPathOutputType'):
+        MESSAGES = {
+            FastPathOutputType.FASTPATH_UPDATETYPE_ORDERS: 'ORDERS',
+            FastPathOutputType.FASTPATH_UPDATETYPE_BITMAP: 'BITMAP',
+            FastPathOutputType.FASTPATH_UPDATETYPE_PALETTE: 'PALETTE',
+            FastPathOutputType.FASTPATH_UPDATETYPE_SYNCHRONIZE: 'SYNCHRONIZE',
+            FastPathOutputType.FASTPATH_UPDATETYPE_SURFCMDS: 'SURFCMDS',
+            FastPathOutputType.FASTPATH_UPDATETYPE_PTR_NULL: 'PTR_NULL',
+            FastPathOutputType.FASTPATH_UPDATETYPE_PTR_DEFAULT: 'PTR_DEFAULT',
+            FastPathOutputType.FASTPATH_UPDATETYPE_PTR_POSITION: 'PTR_POSITION',
+            FastPathOutputType.FASTPATH_UPDATETYPE_COLOR: 'COLOR',
+            FastPathOutputType.FASTPATH_UPDATETYPE_CACHED: 'CACHED',
+            FastPathOutputType.FASTPATH_UPDATETYPE_POINTER: 'POINTER',
+        }
+        return MESSAGES.get(updateType)
 
 
 class FastPathOutputCompressionType(IntEnum):
@@ -162,11 +187,16 @@ class SlowPathPDUType(IntEnum):
     DATA_PDU = 0x7
     SERVER_REDIR_PKT_PDU = 0xA
 
+
 class SlowPathUpdateType(IntEnum):
+    """
+    https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/bd3c4df4-87b9-43dd-88cb-ce5b24698e19
+    """
     SLOWPATH_UPDATETYPE_ORDERS = 0
     SLOWPATH_UPDATETYPE_BITMAP = 1
     SLOWPATH_UPDATETYPE_PALETTE = 2
     SLOWPATH_UPDATETYPE_SYNCHRONIZE = 3
+
 
 class SlowPathDataType(IntEnum):
     """
@@ -361,6 +391,7 @@ class NegotiationFailureCode(IntEnum):
     HYBRID_REQUIRED_BY_SERVER = 0x00000005
     SSL_WITH_USER_AUTH_REQUIRED_BY_SERVER = 0x00000006
 
+    
     @staticmethod
     def getMessage(code: "NegotiationFailureCode"):
         MESSAGES = {
@@ -794,14 +825,6 @@ class ChannelOption(IntFlag):
     CHANNEL_OPTION_COMPRESS = 0x00400000
     CHANNEL_OPTION_SHOW_PROTOCOL = 0x00200000
     REMOTE_CONTROL_PERSISTENT = 0x00100000
-
-
-class DrawingOrderControlFlags(IntEnum):
-    """
-    https://msdn.microsoft.com/en-us/library/cc241574.aspx
-    """
-    TS_STANDARD = 0b00000001
-    TS_SECONDARY = 0b00000010
 
 
 class BitmapFlags(IntEnum):

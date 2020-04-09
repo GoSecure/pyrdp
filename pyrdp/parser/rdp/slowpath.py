@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -13,9 +13,10 @@ from pyrdp.parser.parser import Parser
 from pyrdp.parser.rdp.input import SlowPathInputParser
 from pyrdp.parser.rdp.pointer import PointerEventParser
 from pyrdp.pdu import BitmapCapability, Capability, ConfirmActivePDU, ControlPDU, DemandActivePDU, GeneralCapability, \
-    GlyphCacheCapability, InputPDU, MultifragmentUpdateCapability, OffscreenBitmapCacheCapability, OrderCapability, PDU, \
-    PlaySoundPDU, PointerCapability, PointerPDU, SetErrorInfoPDU, ShareControlHeader, ShareDataHeader, SlowPathPDU, \
-    SlowPathUnparsedPDU, SuppressOutputPDU, SynchronizePDU, UpdatePDU, VirtualChannelCapability
+    GlyphCacheCapability, InputPDU, MultifragmentUpdateCapability, OffscreenBitmapCacheCapability, OrderCapability, \
+    PDU, PlaySoundPDU, PointerCapability, PointerPDU, SetErrorInfoPDU, ShareControlHeader, ShareDataHeader, \
+    SlowPathPDU, SlowPathUnparsedPDU, SuppressOutputPDU, SynchronizePDU, UpdatePDU, VirtualChannelCapability, \
+    PersistentCacheKeysPDU
 from pyrdp.pdu.rdp.capability import SurfaceCommandsCapability
 
 
@@ -37,6 +38,7 @@ class SlowPathParser(Parser):
             SlowPathDataType.PDUTYPE2_PLAY_SOUND: self.parsePlaySound,
             SlowPathDataType.PDUTYPE2_SUPPRESS_OUTPUT: self.parseSuppressOutput,
             SlowPathDataType.PDUTYPE2_UPDATE: self.parseUpdate,
+            SlowPathDataType.PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST: self.parsePersistentCacheKeys,
         }
 
         self.dataWriters = {
@@ -48,6 +50,7 @@ class SlowPathParser(Parser):
             SlowPathDataType.PDUTYPE2_PLAY_SOUND: self.writePlaySound,
             SlowPathDataType.PDUTYPE2_SUPPRESS_OUTPUT: self.writeSuppressOutput,
             SlowPathDataType.PDUTYPE2_UPDATE: self.writeUpdate,
+            SlowPathDataType.PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST: self.writePersistentCacheKeys,
         }
 
     def parse(self, data: bytes) -> PDU:
@@ -103,7 +106,7 @@ class SlowPathParser(Parser):
             self.dataWriters[pdu.header.subtype](stream, pdu)
 
     def parseShareControlHeader(self, stream: BytesIO):
-        length = Uint16LE.unpack(stream)
+        Uint16LE.unpack(stream)  # length (unused)
         pduType = Uint16LE.unpack(stream)
         source = Uint16LE.unpack(stream)
         return ShareControlHeader(SlowPathPDUType(pduType & 0xf), (pduType >> 4), source)
@@ -122,7 +125,10 @@ class SlowPathParser(Parser):
         pduSubtype = Uint8.unpack(stream)
         compressedType = Uint8.unpack(stream)
         compressedLength = Uint16LE.unpack(stream)
-        return ShareDataHeader(controlHeader.pduType, controlHeader.version, controlHeader.source, shareID, streamID, uncompressedLength, SlowPathDataType(pduSubtype), compressedType, compressedLength)
+        return ShareDataHeader(controlHeader.pduType,
+                               controlHeader.version, controlHeader.source,
+                               shareID, streamID, uncompressedLength,
+                               SlowPathDataType(pduSubtype), compressedType, compressedLength)
 
     def writeShareDataHeader(self, stream: BytesIO, header, dataLength):
         substream = BytesIO()
@@ -144,12 +150,13 @@ class SlowPathParser(Parser):
         lengthCombinedCapabilities = Uint16LE.unpack(stream)
         sourceDescriptor = stream.read(lengthSourceDescriptor)
         numberCapabilities = Uint16LE.unpack(stream)
-        pad2Octets = stream.read(2)
+        stream.read(2)  # Padding
         capabilitySets = stream.read(lengthCombinedCapabilities - 4)
         sessionID = Uint32LE.unpack(stream)
         parsedCapabilitySets = self.parseCapabilitySets(capabilitySets, numberCapabilities)
 
-        return DemandActivePDU(header, shareID, sourceDescriptor, numberCapabilities, capabilitySets, sessionID, parsedCapabilitySets)
+        return DemandActivePDU(header, shareID, sourceDescriptor, numberCapabilities,
+                               capabilitySets, sessionID, parsedCapabilitySets)
 
     def writeDemandActive(self, stream: BytesIO, pdu: DemandActivePDU):
         Uint32LE.pack(pdu.shareID, stream)
@@ -625,3 +632,40 @@ class SlowPathParser(Parser):
 
         Uint16LE.pack(len(substream.getvalue()) + 4, stream)
         stream.write(substream.getvalue())
+
+    def parsePersistentCacheKeys(self, stream: BytesIO, header):
+        num0 = Uint16LE.unpack(stream)
+        num1 = Uint16LE.unpack(stream)
+        num2 = Uint16LE.unpack(stream)
+        num3 = Uint16LE.unpack(stream)
+        num4 = Uint16LE.unpack(stream)
+
+        total0 = Uint16LE.unpack(stream)
+        total1 = Uint16LE.unpack(stream)
+        total2 = Uint16LE.unpack(stream)
+        total3 = Uint16LE.unpack(stream)
+        total4 = Uint16LE.unpack(stream)
+        bBitMask = Uint8.unpack(stream)
+
+        stream.read(3)  # Padding
+
+        keys = stream.read(64 * (num0 + num1 + num2 + num3 + num4))
+        return PersistentCacheKeysPDU(header, num0, num1, num2, num3, num4,
+                                      total0, total1, total2, total3, total4, keys, bBitMask)
+
+    def writePersistentCacheKeys(self, s: BytesIO, pdu: PersistentCacheKeysPDU):
+        # Only send the first PDU with an empty list and drop the rest.
+        # TODO: Find a way to cleanly drop the entire packet instead.
+        Uint16LE.pack(0, s)
+        Uint16LE.pack(0, s)
+        Uint16LE.pack(0, s)
+        Uint16LE.pack(0, s)
+        Uint16LE.pack(0, s)
+
+        Uint16LE.pack(0, s)
+        Uint16LE.pack(0, s)
+        Uint16LE.pack(0, s)
+        Uint16LE.pack(0, s)
+        Uint16LE.pack(0, s)
+        Uint8.pack(pdu.mask, s)
+        s.write(b'\x00'*3)
