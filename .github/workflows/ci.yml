@@ -88,7 +88,7 @@ jobs:
       - name: Extract test files
         uses: DuckSoft/extract-7z-action@v1.0
         with:
-          pathSource: test/files/test_session.zip
+          pathSource: test/files/test_files.zip
           pathTarget: test/files
 
       - name: Integration Test with a prerecorded PCAP.
