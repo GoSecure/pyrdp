@@ -137,7 +137,9 @@ class QRemoteDesktop(QWidget):
         """
         super().__init__(parent)
 
-        self.scaleValue = 1
+        self.ratio = 1
+        """ Scale factor used to render the RDP session on the player."""
+
         self.sessionWidth = width
         self.sessionHeight = height
 
@@ -188,7 +190,7 @@ class QRemoteDesktop(QWidget):
         Rescale the current widget to a percentage of the height of the RDP session.
         :param scale: Ex: 0.5 for 50% height and 50% width.
         """
-        self.scaleValue = scale
+        self.ratio = scale
 
     def setScaleToWindow(self, status):
         self.scaleToWindow = status > 0
@@ -210,11 +212,11 @@ class QRemoteDesktop(QWidget):
         Call when Qt renderer engine estimate that is needed
         :param e: the event
         """
-        scaleValue = self.scaleValue if self.scaleToWindow else 1
+        ratio = self.ratio if self.scaleToWindow else 1
         qp = QPainter(self)
-        qp.drawImage(0, 0, self._buffer.scaled(self.sessionWidth * scaleValue, self.sessionHeight * scaleValue, aspectMode=Qt.KeepAspectRatio))
+        qp.drawImage(0, 0, self._buffer.scaled(self.sessionWidth * ratio, self.sessionHeight * ratio, aspectMode=Qt.KeepAspectRatio))
         qp.setBrush(QColor.fromRgb(255, 255, 0, 180))
-        qp.drawEllipse(QPoint(self.mouseX * scaleValue, self.mouseY * scaleValue), 5, 5)
+        qp.drawEllipse(QPoint(self.mouseX * ratio, self.mouseY * ratio), 5, 5)
 
     def clear(self):
         self._buffer = QImage(self._buffer.width(), self._buffer.height(), QImage.Format_ARGB32_Premultiplied)
