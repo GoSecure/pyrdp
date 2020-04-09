@@ -108,10 +108,3 @@ class ReplayThread(QThread):
 
     def close(self):
         self.queue.put(ReplayThreadEvent.EXIT)
-
-    def parentResized(self):
-        """
-        Seeks to current time to allow to rerender the image on the resized widget.
-        """
-        self.lastSeekTime = self.timer.getElapsedTime()
-        self.queue.put(ReplayThreadEvent.SEEK)

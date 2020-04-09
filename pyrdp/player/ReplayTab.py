@@ -108,4 +108,3 @@ class ReplayTab(BaseTab):
         """
         newScale = (self.scrollViewer.height() - self.scrollViewer.horizontalScrollBar().height()) / self.widget.sessionHeight
         self.widget.scale(newScale)
-        self.thread.parentResized()

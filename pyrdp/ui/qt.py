@@ -141,12 +141,13 @@ class QRemoteDesktop(QWidget):
 
         self.scaleToWindow = False
 
+        self._buffer: QImage = QImage(width, height, QImage.Format_ARGB32_Premultiplied)
+
         # Set correct size
         self.resize(width, height)
         # Bind mouse event
         self.setMouseTracking(True)
         # Buffer image
-        self._buffer = QImage(width, height, QImage.Format_ARGB32_Premultiplied)
         self.mouseX = width // 2
         self.mouseY = height // 2
 
@@ -197,7 +198,7 @@ class QRemoteDesktop(QWidget):
         :param width: new width of the widget
         :param height: new height of the widget
         """
-        self._buffer = QImage(width, height, QImage.Format_RGB32)
+        self._buffer = self._buffer.scaled(width, height)
         self.sessionWidth = width
         self.sessionHeight = height
         super().resize(width, height)
@@ -214,6 +215,6 @@ class QRemoteDesktop(QWidget):
         qp.drawEllipse(QPoint(self.mouseX * scaleValue, self.mouseY * scaleValue), 5, 5)
 
     def clear(self):
-        self._buffer = QImage(self._buffer.width(), self._buffer.height(), QImage.Format_RGB32)
+        self._buffer = QImage(self._buffer.width(), self._buffer.height(), QImage.Format_ARGB32_Premultiplied)
         self.setMousePosition(self._buffer.width() // 2, self._buffer.height() // 2)
         self.repaint()
