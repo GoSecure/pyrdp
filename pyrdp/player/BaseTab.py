@@ -33,11 +33,12 @@ class BaseTab(QWidget):
         self.text.setMinimumHeight(150)
         self.log = logging.getLogger(LOGGER_NAMES.PLAYER)
 
-        scrollViewer = QScrollArea()
-        scrollViewer.setWidget(self.widget)
-
         self.tabLayout = QVBoxLayout()
-        self.tabLayout.addWidget(scrollViewer, 8)
+
+        self.scrollViewer = QScrollArea()
+        self.scrollViewer.setWidget(self.widget)
+
+        self.tabLayout.addWidget(self.scrollViewer, 10)
         self.tabLayout.addWidget(self.text, 2)
 
         self.setLayout(self.tabLayout)
