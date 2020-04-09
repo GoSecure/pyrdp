@@ -55,7 +55,7 @@ jobs:
       uses: DuckSoft/extract-7z-action@v1.0
       with:
         pathSource: test/files/test_session_replay.zip
-        pathTarget: test/files/test_session.replay
+        pathTarget: test/files
 
     - name: pyrdp-player.py read a replay in headless mode test
       working-directory: ./
