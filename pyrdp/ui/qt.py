@@ -189,7 +189,6 @@ class QRemoteDesktop(QWidget):
         :param scale: Ex: 0.5 for 50% height and 50% width.
         """
         self.scaleValue = scale
-        self.resize(self.sessionWidth, self.sessionHeight)
 
     def setScaleToWindow(self, status):
         self.scaleToWindow = status > 0
@@ -200,7 +199,7 @@ class QRemoteDesktop(QWidget):
         :param width: new width of the widget
         :param height: new height of the widget
         """
-        self._buffer = self._buffer.scaled(width, height)
+        self._buffer = QImage(width, height, QImage.Format_ARGB32_Premultiplied)
         self.sessionWidth = width
         self.sessionHeight = height
         super().resize(width, height)
