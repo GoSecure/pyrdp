@@ -97,5 +97,5 @@ class ReplayTab(BaseTab):
         :param width: The new width of the main window
         :param height: The new height of the main window
         """
-        self.widget.scale((height - self.text.height() - 200) / self.widget.height)
+        self.widget.scale((height - self.text.height() - 200) / self.widget.sessionHeight)
         self.thread.mainWindowResized()

@@ -136,8 +136,8 @@ class QRemoteDesktop(QWidget):
         super().__init__(parent)
 
         self.scaleValue = 1
-        self.width = width
-        self.height = height
+        self.sessionWidth = width
+        self.sessionHeight = height
 
         self.scaleToWindow = False
 
@@ -186,7 +186,7 @@ class QRemoteDesktop(QWidget):
         :param scale: Ex: 0.5 for 50% height and 50% width.
         """
         self.scaleValue = scale
-        self.resize(self.width, self.height)
+        self.resize(self.sessionWidth, self.sessionHeight)
 
     def setScaleToWindow(self, status):
         self.scaleToWindow = status > 0
@@ -198,8 +198,8 @@ class QRemoteDesktop(QWidget):
         :param height: new height of the widget
         """
         self._buffer = QImage(width, height, QImage.Format_RGB32)
-        self.width = width
-        self.height = height
+        self.sessionWidth = width
+        self.sessionHeight = height
         super().resize(width, height)
 
     def paintEvent(self, e: QEvent):
@@ -209,7 +209,7 @@ class QRemoteDesktop(QWidget):
         """
         scaleValue = self.scaleValue if self.scaleToWindow else 1
         qp = QPainter(self)
-        qp.drawImage(0, 0, self._buffer.scaled(self.width * scaleValue, self.height * scaleValue, aspectMode=Qt.KeepAspectRatio))
+        qp.drawImage(0, 0, self._buffer.scaled(self.sessionWidth * scaleValue, self.sessionHeight * scaleValue, aspectMode=Qt.KeepAspectRatio))
         qp.setBrush(QColor.fromRgb(255, 255, 0, 180))
         qp.drawEllipse(QPoint(self.mouseX * scaleValue, self.mouseY * scaleValue), 5, 5)
 
