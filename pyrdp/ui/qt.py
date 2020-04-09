@@ -122,8 +122,10 @@ def convert8bppTo16bpp(buf: bytes):
 
 class QRemoteDesktop(QWidget):
     """
-    Qt RDP display widget
+    Qt RDP display widget. It is the widget directly responsible to display the "screen" of the
+    client in the RDP session being shown/replayed.
     """
+
     # This signal can be used by other objects to run code on the main thread. The argument is a callable.
     mainThreadHook = Signal(object)
 
