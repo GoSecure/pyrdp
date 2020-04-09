@@ -4,6 +4,7 @@
 # Licensed under the GPLv3 or later.
 #
 
+from io import BufferedIOBase
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
@@ -95,7 +96,7 @@ class FileLayer(LayerChainItem):
         self.pending = b''
 
         self.filename = fileName
-        self.fd = None
+        self.fd: BufferedIOBase = None
 
     def sendBytes(self, data: bytes):
         """
