@@ -48,7 +48,7 @@ jobs:
       run: coverage run test/test.py
 
     - name: Coverage
-      run: coverage report --fail-under=50
+      run: coverage report --fail-under=40
 
 
 
