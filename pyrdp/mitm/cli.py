@@ -114,13 +114,17 @@ def generateCertificate(keyPath: str, certificatePath: str) -> bool:
     else:
         nullDevicePath = "NUL"
 
-    result = os.system("openssl req -newkey rsa:2048 -nodes -keyout %s -x509 -days 365 -out %s -subj \"/CN=www.example.com/O=PYRDP/C=US\" 2>%s" % (keyPath, certificatePath, nullDevicePath))
+    result = os.system("openssl req -newkey rsa:2048 -nodes -keyout %s -x509"
+                       " -days 365 -out %s -subj \"/CN=www.example.com/O=PYRDP/C=US\" 2>%s" %
+                       (keyPath, certificatePath, nullDevicePath))
     return result == 0
 
 
 def showConfiguration(config: MITMConfig):
-    logging.getLogger(LOGGER_NAMES.MITM).info("Target: %(target)s:%(port)d", {"target": config.targetHost, "port": config.targetPort})
-    logging.getLogger(LOGGER_NAMES.MITM).info("Output directory: %(outputDirectory)s", {"outputDirectory": config.outDir.absolute()})
+    logging.getLogger(LOGGER_NAMES.MITM).info("Target: %(target)s:%(port)d", {
+        "target": config.targetHost, "port": config.targetPort})
+    logging.getLogger(LOGGER_NAMES.MITM).info("Output directory: %(outputDirectory)s",
+                                              {"outputDirectory": config.outDir.absolute()})
 
 
 def buildArgParser():
@@ -128,28 +132,54 @@ def buildArgParser():
     parser.add_argument("target", help="IP:port of the target RDP machine (ex: 192.168.1.10:3390)")
     parser.add_argument("-l", "--listen", help="Port number to listen on (default: 3389)", default=3389)
     parser.add_argument("-o", "--output", help="Output folder", default="pyrdp_output")
-    parser.add_argument("-i", "--destination-ip", help="Destination IP address of the PyRDP player.If not specified, RDP events are not sent over the network.")
-    parser.add_argument("-d", "--destination-port", help="Listening port of the PyRDP player (default: 3000).", default=3000)
+    parser.add_argument("-i", "--destination-ip",
+                        help="Destination IP address of the PyRDP player.If not specified, RDP events are"
+                        " not sent over the network.")
+    parser.add_argument("-d", "--destination-port",
+                        help="Listening port of the PyRDP player (default: 3000).", default=3000)
     parser.add_argument("-k", "--private-key", help="Path to private key (for SSL)")
     parser.add_argument("-c", "--certificate", help="Path to certificate (for SSL)")
     parser.add_argument("-u", "--username", help="Username that will replace the client's username", default=None)
     parser.add_argument("-p", "--password", help="Password that will replace the client's password", default=None)
-    parser.add_argument("-L", "--log-level", help="Console logging level. Logs saved to file are always verbose.", default="INFO", choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"])
-    parser.add_argument("-F", "--log-filter", help="Only show logs from this logger name (accepts '*' wildcards)", default="")
-    parser.add_argument("-s", "--sensor-id", help="Sensor ID (to differentiate multiple instances of the MITM where logs are aggregated at one place)", default="PyRDP")
+    parser.add_argument("-L", "--log-level", help="Console logging level. Logs saved to file are always verbose.",
+                        default="INFO", choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"])
+    parser.add_argument("-F", "--log-filter",
+                        help="Only show logs from this logger name (accepts '*' wildcards)", default="")
+    parser.add_argument(
+        "-s", "--sensor-id", help="Sensor ID (to differentiate multiple instances of the MITM"
+        " where logs are aggregated at one place)", default="PyRDP")
     parser.add_argument("--payload", help="Command to run automatically upon connection", default=None)
-    parser.add_argument("--payload-powershell", help="PowerShell command to run automatically upon connection", default=None)
-    parser.add_argument("--payload-powershell-file", help="PowerShell script to run automatically upon connection (as -EncodedCommand)", default=None)
-    parser.add_argument("--payload-delay", help="Time to wait after a new connection before sending the payload, in milliseconds", default=None)
-    parser.add_argument("--payload-duration", help="Amount of time for which input / output should be dropped, in milliseconds. This can be used to hide the payload screen.", default=None)
-    parser.add_argument("--disable-active-clipboard", help="Disables the active clipboard stealing to request clipboard content upon connection.", action="store_true")
+    parser.add_argument("--payload-powershell",
+                        help="PowerShell command to run automatically upon connection", default=None)
+    parser.add_argument("--payload-powershell-file",
+                        help="PowerShell script to run automatically upon connection (as -EncodedCommand)",
+                        default=None)
+    parser.add_argument(
+        "--payload-delay", help="Time to wait after a new connection before sending the payload, in milliseconds",
+        default=None)
+    parser.add_argument(
+        "--payload-duration", help="Amount of time for which input / output should be dropped, in milliseconds."
+        " This can be used to hide the payload screen.", default=None)
+    parser.add_argument("--disable-active-clipboard",
+                        help="Disables the active clipboard stealing to request clipboard content upon connection.",
+                        action="store_true")
     parser.add_argument("--crawl", help="Enable automatic shared drive scraping", action="store_true")
-    parser.add_argument("--crawler-match-file", help="File to be used by the crawler to chose what to download when scraping the client shared drives.", default=None)
-    parser.add_argument("--crawler-ignore-file", help="File to be used by the crawler to chose what folders to avoid when scraping the client shared drives.", default=None)
+    parser.add_argument("--crawler-match-file",
+                        help="File to be used by the crawler to chose what to download when scraping the client shared"
+                        " drives.", default=None)
+    parser.add_argument("--crawler-ignore-file",
+                        help="File to be used by the crawler to chose what folders to avoid when scraping the client"
+                        " shared drives.", default=None)
     parser.add_argument("--no-replay", help="Disable replay recording", action="store_true")
-    parser.add_argument("--no-downgrade", help="Disables downgrading of unsupported extensions. This makes PyRDP harder to fingerprint but might impact the player's ability to replay captured traffic.", action="store_true")
-    parser.add_argument("--no-files", help="Do not extract files transferred between the client and server.", action="store_true")
-    parser.add_argument("--transparent", help="Spoof source IP for connections to the server (See README)", action="store_true")
+    parser.add_argument("--no-downgrade", help="Disables downgrading of unsupported extensions. This makes PyRDP harder"
+                        " to fingerprint but might impact the player's ability to replay captured traffic.",
+                        action="store_true")
+    parser.add_argument(
+        "--no-files", help="Do not extract files transferred between the client and server.", action="store_true")
+    parser.add_argument(
+        "--transparent", help="Spoof source IP for connections to the server (See README)", action="store_true")
+    parser.add_argument("--gdi", help="Accept accelerated graphics pipeline (MS-RDPEGDI) extension",
+                        action="store_true")
 
     return parser
 
@@ -201,11 +231,16 @@ def configure(cmdline=None) -> MITMConfig:
     config.transparent = args.transparent
     config.extractFiles = not args.no_files
     config.disableActiveClipboardStealing = args.disable_active_clipboard
+    config.useGdi = args.gdi
 
     payload = None
     powershell = None
 
-    if int(args.payload is not None) + int(args.payload_powershell is not None) + int(args.payload_powershell_file is not None) > 1:
+    npayloads = int(args.payload is not None) + \
+        int(args.payload_powershell is not None) + \
+        int(args.payload_powershell_file is not None)
+
+    if npayloads > 1:
         logger.error("Only one of --payload, --payload-powershell and --payload-powershell-file may be supplied.")
         sys.exit(1)
 
@@ -252,7 +287,9 @@ def configure(cmdline=None) -> MITMConfig:
             sys.exit(1)
 
         if config.payloadDelay < 1000:
-            logger.warning("You have provided a payload delay of less than 1 second. We recommend you use a slightly longer delay to make sure it runs properly.")
+            logger.warning(
+                "You have provided a payload delay of less than 1 second."
+                " We recommend you use a slightly longer delay to make sure it runs properly.")
 
         try:
             config.payloadDuration = int(args.payload_duration)

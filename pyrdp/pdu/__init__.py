@@ -1,8 +1,9 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018, 2019 GoSecure Inc.
+# Copyright (C) 2018-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+# flake8: noqa
 
 from pyrdp.pdu.gcc import GCCConferenceCreateRequestPDU, GCCConferenceCreateResponsePDU, GCCPDU
 from pyrdp.pdu.mcs import MCSAttachUserConfirmPDU, MCSAttachUserRequestPDU, MCSChannelJoinConfirmPDU, \
@@ -29,7 +30,7 @@ from pyrdp.pdu.rdp.connection import ClientChannelDefinition, ClientClusterData,
     ServerNetworkData, ServerSecurityData
 from pyrdp.pdu.rdp.fastpath import FastPathBitmapEvent, FastPathEvent, FastPathEventRaw, FastPathInputEvent, \
     FastPathMouseEvent, FastPathOrdersEvent, FastPathOutputEvent, FastPathOutputEvent, FastPathPDU, \
-    FastPathScanCodeEvent, FastPathUnicodeEvent, SecondaryDrawingOrder
+    FastPathScanCodeEvent, FastPathUnicodeEvent
 from pyrdp.pdu.rdp.input import ExtendedMouseEvent, KeyboardEvent, MouseEvent, SlowPathInput, SynchronizeEvent, \
     UnicodeKeyboardEvent, UnusedEvent
 from pyrdp.pdu.rdp.licensing import LicenseBinaryBlob, LicenseErrorAlertPDU, LicensingPDU
@@ -39,7 +40,7 @@ from pyrdp.pdu.rdp.pointer import Point, PointerCacheEvent, PointerColorEvent, P
 from pyrdp.pdu.rdp.security import SecurityExchangePDU, SecurityPDU
 from pyrdp.pdu.rdp.slowpath import ConfirmActivePDU, ControlPDU, DemandActivePDU, InputPDU, PlaySoundPDU, PointerPDU, \
     SetErrorInfoPDU, ShareControlHeader, ShareDataHeader, SlowPathPDU, SlowPathUnparsedPDU, SuppressOutputPDU, \
-    SynchronizePDU, UpdatePDU
+    SynchronizePDU, UpdatePDU, PersistentCacheKeysPDU
 from pyrdp.pdu.rdp.virtual_channel.clipboard import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU, \
     FormatListPDU, FormatListResponsePDU, FormatName, LongFormatName, ServerMonitorReadyPDU, ShortFormatName
 from pyrdp.pdu.rdp.virtual_channel.device_redirection import DeviceAnnounce, DeviceCloseRequestPDU, \
