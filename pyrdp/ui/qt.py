@@ -24,10 +24,10 @@ Qt specific code
 QRemoteDesktop is a widget use for render in rdpy
 """
 
+import rle
 from io import BytesIO
 
-import rle
-from PySide2.QtCore import QEvent, QPoint, Signal
+from PySide2.QtCore import QEvent, QPoint, Qt, Signal
 from PySide2.QtGui import QColor, QImage, QMatrix, QPainter
 from PySide2.QtWidgets import QWidget
 
@@ -134,21 +134,24 @@ class QRemoteDesktop(QWidget):
         :param parent: parent widget
         """
         super().__init__(parent)
-        #set correct size
+
+        self.scaleValue = 1
+        self.width = width
+        self.height = height
+
+        # set correct size
         self.resize(width, height)
-        #bind mouse event
+        # bind mouse event
         self.setMouseTracking(True)
-        #buffer image
+        # buffer image
         self._buffer = QImage(width, height, QImage.Format_RGB32)
         self.mouseX = width // 2
         self.mouseY = height // 2
 
         self.mainThreadHook.connect(self.runOnMainThread)
 
-
     def runOnMainThread(self, target: callable):
         target()
-
 
     def notifyImage(self, x: int, y: int, qimage: QImage, width: int, height: int):
         """
@@ -160,17 +163,25 @@ class QRemoteDesktop(QWidget):
         :param height: height of the new image
         """
 
-        #fill buffer image
+        # fill buffer image
         qp = QPainter(self._buffer)
         qp.drawImage(x, y, qimage, 0, 0, width, height)
 
-        #force update
+        # force update
         self.update()
 
     def setMousePosition(self, x: int, y: int):
         self.mouseX = x
         self.mouseY = y
         self.update()
+
+    def scale(self, scale):
+        """
+        Rescale the current widget to a percentage of the height of the RDP session.
+        :param scale: Ex: 0.5 for 50% height and 50% width.
+        """
+        self.scaleValue = scale
+        self.resize(self.width, self.height)
 
     def resize(self, width: int, height: int):
         """
@@ -179,7 +190,9 @@ class QRemoteDesktop(QWidget):
         :param height: new height of the widget
         """
         self._buffer = QImage(width, height, QImage.Format_RGB32)
-        super().resize(width, height)
+        self.width = width
+        self.height = height
+        super().resize(width * self.scaleValue, height * self.scaleValue)
 
     def paintEvent(self, e: QEvent):
         """
@@ -187,9 +200,9 @@ class QRemoteDesktop(QWidget):
         :param e: the event
         """
         qp = QPainter(self)
-        qp.drawImage(0, 0, self._buffer)
+        qp.drawImage(0, 0, self._buffer.scaled(self.width * self.scaleValue, self.height * self.scaleValue, aspectMode=Qt.KeepAspectRatio))
         qp.setBrush(QColor.fromRgb(255, 255, 0, 180))
-        qp.drawEllipse(QPoint(self.mouseX, self.mouseY), 5, 5)
+        qp.drawEllipse(QPoint(self.mouseX * self.scaleValue, self.mouseY * self.scaleValue), 5, 5)
 
     def clear(self):
         self._buffer = QImage(self._buffer.width(), self._buffer.height(), QImage.Format_RGB32)

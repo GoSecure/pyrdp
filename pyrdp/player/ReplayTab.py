@@ -88,3 +88,13 @@ class ReplayTab(BaseTab):
     def onClose(self):
         self.thread.close()
         self.thread.wait()
+
+    def mainWindowResized(self, width: int, height: int):
+        """
+        Called when the main PyRDP window is resized to allow to scale the current
+        RDP session being displayed.
+        :param width: The new width of the main window
+        :param height: The new height of the main window
+        """
+        self.widget.scale((height - self.text.height() - 200) / self.widget.height)
+        self.thread.mainWindowResized()

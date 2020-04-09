@@ -9,7 +9,7 @@ from enum import IntEnum
 from multiprocessing import Queue
 from time import sleep
 
-from PySide2.QtCore import Signal, QThread
+from PySide2.QtCore import QThread, Signal
 
 from pyrdp.core import Timer
 from pyrdp.player.Replay import Replay
@@ -44,41 +44,41 @@ class ReplayThread(QThread):
         self.lastSeekTime = 0
         self.requestedSpeed = 1
         self.replay = replay
+        self.timer = Timer()
 
     def run(self):
         step = 16 / 1000
         currentIndex = 0
         runThread = True
         timestamps = sorted(self.replay.events.keys())
-        timer = Timer()
 
         while runThread:
-            timer.update()
+            self.timer.update()
 
             try:
                 while True:
                     event = self.queue.get_nowait()
 
                     if event == ReplayThreadEvent.PLAY:
-                        timer.start()
+                        self.timer.start()
                     elif event == ReplayThreadEvent.PAUSE:
-                        timer.stop()
+                        self.timer.stop()
                     elif event == ReplayThreadEvent.SEEK:
-                        if self.lastSeekTime < timer.getElapsedTime():
+                        if self.lastSeekTime < self.timer.getElapsedTime():
                             currentIndex = 0
                             self.clearNeeded.emit()
 
-                        timer.setTime(self.lastSeekTime)
+                        self.timer.setTime(self.lastSeekTime)
                     elif event == ReplayThreadEvent.SPEED:
-                        timer.setSpeed(self.requestedSpeed)
+                        self.timer.setSpeed(self.requestedSpeed)
                     elif event == ReplayThreadEvent.EXIT:
                         runThread = False
 
             except queue.Empty:
                 pass
 
-            if timer.isRunning():
-                currentTime = timer.getElapsedTime()
+            if self.timer.isRunning():
+                currentTime = self.timer.getElapsedTime()
                 self.timeUpdated.emit(currentTime)
 
                 while currentIndex < len(timestamps) and timestamps[currentIndex] / 1000.0 <= currentTime:
@@ -108,3 +108,10 @@ class ReplayThread(QThread):
 
     def close(self):
         self.queue.put(ReplayThreadEvent.EXIT)
+
+    def mainWindowResized(self):
+        """
+        Seeks to current time to allow to rerender the image on the resized widget.
+        """
+        self.lastSeekTime = self.timer.getElapsedTime()
+        self.queue.put(ReplayThreadEvent.SEEK)

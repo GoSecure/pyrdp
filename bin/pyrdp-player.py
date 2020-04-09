@@ -9,7 +9,9 @@
 # asyncio needs to be imported first to ensure that the reactor is
 # installed properly. Do not re-order.
 import asyncio
+
 from twisted.internet import asyncioreactor
+
 asyncioreactor.install(asyncio.get_event_loop())
 
 from pyrdp.core import settings
@@ -17,7 +19,6 @@ from pyrdp.logging import LOGGER_NAMES, NotifyHandler, configure as configureLog
 from pyrdp.player import HAS_GUI
 from pyrdp.player.config import DEFAULTS
 
-from pathlib import Path
 import argparse
 import logging
 import logging.handlers
