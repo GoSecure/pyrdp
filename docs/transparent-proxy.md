@@ -315,5 +315,9 @@ Other scenarios might require creativity with route configuration and are left t
 * `ebtables` reference: https://ebtables.netfilter.org/
 * https://github.com/rkok/bridge-mitm-tools
 * https://wiki.squid-cache.org/Features/Tproxy4#Timeouts_with_Squid_running_as_a_bridge_or_multiple-NIC
+* Network namespaces: https://lwn.net/Articles/580893/, https://blogs.igalia.com/dpino/2016/04/10/network-namespaces/
+* Give an interface to a namespace: https://medium.com/@badbot/a-thing-with-multi-homed-linux-host-two-nics-in-one-box-f62db1de8f17
+* Using bridges in network namespaces: https://ops.tips/blog/using-network-namespaces-and-bridge-to-isolate-servers/
+* Manual bridge setup: https://www.tldp.org/HOWTO/BRIDGE-STP-HOWTO/set-up-the-bridge.html
 
 [204]: https://github.com/GoSecure/pyrdp/issues/204#issuecomment-610758979
