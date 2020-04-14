@@ -33,12 +33,12 @@ TABLE_ID=100
 # Create a custom routing table for pyrdp traffic
 echo "$TABLE_ID    pyrdp" >> /etc/iproute2/rt_tables
 
+# Enable IP forwarding
+echo 1 > /proc/sys/net/ipv4/ip_forward
+
 # Route RDP traffic intended for the target server to local PyRDP (1)
-iptables -t nat \
-    -A PREROUTING \
-    -d $SERVER_IP \
-    -p tcp -m tcp --dport 3389 \
-    -j REDIRECT --to-port 3389
+iptables -t mangle -I PREROUTING -p tcp -d $SERVER_IP --dport 3389 \
+  -j TPROXY --tproxy-mark $MARK --on-port 3389 --on-ip 127.0.0.1
 
 # Mark RDP traffic intended for clients (2)
 iptables -t mangle -A PREROUTING \
@@ -53,6 +53,12 @@ ip rule add fwmark $MARK lookup $TABLE_ID
 # So that server-client traffic passes through PyRDP
 # This table will only ever be used by RDP so it should not be problematic
 ip route add local default dev lo table $TABLE_ID
+```
+
+Then launch PyRDP. In this case it should be launched like this:
+
+```
+pyrdp-mitm.py --transparent 10.2.2.2
 ```
 
 
