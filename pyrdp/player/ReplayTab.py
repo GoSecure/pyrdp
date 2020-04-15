@@ -105,5 +105,5 @@ class ReplayTab(BaseTab):
         RDP session being displayed.
         :param event: The event of the parent that has been resized
         """
-        newScale = (self.scrollViewer.height() - self.scrollViewer.horizontalScrollBar().height()) / self.widget.sessionHeight
+        newScale = self.scrollViewer.viewport().height() / self.widget.sessionHeight
         self.widget.scale(newScale)
