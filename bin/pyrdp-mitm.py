@@ -10,12 +10,11 @@ import logging
 
 # Need to install this reactor before importing other twisted code
 from twisted.internet import asyncioreactor
+
 asyncioreactor.install(asyncio.get_event_loop())
 from twisted.internet import reactor
 
-from pyrdp.core import settings
 from pyrdp.core.mitm import MITMServerFactory
-from pyrdp.mitm import MITMConfig, DEFAULTS
 from pyrdp.mitm.cli import showConfiguration, configure
 from pyrdp.logging import LOGGER_NAMES
 import socket

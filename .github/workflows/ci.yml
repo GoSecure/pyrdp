@@ -43,11 +43,26 @@ jobs:
     - name: Install ci dependencies
       run: pip install -r requirements-ci.txt
 
+    - name: Extract test files
+      uses: DuckSoft/extract-7z-action@v1.0
+      with:
+        pathSource: test/files/test_files.zip
+        pathTarget: test/files
+
     - name: Integration Test with a prerecorded PCAP.
       working-directory: ./
-      run: coverage run test/test.py
+      run: coverage run test/test_prerecorded.py
+
+    - name: pyrdp-mitm.py initialization integration test
+      working-directory: ./
+      run: coverage run --append test/test_mitm_initialization.py dummy_value
+
+    - name: pyrdp-player.py read a replay in headless mode test
+      working-directory: ./
+      run: coverage run --append bin/pyrdp-player.py --headless test/files/test_session.replay
 
     - name: Coverage
+      working-directory: ./
       run: coverage report --fail-under=40
 
 
@@ -70,6 +85,20 @@ jobs:
         working-directory: .
         run: pip install -U -e .
 
+      - name: Extract test files
+        uses: DuckSoft/extract-7z-action@v1.0
+        with:
+          pathSource: test/files/test_files.zip
+          pathTarget: test/files
+
       - name: Integration Test with a prerecorded PCAP.
         working-directory: ./
-        run: python test/test.py
+        run: python test/test_prerecorded.py
+
+      - name: pyrdp-mitm.py initialization test
+        working-directory: ./
+        run: bin/pyrdp-mitm.py --test localhost
+
+      - name: pyrdp-player.py read a replay in headless mode test
+        working-directory: ./
+        run: bin/pyrdp-player.py --headless test/files/test_session.replay
