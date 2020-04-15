@@ -1,0 +1,3 @@
+Next time we touch that file, we should split it. See
+https://github.com/GoSecure/pyrdp/pull/202#issuecomment-613781106[this GitHub
+issue comment] for rationale.
