@@ -7,9 +7,11 @@
 #
 
 # asyncio needs to be imported first to ensure that the reactor is
-# installed properly. Do not re-order.
-import asyncio   # noqa
+# installed properly. ***DO NOT RE-ORDER***.
+import asyncio  # noqa
+
 from twisted.internet import asyncioreactor
+
 asyncioreactor.install(asyncio.get_event_loop())
 
 from pyrdp.core import settings  # noqa
@@ -86,6 +88,7 @@ def main():
     if not args.headless:
         app = QApplication(sys.argv)
         mainWindow = MainWindow(args.bind, int(args.port), args.replay)
+        mainWindow.showMaximized()
         mainWindow.show()
 
         return app.exec_()

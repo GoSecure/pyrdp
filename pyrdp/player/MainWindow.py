@@ -1,12 +1,14 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018, 2019 GoSecure Inc.
+# Copyright (C) 2018-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+from typing import List
 
 from PySide2.QtCore import Qt, Signal
-from PySide2.QtWidgets import QAction, QFileDialog, QMainWindow, QTabWidget, QInputDialog
+from PySide2.QtWidgets import QAction, QFileDialog, QInputDialog, QMainWindow, QTabWidget
 
+from pyrdp.player import BaseTab
 from pyrdp.player.LiveWindow import LiveWindow
 from pyrdp.player.ReplayWindow import ReplayWindow
 
@@ -32,13 +34,14 @@ class MainWindow(QMainWindow):
             "closeTabOnCtrlW": True     # Allow user to toggle Ctrl+W passthrough.
         }
 
-        self.liveWindow = LiveWindow(bind_address, port, self.updateCountSignal, self.options)
-        self.replayWindow = ReplayWindow(self.options)
+        self.liveWindow = LiveWindow(bind_address, port, self.updateCountSignal, self.options, parent=self)
+        self.replayWindow = ReplayWindow(self.options, parent=self)
         self.tabManager = QTabWidget()
         self.tabManager.addTab(self.liveWindow, "Live connections")
         self.tabManager.addTab(self.replayWindow, "Replays")
         self.setCentralWidget(self.tabManager)
         self.updateCountSignal.connect(self.updateTabConnectionCount)
+        self.resizeObservers: List[BaseTab] = []
 
         # File menu
         openAction = QAction("Open...", self)
@@ -109,7 +112,6 @@ class MainWindow(QMainWindow):
             self.tabManager.setCurrentWidget(self.replayWindow)
             for fileName in fileNames:
                 self.replayWindow.openFile(fileName)
-
 
     def sendKeySequence(self, keys: [Qt.Key]):
         if self.tabManager.currentWidget() is self.liveWindow:

@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019, 2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -15,6 +15,7 @@ from pyrdp.player.BaseWindow import BaseWindow
 from pyrdp.player.LiveTab import LiveTab
 from pyrdp.player.LiveThread import LiveThread
 
+
 class LiveWindow(BaseWindow):
     """
     Class that holds logic for live player (network RDP connections as they happen) tabs.
@@ -23,7 +24,7 @@ class LiveWindow(BaseWindow):
     connectionReceived = Signal()
     closedTabText = " - Closed"
 
-    def __init__(self, address: str, port: int, updateCountSignal: Signal, options: Dict[str, object], parent: QWidget = None):
+    def __init__(self, address: str, port: int, updateCountSignal: Signal, options: Dict[str, object], parent: QWidget):
         super().__init__(options, parent)
 
         QApplication.instance().aboutToQuit.connect(self.onClose)
@@ -40,7 +41,7 @@ class LiveWindow(BaseWindow):
         return tab.getProtocol()
 
     def createLivePlayerTab(self):
-        tab = LiveTab()
+        tab = LiveTab(parent=self)
         tab.addIconToTab.connect(self.addIconToTab)
         tab.renameTab.connect(self.renameLivePlayerTab)
         tab.connectionClosed.connect(self.onConnectionClosed)

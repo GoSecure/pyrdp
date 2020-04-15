@@ -1,12 +1,13 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 import logging
 
 from PySide2.QtCore import Qt, Signal
-from PySide2.QtWidgets import QHBoxLayout, QLabel, QSizePolicy, QSlider, QSpacerItem, QVBoxLayout, QWidget
+from PySide2.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QSizePolicy, QSlider, QSpacerItem, \
+    QVBoxLayout, QWidget
 
 from pyrdp.logging import LOGGER_NAMES
 from pyrdp.player.SeekBar import SeekBar
@@ -31,6 +32,8 @@ class ReplayBar(QWidget):
         self.button.setMaximumWidth(100)
         self.button.clicked.connect(self.onButtonClicked)
 
+        self.scaleCheckbox = QCheckBox("Scale to window")
+
         self.timeSlider = SeekBar()
         self.timeSlider.setMinimum(0)
         self.timeSlider.setMaximum(int(duration * 1000))
@@ -49,6 +52,7 @@ class ReplayBar(QWidget):
         horizontal = QHBoxLayout()
         horizontal.addWidget(self.speedLabel)
         horizontal.addWidget(self.speedSlider)
+        horizontal.addWidget(self.scaleCheckbox)
         horizontal.addItem(QSpacerItem(20, 40, QSizePolicy.Expanding, QSizePolicy.Expanding))
         vertical.addLayout(horizontal)
 

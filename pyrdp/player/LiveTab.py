@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018, 2019 GoSecure Inc.
+# Copyright (C) 2018-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -9,12 +9,12 @@ import asyncio
 from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QHBoxLayout, QWidget
 
+from pyrdp.mitm.PlayerLayerSet import AsyncIOPlayerLayerSet
 from pyrdp.player.AttackerBar import AttackerBar
 from pyrdp.player.BaseTab import BaseTab
 from pyrdp.player.filesystem import DirectoryObserver, FileSystem
 from pyrdp.player.FileSystemWidget import FileSystemWidget
 from pyrdp.player.LiveEventHandler import LiveEventHandler
-from pyrdp.mitm.PlayerLayerSet import AsyncIOPlayerLayerSet
 from pyrdp.player.RDPMITMWidget import RDPMITMWidget
 
 
@@ -23,7 +23,7 @@ class LiveTab(BaseTab, DirectoryObserver):
     Tab playing a live RDP connection as data is being received over the network.
     """
 
-    def __init__(self, parent: QWidget = None):
+    def __init__(self, parent: QWidget):
         layers = AsyncIOPlayerLayerSet()
         rdpWidget = RDPMITMWidget(1024, 768, layers.player)
 

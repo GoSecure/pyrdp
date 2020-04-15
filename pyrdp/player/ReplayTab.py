@@ -1,9 +1,9 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019, 2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-
+from PySide2.QtGui import QResizeEvent
 from PySide2.QtWidgets import QApplication, QWidget
 
 from pyrdp.layer import PlayerLayer
@@ -20,7 +20,7 @@ class ReplayTab(BaseTab):
     Tab that displays a RDP Connection that is being replayed from a file.
     """
 
-    def __init__(self, fileName: str, parent: QWidget = None):
+    def __init__(self, fileName: str, parent: QWidget):
         """
         :param fileName: name of the file to read.
         :param parent: parent widget.
@@ -45,6 +45,7 @@ class ReplayTab(BaseTab):
         self.controlBar.pause.connect(self.thread.pause)
         self.controlBar.seek.connect(self.thread.seek)
         self.controlBar.speedChanged.connect(self.thread.setSpeed)
+        self.controlBar.scaleCheckbox.stateChanged.connect(self.setScaleToWindow)
         self.controlBar.button.setDefault(True)
 
         self.tabLayout.insertWidget(0, self.controlBar)
@@ -88,3 +89,21 @@ class ReplayTab(BaseTab):
     def onClose(self):
         self.thread.close()
         self.thread.wait()
+
+    def setScaleToWindow(self, status: int):
+        """
+        Called when the scale to window checkbox is checked or unchecked, refresh
+        the scaling calculation.
+        :param status: state of the checkbox
+        """
+        self.parentResized(None)
+        self.widget.setScaleToWindow(status)
+
+    def parentResized(self, event: QResizeEvent):
+        """
+        Called when the main PyRDP window is resized to allow to scale the current
+        RDP session being displayed.
+        :param event: The event of the parent that has been resized
+        """
+        newScale = (self.scrollViewer.height() - self.scrollViewer.horizontalScrollBar().height()) / self.widget.sessionHeight
+        self.widget.scale(newScale)

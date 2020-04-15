@@ -2,7 +2,10 @@
 # Copyright (c) 2014-2015 Sylvain Peyrefitte
 # Copyright (c) 2018-2020 GoSecure Inc.
 #
-# This file is part of rdpy.
+# This file is part of PyRDP.
+# This file was part of rdpy.
+#
+# PyRDP is licensed under the GPLv3 or later.
 #
 # rdpy is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,10 +27,10 @@ Qt specific code
 QRemoteDesktop is a widget use for render in rdpy
 """
 
+import rle
 from io import BytesIO
 
-import rle
-from PySide2.QtCore import QEvent, QPoint, Signal
+from PySide2.QtCore import QEvent, QPoint, Qt, Signal
 from PySide2.QtGui import QColor, QImage, QMatrix, QPainter
 from PySide2.QtWidgets import QWidget
 
@@ -122,8 +125,10 @@ def convert8bppTo16bpp(buf: bytes):
 
 class QRemoteDesktop(QWidget):
     """
-    Qt RDP display widget
+    Qt RDP display widget. It is the widget directly responsible to display the "screen" of the
+    client in the RDP session being shown/replayed.
     """
+
     # This signal can be used by other objects to run code on the main thread. The argument is a callable.
     mainThreadHook = Signal(object)
 
@@ -134,12 +139,22 @@ class QRemoteDesktop(QWidget):
         :param parent: parent widget
         """
         super().__init__(parent)
+
+        self.ratio = 1
+        """ Scale factor used to render the RDP session on the player."""
+
+        self.sessionWidth = width
+        self.sessionHeight = height
+
+        self.scaleToWindow = False
+
+        # Buffer image
+        self._buffer: QImage = QImage(width, height, QImage.Format_ARGB32_Premultiplied)
+
         # Set correct size
         self.resize(width, height)
         # Bind mouse event
         self.setMouseTracking(True)
-        # Buffer image
-        self._buffer = QImage(width, height, QImage.Format_ARGB32_Premultiplied)
         self.mouseX = width // 2
         self.mouseY = height // 2
 
@@ -151,7 +166,6 @@ class QRemoteDesktop(QWidget):
     @property
     def screen(self):
         return self._buffer
-
     def notifyImage(self, x: int, y: int, qimage: QImage, width: int, height: int):
         """
         Draw an image on the buffer.
@@ -174,13 +188,26 @@ class QRemoteDesktop(QWidget):
         self.mouseY = y
         self.update()
 
+    def scale(self, scale):
+        """
+        Rescale the current widget to a percentage of the height of the RDP session.
+        :param scale: Ex: 0.5 for 50% height and 50% width.
+        """
+        self.ratio = scale
+
+    def setScaleToWindow(self, status):
+        self.scaleToWindow = status > 0
+
     def resize(self, width: int, height: int):
         """
-        Resize widget
-        :param width: new width of the widget
-        :param height: new height of the widget
+        Resize the image buffer. This is called when the clientData is parsed, which
+        contains the screen size used for the connection.
+        :param width: new width of the replay client's screen
+        :param height: new height of the replay client's screen.
         """
-        self._buffer = QImage(width, height, QImage.Format_RGB32)
+        self._buffer = QImage(width, height, QImage.Format_ARGB32_Premultiplied)
+        self.sessionWidth = width
+        self.sessionHeight = height
         super().resize(width, height)
 
     def paintEvent(self, e: QEvent):
@@ -188,12 +215,13 @@ class QRemoteDesktop(QWidget):
         Call when Qt renderer engine estimate that is needed
         :param e: the event
         """
+        ratio = self.ratio if self.scaleToWindow else 1
         qp = QPainter(self)
-        qp.drawImage(0, 0, self._buffer)
+        qp.drawImage(0, 0, self._buffer.scaled(self.sessionWidth * ratio, self.sessionHeight * ratio, aspectMode=Qt.KeepAspectRatio))
         qp.setBrush(QColor.fromRgb(255, 255, 0, 180))
-        qp.drawEllipse(QPoint(self.mouseX, self.mouseY), 5, 5)
+        qp.drawEllipse(QPoint(self.mouseX * ratio, self.mouseY * ratio), 5, 5)
 
     def clear(self):
-        self._buffer = QImage(self._buffer.width(), self._buffer.height(), QImage.Format_RGB32)
+        self._buffer = QImage(self._buffer.width(), self._buffer.height(), QImage.Format_ARGB32_Premultiplied)
         self.setMousePosition(self._buffer.width() // 2, self._buffer.height() // 2)
         self.repaint()
