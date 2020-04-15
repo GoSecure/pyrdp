@@ -54,6 +54,7 @@ class ReplayTab(BaseTab):
         self.player.addObserver(self.eventHandler)
 
     def play(self):
+        self.controlBar.button.setPlaying(True)
         self.controlBar.play.emit()
 
     def readEvent(self, position: int):
