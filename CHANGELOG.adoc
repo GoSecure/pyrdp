@@ -30,6 +30,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Added `--no-downgrade` switch to prevent protocol downgrading where possible {uri-issue}189[#189]
 * Added `--no-files` switch to prevent extracting transferred files {uri-issue}195[#195]
 * Added `--gdi` MITM switch to enable accelerated graphics pipeline (MS-RDPEGDI) ({uri-issue}50[#50])
+* PyRDP no longer create replay files for garbage sessions with less than 19 bytes ({uri-issue}169[#169], {uri-issue}207[#207])
 
 === Bug fixes
 
