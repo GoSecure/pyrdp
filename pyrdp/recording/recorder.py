@@ -1,17 +1,18 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
+from io import BufferedIOBase
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 from pyrdp.enum import ParserMode, PlayerPDUType
 from pyrdp.layer import LayerChainItem, PlayerLayer
 from pyrdp.logging import log
-from pyrdp.parser import BasicFastPathParser, ClientConnectionParser, ClientInfoParser, ClipboardParser, Parser, \
-    SlowPathParser
+from pyrdp.parser import BasicFastPathParser, ClientConnectionParser, \
+    ClientInfoParser, ClipboardParser, Parser, SlowPathParser
 from pyrdp.pdu import PDU
 
 
@@ -19,7 +20,8 @@ class Recorder:
     """
     Class that manages recording of RDP events using the provided
     transport layers. Those transport layers are the ones that will
-    receive binary data and handle them as they wish. They perform the actual recording.
+    receive binary data and handle them as they wish. They perform the
+    actual recording.
     """
 
     def __init__(self, transports: List[LayerChainItem]):
@@ -56,7 +58,6 @@ class Recorder:
         """
         self.parsers[messageType] = parser
 
-
     def record(self, pdu: Optional[PDU], messageType: PlayerPDUType):
         """
         Encapsulate the pdu properly, then record the data
@@ -86,9 +87,16 @@ class FileLayer(LayerChainItem):
     Layer that saves RDP events to a file for later replay.
     """
 
+    FLUSH_THRESHOLD = 18
+
     def __init__(self, fileName: Union[str, Path]):
         super().__init__()
-        self.file_descriptor = open(str(fileName), "wb")
+
+        # Buffer data until we have enough bytes for a meaningful replay.
+        self.pending = b''
+
+        self.filename = fileName
+        self.fd: BufferedIOBase = None
 
     def sendBytes(self, data: bytes):
         """
@@ -96,7 +104,13 @@ class FileLayer(LayerChainItem):
         :param data: data to write.
         """
 
-        if not self.file_descriptor.closed:
-            self.file_descriptor.write(data)
+        if not self.fd:
+            self.pending += data
+            if len(self.pending) > FileLayer.FLUSH_THRESHOLD:
+                self.fd = open(str(self.filename), "wb")
+                self.fd.write(self.pending)
+                self.pending = b''
+        elif not self.fd.closed:
+            self.fd.write(data)
         else:
             log.error("Recording file handle closed, cannot write message: %(message)s", {"message": data})
