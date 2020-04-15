@@ -17,18 +17,29 @@ from PySide2.QtGui import QImage, QPainter, QColor
 
 
 class Mp4Sink:
+    """A QRemoteDesktop Mock."""
     def __init__(self):
-        self.screen: QImage = None
+        self._buffer: QImage = None
+
+    @property
+    def screen(self):
+        return self._buffer
 
     def notifyImage(self, x: int, y: int, img: QImage, w: int, h: int):
-        p = QPainter(self.screen)
+        p = QPainter(self._buffer)
         p.drawImage(x, y, img, 0, 0, w, h)
+
+    def resize(self, w: int, h: int):
+        self._buffer = QImage(w, h, QImage.Format_ARGB32_Premultiplied)
+
+    def width(self) -> int:
+        return self._buffer.width()
+
+    def height(self) -> int:
+        return self._buffer.height()
 
     def update(self):
         pass
-
-    def resize(self, w: int, h: int):
-        self.screen = QImage(w, h, QImage.Format_RGB888)
 
 
 class Mp4EventHandler(RenderingEventHandler):
@@ -75,14 +86,14 @@ class Mp4EventHandler(RenderingEventHandler):
         nframes = (dt // self.delta)
         if nframes > 0:
             for _ in range(nframes):
-                self._writeFrame(self.surface)
+                self._writeFrame(self.sink.screen)
             self.prevTimestamp = ts
             self.log.debug('Rendered %d still frame(s)', nframes)
 
     def cleanup(self):
         # Add one second worth of padding so that the video doesn't end too abruptly.
         for _ in range(self.fps):
-            self._writeFrame(self.surface)
+            self._writeFrame(self.sink.screen)
 
         self.log.info('Flushing to disk: %s', self.filename)
         for pkt in self.stream.encode():
@@ -90,7 +101,6 @@ class Mp4EventHandler(RenderingEventHandler):
                 self.progress()
             self.mp4.mux(pkt)
         self.log.info('Export completed.')
-
         self.mp4.close()
 
     def onMousePosition(self, x, y):
@@ -112,18 +122,17 @@ class Mp4EventHandler(RenderingEventHandler):
         self.stream.width = w
         self.stream.height = h
 
-    def onBeginRender(self):
-        pass
+        super().onCapabilities(caps)
 
     def onFinishRender(self):
         # When the screen is updated, always write a frame.
         self.prevTimestamp = self.timestamp
-        self._writeFrame(self.surface)
+        self._writeFrame(self.sink.screen)
 
     def _writeFrame(self, surface: QImage):
         w = self.stream.width
         h = self.stream.height
-        surface = self.sink.screen.scaled(w, h) if self.scale else self.sink.screen
+        surface = surface.scaled(w, h) if self.scale else surface
         frame = av.VideoFrame.from_image(ImageQt.fromqimage(surface))
 
         # Draw the mouse pointer.

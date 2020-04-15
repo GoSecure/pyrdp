@@ -28,30 +28,34 @@ class RenderingEventHandler(BaseEventHandler):
     def onCapabilities(self, caps):
         if CapabilityType.CAPSTYPE_ORDER in caps:
             self.gdi = GdiQtFrontend(self.sink)
-            self.orders = OrdersParser(self.gdi)
-            self.orders.onCapabilities(caps)
+            self._orders = OrdersParser(self.gdi)
+            self._orders.onCapabilities(caps)
 
     # Generic Video Parsing Routines.
     def onFastPathOutput(self, event: FastPathOutputEvent):
+        self.onBeginRender()
         if isinstance(event, FastPathBitmapEvent):
             parsed = self._fastPath.parseBitmapEvent(event)
-            self.onBeginRender()
             for bmp in parsed.bitmapUpdateData:
                 self.onBitmap(bmp)
-            self.onFinishRender()
 
         elif isinstance(event, FastPathOrdersEvent):
-            if self.orders is None:
+            if self._orders is None:
                 self.log.error('Received Unexpected Drawing Orders!')
                 return
+            self.onBeginRender()
             self._orders.parse(event)
+
+        self.onFinishRender()
 
     def onSlowPathUpdate(self, pdu: UpdatePDU):
         if pdu.updateType == SlowPathUpdateType.SLOWPATH_UPDATETYPE_BITMAP:
-            updates = self._bitmap.parseBitmapUpdateData(pdu.updateData)
             self.onBeginRender()
+
+            updates = self._bitmap.parseBitmapUpdateData(pdu.updateData)
             for bmp in updates:
                 self.onBitmap(bmp)
+
             self.onFinishRender()
 
     def onBitmap(self, bitmapData: BitmapUpdateData):

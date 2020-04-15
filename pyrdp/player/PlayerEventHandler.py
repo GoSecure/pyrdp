@@ -46,6 +46,8 @@ class PlayerEventHandler(QObject, RenderingEventHandler):
         (w, h) = (bmp.desktopWidth, bmp.desktopHeight)
         self.viewer.resize(w, h)
 
+        super().onCapabilities(caps)
+
     def onMousePosition(self, x: int, y: int):
         self.viewer.setMousePosition(x, y)
 
