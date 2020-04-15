@@ -87,6 +87,12 @@ This is the easiest installation method if you have docker installed and working
 docker pull gosecure/pyrdp:latest
 ```
 
+As an alternative we have a slimmer image without the GUI and ffmpeg dependencies.
+
+```
+docker pull gosecure/pyrdp:latest-slim
+```
+
 ### From Git Source
 
 We recommend installing PyRDP in a
@@ -132,15 +138,16 @@ Finally, you can install the project with Pip:
 ```
 pip3 install -U pip setuptools wheel
 
-# Without GUI dependencies
+# Without GUI and ffmpeg dependencies
 pip3 install -U -e .
 
-# With GUI dependencies
-pip3 install -U -e '.[GUI]'
+# With GUI and ffmpeg dependencies
+pip3 install -U -e '.[full]'
 ```
 
-This should install the dependencies required to run PyRDP. If you choose to install without GUI dependencies,
-it will not be possible to use `pyrdp-player` without headless mode (`--headless`)
+This should install the dependencies required to run PyRDP. If you choose to
+install without GUI or ffmpeg dependencies, it will not be possible to use
+`pyrdp-player` without headless mode (`--headless`) or `pyrdp-convert`.
 
 If you ever want to leave your virtual environment, you can simply deactivate it:
 
@@ -198,6 +205,12 @@ First of all, build the image by executing this command at the root of PyRDP (wh
 
 ```
 docker build -t pyrdp .
+```
+
+As an alternative we have a slimmer image without the GUI and ffmpeg dependencies:
+
+```
+docker build -f Dockerfile.slim -t pyrdp .
 ```
 
 Afterwards, you can execute PyRDP by invoking the `pyrdp` docker container. See [Usage instructions](#using-pyrdp) and the [Docker specific instructions](#docker-specific-usage-instructions) for details.

@@ -3,7 +3,17 @@
 version: "3"
 services:
   pyrdp:
-    build: .
+    image: gosecure/pyrdp:latest
+    # Slim image (no GUI pyrdp-player, no pyrdp-convert)
+    #image: gosecure/pyrdp:latest-slim
+    # Uncomment a build section if you want to build your own image
+    # Full image
+    #build: .
+    # Slim image (no pyrdp-player, no pyrdp-convert)
+    #build:
+    #  context: .
+    #  dockerfile: Dockerfile.slim
+
     # Uncomment this section only if you want to run the player.
     # This allows the GUI of the player to be displayed on the host screen and
     # stops Qt from using the MITM-SHM X11 Shared Memory Extension.

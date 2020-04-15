@@ -43,6 +43,6 @@ setup(name='pyrdp',
         'twisted',
     ],
     extras_require={
-        "GUI": ['PySide2', 'dbus-python;platform_system!="Windows"', 'notify2;platform_system!="Windows"']
+        "full": ['PySide2', 'dbus-python;platform_system!="Windows"', 'notify2;platform_system!="Windows"']
     }
 )

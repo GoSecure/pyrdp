@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         python3-setuptools \
         # Required for venv setup
         python3-venv \
-        # Required to build RLE module and dbus-python
+        # Required to build RLE module and dbus-python (GUI)
         build-essential python3-dev \
         libdbus-1-dev \
         libdbus-glib-1-dev
@@ -23,7 +23,7 @@ COPY ext/rle.c /pyrdp/ext/rle.c
 COPY pyrdp/ /pyrdp/pyrdp/
 # Install in the virtualenv
 RUN cd /pyrdp \
-    && pip3 --no-cache-dir install .[GUI] -U
+    && pip3 --no-cache-dir install .[full] -U
 
 
 # Handles runtime only (minimize size for distribution)
