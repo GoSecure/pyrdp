@@ -96,8 +96,8 @@ class ReplayTab(BaseTab):
         the scaling calculation.
         :param status: state of the checkbox
         """
-        self.parentResized(None)
         self.widget.setScaleToWindow(status)
+        self.parentResized(None)
 
     def parentResized(self, event: QResizeEvent):
         """
