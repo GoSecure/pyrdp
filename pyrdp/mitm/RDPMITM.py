@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -76,13 +76,13 @@ class RDPMITM:
         self.state = state if state is not None else RDPMITMState(self.config)
         """The MITM state"""
 
-        self.client = RDPLayerSet()
+        self.client = RDPLayerSet(self.config)
         """Layers on the client side"""
 
-        self.server = RDPLayerSet()
+        self.server = RDPLayerSet(self.config)
         """Layers on the server side"""
 
-        self.player = TwistedPlayerLayerSet()
+        self.player = TwistedPlayerLayerSet(self.config)
         """Layers on the attacker side"""
 
         self.recorder = recorder if recorder is not None else MITMRecorder([], self.state)
