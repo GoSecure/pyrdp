@@ -13,6 +13,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * `pyrdp-player` can now run in headless mode (`--headless`).
   All GUI dependencies are now optional enabling further Docker image size reduction.
   See {uri-issue}151[#151], {uri-issue}163[#163] and {uri-issue}190[#190].
+* `pyrdp-player` now support window scaling of the RDP session ({uri-issue}101[#101], {uri-issue}208[#208])
 * Added a transparent proxy mode where source or destination packets are unaltered from the client or the server's perspective.
   Read link:docs/transparent-proxy.md[the feature's documentation for setup and details.].
   Also see {uri-issue}197[#197], {uri-issue}204[#204] and {uri-issue}205[#205].
