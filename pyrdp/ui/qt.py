@@ -2,7 +2,10 @@
 # Copyright (c) 2014-2015 Sylvain Peyrefitte
 # Copyright (c) 2018-2020 GoSecure Inc.
 #
-# This file is part of rdpy.
+# This file is part of PyRDP.
+# This file was part of rdpy.
+#
+# PyRDP is licensed under the GPLv3 or later.
 #
 # rdpy is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
