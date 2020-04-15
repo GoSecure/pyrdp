@@ -166,6 +166,7 @@ class QRemoteDesktop(QWidget):
     @property
     def screen(self):
         return self._buffer
+
     def notifyImage(self, x: int, y: int, qimage: QImage, width: int, height: int):
         """
         Draw an image on the buffer.
