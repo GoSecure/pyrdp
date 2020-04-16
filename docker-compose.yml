@@ -9,7 +9,7 @@ services:
     # Uncomment a build section if you want to build your own image
     # Full image
     #build: .
-    # Slim image (no pyrdp-player, no pyrdp-convert)
+    # Slim image (no pyrdp-player without --headless and no pyrdp-convert)
     #build:
     #  context: .
     #  dockerfile: Dockerfile.slim
