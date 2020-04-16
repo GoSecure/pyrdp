@@ -99,8 +99,8 @@ jobs:
 
       - name: pyrdp-mitm.py initialization test
         working-directory: ./
-        run: bin/pyrdp-mitm.py --test localhost
+        run: python test/test_mitm_initialization.py dummy_value
 
       - name: pyrdp-player.py read a replay in headless mode test
         working-directory: ./
-        run: bin/pyrdp-player.py --headless test/files/test_session.replay
+        run: python bin/pyrdp-player.py --headless test/files/test_session.replay
