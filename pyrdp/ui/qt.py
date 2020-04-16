@@ -166,6 +166,7 @@ class QRemoteDesktop(QWidget):
     @property
     def screen(self):
         return self._buffer
+
     def notifyImage(self, x: int, y: int, qimage: QImage, width: int, height: int):
         """
         Draw an image on the buffer.
@@ -194,6 +195,18 @@ class QRemoteDesktop(QWidget):
         :param scale: Ex: 0.5 for 50% height and 50% width.
         """
         self.ratio = scale
+        self._updateWidgetSize()
+
+    def _updateWidgetSize(self):
+        """
+        Size the widget according to if we are scaled or not
+        """
+        if self.scaleToWindow:
+            # resize widget to parent size: will hide scrollbars
+            super().resize(self.parent().size())
+        else:
+            # resize widget to session size: will show scrollbars if required
+            super().resize(self.sessionWidth, self.sessionHeight)
 
     def setScaleToWindow(self, status):
         self.scaleToWindow = status > 0
@@ -208,7 +221,7 @@ class QRemoteDesktop(QWidget):
         self._buffer = QImage(width, height, QImage.Format_ARGB32_Premultiplied)
         self.sessionWidth = width
         self.sessionHeight = height
-        super().resize(width, height)
+        self._updateWidgetSize()
 
     def paintEvent(self, e: QEvent):
         """
