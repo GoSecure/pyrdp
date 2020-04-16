@@ -16,6 +16,8 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build Docker image
       run: docker build .
+    - name: Build slim Docker image
+      run: docker build -f Dockerfile.slim .
 
   install-and-test-ubuntu:
     runs-on: ubuntu-latest
