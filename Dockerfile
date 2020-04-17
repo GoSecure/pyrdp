@@ -31,6 +31,7 @@ FROM ubuntu:18.04 AS docker-image
 
 # Install runtime dependencies except pre-built venv
 RUN apt-get update && apt-get install -y --no-install-recommends python3 \
+        openssl \
         # GUI and notifications stuff
         libgl1-mesa-glx \
         notify-osd dbus-x11 libxkbcommon-x11-0 \
