@@ -23,6 +23,6 @@ NOTE: This is a work in progress
 * linkify issues with vim's: `%s/{uri-issue}\d\+\[#\(\d\+\)\]/#\1/gc`
 
 .Post-release
-* Update version in `setup.py` (+1 bugfix, append 'dev') and commit
+* Update version in `setup.py` (+1 bugfix, append '.dev0') and commit
 * commit msg: Begin development on next release
 
