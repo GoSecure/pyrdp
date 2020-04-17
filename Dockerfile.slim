@@ -32,6 +32,7 @@ FROM ubuntu:18.04 AS docker-image
 
 # Install runtime dependencies except pre-built venv
 RUN apt-get update && apt-get install -y --no-install-recommends python3 \
+    openssl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy preinstalled dependencies from compile image
