@@ -36,7 +36,7 @@ FROM ubuntu:18.04 AS docker-image
 RUN apt-get update && apt-get install -y --no-install-recommends python3 \
         # To generate certificates
         openssl \
-	# Required for the setup.py install
+        # Required for the setup.py install
         python3-distutils \
         # GUI and notifications stuff
         libgl1-mesa-glx \
