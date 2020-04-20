@@ -1,4 +1,7 @@
 # PyRDP
+
+![pipeline status](https://github.com/GoSecure/pyrdp/workflows/Build/badge.svg?branch=master)
+
 PyRDP is a Python 3 Remote Desktop Protocol (RDP) Man-in-the-Middle (MITM) and library.
 
 ![PyRDP Logo](https://raw.githubusercontent.com/GoSecure/pyrdp/master/docs/pyrdp-logo.svg?sanitize=true)
