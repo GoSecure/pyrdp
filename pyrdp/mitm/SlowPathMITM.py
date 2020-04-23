@@ -4,12 +4,13 @@
 # Licensed under the GPLv3 or later.
 #
 
-from pyrdp.enum import CapabilityType, KeyboardFlag, OrderFlag, VirtualChannelCompressionFlag, Order
+from pyrdp.enum import CapabilityType, KeyboardFlag, Order, OrderFlag, VirtualChannelCompressionFlag
 from pyrdp.layer import SlowPathLayer, SlowPathObserver
-from pyrdp.logging.StatCounter import StatCounter, STAT
-from pyrdp.mitm.state import RDPMITMState
-from pyrdp.pdu import Capability, ConfirmActivePDU, DemandActivePDU, InputPDU, KeyboardEvent, SlowPathPDU
+from pyrdp.logging.StatCounter import STAT, StatCounter
 from pyrdp.mitm.BasePathMITM import BasePathMITM
+from pyrdp.mitm.state import RDPMITMState
+from pyrdp.pdu import Capability, ConfirmActivePDU, DemandActivePDU, InputPDU, KeyboardEvent, \
+    SlowPathPDU
 
 
 class SlowPathMITM(BasePathMITM):
@@ -100,11 +101,13 @@ class SlowPathMITM(BasePathMITM):
         :param pdu: the demand active PDU
         """
 
-        if CapabilityType.CAPSTYPE_ORDER in pdu.parsedCapabilitySets:
-            orders = pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER]
-            supported = bytearray(orders.orderSupport)
-            supported[Order.TS_NEG_DRAWNINEGRID_INDEX] = 0
-            orders.orderSupport = supported
+        if self.state.config.downgrade:
 
-        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].flags = \
-            VirtualChannelCompressionFlag.VCCAPS_NO_COMPR
+            if CapabilityType.CAPSTYPE_ORDER in pdu.parsedCapabilitySets:
+                orders = pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_ORDER]
+                supported = bytearray(orders.orderSupport)
+                supported[Order.TS_NEG_DRAWNINEGRID_INDEX] = 0
+                orders.orderSupport = supported
+
+            pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].flags = \
+                VirtualChannelCompressionFlag.VCCAPS_NO_COMPR
