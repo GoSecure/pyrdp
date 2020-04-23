@@ -15,9 +15,13 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build Docker image
-      run: docker build .
+      run: docker build -t pyrdp .
+    - name: Smoke test docker image
+      run: docker run pyrdp pyrdp-player.py -h
     - name: Build slim Docker image
-      run: docker build -f Dockerfile.slim .
+      run: docker build -f Dockerfile.slim -t pyrdp .
+    - name: Smoke test docker slim image
+      run: docker run pyrdp pyrdp-mitm.py -h
 
   install-and-test-ubuntu:
     runs-on: ubuntu-latest

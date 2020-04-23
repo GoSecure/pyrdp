@@ -16,14 +16,17 @@ RUN python3 -m venv /opt/venv
 # Make sure we use the virtualenv:
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy only what is required for the install
-COPY setup.py /pyrdp/setup.py
-COPY bin/ /pyrdp/bin/
+# Install dependencies only (speeds repetitive builds)
+COPY requirements.txt /pyrdp/requirements.txt
+RUN cd /pyrdp && pip3 --no-cache-dir install -r requirements.txt
+
+# Compile only our C extension and install
+# This way changes to source tree will not trigger full images rebuilds
 COPY ext/rle.c /pyrdp/ext/rle.c
-COPY pyrdp/ /pyrdp/pyrdp/
-# Install in the virtualenv
+COPY setup.py /pyrdp/setup.py
 RUN cd /pyrdp \
-    && pip3 --no-cache-dir install .[full] -U
+    && python setup.py build_ext \
+    && python setup.py install_lib
 
 
 # Handles runtime only (minimize size for distribution)
@@ -31,7 +34,10 @@ FROM ubuntu:18.04 AS docker-image
 
 # Install runtime dependencies except pre-built venv
 RUN apt-get update && apt-get install -y --no-install-recommends python3 \
+        # To generate certificates
         openssl \
+        # Required for the setup.py install
+        python3-distutils \
         # GUI and notifications stuff
         libgl1-mesa-glx \
         notify-osd dbus-x11 libxkbcommon-x11-0 \
@@ -42,10 +48,24 @@ COPY --from=compile-image /opt/venv /opt/venv
 
 # Create user
 RUN useradd --create-home --home-dir /home/pyrdp pyrdp
+
+# Make sure we use the virtualenv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install python source and package
+# NOTE: we are no longer doing this in the compile image to avoid long image rebuilds in development
+COPY --from=compile-image /pyrdp /pyrdp
+COPY bin/ /pyrdp/bin/
+COPY pyrdp/ /pyrdp/pyrdp/
+COPY setup.py /pyrdp/setup.py
+RUN cd /pyrdp \
+    && python setup.py install
+
 USER pyrdp
 
 # UTF-8 support on the console output (for pyrdp-player)
 ENV PYTHONIOENCODING=utf-8
-# Make sure we use the virtualenv:
+# Make sure we use the virtualenv
 ENV PATH="/opt/venv/bin:$PATH"
+
 WORKDIR /home/pyrdp
