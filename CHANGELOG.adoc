@@ -24,9 +24,6 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Added `replayfilename` to the connection report log entry ({uri-issue}180[#180])
 * Added a `twistd` plugin ({uri-issue}174[#174], {uri-issue}177[#177], {uri-issue}191[#191])
 * Support for 32-bit x86 operating systems now that the GUI is optional ({uri-issue}150[#150])
-* Docker image size reduced and split in default and `-slim` variants ({uri-issue}173[#173], {uri-issue}198[#198])
-* Better use of docker caching for faster development iterations ({uri-issue}217[#217], {uri-issue}219[#219])
-* Default Docker Compose command now `pyrdp-mitm -h` to avoid confusing crash on `docker-compose up` ({uri-issue}173[#173])
 * Documentation updates and fixes ({uri-issue}165[#165], {uri-issue}166[#166], {uri-issue}172[#172])
 * Added `--disable-active-clipboard` switch to prevent clipboard request injection
 * Added `--no-downgrade` switch to prevent protocol downgrading where possible {uri-issue}189[#189]
@@ -43,6 +40,9 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 === Infrastructure
 
+* Docker image size reduced and split in default and `-slim` variants ({uri-issue}173[#173], {uri-issue}198[#198])
+* Better use of Docker caching for faster development iterations ({uri-issue}217[#217], {uri-issue}219[#219])
+* Default Docker Compose command now `pyrdp-mitm -h` to avoid confusing crash on `docker-compose up` ({uri-issue}173[#173])
 * Added continuous integration leveraging GitHub Actions that builds the docker image and runs an integration test on both Ubuntu and Windows ({uri-issue}194[#194], {uri-issue}201[#201], {uri-issue}202[#202])
 
 
