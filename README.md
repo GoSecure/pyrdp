@@ -51,7 +51,7 @@ research use cases in mind.
     + [Other MITM arguments](#other-mitm-arguments)
       - [--no-downgrade](#--no-downgrade)
       - [--transparent](#--transparent)
-      - [`--gdi`: Accelerated Graphics Pipeline](#--gdi-accelerated-graphics-pipeline)
+      - [`--no-gdi`: Disable Accelerated Graphics Pipeline](#--no-gdi-disable-accelerated-graphics-pipeline)
   * [Using the PyRDP Player](#using-the-pyrdp-player)
     + [Playing a replay file](#playing-a-replay-file)
     + [Listening for live connections](#listening-for-live-connections)
@@ -368,11 +368,11 @@ a gateway between clients and the server and sees all traffic.
 **NOTE**: This requires root privileges, only works on Linux and requires manual firewall configuration to ensure 
 that traffic is routed properly.
 
-##### `--gdi`: Accelerated Graphics Pipeline
+##### `--no-gdi`: Disable Accelerated Graphics Pipeline
 
-Tells the MITM to allow clients to use [Graphics Device Interface Acceleration][gdi] Extensions to stream
-drawing orders instead of raw bitmaps. The advantage of this mode is a significant reduction in required bandwidth
-for high resolution connections.
+By default, PyRDP uses the most recent supported graphics pipeline. This switch tells the MITM to not use the [Graphics
+Device Interface Acceleration][gdi] Extensions to stream video. The advantage of this mode is a significant reduction in
+required bandwidth for high resolution connections.
 
 Note that some GDI drawing orders are currently unimplemented because they appear to be unused.
 If you have a replay which contains any unsupported or untested order, do not hesitate to share it with the project maintainers so that support can be added as required. (Make sure that the trace does not contain sensitive information)
