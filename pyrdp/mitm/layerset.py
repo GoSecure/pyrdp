@@ -5,9 +5,9 @@
 #
 
 from pyrdp.enum import SegmentationPDUType
-from pyrdp.mitm import MITMConfig
 from pyrdp.layer import FastPathLayer, LayerChainItem, MCSLayer, SecurityLayer, SegmentationLayer, SlowPathLayer, \
     TPKTLayer, TwistedTCPLayer, X224Layer
+# from pyrdp.mitm.config import MITMConfig
 
 
 class RDPLayerSet:
@@ -15,7 +15,7 @@ class RDPLayerSet:
     Class that handles initialization of regular (non-virtual channel) RDP layers.
     """
 
-    def __init__(self, config: MITMConfig):
+    def __init__(self, config):
         self.tcp = TwistedTCPLayer(config)
         self.segmentation = SegmentationLayer()
         self.tpkt = TPKTLayer()

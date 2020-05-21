@@ -16,7 +16,6 @@ from pyrdp.layer.layer import IntermediateLayer, LayerObserver
 from pyrdp.logging import LOGGER_NAMES, getSSLLogger
 from pyrdp.parser.tcp import TCPParser
 from pyrdp.pdu import PDU
-from pyrdp.mitm import MITMConfig
 
 
 TLS_RECORD = 0x16
@@ -46,7 +45,7 @@ class TwistedTCPLayer(IntermediateLayer, Protocol):
     TCP observers are notified when a connection is made.
     """
 
-    def __init__(self, config: MITMConfig):
+    def __init__(self, config):
         self.log = logging.getLogger(LOGGER_NAMES.PYRDP)
         super().__init__(TCPParser())
         self.connectedEvent = asyncio.Event()
