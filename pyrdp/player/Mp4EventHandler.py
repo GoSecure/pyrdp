@@ -135,8 +135,7 @@ class Mp4EventHandler(RenderingEventHandler):
         surface = surface.scaled(w, h) if self.scale else surface
         frame = av.VideoFrame.from_image(ImageQt.fromqimage(surface))
 
-        # Draw the mouse pointer.
-        # NOTE: We could render mouse clicks by changing the color of the brush.
+        # Draw the mouse pointer. Render mouse clicks?
         p = QPainter(surface)
         p.setBrush(QColor.fromRgb(255, 255, 0, 180))
         (x, y) = self.mouse

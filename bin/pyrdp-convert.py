@@ -255,8 +255,13 @@ def decrypted(stream: PacketList, master_secret: bytes) -> Decrypted:
 def getStreamInfo(s: PacketList) -> (str, str, float, bool):
     """Attempt to retrieve an (src, dst, ts, isPlaintext) tuple for a data stream."""
     packet = s[0]
+
     if IP in packet:
-        # FIXME: Technically the IP traffic could be plaintext too.
+        # This is a plaintext stream.
+        #
+        # FIXME: This relies on the fact that decrypted traces are using EXPORTED_PDU and
+        #        thus have no `IP` layer, but it is technically possible to have a true
+        #        plaintext capture with very old implementations of RDP.
         return (packet[IP].src, packet[IP].dst, packet.time, False)
     elif Ether not in packet:
         # No Ethernet layer, so assume exported PDUs.
@@ -423,7 +428,8 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--format', help='Format of the output', choices=['replay', 'mp4'], default='replay')
     parser.add_argument('--src', help='If specified, limits the converted streams to connections initiated from this address', action='append', default=[])
     parser.add_argument('--dst', help='If specified, limits the converted streams to connections destined to this address', action='append', default=[])
-    parser.add_argument('-o', '--output', help='Path to write the converted files to. If a file name is specified, it will be used as a prefix.')
+    parser.add_argument('-o', '--output', help='Path to write the converted files to. If a file name is specified, it will be used as a prefix,'
+                        'otherwise the result is output next to the source file with the proper extension.')
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.CRITICAL)

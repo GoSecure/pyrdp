@@ -438,12 +438,15 @@ Run `pyrdp-clonecert.py --help` for a full list of arguments.
 
 ### Using PyRDP Convert
 
-`pyrdp-convert` is a helper script that performs several useful conversions:
+`pyrdp-convert` is a helper script that performs several useful conversions. The script has the best chance of working
+on traffic captured by PyRDP due to unsupported RDP protocol features that might be used in a non-intercepted
+connection.
+
+The following conversions are supported:
 
 - Network Capture (PCAP) to PyRDP replay file
 - Network Capture to MP4 video file
 - Replay file to MP4 video file
-
 
 The script supports both encrypted (TLS) network captures (by providing `--secrets ssl.log`) and decrypted PDU exports.
 
@@ -457,6 +460,7 @@ pyrdp-convert.py --src 10.2.0.198 --secrets ssl.log -o path/to/output -f mp4 cap
 # List the sessions in a network trace, along with the decryptable ones.
 pyrdp-convert.py --list capture.pcapng
 ```
+
 Note that MP4 conversion requires libavcodec and ffmpeg, so this may require extra steps on Windows.
 
 Manually decrypted network traces can be exported from Wireshark by selecting `File > Export PDUs` and selecting `OSI
