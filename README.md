@@ -370,12 +370,13 @@ that traffic is routed properly.
 
 ##### `--no-gdi`: Disable Accelerated Graphics Pipeline
 
-By default, PyRDP uses the most recent supported graphics pipeline. This switch tells the MITM to not use the [Graphics
-Device Interface Acceleration][gdi] Extensions to stream video. The advantage of this mode is a significant reduction in
-required bandwidth for high resolution connections.
+PyRDP downgrades video to the the most recent graphics pipeline that it supports. This switch explicitly tells the
+MITM to not use the [Graphics Device Interface Acceleration][gdi] extensions to stream video. The advantage of this mode
+is a significant reduction in required bandwidth for high resolution connections.
 
-Note that some GDI drawing orders are currently unimplemented because they appear to be unused.
-If you have a replay which contains any unsupported or untested order, do not hesitate to share it with the project maintainers so that support can be added as required. (Make sure that the trace does not contain sensitive information)
+Note that some GDI drawing orders are currently unimplemented because they appear to be unused. If you have a replay
+which contains any unsupported or untested order, do not hesitate to share it with the project maintainers so that
+support can be added as required. (Make sure that the trace does not contain sensitive information)
 
 [gdi]: https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpegdi/745f2eee-d110-464c-8aca-06fc1814f6ad
 
