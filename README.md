@@ -191,7 +191,7 @@ Finally, you can install the project with Pip:
 
 ```
 pip3 install -U pip setuptools wheel
-pip3 install -U -e .
+pip3 install -U -e '.[full]'
 ```
 
 This should install all the dependencies required to run PyRDP.
