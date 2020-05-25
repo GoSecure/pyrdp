@@ -9,7 +9,7 @@ from io import BytesIO
 from pyrdp.core import Uint16LE, Uint32LE, Uint64LE
 from pyrdp.enum import ClipboardMessageFlags, ClipboardMessageType, ClipboardFormatName
 from pyrdp.parser.parser import Parser
-from pyrdp.pdu import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU, FormatListPDU, LongFormatName
+from pyrdp.pdu import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU, FormatListPDU, LongFormatName, FileContentsRequestPDU, FileContentsResponsePDU
 
 
 class ClipboardParser(Parser):
@@ -36,20 +36,34 @@ class ClipboardParser(Parser):
             self.req = None
         elif msgType == ClipboardMessageType.CB_FORMAT_LIST:
             clipboardPDU = self.parseFormatList(payload, msgFlags)
-        # elif msgType == ClipboardMessageType.CB_FILECONTENTS_REQUEST:
-        #     clipboardPDU = self.parseFileContentsRequest(payload, msgFlags)
-        # elif msgType == ClipboardMessageType.CB_FILECONTENTS_RESPONSE:
-        #     clipboardPDU = self.parseFileContentsResponse(payload, msgFlags)
+        elif msgType == ClipboardMessageType.CB_FILECONTENTS_REQUEST:
+            clipboardPDU = self.parseFileContentsRequest(payload, msgFlags)
+        elif msgType == ClipboardMessageType.CB_FILECONTENTS_RESPONSE:
+            clipboardPDU = self.parseFileContentsResponse(payload, msgFlags)
         else:
             clipboardPDU = ClipboardPDU(ClipboardMessageType(msgType), msgFlags, payload)
 
         return clipboardPDU
 
     def parseFileContentsRequest(self, payload, msgFlags):
-        pass
+        stream = BytesIO(payload)
+        streamId = Uint32LE.unpack(stream)
+        lindex = Uint32LE.unpack(stream)
+        dwFlags =  Uint32LE.unpack(stream)
+        posLo = Uint32LE.unpack(stream)
+        posHi = Uint32LE.unpack(stream)
+        cbRequested = Uint32LE.unpack(stream)
+        clipDataId = Uint32LE.unpack(stream)
+
+        pos = posHi << 32 | posLo
+        return FileContentsRequestPDU(payload, streamId, lindex, msgFlags, dwFlags, pos, cbRequested, clipDataId)
 
     def parseFileContentsResponse(self, payload, msgFlags):
-        pass
+        stream = BytesIO(payload)
+        streamId = Uint32LE.unpack(stream)
+        # FIXME: Need to grab the actual file size from the reply.
+        data = stream.read()
+        return FileContentsResponsePDU(payload, msgFlags, streamId, data)
 
     def parseFormatDataRequest(self, payload, msgFlags):
         s = BytesIO(payload)
@@ -178,7 +192,6 @@ class FileDescriptor:
         filename = stream.read(520)
 
         fd.filename = filename.decode('utf-16le').strip('\x00')
-        print(f'Filename: {fd.filename}')
 
         return fd
 

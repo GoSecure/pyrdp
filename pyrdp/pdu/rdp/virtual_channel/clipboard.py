@@ -98,8 +98,20 @@ class FormatListResponsePDU(ClipboardPDU):
 
 
 class FileContentsRequestPDU(ClipboardPDU):
-    pass
+    def __init__(self, payload: bytes, streamId: int, lindex: int, msgFlags: int, flags: int, pos: int, size: int, clipId: int):
+        ClipboardPDU.__init__(self, ClipboardMessageType.CB_FILECONTENTS_REQUEST, msgFlags)
+        self.payload = payload
+        self.streamId = streamId
+        self.lindex = lindex
+        self.flags = flags
+        self.offset = pos,
+        self.size = size
+        self.clipId = clipId
 
 
 class FileContentsResponsePDU(ClipboardPDU):
-    pass
+    def __init__(self, payload: bytes, msgFlags: int, streamId: int, data: bytes):
+        ClipboardPDU.__init__(self, ClipboardMessageType.CB_FILECONTENTS_RESPONSE, msgFlags)
+        self.payload = payload
+        self.data = data
+        self.streamId = streamId
