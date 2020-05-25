@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -9,13 +9,17 @@ from io import BytesIO
 from pyrdp.core import Uint16LE, Uint32LE
 from pyrdp.enum import ClipboardMessageFlags, ClipboardMessageType
 from pyrdp.parser.parser import Parser
-from pyrdp.pdu import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU, FormatListPDU, LongFormatName
+from pyrdp.pdu import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU, FormatListPDU, LongFormatName, ClipboardFormatName
 
 
 class ClipboardParser(Parser):
     """
     Parser class for clipboard PDUs
     """
+
+    def __init__(self):
+        self.formats = {}  # Supported Clipboard Formats
+        self.req = None  # Active Request
 
     def parse(self, data):
         stream = BytesIO(data)
@@ -24,17 +28,42 @@ class ClipboardParser(Parser):
         dataLen = Uint32LE.unpack(stream)
         payload = stream.read(dataLen)
 
-        if msgType == ClipboardMessageType.CB_FORMAT_DATA_RESPONSE:
+        if msgType == ClipboardMessageType.CB_FORMAT_DATA_REQUEST:
+            clipboardPDU = self.parseFormatDataRequest(payload, msgFlags)
+            self.req = clipboardPDU
+        elif msgType == ClipboardMessageType.CB_FORMAT_DATA_RESPONSE:
             clipboardPDU = self.parseFormatDataResponse(payload, msgFlags)
+            self.req = None
         elif msgType == ClipboardMessageType.CB_FORMAT_LIST:
             clipboardPDU = self.parseFormatList(payload, msgFlags)
+        # elif msgType == ClipboardMessageType.CB_FILECONTENTS_REQUEST:
+        #     clipboardPDU = self.parseFileContentsRequest(payload, msgFlags)
+        # elif msgType == ClipboardMessageType.CB_FILECONTENTS_RESPONSE:
+        #     clipboardPDU = self.parseFileContentsResponse(payload, msgFlags)
         else:
             clipboardPDU = ClipboardPDU(ClipboardMessageType(msgType), msgFlags, payload)
 
         return clipboardPDU
 
+    def parseFileContentsRequest(self, payload, msgFlags):
+        pass
+
+    def parseFileContentsResponse(self, payload, msgFlags):
+        pass
+
+    def parseFormatDataRequest(self, payload, msgFlags):
+        s = BytesIO(payload)
+        return FormatDataRequestPDU(Uint32LE.unpack(s))
+
     def parseFormatDataResponse(self, payload, msgFlags):
         isSuccessful = True if msgFlags & ClipboardMessageFlags.CB_RESPONSE_OK else False
+        fid = self.req.requestedFormatId
+        if isSuccessful and fid in self.formats:
+            fmt = str(self.formats[fid])
+            if fmt == ClipboardFormatName.FILE_LIST:
+                # TODO: Parse file list.
+                stream = BytesIO(payload)
+
         return FormatDataResponsePDU(payload, isSuccessful)
 
     def parseFormatList(self, payload, msgFlags):

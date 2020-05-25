@@ -10,7 +10,7 @@ from pyrdp.core import decodeUTF16LE
 from pyrdp.enum import ClipboardFormatNumber, ClipboardMessageFlags, ClipboardMessageType, PlayerPDUType
 from pyrdp.layer import ClipboardLayer
 from pyrdp.logging.StatCounter import StatCounter, STAT
-from pyrdp.pdu import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU
+from pyrdp.pdu import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU, FormatListPDU
 from pyrdp.recording import Recorder
 
 

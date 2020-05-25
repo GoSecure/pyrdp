@@ -16,6 +16,9 @@ class FormatName(PDU):
         self.formatId = formatId
         self.formatName = formatName
 
+    def __str__(self):
+        return self.formatName.decode('utf-16le')
+
 
 class ShortFormatName(FormatName):
     """
@@ -89,3 +92,11 @@ class FormatListResponsePDU(ClipboardPDU):
     def __init__(self, isSuccessful: bool = True):
         flags = ClipboardMessageFlags.CB_RESPONSE_OK if isSuccessful else ClipboardMessageFlags.CB_RESPONSE_FAIL
         ClipboardPDU.__init__(self, ClipboardMessageType.CB_FORMAT_LIST_RESPONSE, flags)
+
+
+class FileContentsRequestPDU(ClipboardPDU):
+    pass
+
+
+class FileContentsResponsePDU(ClipboardPDU):
+    pass

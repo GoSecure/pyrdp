@@ -49,3 +49,5 @@ class ClipboardFormatName(Enum):
     https://msdn.microsoft.com/en-us/library/cc241079.aspx
     """
     FILE_LIST = "FileGroupDescriptorW"
+    DROP_EFFECT = "Preferred DropEffect"
+    FILE_CONTENT = "FileContents"
