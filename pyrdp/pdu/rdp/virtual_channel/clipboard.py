@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -17,7 +17,7 @@ class FormatName(PDU):
         self.formatName = formatName
 
     def __str__(self):
-        return self.formatName.decode('utf-16le')
+        return self.formatName.decode('utf-16le').strip('\x00')
 
 
 class ShortFormatName(FormatName):
@@ -59,10 +59,13 @@ class FormatDataResponsePDU(ClipboardPDU):
     https://msdn.microsoft.com/en-us/library/cc241123.aspx
     """
 
-    def __init__(self, requestedFormatData: bytes, isSuccessful: bool = True):
+    def __init__(self, requestedFormatData: bytes, isSuccessful: bool = True, formatId = None):
+
         flags = ClipboardMessageFlags.CB_RESPONSE_OK if isSuccessful else ClipboardMessageFlags.CB_RESPONSE_FAIL
         ClipboardPDU.__init__(self, ClipboardMessageType.CB_FORMAT_DATA_RESPONSE, flags)
         self.requestedFormatData = requestedFormatData
+        self.formatId = formatId
+        self.files = []
 
 
 class ServerMonitorReadyPDU(ClipboardPDU):
