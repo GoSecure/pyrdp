@@ -61,6 +61,7 @@ research use cases in mind.
     + [Cloning a certificate](#cloning-a-certificate)
     + [Using a custom private key](#using-a-custom-private-key)
     + [Other cloner arguments](#other-cloner-arguments)
+  * [Using PyRDP Convert](#using-pyrdp-convert)
   * [Configuring PyRDP](#configuring-pyrdp)
   * [Using PyRDP as a Library](#using-pyrdp-as-a-library)
   * [Using PyRDP with twistd](#using-pyrdp-with-twistd)
@@ -434,6 +435,54 @@ pyrdp-clonecert.py 192.168.1.10 cert.pem -i input_key.pem
 
 #### Other cloner arguments
 Run `pyrdp-clonecert.py --help` for a full list of arguments.
+
+### Using PyRDP Convert
+
+`pyrdp-convert` is a helper script that performs several useful conversions. The script has the best chance of working
+on traffic captured by PyRDP due to unsupported RDP protocol features that might be used in a non-intercepted
+connection.
+
+The following conversions are supported:
+
+- Network Capture (PCAP) to PyRDP replay file
+- Network Capture to MP4 video file
+- Replay file to MP4 video file
+
+The script supports both encrypted (TLS) network captures (by providing `--secrets ssl.log`) and decrypted PDU exports.
+
+```
+# Export the session coming client 10.2.0.198 to a .pyrdp file.
+pyrdp-convert.py --src 10.2.0.198 --secrets ssl.log -o path/to/output capture.pcapng
+
+# Or as an MP4 video
+pyrdp-convert.py --src 10.2.0.198 --secrets ssl.log -o path/to/output -f mp4 capture.pcapng
+
+# List the sessions in a network trace, along with the decryptable ones.
+pyrdp-convert.py --list capture.pcapng
+```
+
+Note that MP4 conversion requires libavcodec and ffmpeg, so this may require extra steps on Windows.
+
+Manually decrypted network traces can be exported from Wireshark by selecting `File > Export PDUs` and selecting `OSI
+Layer 7`. When using this method, it is also recommended to filter the exported stream to only contain the TCP stream of
+the RDP session which must be converted.
+
+First, make sure you configured wireshark to load TLS secrets:
+
+![Configure TLS secrets log](docs/screens/wireshark-tls.png)
+
+Next, export OSI Layer 7 PDUs:
+
+![Export OSI Layer 7](docs/screens/wireshark-export.png)
+
+And lastly, filter down the trace to contain only the conversation of interest (Optional but recommended) by applying a
+display filter and clicking `File > Export Specified Packets...`
+
+![Filtering the exported trace](docs/screens/wireshark-export-specified.png)
+
+
+Now this trace can be used directly in `pyrdp-convert`.
+
 
 ### Configuring PyRDP
 
