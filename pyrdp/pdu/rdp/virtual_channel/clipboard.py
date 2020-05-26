@@ -104,7 +104,7 @@ class FileContentsRequestPDU(ClipboardPDU):
         self.streamId = streamId
         self.lindex = lindex
         self.flags = flags
-        self.offset = pos,
+        self.offset = pos
         self.size = size
         self.clipId = clipId
 

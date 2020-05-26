@@ -48,10 +48,15 @@ class FileDescriptorFlags(Enum):
     """
     https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpeclip/a765d784-2b39-4b88-9faa-88f8666f9c35
     """
-    FD_ATTRIBUTES =  0x04
-    FD_FILESIZE =  0x40
-    FD_WRITESTIME =  0x20
-    FD_SHOWPROGRESSUI =  0x4000
+    FD_ATTRIBUTES = 0x04
+    FD_FILESIZE = 0x40
+    FD_WRITESTIME = 0x20
+    FD_SHOWPROGRESSUI = 0x4000
+
+
+class FileContentsFlags(IntEnum):
+    SIZE = 0x1
+    RANGE = 0x2
 
 
 class ClipboardFormatName(Enum):
