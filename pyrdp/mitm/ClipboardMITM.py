@@ -178,7 +178,6 @@ class ActiveClipboardStealer(PassiveClipboardStealer):
         self.forwardNextDataResponse = False
 
 
-
 class FileTransfer:
     """Encapsulate the state of a clipboard file transfer."""
     def __init__(self, info: FileDescriptor, size: int):
@@ -218,6 +217,4 @@ class FileTransfer:
             return True
 
         return False
-
-
 
