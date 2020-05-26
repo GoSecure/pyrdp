@@ -92,7 +92,7 @@ class PassiveClipboardStealer:
             else:
                 done = self.transfers[pdu.streamId].onResponse(pdu)
                 if done:
-                    self.log.warning('Transfer completed for file "%s"', self.transfers[pdu.streamId].info.filename)
+                    self.log.info('Transfer completed for file "%s"', self.transfers[pdu.streamId].info.filename)
                     del self.transfers[pdu.streamId]
 
         # Handle regular clipboard.

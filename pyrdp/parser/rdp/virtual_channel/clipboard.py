@@ -21,6 +21,14 @@ class ClipboardParser(Parser):
         self.formats = {}  # Supported Clipboard Formats
         self.req = None  # Active Request
 
+        self.dispatch = {
+            ClipboardMessageType.CB_FORMAT_DATA_REQUEST: self.parseFormatDataRequest,
+            ClipboardMessageType.CB_FORMAT_DATA_RESPONSE: self.parseFormatDataResponse,
+            ClipboardMessageType.CB_FORMAT_LIST: self.parseFormatList,
+            ClipboardMessageType.CB_FILECONTENTS_REQUEST: self.parseFileContentsRequest,
+            ClipboardMessageType.CB_FILECONTENTS_RESPONSE: self.parseFileContentsResponse,
+        }
+
     def parse(self, data):
         stream = BytesIO(data)
         msgType = Uint16LE.unpack(stream)
@@ -28,18 +36,8 @@ class ClipboardParser(Parser):
         dataLen = Uint32LE.unpack(stream)
         payload = stream.read(dataLen)
 
-        if msgType == ClipboardMessageType.CB_FORMAT_DATA_REQUEST:
-            clipboardPDU = self.parseFormatDataRequest(payload, msgFlags)
-            self.req = clipboardPDU
-        elif msgType == ClipboardMessageType.CB_FORMAT_DATA_RESPONSE:
-            clipboardPDU = self.parseFormatDataResponse(payload, msgFlags)
-            self.req = None
-        elif msgType == ClipboardMessageType.CB_FORMAT_LIST:
-            clipboardPDU = self.parseFormatList(payload, msgFlags)
-        elif msgType == ClipboardMessageType.CB_FILECONTENTS_REQUEST:
-            clipboardPDU = self.parseFileContentsRequest(payload, msgFlags)
-        elif msgType == ClipboardMessageType.CB_FILECONTENTS_RESPONSE:
-            clipboardPDU = self.parseFileContentsResponse(payload, msgFlags)
+        if msgType in self.dispatch:
+            clipboardPDU = self.dispatch[msgType](payload, msgFlags)
         else:
             clipboardPDU = ClipboardPDU(ClipboardMessageType(msgType), msgFlags, payload)
 
@@ -67,7 +65,9 @@ class ClipboardParser(Parser):
 
     def parseFormatDataRequest(self, payload, msgFlags):
         s = BytesIO(payload)
-        return FormatDataRequestPDU(Uint32LE.unpack(s))
+        out = FormatDataRequestPDU(Uint32LE.unpack(s))
+        self.req = out
+        return out
 
     def parseFormatDataResponse(self, payload, msgFlags):
         isSuccessful = True if msgFlags & ClipboardMessageFlags.CB_RESPONSE_OK else False
@@ -82,8 +82,8 @@ class ClipboardParser(Parser):
                 cItems = Uint32LE.unpack(stream)
                 pdu.files = [FileDescriptor.parse(stream) for _ in range(cItems)]
 
+        self.req = None
         return pdu
-
 
     def parseFormatList(self, payload, msgFlags):
         # Assumes LongFormatNames. This might be bad. Should check capabilities beforehand
