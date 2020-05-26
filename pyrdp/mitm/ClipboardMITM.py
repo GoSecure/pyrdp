@@ -11,10 +11,9 @@ from pyrdp.core import decodeUTF16LE, Uint64LE
 from pyrdp.enum import ClipboardFormatNumber, ClipboardMessageFlags, ClipboardMessageType, PlayerPDUType, FileContentsFlags
 from pyrdp.layer import ClipboardLayer
 from pyrdp.logging.StatCounter import StatCounter, STAT
-from pyrdp.pdu import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU, FormatListPDU, FileContentsRequestPDU, FileContentsResponsePDU 
+from pyrdp.pdu import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU, FileContentsRequestPDU, FileContentsResponsePDU
 from pyrdp.parser.rdp.virtual_channel.clipboard import FileDescriptor
 from pyrdp.recording import Recorder
-
 
 
 class PassiveClipboardStealer:
@@ -47,6 +46,13 @@ class PassiveClipboardStealer:
             onPDUReceived = self.onServerPDUReceived,
         )
 
+        # Dispatchers must return whether to forward the packet.
+        self.dispatch = {
+            FormatDataResponsePDU: self.onFormatDataResponse,
+            FileContentsRequestPDU: self.onFileContentsRequest,
+            FileContentsResponsePDU: self.onFileContentsResponse
+        }
+
     def onClientPDUReceived(self, pdu: ClipboardPDU):
         self.statCounter.increment(STAT.CLIPBOARD, STAT.CLIPBOARD_CLIENT)
         self.handlePDU(pdu, self.server)
@@ -57,73 +63,77 @@ class PassiveClipboardStealer:
 
     def handlePDU(self, pdu: ClipboardPDU, destination: ClipboardLayer):
         """
-        Check if the PDU is a FormatDataResponse. If so, log and record the clipboard data.
+        Handle an incoming clipboard message.
+
         :param pdu: the PDU that was received
         :param destination: the destination layer
-        TODO: Refactor into handler map
-        FIXME: Use LOCK and UNLOCK to track file transfer cancellation.
         """
 
+        forward = True
         # Handle file transfers
-        if isinstance(pdu, FileContentsRequestPDU):
-            if pdu.flags == FileContentsFlags.SIZE:
-                # This is a new transfer request.
-                if pdu.lindex < len(self.files):
-                    fd = self.files[pdu.lindex]
-                    self.log.info('Starting transfer for file "%s" Size=%d ClipId=%d', fd.filename, pdu.size, pdu.clipId)
+        if type(pdu) in self.dispatch:
+            forward = self.dispatch[type(pdu)](pdu)
 
-                    if pdu.streamId in self.transfers:
-                        self.log.warning('File transfer already started')
-
-                    self.transfers[pdu.streamId] = FileTransfer(fd, pdu.size)
-                else:
-                    self.log.info('Request for uknown file! (lindex=%d)',  pdu.lindex)
-
-            elif pdu.flags == FileContentsFlags.RANGE:
-                if pdu.streamId not in self.transfers:
-                    self.log.warning('FileContentsRequest for unknown transfer (streamId=%d)', pdu.streamId)
-                else:
-                    self.transfers[pdu.streamId].onRequest(pdu)
-
-
-        elif isinstance(pdu, FileContentsResponsePDU):
-            if pdu.streamId not in self.transfers:
-                self.log.warning('FileContentsResponse for unknown transfer (streamId=%d)', pdu.streamId)
-            else:
-                done = self.transfers[pdu.streamId].onResponse(pdu)
-                if done:
-                    self.log.info('Transfer completed for file "%s"', self.transfers[pdu.streamId].info.filename)
-                    del self.transfers[pdu.streamId]
-
-        # Handle regular clipboard.
-        if isinstance(pdu, FormatDataResponsePDU):
-            if self.forwardNextDataResponse:
-                destination.sendPDU(pdu)
-
-            if pdu.msgFlags == ClipboardMessageFlags.CB_RESPONSE_OK:
-                # Keep the file list if there is one.
-                # FIXME: There is currently no concept of transfer direction.
-                if len(pdu.files) > 0:
-                    self.files = pdu.files
-                    self.log.info('---- Received Clipboard Files ----')
-                    for f in self.files:
-                        self.log.info(f.filename)
-                    self.log.info('-------------------------')
-
-                if pdu.formatId == ClipboardFormatNumber.GENERIC.value:
-                    clipboardData = self.decodeClipboardData(pdu.requestedFormatData)
-                    self.log.info("Clipboard data: %(clipboardData)r", {"clipboardData": clipboardData})
-                    # FIXME: Record all clipboard related messages?
-                    self.recorder.record(pdu, PlayerPDUType.CLIPBOARD_DATA)
-
-                if self.forwardNextDataResponse:
-                    # Means it's NOT a crafted response
-                    self.statCounter.increment(STAT.CLIPBOARD_PASTE)
-
-            self.forwardNextDataResponse = True
-
-        else:  # Unhandled PDU -> forward.
+        if forward:
             destination.sendPDU(pdu)
+
+    def onFileContentsRequest(self, pdu: FileContentsRequestPDU):
+        if pdu.flags == FileContentsFlags.SIZE:
+            # This is a new transfer request.
+            if pdu.lindex < len(self.files):
+                fd = self.files[pdu.lindex]
+                self.log.info('Starting transfer for file "%s" Size=%d ClipId=%d', fd.filename, pdu.size, pdu.clipId)
+
+                if pdu.streamId in self.transfers:
+                    self.log.warning('File transfer already started')
+
+                self.transfers[pdu.streamId] = FileTransfer(fd, pdu.size)
+            else:
+                self.log.info('Request for uknown file! (lindex=%d)',  pdu.lindex)
+
+        elif pdu.flags == FileContentsFlags.RANGE:
+            if pdu.streamId not in self.transfers:
+                self.log.warning('FileContentsRequest for unknown transfer (streamId=%d)', pdu.streamId)
+            else:
+                self.transfers[pdu.streamId].onRequest(pdu)
+
+        return True
+
+    def onFileContentsResponse(self, pdu: FileContentsResponsePDU):
+        if pdu.streamId not in self.transfers:
+            self.log.warning('FileContentsResponse for unknown transfer (streamId=%d)', pdu.streamId)
+        else:
+            done = self.transfers[pdu.streamId].onResponse(pdu)
+            if done:
+                self.log.info('Transfer completed for file "%s"', self.transfers[pdu.streamId].info.filename)
+                del self.transfers[pdu.streamId]
+        return True
+
+    def onFormatDataResponse(self, pdu: FormatDataResponsePDU):
+        if pdu.msgFlags == ClipboardMessageFlags.CB_RESPONSE_OK:
+            # Keep the file list if there is one.
+            # FIXME: There is currently no concept of transfer direction.
+            if len(pdu.files) > 0:
+                self.files = pdu.files
+                self.log.info('---- Received Clipboard Files ----')
+                for f in self.files:
+                    self.log.info(f.filename)
+                self.log.info('-------------------------')
+
+            if pdu.formatId == ClipboardFormatNumber.GENERIC.value:
+                clipboardData = self.decodeClipboardData(pdu.requestedFormatData)
+                self.log.info("Clipboard data: %(clipboardData)r", {"clipboardData": clipboardData})
+                # FIXME: Record all clipboard related messages?
+                self.recorder.record(pdu, PlayerPDUType.CLIPBOARD_DATA)
+
+            if self.forwardNextDataResponse:
+                # Means it's NOT a crafted response
+                self.statCounter.increment(STAT.CLIPBOARD_PASTE)
+
+        # Do not forward the response if it is for an injected DataRequest.
+        forward = self.forwardNextDataResponse
+        self.forwardNextDataResponse = True
+        return forward
 
     def decodeClipboardData(self, data: bytes) -> str:
         """
