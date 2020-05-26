@@ -73,6 +73,7 @@ class PassiveClipboardStealer:
         # Handle file transfers
         if type(pdu) in self.dispatch:
             forward = self.dispatch[type(pdu)](pdu)
+        assert forward is not None, "ClipboardMITM: PDU handler must return True or False!"
 
         if forward:
             destination.sendPDU(pdu)
@@ -82,7 +83,7 @@ class PassiveClipboardStealer:
             # This is a new transfer request.
             if pdu.lindex < len(self.files):
                 fd = self.files[pdu.lindex]
-                self.log.info('Starting transfer for file "%s" Size=%d ClipId=%d', fd.filename, pdu.size, pdu.clipId)
+                self.log.info('Starting transfer for file "%s" ClipId=%d', fd.filename, pdu.clipId)
 
                 if pdu.streamId in self.transfers:
                     self.log.warning('File transfer already started')
