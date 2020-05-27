@@ -10,6 +10,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 === Enhancements
 
+* `pyrdp-mitm` now carves and saves files transferred via clipboard ({uri-issue}100[#100])
 * `pyrdp-player` can now run in headless mode (`--headless`).
   All GUI dependencies are now optional enabling further Docker image size reduction.
   See {uri-issue}151[#151], {uri-issue}163[#163] and {uri-issue}190[#190].
