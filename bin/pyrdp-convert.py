@@ -102,7 +102,7 @@ class RDPReplayer(RDPMITM):
             self.server.tcp.dataReceived(data)
 
     def setTimeStamp(self, timeStamp: float):
-        self.recorder.setTimeStamp(int(timeStamp * 1000))
+        self.recorder.setTimeStamp(int(timeStamp))
 
     def connectToServer(self):
         pass
@@ -383,7 +383,7 @@ class Converter():
                                                    'ext': 'pyrdp'})
 
                 if plaintext:
-                    sefl.processPlaintext(s, outfile, info)
+                    self.processPlaintext(s, outfile, info)
                 else:
                     self.processTLS(s, outfile)
 
