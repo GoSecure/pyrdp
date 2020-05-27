@@ -55,9 +55,12 @@ class PassiveClipboardStealer:
         # Dispatchers must return whether to forward the packet.
         self.dispatch = {
             FormatDataResponsePDU: self.onFormatDataResponse,
-            FileContentsRequestPDU: self.onFileContentsRequest,
-            FileContentsResponsePDU: self.onFileContentsResponse
         }
+
+        # Only handle file contents if file extraction is enabled.
+        if self.config.extractFiles:
+            self.dispatch[FileContentsRequestPDU] = self.onFileContentsRequest
+            self.dispatch[FileContentsResponsePDU] = self.onFileContentsRespons
 
     def onClientPDUReceived(self, pdu: ClipboardPDU):
         self.statCounter.increment(STAT.CLIPBOARD, STAT.CLIPBOARD_CLIENT)
