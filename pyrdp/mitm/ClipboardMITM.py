@@ -1,11 +1,13 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
 from logging import LoggerAdapter
 from io import BytesIO
+
+from pathlib import Path
 
 from pyrdp.core import decodeUTF16LE, Uint64LE
 from pyrdp.enum import ClipboardFormatNumber, ClipboardMessageFlags, ClipboardMessageType, PlayerPDUType, FileContentsFlags
@@ -14,6 +16,7 @@ from pyrdp.logging.StatCounter import StatCounter, STAT
 from pyrdp.pdu import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU, FileContentsRequestPDU, FileContentsResponsePDU
 from pyrdp.parser.rdp.virtual_channel.clipboard import FileDescriptor
 from pyrdp.recording import Recorder
+from pyrdp.mitm.config import MITMConfig
 
 
 class PassiveClipboardStealer:
@@ -21,7 +24,7 @@ class PassiveClipboardStealer:
     MITM component for the clipboard layer. Logs clipboard data when it is pasted.
     """
 
-    def __init__(self, client: ClipboardLayer, server: ClipboardLayer, log: LoggerAdapter, recorder: Recorder,
+    def __init__(self, config: MITMConfig, client: ClipboardLayer, server: ClipboardLayer, log: LoggerAdapter, recorder: Recorder,
                  statCounter: StatCounter):
         """
         :param client: clipboard layer for the client side
@@ -32,11 +35,14 @@ class PassiveClipboardStealer:
         self.statCounter = statCounter
         self.client = client
         self.server = server
+        self.config = config
         self.log = log
         self.recorder = recorder
         self.forwardNextDataResponse = True
         self.files = []
         self.transfers = {}
+
+        self.fileDir = f"{self.config.fileDir}/{self.log.sessionID}"
 
         self.client.createObserver(
             onPDUReceived = self.onClientPDUReceived,
@@ -88,7 +94,10 @@ class PassiveClipboardStealer:
                 if pdu.streamId in self.transfers:
                     self.log.warning('File transfer already started')
 
-                self.transfers[pdu.streamId] = FileTransfer(fd, pdu.size)
+                fpath = Path(self.fileDir)
+                fpath.mkdir(parents=True, exist_ok=True)
+
+                self.transfers[pdu.streamId] = FileTransfer(fpath, fd, pdu.size)
             else:
                 self.log.info('Request for uknown file! (lindex=%d)',  pdu.lindex)
 
@@ -106,7 +115,8 @@ class PassiveClipboardStealer:
         else:
             done = self.transfers[pdu.streamId].onResponse(pdu)
             if done:
-                self.log.info('Transfer completed for file "%s"', self.transfers[pdu.streamId].info.filename)
+                xfer = self.transfers[pdu.streamId]
+                self.log.info('Transfer completed for file "%s" location: "%s"', xfer.info.filename, xfer.localname)
                 del self.transfers[pdu.streamId]
         return True
 
@@ -150,9 +160,9 @@ class ActiveClipboardStealer(PassiveClipboardStealer):
     clipboard is updated.
     """
 
-    def __init__(self, client: ClipboardLayer, server: ClipboardLayer, log: LoggerAdapter, recorder: Recorder,
+    def __init__(self, config: MITMConfig, client: ClipboardLayer, server: ClipboardLayer, log: LoggerAdapter, recorder: Recorder,
                  statCounter: StatCounter):
-        super().__init__(client, server, log, recorder, statCounter)
+        super().__init__(config, client, server, log, recorder, statCounter)
 
     def handlePDU(self, pdu: ClipboardPDU, destination: ClipboardLayer):
         """
@@ -180,16 +190,24 @@ class ActiveClipboardStealer(PassiveClipboardStealer):
 
 class FileTransfer:
     """Encapsulate the state of a clipboard file transfer."""
-    def __init__(self, info: FileDescriptor, size: int):
+    def __init__(self, dst: Path, info: FileDescriptor, size: int):
         self.info = info
         self.size = size
         self.transferred: int = 0
         self.data = b''
-        self.prev = None  # Pending file content requests.
+        self.prev = None  # Pending file content request.
 
-        # TODO: Respect config
-        self.handle = open(f'carved-{info.filename}', 'wb')
+        self.localname = dst / Path(info.filename).name  # Avoid path traversal.
 
+        # Handle duplicates.
+        c = 1
+        localname = self.localname
+        while localname.exists():
+            localname = self.localname.parent / f'{self.localname.stem}_{c}{self.localname.suffix}'
+            c += 1
+        self.localname = localname
+
+        self.handle = open(str(self.localname), 'wb')
 
     def onRequest(self, pdu: FileContentsRequestPDU):
         # TODO: Handle out of order ranges. Are they even possible?
