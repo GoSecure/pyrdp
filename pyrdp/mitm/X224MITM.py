@@ -111,8 +111,7 @@ class X224MITM:
             self.log.info("The server failed the negotiation. Error: %(error)s", {"error": NegotiationFailureCode.getMessage(response.failureCode)})
             payload = pdu.payload
         else:
-            # payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, protocols))
-            payload = pdu.payload
+            payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, response.selectedProtocols))
         self.client.sendConnectionConfirm(payload, source=0x1234)
 
         # FIXME: This should be done based on what authentication method the server selected, not on what
