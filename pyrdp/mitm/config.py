@@ -7,6 +7,7 @@
 from pathlib import Path
 from typing import Optional
 from pyrdp.core import settings
+from pyrdp.enum import NegotiationProtocols
 
 
 class MITMConfig:
@@ -77,6 +78,8 @@ class MITMConfig:
 
         self.useGdi: bool = False
         """Whether to allow the client to use the GDI rendering pipeline extension."""
+
+        self.authMethods: NegotiationProtocols = NegotiationProtocols.SSL
 
     @property
     def replayDir(self) -> Path:

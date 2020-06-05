@@ -40,6 +40,17 @@ from pyrdp.mitm.X224MITM import X224MITM
 from pyrdp.recording import FileLayer, RecordingFastPathObserver, RecordingSlowPathObserver, \
     Recorder
 
+from pyrdp.layer.segmentation import SegmentationObserver
+
+
+class PacketForwarder(SegmentationObserver):
+    """Handles unknown segmentation packets by forwarding them transparently."""
+    def __init__(self, sink):
+        self._forwarder = sink
+
+    def onUnknownHeader(self, header, data: bytes):
+        self._forwarder.sendBytes(data)
+
 
 class RDPMITM:
     """
@@ -205,6 +216,8 @@ class RDPMITM:
 
         self.client.tcp.startTLS(contextForClient)
         self.server.tcp.startTLS(contextForServer)
+        self.client.segmentation.addObserver(PacketForwarder(self.server.tcp))
+        self.server.segmentation.addObserver(PacketForwarder(self.client.tcp))
 
     def buildChannel(self, client: MCSServerChannel, server: MCSClientChannel):
         """
