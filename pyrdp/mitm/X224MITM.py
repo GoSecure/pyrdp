@@ -72,7 +72,7 @@ class X224MITM:
 
         if chosenProtocols is not None:
             # Tell the server we only support the allowed authentication methods.
-            chosenProtocols = self.state.config.authMethods
+            chosenProtocols &= self.state.config.authMethods
 
         modifiedRequest = NegotiationRequestPDU(
             self.originalRequest.cookie,
