@@ -4,7 +4,7 @@ This procedure is useful when running honeypots to support CredSSP (using `--aut
 It requires Administrative privileges on the target server and the use of Mimikatz, so it assumes that you are able to deactivate the Anti-Virus on the target server.
 
 
-> **WARNING**: Cloning the certrificate of the RDP server does not mean that the certificate will be trusted. Certificate trust requires a signed certificate from a CA that is **trusted** by the client. This is not likely to be the case in most scenarios. If you want to do that, you are on your own.
+> **WARNING**: Cloning the certificate of the RDP server does not mean that the certificate will be trusted. Certificate trust requires a signed certificate from a CA that is **trusted** by the client. This is not likely to be the case in most scenarios. If you want to do that, you are on your own.
 
 ## Steps
 

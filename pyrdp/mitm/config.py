@@ -80,6 +80,7 @@ class MITMConfig:
         """Whether to allow the client to use the GDI rendering pipeline extension."""
 
         self.authMethods: NegotiationProtocols = NegotiationProtocols.SSL
+        """Specifies the list of authentication protocols that PyRDP accepts."""
 
     @property
     def replayDir(self) -> Path:
