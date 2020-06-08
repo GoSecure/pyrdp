@@ -23,6 +23,7 @@ from pyrdp.core import settings
 from pyrdp.core.ssl import ServerTLSContext
 from pyrdp.logging import configure as configureLoggers, LOGGER_NAMES
 from pyrdp.mitm.config import DEFAULTS, MITMConfig
+from pyrdp.enum import NegotiationProtocols
 
 
 def parseTarget(target: str) -> Tuple[str, int]:
@@ -145,6 +146,7 @@ def buildArgParser():
                         default="INFO", choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"])
     parser.add_argument("-F", "--log-filter",
                         help="Only show logs from this logger name (accepts '*' wildcards)", default="")
+    parser.add_argument("--auth", help="Specify allowed authentication mechanisms (Comma-separated, choose from: tls, ssp)", default="tls")
     parser.add_argument(
         "-s", "--sensor-id", help="Sensor ID (to differentiate multiple instances of the MITM"
         " where logs are aggregated at one place)", default="PyRDP")
@@ -305,6 +307,15 @@ def configure(cmdline=None) -> MITMConfig:
     elif args.payload_delay is not None:
         logger.error("--payload-delay was provided but no payload was set.")
         sys.exit(1)
+
+    # Configure allowed authentication protocols.
+    for auth in args.auth.split(','):
+        auth = auth.strip()
+        if auth == "tls":
+            config.authMethods |= NegotiationProtocols.SSL
+        elif auth == "ssp":
+            # CredSSP implies TLS.
+            config.authMethods |= (NegotiationProtocols.SSL | NegotiationProtocols.CRED_SSP)
 
     showConfiguration(config)
     return config

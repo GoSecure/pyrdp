@@ -13,7 +13,7 @@ from pyrdp.layer.layer import BaseLayer, LayerObserver
 
 
 class SegmentationObserver(LayerObserver):
-    def onUnknownHeader(self, header):
+    def onUnknownHeader(self, header, data: bytes):
         pass
 
 
@@ -63,7 +63,7 @@ class SegmentationLayer(BaseLayer):
                     layer = self.layers[header]
                 except KeyError:
                     if self.observer:
-                        self.observer.onUnknownHeader(header)
+                        self.observer.onUnknownHeader(header, data)
                         return
                     else:
                         raise
