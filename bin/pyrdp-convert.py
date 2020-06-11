@@ -69,7 +69,6 @@ class RDPReplayer(RDPMITM):
 
         output_path = Path(output_path)
         output_directory = output_path.absolute().parent
-
         logger = logging.getLogger(LOGGER_NAMES.MITM_CONNECTIONS)
         log = SessionLogger(logger, "replay")
 
@@ -267,7 +266,7 @@ def getStreamInfo(s: PacketList) -> (str, str, float, bool):
         # No Ethernet layer, so assume exported PDUs.
         src = ".".join(str(b) for b in packet.load[12:16])
         dst = ".".join(str(b) for b in packet.load[20:24])
-        return (src, dst, float(packet.time) / 1000, True)
+        return (src, dst, packet.time, True)
     raise Exception('Invalid stream type. Must be TCP/TLS or EXPORTED PDU.')
 
 
@@ -300,8 +299,7 @@ class Converter():
             if src not in [client, server] or dst not in [client, server]:
                 continue
 
-            # FIXME: The absolute time is completely wrong here because replayer multiplies by 1000.
-            replayer.setTimeStamp(float(packet.time))
+            replayer.setTimeStamp(int(packet.time * 1000))
             replayer.recv(data, src == client)
 
         try:
@@ -328,7 +326,7 @@ class Converter():
                 # network stack cannot parse TLS handshakes.
                 continue
 
-            ts = float(packet.time)
+            ts = int(packet.time * 1000)
             for payload in packet[TLS].iterpayloads():
                 if TLSApplicationData not in payload:
                     continue  # Not application data.
@@ -412,17 +410,17 @@ class Converter():
         args = self.args
         infile = Path(args.input)
 
-        if infile.suffix in ['.pcap', '.pcapng', '.cap']:
+        if infile.suffix in ['.pcap']:
             self.processPcap(infile)
         elif infile.suffix in ['.pyrdp']:
             self.processReplay(infile)
         else:
-            print('Unknown file extension. (Supported: .cap, .pcap, .pcapng, .pyrdp)')
+            print('Unknown file extension. (Supported: .pcap, .pyrdp)')
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('input', help='Path to a .pcap, .pcapng, or .pyrdp file')
+    parser.add_argument('input', help='Path to a .pcap or .pyrdp file')
     parser.add_argument('-l', '--list', help='Print the list of sessions in the capture without processing anything', action='store_true')
     parser.add_argument('-s', '--secrets', help='Path to the file containing the SSL secrets to decrypt Transport Layer Security.')
     parser.add_argument('-f', '--format', help='Format of the output', choices=['replay', 'mp4'], default='replay')
