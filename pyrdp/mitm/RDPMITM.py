@@ -15,6 +15,8 @@ from pyrdp.core.ssl import ClientTLSContext, ServerTLSContext
 from pyrdp.enum import MCSChannelName, ParserMode, PlayerPDUType, ScanCode, SegmentationPDUType
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, LayerChainItem, RawLayer, \
     VirtualChannelLayer
+from pyrdp.layer.rdp.virtual_channel.dynamic_channel import DynamicChannelLayer
+from pyrdp.layer.segmentation import SegmentationObserver
 from pyrdp.logging import RC4LoggingObserver
 from pyrdp.logging.adapters import SessionLogger
 from pyrdp.logging.observers import FastPathLogger, LayerLogger, MCSLogger, SecurityLogger, \
@@ -25,6 +27,7 @@ from pyrdp.mitm.AttackerMITM import AttackerMITM
 from pyrdp.mitm.ClipboardMITM import ActiveClipboardStealer, PassiveClipboardStealer
 from pyrdp.mitm.config import MITMConfig
 from pyrdp.mitm.DeviceRedirectionMITM import DeviceRedirectionMITM
+from pyrdp.mitm.DynamicChannelMITM import DynamicChannelMITM
 from pyrdp.mitm.FastPathMITM import FastPathMITM
 from pyrdp.mitm.FileCrawlerMITM import FileCrawlerMITM
 from pyrdp.mitm.layerset import RDPLayerSet
@@ -37,10 +40,9 @@ from pyrdp.mitm.state import RDPMITMState
 from pyrdp.mitm.TCPMITM import TCPMITM
 from pyrdp.mitm.VirtualChannelMITM import VirtualChannelMITM
 from pyrdp.mitm.X224MITM import X224MITM
-from pyrdp.recording import FileLayer, RecordingFastPathObserver, RecordingSlowPathObserver, \
-    Recorder
-
-from pyrdp.layer.segmentation import SegmentationObserver
+from pyrdp.parser.rdp.virtual_channel.dynamic_channel import DynamicChannelParser
+from pyrdp.recording import FileLayer, Recorder, RecordingFastPathObserver, \
+    RecordingSlowPathObserver
 
 
 class PacketForwarder(SegmentationObserver):
@@ -238,6 +240,8 @@ class RDPMITM:
             self.buildClipboardChannel(client, server)
         elif self.state.channelMap[channelID] == MCSChannelName.DEVICE_REDIRECTION:
             self.buildDeviceChannel(client, server)
+        elif self.state.channelMap[channelID] == MCSChannelName.DYNAMIC_CHANNEL:
+            self.buildDynamicChannel(client, server)
         else:
             self.buildVirtualChannel(client, server)
 
@@ -330,7 +334,9 @@ class RDPMITM:
         LayerChainItem.chain(client, clientSecurity, clientVirtualChannel, clientLayer)
         LayerChainItem.chain(server, serverSecurity, serverVirtualChannel, serverLayer)
 
-        deviceRedirection = DeviceRedirectionMITM(clientLayer, serverLayer, self.getLog(MCSChannelName.DEVICE_REDIRECTION), self.statCounter, self.state)
+        deviceRedirection = DeviceRedirectionMITM(clientLayer, serverLayer,
+                                                  self.getLog(MCSChannelName.DEVICE_REDIRECTION),
+                                                  self.statCounter, self.state)
         self.channelMITMs[client.channelID] = deviceRedirection
 
         if self.config.enableCrawler:
@@ -338,6 +344,30 @@ class RDPMITM:
 
         if self.attacker:
             self.attacker.setDeviceRedirectionComponent(deviceRedirection)
+
+    def buildDynamicChannel(self, client: MCSServerChannel, server: MCSClientChannel):
+        """
+        Build the MITM component for the dynamic channel.
+        Ref: https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpedyc/0147004d-1542-43ab-9337-93338f218587
+        :param client: MCS channel for the client side
+        :param server: MCS channel for the server side
+        """
+
+        clientSecurity = self.state.createSecurityLayer(ParserMode.SERVER, True)
+        clientVirtualChannel = VirtualChannelLayer(activateShowProtocolFlag=False)
+        clientLayer = DynamicChannelLayer(DynamicChannelParser(isClient=True))
+        serverSecurity = self.state.createSecurityLayer(ParserMode.CLIENT, True)
+        serverVirtualChannel = VirtualChannelLayer(activateShowProtocolFlag=False)
+        serverLayer = DynamicChannelLayer(DynamicChannelParser(isClient=False))
+
+        clientLayer.addObserver(LayerLogger(self.getClientLog(MCSChannelName.DYNAMIC_CHANNEL)))
+        serverLayer.addObserver(LayerLogger(self.getServerLog(MCSChannelName.DYNAMIC_CHANNEL)))
+
+        LayerChainItem.chain(client, clientSecurity, clientVirtualChannel, clientLayer)
+        LayerChainItem.chain(server, serverSecurity, serverVirtualChannel, serverLayer)
+
+        dynamicChannelMITM = DynamicChannelMITM(clientLayer, serverLayer, self.getLog(MCSChannelName.DYNAMIC_CHANNEL), self.statCounter, self.state)
+        self.channelMITMs[client.channelID] = dynamicChannelMITM
 
     def buildVirtualChannel(self, client: MCSServerChannel, server: MCSClientChannel):
         """

@@ -41,3 +41,13 @@ class CreateResponsePDU(DynamicChannelPDU):
         super().__init__(cbid, sp, DynamicChannelCommand.CREATE)
         self.channelId = channelId
         self.creationStatus = creationStatus
+
+
+class DataPDU(DynamicChannelPDU):
+    """
+    https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpedyc/15b59886-db44-47f1-8da3-47c8fcd82803
+    """
+
+    def __init__(self, cbid, sp, channelId: int, payload: bytes):
+        super().__init__(cbid, sp, DynamicChannelCommand.DATA, payload=payload)
+        self.channelId = channelId
