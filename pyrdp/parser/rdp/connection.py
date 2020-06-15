@@ -12,12 +12,16 @@ from Crypto.PublicKey import RSA
 from Crypto.Util.number import bytes_to_long, long_to_bytes
 
 from pyrdp.core import decodeUTF16LE, encodeUTF16LE, StrictStream, Uint16LE, Uint32LE, Uint8
-from pyrdp.enum import ColorDepth, ConnectionDataType, ConnectionType, DesktopOrientation, EncryptionLevel, \
-    EncryptionMethod, HighColorDepth, RDPVersion, ServerCertificateType
+from pyrdp.enum import ColorDepth, ConnectionDataType, ConnectionType, DesktopOrientation, \
+    EncryptionLevel, \
+    EncryptionMethod, RDPVersion, ServerCertificateType
 from pyrdp.exceptions import ParsingError, UnknownPDUTypeError
 from pyrdp.parser.parser import Parser
-from pyrdp.pdu import ClientChannelDefinition, ClientClusterData, ClientCoreData, ClientDataPDU, ClientNetworkData, \
-    ClientSecurityData, ProprietaryCertificate, ServerCoreData, ServerDataPDU, ServerNetworkData, ServerSecurityData
+from pyrdp.pdu import ClientChannelDefinition, ClientClusterData, ClientCoreData, ClientDataPDU, \
+    ClientNetworkData, \
+    ClientSecurityData, ProprietaryCertificate, ServerCoreData, ServerDataPDU, ServerNetworkData, \
+    ServerSecurityData
+from pyrdp.pdu.rdp.connection import ClientMonitorData, ClientUnparsedData, MonitorDef
 
 
 class ClientConnectionParser(Parser):
@@ -32,6 +36,7 @@ class ClientConnectionParser(Parser):
             ConnectionDataType.CLIENT_SECURITY: self.parseClientSecurityData,
             ConnectionDataType.CLIENT_NETWORK: self.parseClientNetworkData,
             ConnectionDataType.CLIENT_CLUSTER: self.parseClientClusterData,
+            ConnectionDataType.CLIENT_MONITOR: self.parseClientMonitorData,
         }
 
         self.writers = {
@@ -39,7 +44,7 @@ class ClientConnectionParser(Parser):
             ConnectionDataType.CLIENT_SECURITY: self.writeClientSecurityData,
             ConnectionDataType.CLIENT_NETWORK: self.writeClientNetworkData,
             ConnectionDataType.CLIENT_CLUSTER: self.writeClientClusterData,
-
+            ConnectionDataType.CLIENT_MONITOR: self.writeClientMonitorData,
         }
 
     def parse(self, data: bytes) -> ClientDataPDU:
@@ -51,26 +56,33 @@ class ClientConnectionParser(Parser):
         security = None
         network = None
         cluster = None
+        monitor = None
+        rest = []
 
         stream = BytesIO(data)
-        while stream.tell() != len(stream.getvalue()) and (core is None or security is None or network is None or cluster is None):
-            structure = self.parseStructure(stream)
+        while stream.tell() != len(stream.getvalue()):
+            parsed, structure = self.parseStructure(stream)
 
-            if structure.header == ConnectionDataType.CLIENT_CORE:
-                core = structure
-            elif structure.header == ConnectionDataType.CLIENT_SECURITY:
-                security = structure
-            elif structure.header == ConnectionDataType.CLIENT_NETWORK:
-                network = structure
-            elif structure.header == ConnectionDataType.CLIENT_CLUSTER:
-                cluster = structure
+            if parsed:
+                if structure.header == ConnectionDataType.CLIENT_CORE:
+                    core = structure
+                elif structure.header == ConnectionDataType.CLIENT_SECURITY:
+                    security = structure
+                elif structure.header == ConnectionDataType.CLIENT_NETWORK:
+                    network = structure
+                elif structure.header == ConnectionDataType.CLIENT_CLUSTER:
+                    cluster = structure
+                elif structure.header == ConnectionDataType.CLIENT_MONITOR:
+                    monitor = structure
+            else:
+                rest.append(structure)
 
             if len(stream.getvalue()) == 0:
                 break
 
-        return ClientDataPDU(core, security, network, cluster)
+        return ClientDataPDU(core, security, network, cluster, monitor, rest)
 
-    def parseStructure(self, stream: BytesIO) -> typing.Union[ClientCoreData, ClientNetworkData, ClientSecurityData, ClientClusterData]:
+    def parseStructure(self, stream: BytesIO) -> typing.Tuple[bool, typing.Union[ClientCoreData, ClientNetworkData, ClientSecurityData, ClientClusterData, ClientMonitorData, ClientUnparsedData]]:
         header = Uint16LE.unpack(stream)
         length = Uint16LE.unpack(stream) - 4
         data = stream.read(length)
@@ -81,9 +93,9 @@ class ClientConnectionParser(Parser):
         substream = BytesIO(data)
 
         if header not in self.parsers:
-            raise UnknownPDUTypeError("Trying to parse unknown client data structure %s" % header, header)
+            return False, ClientUnparsedData(header, substream.read(length))
 
-        return self.parsers[header](substream)
+        return True, self.parsers[header](substream)
 
     def parseClientCoreData(self, stream: BytesIO) -> ClientCoreData:
         stream = StrictStream(stream)
@@ -157,6 +169,26 @@ class ClientConnectionParser(Parser):
         redirectedSessionID = Uint32LE.unpack(stream)
         return ClientClusterData(flags, redirectedSessionID)
 
+    def parseClientMonitorData(self, stream: BytesIO) -> ClientMonitorData:
+        flags = Uint32LE.unpack(stream)
+        monitorCount = Uint32LE.unpack(stream)
+        monitorDefArray = self.parseMonitorDefArray(stream, monitorCount)
+        return ClientMonitorData(flags, monitorCount, monitorDefArray)
+
+    def parseMonitorDefArray(self, stream: BytesIO, count) -> typing.List[MonitorDef]:
+        """
+        https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/c3964b39-3d54-4ae1-a84a-ceaed311e0f6
+        """
+        monitorDefArray = []
+        for i in range(count):
+            left = Uint32LE.unpack(stream)
+            top = Uint32LE.unpack(stream)
+            right = Uint32LE.unpack(stream)
+            bottom = Uint32LE.unpack(stream)
+            flags = Uint32LE.unpack(stream)
+            monitorDefArray.append(MonitorDef(left, top, right, bottom, flags))
+        return monitorDefArray
+
     def write(self, pdu: ClientDataPDU) -> bytes:
         """
         Encode a Client Data PDU to bytes.
@@ -176,19 +208,30 @@ class ClientConnectionParser(Parser):
         if pdu.clusterData:
             self.writeStructure(stream, pdu.clusterData)
 
+        if pdu.monitorData:
+            self.writeStructure(stream, pdu.monitorData)
+
+        # TODO: If we let through unparsed data structures in the clientData PDU, it might cause trouble
+        # ex: UDP might get used by the client? https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/3801236b-b5ba-4b6e-bf0d-afbde1fe391c
+        # further testing/reading is required before this gets enabled.
+        for unparsedData in pdu.rest:
+            self.writeStructure(stream, unparsedData)
+
+
         return stream.getvalue()
 
-    def writeStructure(self, stream: BytesIO, data: typing.Union[ClientCoreData, ClientNetworkData, ClientSecurityData, ClientClusterData]):
-        if data.header not in self.writers:
-            raise UnknownPDUTypeError("Trying to write unknown Client Data structure %s" % data.header, data.header)
+    def writeStructure(self, stream: BytesIO, data: typing.Union[ClientCoreData, ClientNetworkData, ClientSecurityData, ClientClusterData, ClientUnparsedData]):
 
-        substream = BytesIO()
-        self.writers[data.header](substream, data)
+        if data.header in self.writers:
+            substream = BytesIO()
+            self.writers[data.header](substream, data)
+        else:
+            substream = BytesIO(data.payload)
 
         substream = substream.getvalue()
 
         stream.write(Uint16LE.pack(data.header))
-        stream.write(Uint16LE.pack(len(substream) + 4))
+        stream.write(Uint16LE.pack(len(substream) + 4))  # Length
         stream.write(substream)
 
     def writeClientCoreData(self, stream: BytesIO, core: ClientCoreData):
@@ -242,6 +285,19 @@ class ClientConnectionParser(Parser):
     def writeClientClusterData(self, stream: BytesIO, cluster: ClientClusterData):
         stream.write(Uint32LE.pack(cluster.flags))
         stream.write(Uint32LE.pack(cluster.redirectedSessionID))
+
+    def writeClientMonitorData(self, stream: BytesIO, pdu: ClientMonitorData):
+        stream.write(Uint32LE.pack(pdu.flags))
+        stream.write(Uint32LE.pack(pdu.monitorCount))
+        self.writeMonitorDefArray(stream, pdu.monitorDefArray)
+
+    def writeMonitorDefArray(self, stream: BytesIO, monitorDefs: typing.List[MonitorDef]):
+        for monitorDef in monitorDefs:
+            Uint32LE.pack(monitorDef.left, stream)
+            Uint32LE.pack(monitorDef.top, stream)
+            Uint32LE.pack(monitorDef.right, stream)
+            Uint32LE.pack(monitorDef.bottom, stream)
+            Uint32LE.pack(monitorDef.flags, stream)
 
 
 class ServerConnectionParser(Parser):
