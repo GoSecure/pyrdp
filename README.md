@@ -450,7 +450,7 @@ The following conversions are supported:
 
 The script supports both encrypted (TLS) network captures (by providing `--secrets ssl.log`) and decrypted PDU exports.
 
-> **WARNING**: pcapng and pcap with nanosecond timestamps are not compatible with `pyrdp-convert` and will cause create
+> **WARNING**: pcapng and pcap with nanosecond timestamps are not compatible with `pyrdp-convert` and will create
 > replay files that fail to playback or export to MP4. This is due to incompatible timestamp formats.
 
 ```
