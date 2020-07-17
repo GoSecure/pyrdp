@@ -191,7 +191,13 @@ class RDPMITM:
         serverFactory = AwaitableClientFactory(self.server.tcp)
         if self.config.transparent:
             src = self.client.tcp.transport.client
-            connectTransparent(self.config.targetHost, self.config.targetPort, serverFactory, bindAddress=(src[0], 0))
+            if self.config.targetHost:
+                # Fully Transparent (with a specific poisoned target.)
+                connectTransparent(self.config.targetHost, self.config.targetPort, serverFactory, bindAddress=(src[0], 0))
+            else:
+                # Half Transparent (for client-side only)
+                dst = self.client.tcp.transport.getHost().host
+                reactor.connectTCP(dst, self.config.targetPort, serverFactory)
         else:
             reactor.connectTCP(self.config.targetHost, self.config.targetPort, serverFactory)
 

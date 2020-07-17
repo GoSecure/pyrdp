@@ -216,7 +216,12 @@ def configure(cmdline=None) -> MITMConfig:
         sys.stderr.write('error: A relay target is required unless running in transparent proxy mode.\n')
         sys.exit(1)
 
-    targetHost, targetPort = parseTarget(args.target)
+    if args.target:
+        targetHost, targetPort = parseTarget(args.target)
+    else:
+        targetHost = None
+        targetPort = 3389  # FIXME: Allow to set transparent port as well.
+
     key, certificate = validateKeyAndCertificate(args.private_key, args.certificate)
 
     config = MITMConfig()
