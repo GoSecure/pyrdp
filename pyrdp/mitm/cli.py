@@ -130,7 +130,7 @@ def showConfiguration(config: MITMConfig):
 
 def buildArgParser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("target", help="IP:port of the target RDP machine (ex: 192.168.1.10:3390)")
+    parser.add_argument("target", help="IP:port of the target RDP machine (ex: 192.168.1.10:3390)", nargs='?', default=None)
     parser.add_argument("-l", "--listen", help="Port number to listen on (default: 3389)", default=3389)
     parser.add_argument("-o", "--output", help="Output folder", default="pyrdp_output")
     parser.add_argument("-i", "--destination-ip",
@@ -210,6 +210,11 @@ def configure(cmdline=None) -> MITMConfig:
 
     configureLoggers(cfg)
     logger = logging.getLogger(LOGGER_NAMES.PYRDP)
+
+    if args.target is None and not args.transparent:
+        parser.print_usage()
+        sys.stderr.write('error: A relay target is required unless running in transparent proxy mode.\n')
+        sys.exit(1)
 
     targetHost, targetPort = parseTarget(args.target)
     key, certificate = validateKeyAndCertificate(args.private_key, args.certificate)
