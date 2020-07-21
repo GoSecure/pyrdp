@@ -7,7 +7,9 @@ from collections import defaultdict
 from logging import LoggerAdapter
 from pathlib import Path
 from typing import Dict, Optional
+from functools import partial
 
+from pyrdp.core import AsyncIOSequencer
 from pyrdp.enum import FastPathInputType, FastPathOutputType, MouseButton, PlayerPDUType, PointerFlag, ScanCodeTuple
 from pyrdp.layer import FastPathLayer, PlayerLayer
 from pyrdp.mitm.DeviceRedirectionMITM import DeviceRedirectionMITM, DeviceRedirectionMITMObserver
@@ -96,10 +98,19 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
             for key in keys:
                 self.handleKeyboard(PlayerKeyboardPDU(0, key.code, released, key.extended))
 
+
+    def sendOne(self, x, y):
+        self.handleText(PlayerTextPDU(0, x, y))
+        return 25
+
     def sendText(self, text: str):
+        seq = []
+
         for c in text:
             for released in [False, True]:
-                self.handleText(PlayerTextPDU(0, c, released))
+                seq.append(partial(self.sendOne, c, released))
+
+        return seq
 
 
     def handleMouseMove(self, pdu: PlayerMouseMovePDU):
