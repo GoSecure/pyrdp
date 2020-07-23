@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Dict, Optional
 from functools import partial
 
-from pyrdp.core import AsyncIOSequencer
 from pyrdp.enum import FastPathInputType, FastPathOutputType, MouseButton, PlayerPDUType, PointerFlag, ScanCodeTuple
 from pyrdp.layer import FastPathLayer, PlayerLayer
 from pyrdp.mitm.DeviceRedirectionMITM import DeviceRedirectionMITM, DeviceRedirectionMITMObserver
