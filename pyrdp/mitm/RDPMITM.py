@@ -238,12 +238,13 @@ class RDPMITM:
 
         if userID == channelID:
             self.buildVirtualChannel(client, server)
-        elif self.state.channelMap[channelID] == MCSChannelName.IO:
-            self.buildIOChannel(client, server)
-        elif self.state.channelMap[channelID] == MCSChannelName.CLIPBOARD:
-            self.buildClipboardChannel(client, server)
-        elif self.state.channelMap[channelID] == MCSChannelName.DEVICE_REDIRECTION:
-            self.buildDeviceChannel(client, server)
+        elif channelID in self.state.channelMap:
+            if self.state.channelMap[channelID] == MCSChannelName.IO:
+                self.buildIOChannel(client, server)
+            elif self.state.channelMap[channelID] == MCSChannelName.CLIPBOARD:
+                self.buildClipboardChannel(client, server)
+            elif self.state.channelMap[channelID] == MCSChannelName.DEVICE_REDIRECTION:
+                self.buildDeviceChannel(client, server)
         else:
             self.buildVirtualChannel(client, server)
 
