@@ -180,7 +180,7 @@ def buildArgParser():
         "--no-files", help="Do not extract files transferred between the client and server.", action="store_true")
     parser.add_argument(
         "--transparent", help="Spoof source IP for connections to the server (See README)", action="store_true")
-    parser.add_argument("--gdi", help="Accept accelerated graphics pipeline (MS-RDPEGDI) extension",
+    parser.add_argument("--no-gdi", help="Disable accelerated graphics pipeline (MS-RDPEGDI) extension",
                         action="store_true")
 
     return parser
@@ -243,7 +243,7 @@ def configure(cmdline=None) -> MITMConfig:
     config.transparent = args.transparent
     config.extractFiles = not args.no_files
     config.disableActiveClipboardStealing = args.disable_active_clipboard
-    config.useGdi = args.gdi
+    config.useGdi = not args.no_gdi
 
     payload = None
     powershell = None
