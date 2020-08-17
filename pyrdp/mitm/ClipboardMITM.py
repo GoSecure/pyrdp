@@ -60,7 +60,7 @@ class PassiveClipboardStealer:
         # Only handle file contents if file extraction is enabled.
         if self.config.extractFiles:
             self.dispatch[FileContentsRequestPDU] = self.onFileContentsRequest
-            self.dispatch[FileContentsResponsePDU] = self.onFileContentsRespons
+            self.dispatch[FileContentsResponsePDU] = self.onFileContentsResponse
 
     def onClientPDUReceived(self, pdu: ClipboardPDU):
         self.statCounter.increment(STAT.CLIPBOARD, STAT.CLIPBOARD_CLIENT)
