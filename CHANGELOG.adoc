@@ -11,10 +11,16 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 === Enhancements
 
 * `pyrdp-mitm` now carves and saves files transferred via clipboard ({uri-issue}100[#100])
+* Introduced the `pyrdp-convert` tool to convert between pcaps, PyRDP replay files and MP4 video files.
+  Read link:README.md#using-pyrdp-convert[its section in the README for details].
+  See {uri-issue}199[#199], {uri-issue}188[#188] and {uri-issue}170[#170].
 * `pyrdp-player` can now run in headless mode (`--headless`).
   All GUI dependencies are now optional enabling further Docker image size reduction.
   See {uri-issue}151[#151], {uri-issue}163[#163] and {uri-issue}190[#190].
 * `pyrdp-player` now support window scaling of the RDP session ({uri-issue}101[#101], {uri-issue}208[#208])
+* Added support for the GDI graphics pipeline which is enabled by default.
+  The `--no-gdi` switch was also added to disable GDI.
+  See {uri-issue}50[#50] and {uri-issue}209[#209] for details.
 * Added a transparent proxy mode where source or destination packets are unaltered from the client or the server's perspective.
   Read link:docs/transparent-proxy.md[the feature's documentation for setup and details.].
   Also see {uri-issue}197[#197], {uri-issue}204[#204] and {uri-issue}205[#205].
@@ -29,7 +35,6 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Added `--disable-active-clipboard` switch to prevent clipboard request injection
 * Added `--no-downgrade` switch to prevent protocol downgrading where possible {uri-issue}189[#189]
 * Added `--no-files` switch to prevent extracting transferred files {uri-issue}195[#195]
-* Added `--gdi` MITM switch to enable accelerated graphics pipeline (MS-RDPEGDI) ({uri-issue}50[#50])
 * PyRDP no longer create replay files for garbage sessions with less than 19 bytes ({uri-issue}169[#169], {uri-issue}207[#207])
 
 === Bug fixes

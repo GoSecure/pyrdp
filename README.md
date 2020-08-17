@@ -51,7 +51,7 @@ research use cases in mind.
     + [Other MITM arguments](#other-mitm-arguments)
       - [--no-downgrade](#--no-downgrade)
       - [--transparent](#--transparent)
-      - [`--gdi`: Accelerated Graphics Pipeline](#--gdi-accelerated-graphics-pipeline)
+      - [`--no-gdi`: Disable Accelerated Graphics Pipeline](#--no-gdi-disable-accelerated-graphics-pipeline)
   * [Using the PyRDP Player](#using-the-pyrdp-player)
     + [Playing a replay file](#playing-a-replay-file)
     + [Listening for live connections](#listening-for-live-connections)
@@ -61,6 +61,7 @@ research use cases in mind.
     + [Cloning a certificate](#cloning-a-certificate)
     + [Using a custom private key](#using-a-custom-private-key)
     + [Other cloner arguments](#other-cloner-arguments)
+  * [Using PyRDP Convert](#using-pyrdp-convert)
   * [Configuring PyRDP](#configuring-pyrdp)
   * [Using PyRDP as a Library](#using-pyrdp-as-a-library)
   * [Using PyRDP with twistd](#using-pyrdp-with-twistd)
@@ -102,16 +103,19 @@ We recommend installing PyRDP in a
 [virtual environment](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/)
 to avoid dependency issues.
 
-First, make sure to install the prerequisite packages (on Ubuntu):
+First, make sure to install the prerequisite packages (on Ubuntu). We provide two types of installs a full one and a
+slim one. Install the dependencies according to your use case.
 
 ```
-sudo apt install libdbus-1-dev libdbus-glib-1-dev libgl1-mesa-glx git python3-dev
-```
+# Full install (GUI, transcoding to MP4)
+sudo apt install python3 python3-pip python3-dev python3-setuptools python3-venv \
+        build-essential python3-dev git openssl \
+        libdbus-1-dev libdbus-glib-1-dev libgl1-mesa-glx \
+        notify-osd dbus-x11 libxkbcommon-x11-0
 
-On some systems, you may need to install the `python3-venv` package:
-
-```
-sudo apt install python3-venv
+# Slim install (no GUI, no transcoding)
+sudo apt install python3 python3-pip python3-setuptools python3-venv \
+        build-essential python3-dev git openssl
 ```
 
 Grab PyRDP's source code:
@@ -123,7 +127,7 @@ git clone https://github.com/gosecure/pyrdp.git
 Then, create your virtual environment in the `venv` directory inside PyRDP's directory:
 
 ```
-cd pyrdp 
+cd pyrdp
 python3 -m venv venv
 ```
 
@@ -188,7 +192,7 @@ Finally, you can install the project with Pip:
 
 ```
 pip3 install -U pip setuptools wheel
-pip3 install -U -e .
+pip3 install -U -e '.[full]'
 ```
 
 This should install all the dependencies required to run PyRDP.
@@ -257,7 +261,7 @@ If key generation didn't work or you want to use a custom key and certificate, y
 
 ```
 pyrdp-mitm.py 192.168.1.10 -k private_key.pem -c certificate.pem
-``` 
+```
 
 #### Connecting to the PyRDP player
 If you want to see live RDP connections through the PyRDP player, you will need to specify the ip and port on which the
@@ -338,7 +342,7 @@ Run `pyrdp-mitm.py --help` for a full list of arguments.
 
 This argument is useful when running PyRDP in Honeypot scenarios to avoid scanner fingerprinting.
 When the switch is enabled, PyRDP will not downgrade unsupported extensions and let the traffic through
-transparently. The player will likely not be able to successfully replay video traffic, but the following 
+transparently. The player will likely not be able to successfully replay video traffic, but the following
 supported channels should still be accessible:
 
 - Keystroke recording
@@ -346,7 +350,7 @@ supported channels should still be accessible:
 - Clipboard access (passively)
 - Drive access (passively)
 
-This feature is still a work in progress and some downgrading is currently unavoidable to allow the connection 
+This feature is still a work in progress and some downgrading is currently unavoidable to allow the connection
 to be established. The following are currently not affected by this switch and will still be disabled:
 
 - FIPS Encryption
@@ -354,28 +358,29 @@ to be established. The following are currently not affected by this switch and w
 - ClientInfo compression
 - Virtual Channel compression
 
-**NOTE**: If being able to eventually replay the full session is important, a good solution is to record the raw 
-RDP traffic using Wireshark and keep the TLS master secrets. Whenever PyRDP adds support for additional extensions, 
+**NOTE**: If being able to eventually replay the full session is important, a good solution is to record the raw
+RDP traffic using Wireshark and keep the TLS master secrets. Whenever PyRDP adds support for additional extensions,
 it would then become possible to extract a valid RDP replay file from the raw network capture.
 
 ##### `--transparent`
 
 Tells PyRDP to attempt to spoof the source IP address of the client so that the server sees the real IP
 address instead of the MITM one. This option is only useful in certain scenarios where the MITM is physically
-a gateway between clients and the server and sees all traffic. 
+a gateway between clients and the server and sees all traffic.
 [Specific examples can be found here.](docs/transparent-proxy.md)
 
-**NOTE**: This requires root privileges, only works on Linux and requires manual firewall configuration to ensure 
+**NOTE**: This requires root privileges, only works on Linux and requires manual firewall configuration to ensure
 that traffic is routed properly.
 
-##### `--gdi`: Accelerated Graphics Pipeline
+##### `--no-gdi`: Disable Accelerated Graphics Pipeline
 
-Tells the MITM to allow clients to use [Graphics Device Interface Acceleration][gdi] Extensions to stream
-drawing orders instead of raw bitmaps. The advantage of this mode is a significant reduction in required bandwidth
-for high resolution connections.
+PyRDP downgrades video to the the most recent graphics pipeline that it supports. This switch explicitly tells the
+MITM to not use the [Graphics Device Interface Acceleration][gdi] extensions to stream video. The advantage of this mode
+is a significant reduction in required bandwidth for high resolution connections.
 
-Note that some GDI drawing orders are currently unimplemented because they appear to be unused.
-If you have a replay which contains any unsupported or untested order, do not hesitate to share it with the project maintainers so that support can be added as required. (Make sure that the trace does not contain sensitive information)
+Note that some GDI drawing orders are currently unimplemented because they appear to be unused. If you have a replay
+which contains any unsupported or untested order, do not hesitate to share it with the project maintainers so that
+support can be added as required. (Make sure that the trace does not contain sensitive information)
 
 [gdi]: https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpegdi/745f2eee-d110-464c-8aca-06fc1814f6ad
 
@@ -396,7 +401,7 @@ The player always listens for live connections. By default, the listening port i
 
 ```
 pyrdp-player.py -p <PORT>
-``` 
+```
 
 #### Changing the listening address
 By default, the player only listens to connections coming from the local machine. We do not recommend opening up the player
@@ -434,6 +439,57 @@ pyrdp-clonecert.py 192.168.1.10 cert.pem -i input_key.pem
 
 #### Other cloner arguments
 Run `pyrdp-clonecert.py --help` for a full list of arguments.
+
+### Using PyRDP Convert
+
+`pyrdp-convert` is a helper script that performs several useful conversions. The script has the best chance of working
+on traffic captured by PyRDP due to unsupported RDP protocol features that might be used in a non-intercepted
+connection.
+
+The following conversions are supported:
+
+- Network Capture (PCAP) to PyRDP replay file
+- Network Capture to MP4 video file
+- Replay file to MP4 video file
+
+The script supports both encrypted (TLS) network captures (by providing `--secrets ssl.log`) and decrypted PDU exports.
+
+> **WARNING**: pcapng and pcap with nanosecond timestamps are not compatible with `pyrdp-convert` and will create
+> replay files that fail to playback or export to MP4. This is due to incompatible timestamp formats.
+
+```
+# Export the session coming client 10.2.0.198 to a .pyrdp file.
+pyrdp-convert.py --src 10.2.0.198 --secrets ssl.log -o path/to/output capture.pcap
+
+# Or as an MP4 video
+pyrdp-convert.py --src 10.2.0.198 --secrets ssl.log -o path/to/output -f mp4 capture.pcap
+
+# List the sessions in a network trace, along with the decryptable ones.
+pyrdp-convert.py --list capture.pcap
+```
+
+Note that MP4 conversion requires libavcodec and ffmpeg, so this may require extra steps on Windows.
+
+Manually decrypted network traces can be exported from Wireshark by selecting `File > Export PDUs` and selecting `OSI
+Layer 7`. When using this method, it is also recommended to filter the exported stream to only contain the TCP stream of
+the RDP session which must be converted.
+
+First, make sure you configured wireshark to load TLS secrets:
+
+![Configure TLS secrets log](docs/screens/wireshark-tls.png)
+
+Next, export OSI Layer 7 PDUs:
+
+![Export OSI Layer 7](docs/screens/wireshark-export.png)
+
+And lastly, filter down the trace to contain only the conversation of interest (Optional but recommended) by applying a
+display filter and clicking `File > Export Specified Packets...`
+
+![Filtering the exported trace](docs/screens/wireshark-export-specified.png)
+
+
+Now this trace can be used directly in `pyrdp-convert`.
+
 
 ### Configuring PyRDP
 

@@ -27,15 +27,17 @@ setup(name='pyrdp',
     scripts=[
         'bin/pyrdp-clonecert.py',
         'bin/pyrdp-mitm.py',
-        'bin/pyrdp-player.py'
+        'bin/pyrdp-player.py',
+        'bin/pyrdp-convert.py',
     ],
     install_requires=[
         'appdirs>=1,<2',
         'cryptography>=2.2,<3',
         'names>=0,<1',
+        'progressbar2>=3.20,<4',
         'pyasn1>=0,<1',
         'pycryptodome>=3.5,<4',
-        'pyopenssl>=18',
+        'pyopenssl>=19,<20',
         'pytz',
         'rsa>=4,<5',
         'scapy>=2.4,<3',
@@ -44,6 +46,9 @@ setup(name='pyrdp',
     ],
     extras_require={
         "full": [
+            'wheel>=0.34.2',
+            'av>=8',
+            'pillowcase>=2',
             'PySide2>=5.12,<6',
             'dbus-python>=1.2<1.3;platform_system!="Windows"',
             'notify2>=0.3,<1;platform_system!="Windows"'

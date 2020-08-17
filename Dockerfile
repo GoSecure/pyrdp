@@ -9,8 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         python3-venv \
         # Required to build RLE module and dbus-python (GUI)
         build-essential python3-dev \
-        libdbus-1-dev \
-        libdbus-glib-1-dev
+        libdbus-1-dev libdbus-glib-1-dev
 
 RUN python3 -m venv /opt/venv
 # Make sure we use the virtualenv:
@@ -18,7 +17,9 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Install dependencies only (speeds repetitive builds)
 COPY requirements.txt /pyrdp/requirements.txt
-RUN cd /pyrdp && pip3 --no-cache-dir install -r requirements.txt
+RUN cd /pyrdp && \
+    pip3 install wheel && \
+    pip3 --no-cache-dir install -r requirements.txt
 
 # Compile only our C extension and install
 # This way changes to source tree will not trigger full images rebuilds
@@ -41,6 +42,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 \
         # GUI and notifications stuff
         libgl1-mesa-glx \
         notify-osd dbus-x11 libxkbcommon-x11-0 \
+        # Runtime requirement by progressbar (required by pyrdp-convert)
+        python3-distutils \
         && rm -rf /var/lib/apt/lists/*
 
 # Copy preinstalled dependencies from compile image

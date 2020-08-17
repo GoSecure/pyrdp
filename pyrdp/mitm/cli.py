@@ -23,6 +23,7 @@ from pyrdp.core import settings
 from pyrdp.core.ssl import ServerTLSContext
 from pyrdp.logging import configure as configureLoggers, LOGGER_NAMES
 from pyrdp.mitm.config import DEFAULTS, MITMConfig
+from pyrdp.enum import NegotiationProtocols
 
 
 def parseTarget(target: str) -> Tuple[str, int]:
@@ -129,7 +130,7 @@ def showConfiguration(config: MITMConfig):
 
 def buildArgParser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("target", help="IP:port of the target RDP machine (ex: 192.168.1.10:3390)")
+    parser.add_argument("target", help="IP:port of the target RDP machine (ex: 192.168.1.10:3390)", nargs='?', default=None)
     parser.add_argument("-l", "--listen", help="Port number to listen on (default: 3389)", default=3389)
     parser.add_argument("-o", "--output", help="Output folder", default="pyrdp_output")
     parser.add_argument("-i", "--destination-ip",
@@ -145,6 +146,7 @@ def buildArgParser():
                         default="INFO", choices=["INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL"])
     parser.add_argument("-F", "--log-filter",
                         help="Only show logs from this logger name (accepts '*' wildcards)", default="")
+    parser.add_argument("--auth", help="Specify allowed authentication mechanisms (Comma-separated, choose from: tls, ssp)", default="tls")
     parser.add_argument(
         "-s", "--sensor-id", help="Sensor ID (to differentiate multiple instances of the MITM"
         " where logs are aggregated at one place)", default="PyRDP")
@@ -178,7 +180,7 @@ def buildArgParser():
         "--no-files", help="Do not extract files transferred between the client and server.", action="store_true")
     parser.add_argument(
         "--transparent", help="Spoof source IP for connections to the server (See README)", action="store_true")
-    parser.add_argument("--gdi", help="Accept accelerated graphics pipeline (MS-RDPEGDI) extension",
+    parser.add_argument("--no-gdi", help="Disable accelerated graphics pipeline (MS-RDPEGDI) extension",
                         action="store_true")
 
     return parser
@@ -209,7 +211,17 @@ def configure(cmdline=None) -> MITMConfig:
     configureLoggers(cfg)
     logger = logging.getLogger(LOGGER_NAMES.PYRDP)
 
-    targetHost, targetPort = parseTarget(args.target)
+    if args.target is None and not args.transparent:
+        parser.print_usage()
+        sys.stderr.write('error: A relay target is required unless running in transparent proxy mode.\n')
+        sys.exit(1)
+
+    if args.target:
+        targetHost, targetPort = parseTarget(args.target)
+    else:
+        targetHost = None
+        targetPort = 3389  # FIXME: Allow to set transparent port as well.
+
     key, certificate = validateKeyAndCertificate(args.private_key, args.certificate)
 
     config = MITMConfig()
@@ -231,7 +243,7 @@ def configure(cmdline=None) -> MITMConfig:
     config.transparent = args.transparent
     config.extractFiles = not args.no_files
     config.disableActiveClipboardStealing = args.disable_active_clipboard
-    config.useGdi = args.gdi
+    config.useGdi = not args.no_gdi
 
     payload = None
     powershell = None
@@ -305,6 +317,15 @@ def configure(cmdline=None) -> MITMConfig:
     elif args.payload_delay is not None:
         logger.error("--payload-delay was provided but no payload was set.")
         sys.exit(1)
+
+    # Configure allowed authentication protocols.
+    for auth in args.auth.split(','):
+        auth = auth.strip()
+        if auth == "tls":
+            config.authMethods |= NegotiationProtocols.SSL
+        elif auth == "ssp":
+            # CredSSP implies TLS.
+            config.authMethods |= (NegotiationProtocols.SSL | NegotiationProtocols.CRED_SSP)
 
     showConfiguration(config)
     return config

@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -71,8 +71,8 @@ class X224MITM:
         chosenProtocols = self.originalRequest.requestedProtocols
 
         if chosenProtocols is not None:
-            # Only SSL is implemented, so remove other protocol flags
-            chosenProtocols &= NegotiationProtocols.SSL
+            # Tell the server we only support the allowed authentication methods.
+            chosenProtocols &= self.state.config.authMethods
 
         modifiedRequest = NegotiationRequestPDU(
             self.originalRequest.cookie,
@@ -99,8 +99,11 @@ class X224MITM:
         :param _: the connection confirm PDU
         """
 
-        # X224 Response
-        protocols = NegotiationProtocols.SSL if self.originalRequest.tlsSupported else NegotiationProtocols.NONE
+        # FIXME: In case the server picks anything other than what we support, PyRDP is
+        #        likely going to be unable to complete the handshake with the server.
+        #        This should not happen since we are intercepting and spoofing the NEG_REQ,
+        #        though.
+        # protocols = NegotiationProtocols.SSL if self.originalRequest.tlsSupported else NegotiationProtocols.NONE
 
         parser = NegotiationResponseParser()
         response = parser.parse(pdu.payload)
@@ -108,9 +111,11 @@ class X224MITM:
             self.log.info("The server failed the negotiation. Error: %(error)s", {"error": NegotiationFailureCode.getMessage(response.failureCode)})
             payload = pdu.payload
         else:
-            payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, protocols))
+            payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, response.selectedProtocols))
         self.client.sendConnectionConfirm(payload, source=0x1234)
 
+        # FIXME: This should be done based on what authentication method the server selected, not on what
+        #        the client supports.
         if self.originalRequest.tlsSupported:
             self.startTLSCallback()
             self.state.useTLS = True

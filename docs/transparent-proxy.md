@@ -8,6 +8,19 @@ PyRDP is deployed. It is likely that the examples below will not work
 as-is and require modifications and testing during deployment.
 
 
+There are two base modes for transparent proxying:
+
+1. A single server is targeted and poisoned to reply to the MITM. The
+   MITM thus impersonates a single server and both clients and server
+   will not be aware of the proxy. This mode is useful for honeypots.
+   
+2. No server is targeted and the MITM will establish a direct
+   connection to the intended server. In this mode, the server will
+   see connections as coming from the MITM, but clients will not be
+   aware of the proxy. This mode is useful when ARP poisoning a subnet
+   during engagements.
+
+
 ## Basic L3 TPROXY
 
 This example is a simple Layer 3 proxy which intercepts RDP
