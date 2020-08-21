@@ -96,6 +96,13 @@ class MITMConfig:
         """
         return self.outDir / "files"
 
+    @property
+    def certDir(self) -> Path:
+        """
+        Get the directory for dynamically generated certificates.
+        """
+        return self.outDir / "certs"
+
 
 """
 The default MITM configuration.

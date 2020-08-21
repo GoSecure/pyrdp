@@ -1,11 +1,12 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
 import asyncio
 import datetime
+import typing
 
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol
@@ -137,9 +138,11 @@ class RDPMITM:
 
         self.player.player.addObserver(LayerLogger(self.attackerLog))
 
-        self.config.outDir.mkdir(parents=True, exist_ok=True)
-        self.config.replayDir.mkdir(exist_ok=True)
-        self.config.fileDir.mkdir(exist_ok=True)
+        self.ensureOutDir()
+        # if config.certificateFileName == "auto":
+        #     self.certCache: CertificateCache = CertificateCache(self.config.certDir)
+        # else:
+        #     self.certCache = None
 
         self.state.securitySettings.addObserver(RC4LoggingObserver(self.rc4Log))
 
@@ -213,17 +216,40 @@ class RDPMITM:
             except asyncio.TimeoutError:
                 self.log.error("Failed to connect to recording host: timeout expired")
 
-    def startTLS(self):
+    def doClientTls(self):
+        cert = self.server.tcp.transport.getPeerCertificate()
+        if not cert:
+            # Wait for server certificate
+            reactor.callLater(1, self.doClientTls)
+
+        # Clone certificate if necessary.
+        if self.certs:
+            contextForClient = ServerTLSContext(self.config.privateKeyFileName, self.config.certificateFileName)
+        else:
+            # No automated certificate cloning. Use the specified certificate.
+            contextForClient = ServerTLSContext(self.config.privateKeyFileName, self.config.certificateFileName)
+
+        # Establish TLS tunnel with the client
+        self.onTlsReady()
+        self.client.tcp.startTLS(contextForClient)
+        self.onTlsReady = None
+
+        # Add unknown packet handlers.
+        self.client.segmentation.addObserver(PacketForwarder(self.server.tcp))
+        self.server.segmentation.addObserver(PacketForwarder(self.client.tcp))
+
+    def startTLS(self, onTlsReady: typing.Callable[[], None]):
         """
         Execute a startTLS on both the client and server side.
         """
-        contextForClient = ServerTLSContext(self.config.privateKeyFileName, self.config.certificateFileName)
-        contextForServer = ClientTLSContext()
+        self.onTlsReady = onTlsReady
 
-        self.client.tcp.startTLS(contextForClient)
+        # Establish TLS tunnel with target server...
+        contextForServer = ClientTLSContext()
         self.server.tcp.startTLS(contextForServer)
-        self.client.segmentation.addObserver(PacketForwarder(self.server.tcp))
-        self.server.segmentation.addObserver(PacketForwarder(self.client.tcp))
+
+        # Establish TLS tunnel with client.
+        reactor.callLater(1, self.doClientTls)
 
     def buildChannel(self, client: MCSServerChannel, server: MCSClientChannel):
         """
@@ -420,3 +446,9 @@ class RDPMITM:
             enableForwarding
         ])
         sequencer.run()
+
+    def ensureOutDir(self):
+        self.config.outDir.mkdir(parents=True, exist_ok=True)
+        self.config.replayDir.mkdir(exist_ok=True)
+        self.config.fileDir.mkdir(exist_ok=True)
+        self.config.certDir.mkdir(exist_ok=True)
