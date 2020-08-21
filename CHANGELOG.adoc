@@ -10,6 +10,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 === Enhancements
 
+* Added support for dynamic certificate cloning using `-c auto` ({uri-issue}94[#94])
 * Introduced the `pyrdp-convert` tool to convert between pcaps, PyRDP replay files and MP4 video files.
   Read link:README.md#using-pyrdp-convert[its section in the README for details].
   See {uri-issue}199[#199], {uri-issue}188[#188] and {uri-issue}170[#170].
