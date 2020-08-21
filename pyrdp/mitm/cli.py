@@ -40,7 +40,9 @@ def parseTarget(target: str) -> Tuple[str, int]:
 
 
 def validateKeyAndCertificate(private_key: str, certificate: str) -> Tuple[str, str]:
-    if (private_key is None) != (certificate is None):
+    if 'auto' in [certificate, private_key]:
+        return 'auto', 'auto'  # Use dynamic certificate generation
+    elif (private_key is None) != (certificate is None):
         sys.stderr.write("You must provide both the private key and the certificate")
         sys.exit(1)
     elif private_key is None:
@@ -139,7 +141,7 @@ def buildArgParser():
     parser.add_argument("-d", "--destination-port",
                         help="Listening port of the PyRDP player (default: 3000).", default=3000)
     parser.add_argument("-k", "--private-key", help="Path to private key (for SSL)")
-    parser.add_argument("-c", "--certificate", help="Path to certificate (for SSL)")
+    parser.add_argument("-c", "--certificate", help="Path to certificate (for SSL). 'auto' for dynamic generation")
     parser.add_argument("-u", "--username", help="Username that will replace the client's username", default=None)
     parser.add_argument("-p", "--password", help="Password that will replace the client's password", default=None)
     parser.add_argument("-L", "--log-level", help="Console logging level. Logs saved to file are always verbose.",
