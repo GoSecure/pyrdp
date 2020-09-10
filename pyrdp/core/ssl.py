@@ -61,8 +61,9 @@ class CertificateCache():
     Handle multiple certificates.
     """
 
-    def __init__(self, cachedir):
+    def __init__(self, cachedir, log):
         self._root = cachedir
+        self.log = log
 
     def clone(self, cert: OpenSSL.crypto.X509) -> (OpenSSL.crypto.PKey, OpenSSL.crypto.X509):
         """Clone the provided certificate."""
@@ -90,6 +91,8 @@ class CertificateCache():
         base = str(self._root / commonName)
 
         if path.exists(base + '.pem'):
+            self.log.info('Using cached certificate for %s', commonName)
+
             # Recover cache entry from disk.
             privKey = base + '.pem'
             certFile = base + '.crt'
@@ -105,5 +108,7 @@ class CertificateCache():
 
             with open(privKey, "wb") as f:
                 f.write(OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, priv))
+
+            self.log.info('Cloned server certificate to %s', certFile)
 
             return privKey, certFile

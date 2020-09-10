@@ -139,8 +139,9 @@ class RDPMITM:
         self.player.player.addObserver(LayerLogger(self.attackerLog))
 
         self.ensureOutDir()
-        if config.certificateFileName == "auto":
-            self.certs: CertificateCache = CertificateCache(self.config.certDir)
+
+        if config.certificateFileName is None:
+            self.certs: CertificateCache = CertificateCache(self.config.certDir, mainLogger.createChild("cert"))
         else:
             self.certs = None
 

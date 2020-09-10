@@ -40,14 +40,13 @@ def parseTarget(target: str) -> Tuple[str, int]:
 
 
 def validateKeyAndCertificate(private_key: str, certificate: str) -> Tuple[str, str]:
-    if 'auto' in [certificate, private_key]:
-        return 'auto', 'auto'  # Use dynamic certificate generation
-    elif (private_key is None) != (certificate is None):
+    if (private_key is None) != (certificate is None):
         sys.stderr.write("You must provide both the private key and the certificate")
         sys.exit(1)
-    elif private_key is None:
-        key, cert = getSSLPaths()
-        handleKeyAndCertificate(key, cert)
+
+    if private_key is None:
+        # Certificates will be generated automatically.
+        return None, None
     else:
         key, cert = private_key, certificate
 
@@ -67,62 +66,6 @@ def validateKeyAndCertificate(private_key: str, certificate: str) -> Tuple[str, 
     return key, cert
 
 
-def handleKeyAndCertificate(key: str, certificate: str):
-    """
-    Handle the certificate and key arguments that were given on the command line.
-    :param key: path to the TLS private key.
-    :param certificate: path to the TLS certificate.
-    """
-
-    from pyrdp.logging import LOGGER_NAMES
-    logger = logging.getLogger(LOGGER_NAMES.MITM)
-
-    if os.path.exists(key) and os.path.exists(certificate):
-        logger.info("Using existing private key: %(privateKey)s", {"privateKey": key})
-        logger.info("Using existing certificate: %(certificate)s", {"certificate": certificate})
-    else:
-        logger.info("Generating a private key and certificate for SSL connections")
-
-        if generateCertificate(key, certificate):
-            logger.info("Private key path: %(privateKeyPath)s", {"privateKeyPath": key})
-            logger.info("Certificate path: %(certificatePath)s", {"certificatePath": certificate})
-        else:
-            logger.error("Generation failed. Please provide the private key and certificate with -k and -c")
-
-
-def getSSLPaths() -> (str, str):
-    """
-    Get the path to the TLS key and certificate in pyrdp's config directory.
-    :return: the path to the key and the path to the certificate.
-    """
-
-    if not os.path.exists(settings.CONFIG_DIR):
-        os.makedirs(settings.CONFIG_DIR)
-
-    key = settings.CONFIG_DIR + "/private_key.pem"
-    certificate = settings.CONFIG_DIR + "/certificate.pem"
-    return key, certificate
-
-
-def generateCertificate(keyPath: str, certificatePath: str) -> bool:
-    """
-    Generate an RSA private key and certificate with default values.
-    :param keyPath: path where the private key should be saved.
-    :param certificatePath: path where the certificate should be saved.
-    :return: True if generation was successful
-    """
-
-    if os.name != "nt":
-        nullDevicePath = "/dev/null"
-    else:
-        nullDevicePath = "NUL"
-
-    result = os.system("openssl req -newkey rsa:2048 -nodes -keyout %s -x509"
-                       " -days 365 -out %s -subj \"/CN=www.example.com/O=PYRDP/C=US\" 2>%s" %
-                       (keyPath, certificatePath, nullDevicePath))
-    return result == 0
-
-
 def showConfiguration(config: MITMConfig):
     logging.getLogger(LOGGER_NAMES.MITM).info("Target: %(target)s:%(port)d", {
         "target": config.targetHost, "port": config.targetPort})
@@ -140,8 +83,8 @@ def buildArgParser():
                         " not sent over the network.")
     parser.add_argument("-d", "--destination-port",
                         help="Listening port of the PyRDP player (default: 3000).", default=3000)
-    parser.add_argument("-k", "--private-key", help="Path to private key (for SSL)")
-    parser.add_argument("-c", "--certificate", help="Path to certificate (for SSL). 'auto' for dynamic generation")
+    parser.add_argument("-k", "--private-key", help="Specify path to private key (for SSL)")
+    parser.add_argument("-c", "--certificate", help="Specify path to certificate (for SSL).")
     parser.add_argument("-u", "--username", help="Username that will replace the client's username", default=None)
     parser.add_argument("-p", "--password", help="Password that will replace the client's password", default=None)
     parser.add_argument("-L", "--log-level", help="Console logging level. Logs saved to file are always verbose.",
