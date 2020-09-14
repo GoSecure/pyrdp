@@ -310,10 +310,10 @@ class RDPMITM:
         LayerChainItem.chain(server, serverSecurity, serverVirtualChannel, serverLayer)
 
         if self.config.disableActiveClipboardStealing:
-            mitm = PassiveClipboardStealer(clientLayer, serverLayer, self.getLog(MCSChannelName.CLIPBOARD),
+            mitm = PassiveClipboardStealer(self.config, clientLayer, serverLayer, self.getLog(MCSChannelName.CLIPBOARD),
                                            self.recorder, self.statCounter)
         else:
-            mitm = ActiveClipboardStealer(clientLayer, serverLayer, self.getLog(MCSChannelName.CLIPBOARD),
+            mitm = ActiveClipboardStealer(self.config, clientLayer, serverLayer, self.getLog(MCSChannelName.CLIPBOARD),
                                           self.recorder, self.statCounter)
         self.channelMITMs[client.channelID] = mitm
 

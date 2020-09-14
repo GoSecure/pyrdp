@@ -42,7 +42,8 @@ from pyrdp.pdu.rdp.slowpath import ConfirmActivePDU, ControlPDU, DemandActivePDU
     SetErrorInfoPDU, ShareControlHeader, ShareDataHeader, SlowPathPDU, SlowPathUnparsedPDU, SuppressOutputPDU, \
     SynchronizePDU, UpdatePDU, PersistentCacheKeysPDU
 from pyrdp.pdu.rdp.virtual_channel.clipboard import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU, \
-    FormatListPDU, FormatListResponsePDU, FormatName, LongFormatName, ServerMonitorReadyPDU, ShortFormatName
+    FormatListPDU, FormatListResponsePDU, FormatName, LongFormatName, ServerMonitorReadyPDU, ShortFormatName, \
+    FileContentsRequestPDU, FileContentsResponsePDU
 from pyrdp.pdu.rdp.virtual_channel.device_redirection import DeviceAnnounce, DeviceCloseRequestPDU, \
     DeviceCloseResponsePDU, DeviceCreateRequestPDU, DeviceCreateResponsePDU, DeviceDirectoryControlResponsePDU, \
     DeviceDirectoryControlResponsePDU, DeviceIORequestPDU, DeviceIOResponsePDU, DeviceListAnnounceRequest, \
