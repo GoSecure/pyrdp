@@ -17,7 +17,7 @@ from pyrdp.pdu import NegotiationRequestPDU, NegotiationResponsePDU, X224Connect
 
 
 class X224MITM:
-    def __init__(self, client: X224Layer, server: X224Layer, log: LoggerAdapter, state: RDPMITMState, connector: typing.Coroutine, startTLSCallback: typing.Callable[[], None]):
+    def __init__(self, client: X224Layer, server: X224Layer, log: LoggerAdapter, state: RDPMITMState, connector: typing.Coroutine, startTLSCallback: typing.Callable[[typing.Callable[[], None]], None]):
         """
 
         :param client: X224 layer for the client side
@@ -112,13 +112,16 @@ class X224MITM:
             payload = pdu.payload
         else:
             payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, response.selectedProtocols))
-        self.client.sendConnectionConfirm(payload, source=0x1234)
 
         # FIXME: This should be done based on what authentication method the server selected, not on what
         #        the client supports.
         if self.originalRequest.tlsSupported:
-            self.startTLSCallback()
+            # If a TLS tunnel is requested, then we establish the server-side tunnel before
+            # replying to the client, so that we can clone the certificate if needed.
+            self.startTLSCallback(lambda: self.client.sendConnectionConfirm(payload, source=0x1234))
             self.state.useTLS = True
+        else:
+            self.client.sendConnectionConfirm(payload, source=0x1234)
 
     def onClientDisconnectRequest(self, pdu: X224DisconnectRequestPDU):
         self.server.sendPDU(pdu)

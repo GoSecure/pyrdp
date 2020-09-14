@@ -10,6 +10,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 === Enhancements
 
+* Added support for dynamic certificate cloning when no certificate is specified. ({uri-issue}94[#94])
 * `pyrdp-mitm` now carves and saves files transferred via clipboard ({uri-issue}100[#100])
 * Introduced the `pyrdp-convert` tool to convert between pcaps, PyRDP replay files and MP4 video files.
   Read link:README.md#using-pyrdp-convert[its section in the README for details].
