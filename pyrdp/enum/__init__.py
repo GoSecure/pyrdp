@@ -15,7 +15,7 @@ from pyrdp.enum.orders import DrawingOrderControlFlags
 from pyrdp.enum.scancode import ScanCode, ScanCodeTuple
 from pyrdp.enum.segmentation import SegmentationPDUType
 from pyrdp.enum.virtual_channel.clipboard import ClipboardFormatName, ClipboardFormatNumber, ClipboardMessageFlags, \
-    ClipboardMessageType
+    ClipboardMessageType, FileContentsFlags
 from pyrdp.enum.virtual_channel.device_redirection import CreateOption, DeviceRedirectionComponent, \
     DeviceRedirectionPacketID, DeviceType, DirectoryAccessMask, FileAccessMask, FileAttributes, \
     FileCreateDisposition, FileCreateOptions, FileShareAccess, FileSystemInformationClass, GeneralCapabilityVersion, \

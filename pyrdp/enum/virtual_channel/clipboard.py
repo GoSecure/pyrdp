@@ -44,8 +44,25 @@ class ClipboardFormatNumber(IntEnum):
     METAFILE = 3
 
 
+class FileDescriptorFlags(Enum):
+    """
+    https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpeclip/a765d784-2b39-4b88-9faa-88f8666f9c35
+    """
+    FD_ATTRIBUTES = 0x04
+    FD_FILESIZE = 0x40
+    FD_WRITESTIME = 0x20
+    FD_SHOWPROGRESSUI = 0x4000
+
+
+class FileContentsFlags(IntEnum):
+    SIZE = 0x1
+    RANGE = 0x2
+
+
 class ClipboardFormatName(Enum):
     """
     https://msdn.microsoft.com/en-us/library/cc241079.aspx
     """
     FILE_LIST = "FileGroupDescriptorW"
+    DROP_EFFECT = "Preferred DropEffect"
+    FILE_CONTENT = "FileContents"
