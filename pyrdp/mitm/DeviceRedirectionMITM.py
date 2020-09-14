@@ -54,7 +54,6 @@ class DeviceRedirectionMITM(Subject):
 
     FORGED_COMPLETION_ID = 1000000
 
-
     def __init__(self, client: DeviceRedirectionLayer, server: DeviceRedirectionLayer, log: LoggerAdapter,
                  statCounter: StatCounter, state: RDPMITMState):
         """
@@ -70,12 +69,13 @@ class DeviceRedirectionMITM(Subject):
         self.state = state
         self.log = log
         self.statCounter = statCounter
-        self.currentIORequests: Dict[int, DeviceIORequestPDU] = {}
         self.openedFiles: Dict[int, FileProxy] = {}
         self.openedMappings: Dict[int, FileMapping] = {}
         self.fileMap: Dict[str, FileMapping] = {}
         self.fileMapPath = self.config.outDir / "mapping.json"
-        self.forgedRequests: Dict[int, DeviceRedirectionMITM.ForgedRequest] = {}
+
+        self.currentIORequests: Dict[(int, int), DeviceIORequestPDU] = {}
+        self.forgedRequests: Dict[(int, int), DeviceRedirectionMITM.ForgedRequest] = {}
 
         if self.config.extractFiles:
             self.responseHandlers: Dict[MajorFunction, callable] = {
@@ -155,7 +155,8 @@ class DeviceRedirectionMITM(Subject):
         """
 
         self.statCounter.increment(STAT.DEVICE_REDIRECTION_IOREQUEST)
-        self.currentIORequests[pdu.completionID] = pdu
+        key = (pdu.deviceID, pdu.completionID)
+        self.currentIORequests[key] = pdu
 
     def handleIOResponse(self, pdu: DeviceIOResponsePDU):
         """
@@ -164,16 +165,16 @@ class DeviceRedirectionMITM(Subject):
         """
 
         self.statCounter.increment(STAT.DEVICE_REDIRECTION_IORESPONSE)
-
-        if pdu.completionID in self.forgedRequests:
-            request = self.forgedRequests[pdu.completionID]
+        key = (pdu.deviceID, pdu.completionID)
+        if key in self.forgedRequests:
+            request = self.forgedRequests[key]
             request.handleResponse(pdu)
 
             if request.isComplete:
-                self.forgedRequests.pop(pdu.completionID)
+                self.forgedRequests.pop(key)
 
-        elif pdu.completionID in self.currentIORequests:
-            requestPDU = self.currentIORequests.pop(pdu.completionID)
+        elif key in self.currentIORequests:
+            requestPDU = self.currentIORequests.pop(key)
 
             if pdu.ioStatus >> 30 == IOOperationSeverity.STATUS_SEVERITY_ERROR:
                 self.statCounter.increment(STAT.DEVICE_REDIRECTION_IOERROR)
@@ -216,8 +217,9 @@ class DeviceRedirectionMITM(Subject):
             mapping = FileMapping.generate(remotePath, self.config.fileDir)
             proxy = FileProxy(mapping.localPath, "wb")
 
-            self.openedFiles[response.fileID] = proxy
-            self.openedMappings[response.fileID] = mapping
+            key = (response.deviceID, response.completionID, response.fileID)
+            self.openedFiles[key] = proxy
+            self.openedMappings[key] = mapping
 
             proxy.createObserver(
                 onFileCreated = lambda _: self.log.info("Saving file '%(remotePath)s' to '%(localPath)s'", {
@@ -335,7 +337,8 @@ class DeviceRedirectionMITM(Subject):
 
         completionID = self.findNextRequestID()
         request = DeviceRedirectionMITM.ForgedFileReadRequest(deviceID, completionID, self, path)
-        self.forgedRequests[completionID] = request
+        key = (deviceID, completionID)
+        self.forgedRequests[key] = request
 
         request.send()
         return completionID
@@ -358,11 +361,11 @@ class DeviceRedirectionMITM(Subject):
 
         completionID = self.findNextRequestID()
         request = DeviceRedirectionMITM.ForgedDirectoryListingRequest(deviceID, completionID, self, path)
-        self.forgedRequests[completionID] = request
+        key = (deviceID, completionID)
+        self.forgedRequests[key] = request
 
         request.send()
         return completionID
-
 
 
     class ForgedRequest:
