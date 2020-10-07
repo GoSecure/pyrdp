@@ -1,6 +1,7 @@
 # Handles compiling and package installation
-FROM ubuntu:18.04 AS compile-image
+FROM ubuntu:20.04 AS compile-image
 # Install build dependencies
+ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
         python3 python3-pip \
         # Required for local pip install
@@ -9,7 +10,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         python3-venv \
         # Required to build RLE module and dbus-python (GUI)
         build-essential python3-dev \
-        libdbus-1-dev libdbus-glib-1-dev
+        libdbus-1-dev libdbus-glib-1-dev \
+        # Required to build PyAV (pyrdp-convert to MP4)
+        libavformat-dev libavcodec-dev libavdevice-dev \
+        libavutil-dev libswscale-dev libswresample-dev libavfilter-dev
+
 
 RUN python3 -m venv /opt/venv
 # Make sure we use the virtualenv:
@@ -31,9 +36,10 @@ RUN cd /pyrdp \
 
 
 # Handles runtime only (minimize size for distribution)
-FROM ubuntu:18.04 AS docker-image
+FROM ubuntu:20.04 AS docker-image
 
 # Install runtime dependencies except pre-built venv
+ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends python3 \
         # To generate certificates
         openssl \
@@ -42,6 +48,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 \
         # GUI and notifications stuff
         libgl1-mesa-glx \
         notify-osd dbus-x11 libxkbcommon-x11-0 \
+        # Runtime requirement for PyAV (pyrdp-convert to MP4)
+        libavcodec58 libavdevice58 \
         # Runtime requirement by progressbar (required by pyrdp-convert)
         python3-distutils \
         && rm -rf /var/lib/apt/lists/*
