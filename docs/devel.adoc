@@ -4,6 +4,26 @@
 
 NOTE: This is a work in progress
 
+.Update dependencies
+
+For developement and normal installation we rely on `setup.py` with loose dependencies.
+For docker images we rely on `requirements.txt` and `requirements-slim.txt` with strict dependencies.
+It is important to keep both approaches in sync and to peridiocally update the requirements files (like before releases).
+See https://github.com/GoSecure/pyrdp/pull/219[the PR where we improved our use of the docker cache] for the reasoning behind this approach.
+
+In a clean tree, on master:
+
+* install and load the venv
+* do a `pip freeze > requirements.txt`
+* manually inspect updated dependencies
+* copy over to `requirements-slim.txt` those that make sense (don't add av, PySide2, etc.)
+
+If you are unsure about which to keep and which to discard between `requirements.txt` and `requirements-slim.txt`, just look at a diff of a previous version.
+
+.Test
+
+docker images (latest, slim), on linux, on Windows
+
 .Update the changelog
 * You can generate author list with where `<tag>` is replaced with previous release's tag:
 +
