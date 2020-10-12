@@ -95,10 +95,13 @@ class RDPReplayer(RDPMITM):
         pass
 
     def recv(self, data: bytes, from_client: bool):
-        if from_client:
-            self.client.tcp.dataReceived(data)
-        else:
-            self.server.tcp.dataReceived(data)
+        try:
+            if from_client:
+                self.client.tcp.dataReceived(data)
+            else:
+                self.server.tcp.dataReceived(data)
+        except Exception as e:
+            print(f'\n[-] Failed to handle data, continuing anyway: {e}')
 
     def setTimeStamp(self, timeStamp: float):
         self.recorder.setTimeStamp(int(timeStamp))
