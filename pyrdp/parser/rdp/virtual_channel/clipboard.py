@@ -7,7 +7,7 @@
 from io import BytesIO
 
 from pyrdp.core import Uint16LE, Uint32LE, Uint64LE
-from pyrdp.enum import ClipboardMessageFlags, ClipboardMessageType, ClipboardFormatName
+from pyrdp.enum import ClipboardMessageFlags, ClipboardMessageType, ClipboardFormatName, ClipboardFormatNumber
 from pyrdp.parser.parser import Parser
 from pyrdp.pdu import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU, FormatListPDU, LongFormatName, FileContentsRequestPDU, FileContentsResponsePDU
 
@@ -71,7 +71,7 @@ class ClipboardParser(Parser):
 
     def parseFormatDataResponse(self, payload, msgFlags):
         isSuccessful = True if msgFlags & ClipboardMessageFlags.CB_RESPONSE_OK else False
-        fid = self.req.requestedFormatId if self.req else None
+        fid = self.req.requestedFormatId if self.req else ClipboardFormatNumber.GENERIC
         pdu = FormatDataResponsePDU(payload, isSuccessful, fid)
 
         if isSuccessful and fid in self.formats:
