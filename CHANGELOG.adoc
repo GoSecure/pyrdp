@@ -50,6 +50,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Docker image size reduced and split in default and `-slim` variants ({uri-issue}173[#173], {uri-issue}198[#198])
 * Better use of Docker caching for faster development iterations ({uri-issue}217[#217], {uri-issue}219[#219])
 * Default Docker Compose command now `pyrdp-mitm -h` to avoid confusing crash on `docker-compose up` ({uri-issue}173[#173])
+* Docker image now on Ubuntu 20.04 ({uri-issue}251[#251])
 * Added continuous integration leveraging GitHub Actions that builds the docker image and runs an integration test on both Ubuntu and Windows ({uri-issue}194[#194], {uri-issue}201[#201], {uri-issue}202[#202])
 
 
