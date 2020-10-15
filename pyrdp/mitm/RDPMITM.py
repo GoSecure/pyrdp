@@ -261,18 +261,18 @@ class RDPMITM:
         :param server: MCS channel for the server side
         """
 
-        userID = client.userID
         channelID = client.channelID
 
-        if userID == channelID:
+        if channelID not in self.state.channelMap:
             self.buildVirtualChannel(client, server)
-        elif channelID in self.state.channelMap:
-            if self.state.channelMap[channelID] == MCSChannelName.IO:
-                self.buildIOChannel(client, server)
-            elif self.state.channelMap[channelID] == MCSChannelName.CLIPBOARD:
-                self.buildClipboardChannel(client, server)
-            elif self.state.channelMap[channelID] == MCSChannelName.DEVICE_REDIRECTION:
-                self.buildDeviceChannel(client, server)
+            return
+
+        if self.state.channelMap[channelID] == MCSChannelName.IO:
+            self.buildIOChannel(client, server)
+        elif self.state.channelMap[channelID] == MCSChannelName.CLIPBOARD:
+            self.buildClipboardChannel(client, server)
+        elif self.state.channelMap[channelID] == MCSChannelName.DEVICE_REDIRECTION:
+            self.buildDeviceChannel(client, server)
         else:
             self.buildVirtualChannel(client, server)
 
