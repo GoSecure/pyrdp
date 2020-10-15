@@ -194,6 +194,9 @@ class BaseEventHandler(Observer):
         """
         Handle scan code.
         """
+        # This should probably be refactored so that the base layer does less
+        # processing and lets more specific layers handle the keystrokes the way
+        # they need.
         keyName = scancode.getKeyName(scanCode, isExtended, self.shiftPressed, self.capsLockOn)
 
         if len(keyName) == 1:

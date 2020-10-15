@@ -37,7 +37,7 @@ class JsonEventHandler(BaseEventHandler):
             "events": [
                 {
                     "timestamp": 10000,
-                    "type": "Clipboard" | "Key" | "Mouse",
+                    "type": "clipboard" | "key" | "mouse" | "unicode",
                     "data":  { ... EventData ... }
                 }
             ]
@@ -45,7 +45,7 @@ class JsonEventHandler(BaseEventHandler):
 
     Event data is specific to the type of event.
 
-    Clipboard:
+    clipboard:
 
         {
             "mime": "text" | "blob",
@@ -53,14 +53,14 @@ class JsonEventHandler(BaseEventHandler):
             "content": "utf8-text" | [0x41, ...]
         }
 
-    Key:
+    key and unicode:
         {
             "press": true | false, // Whether it's a key press or release
             "key": "a", // Key name
             "mods": ["alt", "ctrl", "shift", ...] // Modifiers
         }
 
-    Mouse:
+    mouse:
         {
             "x": 100,
             "y": 100,
@@ -91,7 +91,7 @@ class JsonEventHandler(BaseEventHandler):
         super().onPDUReceived(pdu)
 
     def cleanup(self):
-        self.log.info("Flushing to disk: %s", self.filename)
+        # self.log.info("Flushing to disk: %s", self.filename)
         with open(self.filename, "w") as o:
             json.dump(self.json, o)
         self.json = None
@@ -123,7 +123,7 @@ class JsonEventHandler(BaseEventHandler):
         data = decodeUTF16LE(pdu.requestedFormatData)
         self.json[JSON_KEY_EVENTS].append(
             {
-                "timestamp": pdu.timestamp,
+                "timestamp": self.timestamp,
                 "type": "clipboard",
                 "data": {"mime": "text/plain", "content": data},
             }
@@ -142,11 +142,11 @@ class JsonEventHandler(BaseEventHandler):
     def onMouseButton(self, buttons, pos):
         pressed = []
         if 1 in buttons:
-            pressed.append({"left": buttons[1]})
+            pressed.append({"left": buttons[1] != 0})
         if 2 in buttons:
-            pressed.append({"right": buttons[2]})
+            pressed.append({"right": buttons[2] != 0})
         if 3 in buttons:
-            pressed.append({"middle": buttons[3]})
+            pressed.append({"middle": buttons[3] != 0})
 
         (x, y) = pos
 
@@ -191,9 +191,9 @@ class JsonEventHandler(BaseEventHandler):
         # Keep track of active modifiers.
         if scancode.isModifier(scancode):
             if isReleased:
-                self.modifiers.discard(keyName)  # No-throw
+                self.mods.discard(keyName)  # No-throw
             else:
-                self.modifiers.add(keyName)
+                self.mods.add(keyName)
 
         # Add the event
         self.json[JSON_KEY_EVENTS].append(
@@ -203,7 +203,7 @@ class JsonEventHandler(BaseEventHandler):
                 "data": {
                     "key": keyName,
                     "press": not isReleased,
-                    "mods": list(self.modifiers),
+                    "mods": list(self.mods),
                 },
             }
         )
