@@ -72,7 +72,7 @@ class JsonEventHandler(BaseEventHandler):
         }
     """
 
-    def __init__(self, filename: str):
+    def __init__(self, filename: str, progress=None):
         """
         Construct an event handler that outputs to a JSON file.
 
@@ -83,12 +83,15 @@ class JsonEventHandler(BaseEventHandler):
         self.filename = filename
         self.timestamp = None
         self.mods = set()
+        self.progress = progress
         super().__init__()
 
     def onPDUReceived(self, pdu: PlayerPDU):
         # Keep track of the timestamp for event notation.
         self.timestamp = pdu.timestamp
         super().onPDUReceived(pdu)
+        if self.progress:
+            self.progress()
 
     def cleanup(self):
         # self.log.info("Flushing to disk: %s", self.filename)

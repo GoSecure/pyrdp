@@ -29,7 +29,7 @@ import sys
 """
 Supported conversion handlers.
 
-The class constructor signature must be `__init__(self, output_path: str)`
+The class constructor signature must be `__init__(self, output_path: str, progress=None)`
 """
 HANDLERS = {"replay": (None, "pyrdp"), "json": (JsonEventHandler, "json")}
 
@@ -49,7 +49,7 @@ TLS_HDR_LEN = 24  # Hopefully this doesn't change between TLS versions.
 OUTFILE_FORMAT = "{prefix}{timestamp}_{src}-{dst}"
 
 
-def getSink(format: str, outfile: str) -> (str, str):
+def getSink(format: str, outfile: str, progress=None) -> (str, str):
     """Get the appropriate sink and returns the filename with extension."""
 
     if format not in HANDLERS:
@@ -58,7 +58,7 @@ def getSink(format: str, outfile: str) -> (str, str):
 
     sink, ext = HANDLERS[format]
     outfile += f".{ext}"
-    return sink(outfile) if sink else None, outfile
+    return sink(outfile, progress=progress) if sink else None, outfile
 
 
 class ConversionLayer(LayerChainItem):
@@ -440,27 +440,25 @@ class Converter:
 
     def processReplay(self, infile: Path):
         # FIXME: Sinks need to support progress bar.
-        # widgets = [
-        #     progressbar.FormatLabel('Encoding MP4 '),
-        #     progressbar.BouncingBar(),
-        #     progressbar.FormatLabel(' Elapsed: %(elapsed)s'),
-        # ]
-        # with progressbar.ProgressBar(widgets=widgets) as progress:
-        print(f"[*] Converting '{infile}' to {self.args.format.upper()}")
-        outfile = self.prefix + infile.stem
+        widgets = [
+            progressbar.FormatLabel(f'Converting to {self.args.format.upper()}'),
+            progressbar.BouncingBar(),
+            progressbar.FormatLabel(' Elapsed: %(elapsed)s'),
+        ]
+        with progressbar.ProgressBar(widgets=widgets) as progress:
+            print(f"[*] Converting '{infile}' to {self.args.format.upper()}")
+            outfile = self.prefix + infile.stem
 
-        # sink = Mp4EventHandler(outfile, progress=lambda: progress.update(0))
+            sink, outfile = getSink(self.args.format, outfile, progress=lambda: progress.update(0))
+            if not sink:
+                print("The input file is already a replay file. Nothing to do.")
+                sys.exit(1)
 
-        sink, outfile = getSink(self.args.format, outfile)
-        if not sink:
-            print("The input file is already a replay file. Nothing to do.")
-            sys.exit(1)
-
-        fd = open(infile, "rb")
-        replay = Replay(fd, handler=sink)
-        print(f"\n[+] Succesfully wrote '{outfile}'")
-        sink.cleanup()
-        fd.close()
+            fd = open(infile, "rb")
+            replay = Replay(fd, handler=sink)
+            print(f"\n[+] Succesfully wrote '{outfile}'")
+            sink.cleanup()
+            fd.close()
 
     def run(self):
         args = self.args
