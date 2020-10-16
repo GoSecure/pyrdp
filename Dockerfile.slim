@@ -14,15 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         # Required for venv setup
         python3-venv \
         # Required to build RLE module
-        build-essential python3-dev \
-        locales
-
-# Set locale to UTF-8
-RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
-    locale-gen
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
+        build-essential python3-dev
 
 RUN python3 -m venv /opt/venv
 # Make sure we use the virtualenv:

@@ -4,7 +4,6 @@ FROM ubuntu:20.04 AS compile-image
 # Install build dependencies
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        locales \
         python3 python3-pip \
         # Required for local pip install
         python3-setuptools \
@@ -16,13 +15,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         # Required to build PyAV (pyrdp-convert to MP4)
         libavformat-dev libavcodec-dev libavdevice-dev \
         libavutil-dev libswscale-dev libswresample-dev libavfilter-dev
-
-# Set locale to UTF-8
-RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
-    locale-gen
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
 
 RUN python3 -m venv /opt/venv
 # Make sure we use the virtualenv:
