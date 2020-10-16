@@ -1,5 +1,6 @@
 # Handles compiling and package installation
 FROM ubuntu:20.04 AS compile-image
+
 # Install build dependencies
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -14,7 +15,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         # Required to build PyAV (pyrdp-convert to MP4)
         libavformat-dev libavcodec-dev libavdevice-dev \
         libavutil-dev libswscale-dev libswresample-dev libavfilter-dev
-
 
 RUN python3 -m venv /opt/venv
 # Make sure we use the virtualenv:
