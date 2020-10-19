@@ -24,9 +24,8 @@ jobs:
       run: docker run pyrdp pyrdp-mitm.py -h
     - name: Build slim Docker image
       run: docker build -f Dockerfile.slim -t pyrdp .
-    # disabled until we fix #252
-    #- name: "Smoke test docker image: pyrdp-convert.py"
-    #  run: docker run pyrdp pyrdp-convert.py -h
+    - name: "Smoke test docker image: pyrdp-convert.py"
+      run: docker run pyrdp pyrdp-convert.py -h
     - name: "Smoke test docker image: pyrdp-player.py"
       run: docker run pyrdp pyrdp-player.py -h
     - name: "Smoke test docker image: pyrdp-mitm.py"

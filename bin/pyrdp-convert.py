@@ -15,6 +15,9 @@ from pyrdp.player.BaseEventHandler import BaseEventHandler
 from pyrdp.player.JsonEventHandler import JsonEventHandler
 from pyrdp.player.Replay import Replay
 from pyrdp.layer import PlayerLayer, LayerChainItem
+from pyrdp.player import HAS_GUI
+
+import progressbar
 
 from pyrdp.player import HAS_GUI
 
@@ -23,6 +26,7 @@ from binascii import unhexlify, hexlify
 import logging
 from pathlib import Path
 import struct
+import sys
 import time
 import sys
 
@@ -38,7 +42,17 @@ if HAS_GUI:
 
     HANDLERS["mp4"] = (Mp4EventHandler, "mp4")
 
-import progressbar
+
+if HAS_GUI:
+    from pyrdp.player.Mp4EventHandler import Mp4EventHandler
+else:
+    # Class stub for when MP4 support is not available.
+    # It would be a good idea to refactor this so that Mp4EventHandler is
+    # acquired through some factory object that checks for GUI support
+    # once we add more conversion handlers.
+    class Mp4EventHandler():
+        def __init__(self, _unused: str):
+            pass
 
 # No choice but to import * here for load_layer to work properly.
 from scapy.all import *  # noqa
@@ -512,6 +526,10 @@ if __name__ == "__main__":
         "otherwise the result is output next to the source file with the proper extension.",
     )
     args = parser.parse_args()
+
+    if not HAS_GUI and args.format == 'mp4':
+        print('Error: MP4 conversion requires the full PyRDP installation.')
+        sys.exit(1)
 
     logging.basicConfig(level=logging.CRITICAL)
     logging.getLogger("scapy").setLevel(logging.ERROR)

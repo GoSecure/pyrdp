@@ -4,6 +4,7 @@
 #
 # Handles compiling and package installation
 FROM ubuntu:20.04 AS compile-image
+
 # Install build dependencies
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \

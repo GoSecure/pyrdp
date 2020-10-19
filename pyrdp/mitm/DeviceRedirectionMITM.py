@@ -234,21 +234,22 @@ class DeviceRedirectionMITM(Subject):
         :param request: the device read request
         :param response: the device IO response to the request
         """
+        key = (response.deviceID, response.completionID, request.fileID)
 
-        if request.fileID in self.openedFiles:
-            file = self.openedFiles[request.fileID]
+        if key in self.openedFiles:
+            file = self.openedFiles[key]
             file.seek(request.offset)
             file.write(response.payload)
 
             # Save the mapping permanently
-            mapping = self.openedMappings[request.fileID]
+            mapping = self.openedMappings[key]
             fileName = mapping.localPath.name
 
             if fileName not in self.fileMap:
                 self.fileMap[fileName] = mapping
                 self.saveMapping()
 
-    def handleCloseResponse(self, request: DeviceCloseRequestPDU, _: DeviceCloseResponsePDU):
+    def handleCloseResponse(self, request: DeviceCloseRequestPDU, response: DeviceCloseResponsePDU):
         """
         Close the file if it was open. Compute the hash of the file, then delete it if we already have a file with the
         same hash.
@@ -257,15 +258,16 @@ class DeviceRedirectionMITM(Subject):
         """
 
         self.statCounter.increment(STAT.DEVICE_REDIRECTION_FILE_CLOSE)
+        key = (response.deviceID, response.completionID, request.fileID)
 
-        if request.fileID in self.openedFiles:
-            file = self.openedFiles.pop(request.fileID)
+        if key in self.openedFiles:
+            file = self.openedFiles.pop(key)
             file.close()
 
             if file.file is None:
                 return
 
-            currentMapping = self.openedMappings.pop(request.fileID)
+            currentMapping = self.openedMappings.pop(key)
 
             # Compute the hash for the final file
             with open(currentMapping.localPath, "rb") as f:
@@ -367,7 +369,6 @@ class DeviceRedirectionMITM(Subject):
         request.send()
         return completionID
 
-
     class ForgedRequest:
         """
         Base class for forged requests that simulate the server asking for information.
@@ -419,7 +420,6 @@ class DeviceRedirectionMITM(Subject):
 
         def onCloseResponse(self, _: DeviceCloseResponsePDU):
             self.complete()
-
 
     class ForgedFileReadRequest(ForgedRequest):
         def __init__(self, deviceID: int, requestID: int, mitm: 'DeviceRedirectionMITM', path: str):
@@ -496,8 +496,6 @@ class DeviceRedirectionMITM(Subject):
                 self.complete()
             else:
                 self.sendCloseRequest()
-
-
 
     class ForgedDirectoryListingRequest(ForgedRequest):
         def __init__(self, deviceID: int, requestID: int, mitm: 'DeviceRedirectionMITM', path: str):

@@ -35,6 +35,7 @@ docker images (latest, slim), on linux, on Windows
 * You can optionally do a release commit (with `--allow-empty` if needed) msg: Release %version%
 
 .Tag the release commit
+* `git tag -a v%version%` like `git tag -a v1.0.0` (docker builds rely on this tag)
 * Annotated Tag msg: Version %version%
 
 .Push your changes (don't forget the tag!)
