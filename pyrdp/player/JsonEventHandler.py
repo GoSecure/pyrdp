@@ -6,7 +6,7 @@
 
 from pyrdp.enum import CapabilityType, scancode
 from pyrdp.pdu import PlayerPDU, FormatDataResponsePDU, FastPathUnicodeEvent
-from pyrdp.player.RenderingEventHandler import BaseEventHandler
+from pyrdp.player.BaseEventHandler import BaseEventHandler
 from pyrdp.parser import ClientInfoParser, ClientConnectionParser, ClipboardParser
 from pyrdp.core import decodeUTF16LE
 
