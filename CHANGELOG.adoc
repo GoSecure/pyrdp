@@ -6,6 +6,10 @@
 This document provides a high-level view of the changes introduced in {project-name} by release.
 For a detailed view of what has changed, refer to the {uri-repo}/commits/master[commit history] on GitHub.
 
+== master - <unreleased>
+
+* Added a JSON output format to `pyrdp-convert` (See {uri-issue}236[#236])
+
 == 1.0.0 - 2020-10-19
 
 We added many interesting features in the last couple of months and have used this tool in enough contexts to officially mark it as stable.
