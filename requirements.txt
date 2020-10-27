@@ -4,7 +4,7 @@ Automat==20.2.0
 av==8.0.2
 cffi==1.14.3
 constantly==15.1.0
-cryptography==2.9.2
+cryptography==3.2
 dbus-python==1.2.16
 hyperlink==20.0.1
 idna==2.10
