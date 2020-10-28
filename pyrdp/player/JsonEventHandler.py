@@ -192,7 +192,7 @@ class JsonEventHandler(BaseEventHandler):
             self.capsLockOn = not self.capsLockOn
 
         # Keep track of active modifiers.
-        if scancode.isModifier(scancode):
+        if scancode.isModifier(scanCode):
             if isReleased:
                 self.mods.discard(keyName)  # No-throw
             else:
