@@ -15,7 +15,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 We added many interesting features in the last couple of months and have used this tool in enough contexts to officially mark it as stable.
 Some of the noteworthy features are described https://www.gosecure.net/blog/2020/10/20/announcing-pyrdp-1/[in our announcement blog post].
 
-This release has a dedicated SecTor 2020 presentation: https://sector.ca/sessions/achieving-pyrdp-1-0-the-remote-desktop-pwnage-mitm-and-library/[ACHIEVING PYRDP 1.0 – THE REMOTE DESKTOP PWNAGE MITM AND LIBRARY].
+This release has a dedicated SecTor 2020 presentation: https://sector.ca/sessions/achieving-pyrdp-1-0-the-remote-desktop-pwnage-mitm-and-library/[Achieving PyRDP 1.0 – The Remote Desktop Pwnage MITM and Library].
 
 === Enhancements
 
