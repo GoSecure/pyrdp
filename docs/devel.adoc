@@ -42,6 +42,8 @@ docker images (latest, slim), on linux, on Windows
 
 .Make a release on github (from changelog and copy sections themes from previous releases)
 * linkify issues with vim's: `%s/{uri-issue}\d\+\[#\(\d\+\)\]/#\1/gc`
+* sections, vim's: `%s/^=== \(.*\)$/## \1/gc`
+* asciidoc links to markdown with vim: `%s/link:\([^\[]\+\)\(\[[^\[]\+\]\)/\2(\1)/gc`
 
 .Post-release
 * Update version in `setup.py` (+1 bugfix, append '.dev0') and commit
