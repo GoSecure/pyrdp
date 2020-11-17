@@ -217,7 +217,7 @@ class DeviceRedirectionMITM(Subject):
             mapping = FileMapping.generate(remotePath, self.config.fileDir)
             proxy = FileProxy(mapping.localPath, "wb")
 
-            key = (response.deviceID, response.completionID, response.fileID)
+            key = (response.deviceID, response.fileID)
             self.openedFiles[key] = proxy
             self.openedMappings[key] = mapping
 
@@ -234,7 +234,7 @@ class DeviceRedirectionMITM(Subject):
         :param request: the device read request
         :param response: the device IO response to the request
         """
-        key = (response.deviceID, response.completionID, request.fileID)
+        key = (response.deviceID, request.fileID)
 
         if key in self.openedFiles:
             file = self.openedFiles[key]
@@ -258,7 +258,7 @@ class DeviceRedirectionMITM(Subject):
         """
 
         self.statCounter.increment(STAT.DEVICE_REDIRECTION_FILE_CLOSE)
-        key = (response.deviceID, response.completionID, request.fileID)
+        key = (response.deviceID, request.fileID)
 
         if key in self.openedFiles:
             file = self.openedFiles.pop(key)
