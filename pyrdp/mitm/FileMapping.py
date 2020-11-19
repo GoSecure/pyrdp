@@ -30,6 +30,10 @@ class FileMapping:
         self.creationTime = creationTime
         self.hash: str = fileHash
 
+    def renameToHash(self):
+        newPath = self.localPath.parents[0] / self.hash
+        self.localPath = self.localPath.rename(newPath)
+
     @staticmethod
     def generate(remotePath: Path, outDir: Path):
         localName = f"{names.get_first_name()}{names.get_last_name()}"

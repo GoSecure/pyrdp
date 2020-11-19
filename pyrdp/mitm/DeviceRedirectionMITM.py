@@ -283,15 +283,25 @@ class DeviceRedirectionMITM(Subject):
 
                 currentMapping.hash = sha1.hexdigest()
 
+            isDuplicate = False
+
             # Check if a file with the same hash exists. If so, keep that one and remove the current file.
-            for localPath, mapping in self.fileMap.items():
+            for _, mapping in self.fileMap.items():
                 if mapping is currentMapping:
                     continue
 
                 if mapping.hash == currentMapping.hash:
-                    currentMapping.localPath.unlink()
-                    self.fileMap.pop(currentMapping.localPath.name)
+                    isDuplicate = True
                     break
+
+            if isDuplicate:
+                currentMapping.localPath.unlink()
+                self.fileMap.pop(currentMapping.localPath.name)
+            else:
+                oldName = currentMapping.localPath.name
+                currentMapping.renameToHash()
+                self.fileMap.pop(oldName)
+                self.fileMap[currentMapping.localPath.name] = currentMapping
 
             self.saveMapping()
 
