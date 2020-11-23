@@ -1,0 +1,145 @@
+import unittest
+from pathlib import Path
+from unittest.mock import Mock, MagicMock, patch, mock_open
+
+from pyrdp.enum import IOOperationSeverity
+from pyrdp.logging.StatCounter import StatCounter, STAT
+from pyrdp.mitm.DeviceRedirectionMITM import DeviceRedirectionMITM
+from pyrdp.pdu import DeviceIOResponsePDU
+
+
+def MockIOError():
+    ioError = Mock(deviceID = 0, completionID = 0, ioStatus = IOOperationSeverity.STATUS_SEVERITY_ERROR << 30)
+    return ioError
+
+
+@patch("builtins.open", new_callable=mock_open)
+class DeviceRedirectionMITMTest(unittest.TestCase):
+    def setUp(self):
+        self.client = Mock()
+        self.server = Mock()
+        self.log = Mock()
+        self.statCounter = Mock()
+        self.state = Mock()
+        self.state.config = MagicMock()
+        self.state.config.outDir = Path("/tmp")
+        self.mitm = DeviceRedirectionMITM(self.client, self.server, self.log, self.statCounter, self.state)
+
+    def test_stats(self, *args):
+        self.mitm.handlePDU = Mock()
+        self.mitm.statCounter = StatCounter()
+
+        self.mitm.onClientPDUReceived(Mock())
+        self.assertEqual(self.mitm.statCounter.stats[STAT.DEVICE_REDIRECTION], 1)
+        self.assertEqual(self.mitm.statCounter.stats[STAT.DEVICE_REDIRECTION_CLIENT], 1)
+
+        self.mitm.onServerPDUReceived(Mock())
+        self.assertEqual(self.mitm.statCounter.stats[STAT.DEVICE_REDIRECTION], 2)
+        self.assertEqual(self.mitm.statCounter.stats[STAT.DEVICE_REDIRECTION_SERVER], 1)
+
+        self.mitm.handleIORequest(Mock())
+        self.assertEqual(self.mitm.statCounter.stats[STAT.DEVICE_REDIRECTION_IOREQUEST], 1)
+
+        self.mitm.handleIOResponse(Mock())
+        self.assertEqual(self.mitm.statCounter.stats[STAT.DEVICE_REDIRECTION_IORESPONSE], 1)
+
+        error = MockIOError()
+        self.mitm.handleIORequest(error)
+        self.mitm.handleIOResponse(error)
+        self.assertEqual(self.mitm.statCounter.stats[STAT.DEVICE_REDIRECTION_IOERROR], 1)
+
+        self.mitm.handleCloseResponse(Mock(), Mock())
+        self.assertEqual(self.mitm.statCounter.stats[STAT.DEVICE_REDIRECTION_FILE_CLOSE], 1)
+
+        self.mitm.sendForgedFileRead(Mock(), Mock())
+        self.assertEqual(self.mitm.statCounter.stats[STAT.DEVICE_REDIRECTION_FORGED_FILE_READ], 1)
+
+        self.mitm.sendForgedDirectoryListing(Mock(), MagicMock())
+        self.assertEqual(self.mitm.statCounter.stats[STAT.DEVICE_REDIRECTION_FORGED_DIRECTORY_LISTING], 1)
+
+    def test_ioError_showsWarning(self, *args):
+        self.log.warning = Mock()
+        error = MockIOError()
+
+        self.mitm.handleIORequest(error)
+        self.mitm.handleIOResponse(error)
+        self.log.warning.assert_called_once()
+
+    def test_deviceListAnnounce_logsDevices(self, *args):
+        pdu = Mock()
+        pdu.deviceList = [Mock(), Mock(), Mock()]
+
+        self.mitm.observer = Mock()
+        self.mitm.handleDeviceListAnnounceRequest(pdu)
+
+        self.assertEqual(self.log.info.call_count, len(pdu.deviceList))
+        self.assertEqual(self.mitm.observer.onDeviceAnnounce.call_count, len(pdu.deviceList))
+
+    def test_handleClientLogin_logsCredentials(self, *args):
+        creds = "PASSWORD"
+        self.log.info = Mock()
+
+        self.state.credentialsCandidate = creds
+        self.state.inputBuffer = ""
+        self.mitm.handleClientLogin()
+        self.log.info.assert_called_once()
+        self.assertTrue(creds in self.log.info.call_args[0][1].values())
+
+        self.log.info.reset_mock()
+        self.state.credentialsCandidate = ""
+        self.state.inputBuffer = creds
+        self.mitm.handleClientLogin()
+        self.log.info.assert_called_once()
+        self.assertTrue(creds in self.log.info.call_args[0][1].values())
+
+    def test_handleIOResponse_uniqueResponse(self, *args):
+        handler = Mock()
+        self.mitm.responseHandlers[1234] = handler
+
+        pdu = Mock(deviceID = 0, completionID = 0, majorFunction = 1234, ioStatus = 0)
+        self.mitm.handleIORequest(pdu)
+        self.mitm.handleIOResponse(pdu)
+        handler.assert_called_once()
+
+        # Second response should not go through
+        self.mitm.handleIOResponse(pdu)
+        handler.assert_called_once()
+
+
+    def test_handleIOResponse_matchingOnly(self, *args):
+        handler = Mock()
+        self.mitm.responseHandlers[1234] = handler
+
+        request = Mock(deviceID = 0, completionID = 0)
+        matching_response = Mock(deviceID = 0, completionID = 0, majorFunction = 1234, ioStatus = 0)
+        bad_completionID = Mock(deviceID = 0, completionID = 1, majorFunction = 1234, ioStatus = 0)
+        bad_deviceID = Mock(deviceID = 1, completionID = 0, majorFunction = 1234, ioStatus = 0)
+
+        self.mitm.handleIORequest(request)
+        self.mitm.handleIOResponse(matching_response)
+        handler.assert_called_once()
+
+        self.mitm.handleIORequest(request)
+
+        self.mitm.handleIOResponse(bad_completionID)
+        handler.assert_called_once()
+        self.log.error.assert_called_once()
+        self.log.error.reset_mock()
+
+        self.mitm.handleIOResponse(bad_deviceID)
+        handler.assert_called_once()
+        self.log.error.assert_called_once()
+        self.log.error.reset_mock()
+
+    def test_handlePDU_hidesForgedResponses(self, *args):
+        handler = Mock()
+        completionID = self.mitm.sendForgedFileRead(0, "forged")
+        request = self.mitm.forgedRequests[(0, completionID)]
+        request.handlers[1234] = handler
+
+        self.assertEqual(len(self.mitm.forgedRequests), 1)
+        response = Mock(deviceID = 0, completionID = completionID, majorFunction = 1234, ioStatus = 0)
+        response.__class__ = DeviceIOResponsePDU
+        self.mitm.handlePDU(response, self.mitm.server)
+        handler.assert_called_once()
+        self.mitm.server.sendPDU.assert_not_called()
