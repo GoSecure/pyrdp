@@ -135,7 +135,7 @@ class DeviceRedirectionMITM(Subject):
         if isinstance(pdu, DeviceIORequestPDU) and destination is self.client:
             self.handleIORequest(pdu)
         elif isinstance(pdu, DeviceIOResponsePDU) and destination is self.server:
-            dropPDU = pdu.completionID in self.forgedRequests
+            dropPDU = (pdu.deviceID, pdu.completionID) in self.forgedRequests
             self.handleIOResponse(pdu)
 
         elif isinstance(pdu, DeviceListAnnounceRequest):
