@@ -2,10 +2,10 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock, MagicMock, patch, mock_open
 
-from pyrdp.enum import CreateOption, FileAccessMask, IOOperationSeverity
+from pyrdp.enum import CreateOption, FileAccessMask, IOOperationSeverity, DeviceRedirectionPacketID
 from pyrdp.logging.StatCounter import StatCounter, STAT
 from pyrdp.mitm.DeviceRedirectionMITM import DeviceRedirectionMITM
-from pyrdp.pdu import DeviceIOResponsePDU
+from pyrdp.pdu import DeviceIOResponsePDU, DeviceRedirectionPDU
 
 
 def MockIOError():
@@ -91,6 +91,13 @@ class DeviceRedirectionMITMTest(unittest.TestCase):
         self.mitm.handleClientLogin()
         self.log.info.assert_called_once()
         self.assertTrue(creds in self.log.info.call_args[0][1].values())
+
+        self.mitm.handleClientLogin = Mock()
+        pdu = Mock(packetID = DeviceRedirectionPacketID.PAKID_CORE_USER_LOGGEDON)
+        pdu.__class__ = DeviceRedirectionPDU
+
+        self.mitm.handlePDU(pdu, self.client)
+        self.mitm.handleClientLogin.assert_called_once()
 
     def test_handleIOResponse_uniqueResponse(self, *args):
         handler = Mock()
