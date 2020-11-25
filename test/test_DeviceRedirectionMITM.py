@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock, MagicMock, patch, mock_open
 
-from pyrdp.enum import IOOperationSeverity
+from pyrdp.enum import CreateOption, FileAccessMask, IOOperationSeverity
 from pyrdp.logging.StatCounter import StatCounter, STAT
 from pyrdp.mitm.DeviceRedirectionMITM import DeviceRedirectionMITM
 from pyrdp.pdu import DeviceIOResponsePDU
@@ -105,7 +105,6 @@ class DeviceRedirectionMITMTest(unittest.TestCase):
         self.mitm.handleIOResponse(pdu)
         handler.assert_called_once()
 
-
     def test_handleIOResponse_matchingOnly(self, *args):
         handler = Mock()
         self.mitm.responseHandlers[1234] = handler
@@ -143,3 +142,102 @@ class DeviceRedirectionMITMTest(unittest.TestCase):
         self.mitm.handlePDU(response, self.mitm.server)
         handler.assert_called_once()
         self.mitm.server.sendPDU.assert_not_called()
+
+    def test_handleCreateResponse_createsNoFile(self, mock_open):
+        createRequest = Mock(
+            deviceID = 0,
+            completionID = 0,
+            desiredAccess = (FileAccessMask.GENERIC_READ | FileAccessMask.FILE_READ_DATA),
+            createOptions = CreateOption.FILE_NON_DIRECTORY_FILE,
+            path = "file",
+        )
+        createResponse = Mock(deviceID = 0, completionID = 0, fileID = 0)
+
+        with patch("pyrdp.mitm.FileMapping.FileMapping.generate") as generate:
+            self.mitm.handleCreateResponse(createRequest, createResponse)
+            self.assertEqual(len(self.mitm.openedFiles), 1)
+            generate.assert_called_once()
+            mock_open.assert_not_called()
+
+    def test_handleReadResponse_createsFile(self, mock_open):
+        request = Mock(
+            deviceID = 0,
+            completionID = 0,
+            fileID = 0,
+            desiredAccess = (FileAccessMask.GENERIC_READ | FileAccessMask.FILE_READ_DATA),
+            createOptions = CreateOption.FILE_NON_DIRECTORY_FILE,
+            path = "file",
+        )
+        response = Mock(deviceID = 0, completionID = 0, fileID = 0, payload = "test payload")
+        self.mitm.saveMapping = Mock()
+
+        with patch("pyrdp.mitm.FileMapping.FileMapping.generate") as generate:
+            self.mitm.handleCreateResponse(request, response)
+            self.mitm.handleReadResponse(request, response)
+            mock_open.assert_called_once()
+            self.mitm.saveMapping.assert_called_once()
+
+            # Make sure it checks the file ID
+            request.fileID, response.fileID = 1, 1
+            mock_write = Mock()
+            list(self.mitm.openedFiles.values())[0].write = mock_write
+            self.mitm.handleReadResponse(request, response)
+            mock_write.assert_not_called()
+
+    def test_handleCloseResponse_closesFile(self, mock_open):
+        request = Mock(
+            deviceID=0,
+            completionID=0,
+            fileID=0,
+            desiredAccess=(FileAccessMask.GENERIC_READ | FileAccessMask.FILE_READ_DATA),
+            createOptions=CreateOption.FILE_NON_DIRECTORY_FILE,
+            path="file",
+        )
+        response = Mock(deviceID=0, completionID=0, fileID=0, payload="test payload")
+        self.mitm.saveMapping = Mock()
+
+        with patch("pyrdp.mitm.FileMapping.FileMapping.generate") as generate:
+            close = Mock()
+
+            self.mitm.handleCreateResponse(request, response)
+
+            mapping = list(self.mitm.openedMappings.values())[0]
+            mapping.renameToHash = Mock()
+            self.mitm.fileMap[mapping.localPath.name] = Mock()
+
+            file = list(self.mitm.openedFiles.values())[0]
+            file.close = close
+            file.file = Mock()
+
+            self.mitm.handleCloseResponse(request, response)
+
+            close.assert_called_once()
+            mapping.renameToHash.assert_called_once()
+            self.mitm.saveMapping.assert_called_once()
+
+    def test_handleCloseResponse_removesDuplicates(self, mock_open):
+        request = Mock(
+            deviceID=0,
+            completionID=0,
+            fileID=0,
+            desiredAccess=(FileAccessMask.GENERIC_READ | FileAccessMask.FILE_READ_DATA),
+            createOptions=CreateOption.FILE_NON_DIRECTORY_FILE,
+            path="file",
+        )
+        response = Mock(deviceID=0, completionID=0, fileID=0, payload="test payload")
+        self.mitm.saveMapping = Mock()
+        hash = "hash"
+
+        with patch("pyrdp.mitm.FileMapping.FileMapping.generate") as generate, patch("hashlib.sha1") as sha1:
+            sha1.return_value.hexdigest = Mock(return_value = hash)
+            self.mitm.handleCreateResponse(request, response)
+
+            list(self.mitm.openedFiles.values())[0].file = Mock()
+            mapping = list(self.mitm.openedMappings.values())[0]
+            mapping.localPath.unlink = Mock()
+            self.mitm.fileMap[mapping.localPath.name] = Mock()
+            self.mitm.fileMap["duplicate"] = Mock(hash = hash)
+
+            self.mitm.handleCloseResponse(request, response)
+            mapping.localPath.unlink.assert_called_once()
+            self.mitm.saveMapping.assert_called_once()
