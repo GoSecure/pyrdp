@@ -82,7 +82,7 @@ jobs:
         working-directory: ./
         run: coverage run --append -m unittest discover -v
 
-      - name: Coverage
+      - name: Coverage report
         working-directory: ./
         run: coverage report --fail-under=40
 
@@ -108,6 +108,9 @@ jobs:
       - name: Install PyRDP
         working-directory: .
         run: pip install -U -e .[full]
+      - name: Install coverage
+        working-directory: .
+        run: pip install coverage
 
       - name: Extract test files
         uses: DuckSoft/extract-7z-action@v1.0
@@ -117,16 +120,20 @@ jobs:
 
       - name: Integration Test with a prerecorded PCAP.
         working-directory: ./
-        run: python test/test_prerecorded.py
+        run: coverage run test/test_prerecorded.py
 
       - name: pyrdp-mitm.py initialization test
         working-directory: ./
-        run: python test/test_mitm_initialization.py dummy_value
+        run: coverage run --append test/test_mitm_initialization.py dummy_value
 
       - name: pyrdp-player.py read a replay in headless mode test
         working-directory: ./
-        run: python bin/pyrdp-player.py --headless test/files/test_session.replay
+        run: coverage run --append bin/pyrdp-player.py --headless test/files/test_session.replay
 
       - name: Run unit tests
         working-directory: ./
         run: coverage run --append -m unittest discover -v
+
+      - name: Coverage report
+        working-directory: ./
+        run: coverage report --fail-under=40
