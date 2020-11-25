@@ -35,52 +35,56 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v1
-      with:
-        python-version: '3.7' # Version range or exact version of a Python version to use, using semvers version range syntax.
-        architecture: 'x64'
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.7' # Version range or exact version of a Python version to use, using semvers version range syntax.
+          architecture: 'x64'
 
-    - name: Python version
-      run: python --version
-    - name: Pip version
-      run: pip --version
+      - name: Python version
+        run: python --version
+      - name: Pip version
+        run: pip --version
 
-    - name: Install setuptools
-      run: sudo apt install python3-setuptools
-    - name: Install PyRDP dependencies
-      run: sudo apt install libdbus-1-dev libdbus-glib-1-dev libgl1-mesa-glx git python3-dev
-    - name: Install wheel
-      working-directory: .
-      run: pip install wheel
-    - name: Install PyRDP
-      working-directory: .
-      run: pip install -U -e .[full]
+      - name: Install setuptools
+        run: sudo apt install python3-setuptools
+      - name: Install PyRDP dependencies
+        run: sudo apt install libdbus-1-dev libdbus-glib-1-dev libgl1-mesa-glx git python3-dev
+      - name: Install wheel
+        working-directory: .
+        run: pip install wheel
+      - name: Install PyRDP
+        working-directory: .
+        run: pip install -U -e .[full]
 
-    - name: Install ci dependencies
-      run: pip install -r requirements-ci.txt
+      - name: Install ci dependencies
+        run: pip install -r requirements-ci.txt
 
-    - name: Extract test files
-      uses: DuckSoft/extract-7z-action@v1.0
-      with:
-        pathSource: test/files/test_files.zip
-        pathTarget: test/files
+      - name: Extract test files
+        uses: DuckSoft/extract-7z-action@v1.0
+        with:
+          pathSource: test/files/test_files.zip
+          pathTarget: test/files
 
-    - name: Integration Test with a prerecorded PCAP.
-      working-directory: ./
-      run: coverage run test/test_prerecorded.py
+      - name: Integration Test with a prerecorded PCAP.
+        working-directory: ./
+        run: coverage run test/test_prerecorded.py
 
-    - name: pyrdp-mitm.py initialization integration test
-      working-directory: ./
-      run: coverage run --append test/test_mitm_initialization.py dummy_value
+      - name: pyrdp-mitm.py initialization integration test
+        working-directory: ./
+        run: coverage run --append test/test_mitm_initialization.py dummy_value
 
-    - name: pyrdp-player.py read a replay in headless mode test
-      working-directory: ./
-      run: coverage run --append bin/pyrdp-player.py --headless test/files/test_session.replay
+      - name: pyrdp-player.py read a replay in headless mode test
+        working-directory: ./
+        run: coverage run --append bin/pyrdp-player.py --headless test/files/test_session.replay
 
-    - name: Coverage
-      working-directory: ./
-      run: coverage report --fail-under=40
+      - name: Run unit tests
+        working-directory: ./
+        run: coverage run --append -m unittest discover -v
+
+      - name: Coverage
+        working-directory: ./
+        run: coverage report --fail-under=40
 
 
 
@@ -122,3 +126,7 @@ jobs:
       - name: pyrdp-player.py read a replay in headless mode test
         working-directory: ./
         run: python bin/pyrdp-player.py --headless test/files/test_session.replay
+
+      - name: Run unit tests
+        working-directory: ./
+        run: coverage run --append -m unittest discover -v
