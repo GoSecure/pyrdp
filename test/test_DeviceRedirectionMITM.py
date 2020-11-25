@@ -248,3 +248,67 @@ class DeviceRedirectionMITMTest(unittest.TestCase):
             self.mitm.handleCloseResponse(request, response)
             mapping.localPath.unlink.assert_called_once()
             self.mitm.saveMapping.assert_called_once()
+
+
+class ForgedRequestTest(unittest.TestCase):
+    def setUp(self):
+        self.request = DeviceRedirectionMITM.ForgedRequest(0, 0, Mock())
+
+    def test_sendIORequest_sendsToClient(self):
+        self.request.sendIORequest(Mock())
+        self.request.mitm.client.sendPDU.assert_called_once()
+
+    def test_onCloseResponse_completesRequest(self):
+        self.request.onCloseResponse(Mock())
+        self.assertTrue(self.request.isComplete)
+
+    def test_onCreateResponse_checksStatus(self):
+        self.request.onCreateResponse(Mock(ioStatus = 1))
+        self.assertIsNone(self.request.fileID)
+
+
+class ForgedFileReadRequestTest(unittest.TestCase):
+    def setUp(self):
+        self.request = DeviceRedirectionMITM.ForgedFileReadRequest(0, 0, Mock(), "file")
+
+    def test_onCreateResponse_sendsReadRequest(self):
+        self.request.sendReadRequest = Mock()
+        self.request.onCreateResponse(Mock(ioStatus = 0))
+        self.request.sendReadRequest.assert_called_once()
+
+    def test_onCreateResponse_completesRequest(self):
+        self.request.onCreateResponse(Mock(ioStatus = 1))
+        self.request.mitm.observer.onFileDownloadComplete.assert_called_once()
+        self.assertTrue(self.request.isComplete)
+
+    def test_handleFileComplete_sendsCloseRequest(self):
+        self.request.sendCloseRequest = Mock()
+        self.request.fileID = Mock()
+        self.request.handleFileComplete(1)
+        self.request.sendCloseRequest.assert_called_once()
+
+    def test_onReadResponse_closesOnError(self):
+        self.request.fileID = Mock()
+        self.request.sendCloseRequest = Mock()
+        self.request.mitm.observer.onFileDownloadComplete = Mock()
+        self.request.onReadResponse(Mock(ioStatus = 1))
+        self.request.sendCloseRequest.assert_called_once()
+        self.request.mitm.observer.onFileDownloadComplete.assert_called_once()
+
+    def test_onReadResponse_updatesProgress(self):
+        payload = b"testing"
+        self.request.sendReadRequest = Mock()
+        self.request.mitm.observer.onFileDownloadResult = Mock()
+        self.request.onReadResponse(Mock(ioStatus = 0, payload = payload))
+
+        self.assertEqual(self.request.offset, len(payload))
+        self.request.mitm.observer.onFileDownloadResult.assert_called_once()
+        self.request.sendReadRequest.assert_called_once()
+
+    def test_onReadResponse_closesWhenDone(self):
+        self.request.fileID = Mock()
+        self.request.sendCloseRequest = Mock()
+        self.request.mitm.observer.onFileDownloadComplete = Mock()
+        self.request.onReadResponse(Mock(ioStatus = 0, payload = b""))
+        self.request.sendCloseRequest.assert_called_once()
+        self.request.mitm.observer.onFileDownloadComplete.assert_called_once()
