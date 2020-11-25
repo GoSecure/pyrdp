@@ -2,10 +2,11 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock, MagicMock, patch, mock_open
 
-from pyrdp.enum import CreateOption, FileAccessMask, IOOperationSeverity, DeviceRedirectionPacketID
+from pyrdp.enum import CreateOption, FileAccessMask, IOOperationSeverity, DeviceRedirectionPacketID, MajorFunction, \
+    MinorFunction
 from pyrdp.logging.StatCounter import StatCounter, STAT
 from pyrdp.mitm.DeviceRedirectionMITM import DeviceRedirectionMITM
-from pyrdp.pdu import DeviceIOResponsePDU, DeviceRedirectionPDU
+from pyrdp.pdu import DeviceIOResponsePDU, DeviceRedirectionPDU, DeviceQueryDirectoryRequestPDU
 
 
 def MockIOError():
@@ -312,3 +313,67 @@ class ForgedFileReadRequestTest(unittest.TestCase):
         self.request.onReadResponse(Mock(ioStatus = 0, payload = b""))
         self.request.sendCloseRequest.assert_called_once()
         self.request.mitm.observer.onFileDownloadComplete.assert_called_once()
+
+
+class ForgedDirectoryListingRequestTest(unittest.TestCase):
+    def setUp(self):
+        self.request = DeviceRedirectionMITM.ForgedDirectoryListingRequest(0, 0, Mock(), "directory")
+
+    def test_send_removesTrailingSlash(self):
+        self.request.sendIORequest = Mock()
+        self.request.path = "directory\\"
+
+        self.request.send()
+        ioRequest = self.request.sendIORequest.call_args[0][0]
+        self.assertEqual(ioRequest.path, "directory")
+
+    def test_send_handlesWildcard(self):
+        self.request.sendIORequest = Mock()
+        self.request.path = "directory\\*"
+
+        self.request.send()
+        ioRequest = self.request.sendIORequest.call_args[0][0]
+        self.assertEqual(ioRequest.path, "directory")
+
+    def test_send_handlesNormalPath(self):
+        self.request.sendIORequest = Mock()
+        self.request.send()
+
+        ioRequest = self.request.sendIORequest.call_args[0][0]
+        self.request.sendIORequest.assert_called_once()
+        self.assertEqual(ioRequest.path, "directory")
+
+    def test_onCreateResponse_completesOnError(self):
+        self.request.onCreateResponse(Mock(ioStatus = 1))
+        self.assertTrue(self.request.isComplete)
+
+    def test_onCreateResponse_sendsDirectoryRequest(self):
+        self.request.sendIORequest = Mock()
+        self.request.onCreateResponse(Mock(ioStatus = 0))
+        self.request.sendIORequest.assert_called_once()
+        self.assertEqual(self.request.sendIORequest.call_args[0][0].majorFunction, MajorFunction.IRP_MJ_DIRECTORY_CONTROL)
+        self.assertEqual(self.request.sendIORequest.call_args[0][0].minorFunction, MinorFunction.IRP_MN_QUERY_DIRECTORY)
+
+    def test_onDirectoryControlResponse_completesOnError(self):
+        self.request.sendIORequest = Mock()
+        self.request.onDirectoryControlResponse(Mock(ioStatus = 1, minorFunction = MinorFunction.IRP_MN_QUERY_DIRECTORY))
+        self.request.sendIORequest.assert_called_once()
+        self.assertEqual(self.request.sendIORequest.call_args[0][0].majorFunction, MajorFunction.IRP_MJ_CLOSE)
+        self.request.mitm.observer.onDirectoryListingComplete.assert_called_once()
+
+    def test_onDirectoryControlResponse_handlesSuccessfulResponse(self):
+        self.request.sendIORequest = Mock()
+        response = MagicMock(
+            ioStatus = 0,
+            minorFunction = MinorFunction.IRP_MN_QUERY_DIRECTORY,
+            fileInformation = [MagicMock()]
+        )
+
+        self.request.onDirectoryControlResponse(response)
+
+        # Sends result to observer
+        self.request.mitm.observer.onDirectoryListingResult.assert_called_once()
+
+        # Sends follow-up directory listing request
+        self.assertEqual(self.request.sendIORequest.call_args[0][0].majorFunction, MajorFunction.IRP_MJ_DIRECTORY_CONTROL)
+        self.assertEqual(self.request.sendIORequest.call_args[0][0].minorFunction, MinorFunction.IRP_MN_QUERY_DIRECTORY)
