@@ -526,7 +526,7 @@ class DeviceRedirectionMITM(Subject):
                 openPath = self.path[: self.path.index("*")]
 
             if openPath.endswith("\\"):
-                openPath = self.path[: -1]
+                openPath = openPath[: -1]
 
             # We need to start by opening the directory.
             request = DeviceCreateRequestPDU(
