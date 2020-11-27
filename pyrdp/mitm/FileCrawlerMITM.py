@@ -126,7 +126,7 @@ class FileCrawlerMITM(DeviceRedirectionMITMObserver):
         try:
             with open(path, "r") as f:
                 for line in f:
-                    if line and line[0] in ["#", " ", "\n"]:
+                    if not line or line[0] in ["#", " ", "\n"]:
                         continue
 
                     patternList.append(line.lower().rstrip())
