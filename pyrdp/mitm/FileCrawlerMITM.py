@@ -216,7 +216,7 @@ class FileCrawlerMITM(DeviceRedirectionMITMObserver):
 
     def downloadFile(self, file: VirtualFile):
         remotePath = file.path
-        basePath = f"{self.config.fileDir}/{self.log.sessionID}"
+        basePath = f"{self.config.fileDir}/{self.state.sessionID}"
         localPath = f"{basePath}{remotePath}"
 
         self.log.info("Saving %(remotePath)s to %(localPath)s", {"remotePath": remotePath, "localPath": localPath})

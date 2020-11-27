@@ -85,7 +85,7 @@ class RDPMITM:
         self.statCounter = StatCounter()
         """Class to keep track of connection-related statistics such as # of mouse events, # of output events, etc."""
 
-        self.state = state if state is not None else RDPMITMState(self.config)
+        self.state = state if state is not None else RDPMITMState(self.config, self.log.sessionID)
         """The MITM state"""
 
         self.client = RDPLayerSet()
@@ -152,7 +152,7 @@ class RDPMITM:
             replayFileName = "rdp_replay_{}_{}_{}.pyrdp"\
                     .format(date.strftime('%Y%m%d_%H-%M-%S'),
                             date.microsecond // 1000,
-                            self.log.sessionID)
+                            self.state.sessionID)
             self.recorder.setRecordFilename(replayFileName)
             self.recorder.addTransport(FileLayer(self.config.replayDir / replayFileName))
 
@@ -339,10 +339,10 @@ class RDPMITM:
 
         if self.config.disableActiveClipboardStealing:
             mitm = PassiveClipboardStealer(self.config, clientLayer, serverLayer, self.getLog(MCSChannelName.CLIPBOARD),
-                                           self.recorder, self.statCounter)
+                                           self.recorder, self.statCounter, self.state)
         else:
             mitm = ActiveClipboardStealer(self.config, clientLayer, serverLayer, self.getLog(MCSChannelName.CLIPBOARD),
-                                          self.recorder, self.statCounter)
+                                          self.recorder, self.statCounter, self.state)
         self.channelMITMs[client.channelID] = mitm
 
     def buildDeviceChannel(self, client: MCSServerChannel, server: MCSClientChannel):
