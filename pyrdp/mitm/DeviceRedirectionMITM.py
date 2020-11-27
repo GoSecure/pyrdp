@@ -328,7 +328,7 @@ class DeviceRedirectionMITM(Subject):
         """
         completionID = DeviceRedirectionMITM.FORGED_COMPLETION_ID
 
-        while completionID in self.forgedRequests:
+        while completionID in [key[1] for key in self.forgedRequests]:
             completionID += 1
 
         return completionID

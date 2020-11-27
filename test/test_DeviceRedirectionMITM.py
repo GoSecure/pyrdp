@@ -250,6 +250,13 @@ class DeviceRedirectionMITMTest(unittest.TestCase):
             mapping.localPath.unlink.assert_called_once()
             self.mitm.saveMapping.assert_called_once()
 
+    def test_findNextRequestID_incrementsRequestID(self, *args):
+        baseID = self.mitm.findNextRequestID()
+        self.mitm.sendForgedFileRead(0, Mock())
+        self.assertEqual(self.mitm.findNextRequestID(), baseID + 1)
+        self.mitm.sendForgedFileRead(1, Mock())
+        self.assertEqual(self.mitm.findNextRequestID(), baseID + 2)
+
 
 class ForgedRequestTest(unittest.TestCase):
     def setUp(self):
