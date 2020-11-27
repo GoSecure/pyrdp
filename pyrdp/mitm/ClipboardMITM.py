@@ -14,6 +14,7 @@ from pyrdp.core import decodeUTF16LE, Uint64LE
 from pyrdp.enum import ClipboardFormatNumber, ClipboardMessageFlags, ClipboardMessageType, PlayerPDUType, FileContentsFlags
 from pyrdp.layer import ClipboardLayer
 from pyrdp.logging.StatCounter import StatCounter, STAT
+from pyrdp.mitm.state import RDPMITMState
 from pyrdp.pdu import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU, FileContentsRequestPDU, FileContentsResponsePDU
 from pyrdp.parser.rdp.virtual_channel.clipboard import FileDescriptor
 from pyrdp.recording import Recorder
@@ -32,7 +33,7 @@ class PassiveClipboardStealer:
     """
 
     def __init__(self, config: MITMConfig, client: ClipboardLayer, server: ClipboardLayer, log: LoggerAdapter, recorder: Recorder,
-                 statCounter: StatCounter):
+                 statCounter: StatCounter, state: RDPMITMState):
         """
         :param client: clipboard layer for the client side
         :param server: clipboard layer for the server side
@@ -44,13 +45,14 @@ class PassiveClipboardStealer:
         self.server = server
         self.config = config
         self.log = log
+        self.state = state
         self.recorder = recorder
         self.forwardNextDataResponse = True
         self.files = []
         self.transfers = {}
         self.timeouts = {}  # Track active timeout monitoring tasks.
 
-        self.fileDir = f"{self.config.fileDir}/{self.log.sessionID}"
+        self.fileDir = f"{self.config.fileDir}/{self.state.sessionID}"
 
         self.client.createObserver(
             onPDUReceived = self.onClientPDUReceived,

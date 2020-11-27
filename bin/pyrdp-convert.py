@@ -122,7 +122,7 @@ class RDPReplayer(RDPMITM):
         # We'll set up the recorder ourselves
         config.recordReplays = False
 
-        state = RDPMITMState(config)
+        state = RDPMITMState(config, log.sessionID)
 
         sink, outfile = getSink(format, output_path)
         transport = ConversionLayer(sink) if sink else FileLayer(outfile)
