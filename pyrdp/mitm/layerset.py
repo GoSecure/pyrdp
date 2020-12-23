@@ -1,12 +1,13 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
 from pyrdp.enum import SegmentationPDUType
 from pyrdp.layer import FastPathLayer, LayerChainItem, MCSLayer, SecurityLayer, SegmentationLayer, SlowPathLayer, \
     TPKTLayer, TwistedTCPLayer, X224Layer
+# from pyrdp.mitm.config import MITMConfig
 
 
 class RDPLayerSet:
@@ -14,8 +15,8 @@ class RDPLayerSet:
     Class that handles initialization of regular (non-virtual channel) RDP layers.
     """
 
-    def __init__(self):
-        self.tcp = TwistedTCPLayer()
+    def __init__(self, config):
+        self.tcp = TwistedTCPLayer(config)
         self.segmentation = SegmentationLayer()
         self.tpkt = TPKTLayer()
         self.x224 = X224Layer()

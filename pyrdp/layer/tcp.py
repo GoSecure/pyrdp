@@ -11,10 +11,14 @@ from binascii import hexlify
 from twisted.internet.protocol import connectionDone, Protocol
 
 from pyrdp.core import ObservedBy
+from pyrdp.core.ssl import ServerTLSContext
 from pyrdp.layer.layer import IntermediateLayer, LayerObserver
 from pyrdp.logging import LOGGER_NAMES, getSSLLogger
 from pyrdp.parser.tcp import TCPParser
 from pyrdp.pdu import PDU
+
+
+TLS_RECORD = 0x16
 
 
 class TCPObserver(LayerObserver):
@@ -41,17 +45,21 @@ class TwistedTCPLayer(IntermediateLayer, Protocol):
     TCP observers are notified when a connection is made.
     """
 
-    def __init__(self):
+    def __init__(self, config):
         self.log = logging.getLogger(LOGGER_NAMES.PYRDP)
         super().__init__(TCPParser())
         self.connectedEvent = asyncio.Event()
         self.logSSLRequired = False
 
+        self.new = True
+        self.config = config
+
     def logSSLParameters(self):
         """
         Log the SSL parameters of the connection in a format suitable for decryption by Wireshark.
         """
-        getSSLLogger().info(self.transport.protocol._tlsConnection.client_random(), self.transport.protocol._tlsConnection.master_key())
+        getSSLLogger().info(self.transport.protocol._tlsConnection.client_random(),
+                            self.transport.protocol._tlsConnection.master_key())
 
     def connectionMade(self):
         """
@@ -66,7 +74,7 @@ class TwistedTCPLayer(IntermediateLayer, Protocol):
         """
         self.observer.onDisconnection(reason)
 
-    def disconnect(self, abort = False):
+    def disconnect(self, abort=False):
         """
         Close the TCP connection.
         :param abort: True to force close the connection, False to end gracefully.
@@ -83,6 +91,20 @@ class TwistedTCPLayer(IntermediateLayer, Protocol):
         Called whenever data is received.
         :param data: bytes received.
         """
+
+        # Check if the client is sending us a TLS record immediately.
+        # and start the TLS handshake early.
+        if self.new and data[0] == TLS_RECORD:
+            self.startTLS(ServerTLSContext(self.config.privateKeyFileName,
+                                           self.config.certificateFileName))
+            # Resend the ClientHello to Twisted for handshake processing.
+            # WARNING: This is using a private Twisted API which could change in the future.
+            self.transport._dataReceived(data)
+            self.new = False
+            return
+
+        self.new = False  # First packet was not a TLS record.
+
         try:
             if self.logSSLRequired:
                 self.logSSLParameters()
@@ -93,7 +115,7 @@ class TwistedTCPLayer(IntermediateLayer, Protocol):
             raise
         except Exception as e:
             self.log.exception(e)
-            self.log.error("Exception occurred when receiving: %(data)s" , {"data": hexlify(data).decode()})
+            self.log.error("Exception occurred when receiving: %(data)s", {"data": hexlify(data).decode()})
             raise
 
     def sendBytes(self, data: bytes):
@@ -143,7 +165,7 @@ class AsyncIOTCPLayer(IntermediateLayer, asyncio.Protocol):
         """
         self.observer.onDisconnection(exception)
 
-    def disconnect(self, abort = False):
+    def disconnect(self, abort=False):
         """
         Close the TCP connection.
         :param abort: True to force close the connection, False to end gracefully.
