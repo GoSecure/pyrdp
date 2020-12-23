@@ -4,12 +4,11 @@
 # Licensed under the GPLv3 or later.
 #
 
-import datetime
-import json
+import hashlib
+import tempfile
+from logging import LoggerAdapter
 from pathlib import Path
-from typing import Dict
-
-import names
+from typing import io
 
 
 class FileMapping:
@@ -18,73 +17,79 @@ class FileMapping:
     transferred over RDP.
     """
 
-    def __init__(self, remotePath: Path, localPath: Path, creationTime: datetime.datetime, fileHash: str):
+    def __init__(self, file: io.BinaryIO, dataPath: Path, filesystemPath: Path, filesystemDir: Path, log: LoggerAdapter):
         """
-        :param remotePath: the path of the file on the original machine
-        :param localPath: the path of the file on the intercepting machine
-        :param creationTime: the creation time of the local file
-        :param fileHash: the file hash in hex format (empty string if the file is not complete)
+        :param file: the file handle for dataPath
+        :param dataPath: path where the file is actually saved
+        :param filesystemPath: the path to the replicated filesystem, which will be symlinked to dataPath
+        :param log: logger
         """
-        self.remotePath = remotePath
-        self.localPath = localPath
-        self.creationTime = creationTime
-        self.hash: str = fileHash
+        self.file = file
+        self.filesystemPath = filesystemPath
+        self.dataPath = dataPath
+        self.filesystemDir = filesystemDir
+        self.log = log
+        self.written = False
 
-    def renameToHash(self):
-        newPath = self.localPath.parents[0] / self.hash
-        self.localPath = self.localPath.rename(newPath)
+    def seek(self, offset: int):
+        self.file.seek(offset)
+
+    def write(self, data: bytes):
+        self.file.write(data)
+        self.written = True
+
+    def getHash(self):
+        with open(self.dataPath, "rb") as f:
+            sha1 = hashlib.sha1()
+
+            while True:
+                buffer = f.read(65536)
+
+                if len(buffer) == 0:
+                    break
+
+                sha1.update(buffer)
+
+        return sha1.hexdigest()
+
+    def finalize(self):
+        self.log.debug("Closing file %(path)s", {"path": self.dataPath})
+        self.file.close()
+
+        fileHash = self.getHash()
+
+        # Go up one directory because files are saved to outDir / tmp while we're downloading them
+        hashPath = (self.dataPath.parents[1] / fileHash)
+
+        # Don't keep the file if we haven't written anything to it or it's a duplicate, otherwise rename and move to files dir
+        if not self.written or hashPath.exists():
+            self.dataPath.unlink()
+        else:
+            self.dataPath = self.dataPath.rename(hashPath)
+
+        # Whether it's a duplicate or a new file, we need to create a link to it in the filesystem clone
+        if self.written:
+            self.filesystemPath.parents[0].mkdir(exist_ok=True)
+            self.filesystemPath.unlink(missing_ok=True)
+            self.filesystemPath.symlink_to(hashPath)
+
+            self.log.info("SHA1 '%(path)s' = '%(hash)s'", {
+                "path": self.filesystemPath.relative_to(self.filesystemDir), "hash": fileHash
+            })
 
     @staticmethod
-    def generate(remotePath: Path, outDir: Path):
-        localName = f"{names.get_first_name()}{names.get_last_name()}"
-        creationTime = datetime.datetime.now()
+    def generate(remotePath: str, outDir: Path, filesystemDir: Path, log: LoggerAdapter):
+        remotePath = Path(remotePath.replace("\\", "/"))
+        filesystemPath = filesystemDir / remotePath.relative_to("/")
 
-        index = 2
-        suffix = ""
+        tmpOutDir = outDir / "tmp"
+        tmpOutDir.mkdir(exist_ok=True)
 
-        while True:
-            if not (outDir / f"{localName}{suffix}").exists():
-                break
-            else:
-                suffix = f"_{index}"
-                index += 1
+        handle, tmpPath = tempfile.mkstemp("", "", tmpOutDir)
+        file = open(handle, "wb")
 
-        localName += suffix
+        log.info("Saving file '%(remotePath)s' to '%(localPath)s'", {
+            "localPath": tmpPath, "remotePath": remotePath
+        })
 
-        return FileMapping(remotePath, outDir / localName, creationTime, "")
-
-
-class FileMappingEncoder(json.JSONEncoder):
-    """
-    JSON encoder for FileMapping objects.
-    """
-
-    def default(self, o):
-        if isinstance(o, datetime.datetime):
-            return o.isoformat()
-        elif not isinstance(o, FileMapping):
-            return super().default(o)
-
-        return {
-            "remotePath": str(o.remotePath),
-            "localPath": str(o.localPath),
-            "creationTime": o.creationTime,
-            "sha1": o.hash
-        }
-
-
-class FileMappingDecoder(json.JSONDecoder):
-    """
-    JSON decoder for FileMapping objects.
-    """
-
-    def __init__(self):
-        super().__init__(object_hook=self.decodeFileMapping)
-
-    def decodeFileMapping(self, dct: Dict):
-        for key in ["remotePath", "localPath", "creationTime"]:
-            if key not in dct:
-                return dct
-
-        creationTime = datetime.datetime.strptime(dct["creationTime"], "%Y-%m-%dT%H:%M:%S.%f")
-        return FileMapping(Path(dct["remotePath"]), Path(dct["localPath"]), creationTime, dct["sha1"])
+        return FileMapping(file, Path(tmpPath), filesystemPath, filesystemDir, log)
