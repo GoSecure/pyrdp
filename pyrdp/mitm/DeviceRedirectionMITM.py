@@ -4,20 +4,17 @@
 # Licensed under the GPLv3 or later.
 #
 
-import hashlib
-import json
 from logging import LoggerAdapter
-from pathlib import Path
 from typing import Dict, Optional, Union
 
-from pyrdp.core import FileProxy, ObservedBy, Observer, Subject
-from pyrdp.enum import CreateOption, DeviceRedirectionPacketID, DeviceType, DirectoryAccessMask, FileAccessMask, FileAttributes, \
+from pyrdp.core import ObservedBy, Observer, Subject
+from pyrdp.enum import CreateOption, DeviceRedirectionPacketID, DeviceType, DirectoryAccessMask, FileAccessMask, \
+    FileAttributes, \
     FileCreateDisposition, FileCreateOptions, FileShareAccess, FileSystemInformationClass, IOOperationSeverity, \
     MajorFunction, MinorFunction
 from pyrdp.layer import DeviceRedirectionLayer
 from pyrdp.logging.StatCounter import StatCounter, STAT
-from pyrdp.mitm.config import MITMConfig
-from pyrdp.mitm.FileMapping import FileMapping, FileMappingDecoder, FileMappingEncoder
+from pyrdp.mitm.FileMapping import FileMapping
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.pdu import DeviceAnnounce, DeviceCloseRequestPDU, DeviceCloseResponsePDU, DeviceCreateRequestPDU, \
     DeviceCreateResponsePDU, DeviceDirectoryControlResponsePDU, DeviceIORequestPDU, DeviceIOResponsePDU, \
@@ -60,7 +57,8 @@ class DeviceRedirectionMITM(Subject):
         :param client: device redirection layer for the client side
         :param server: device redirection layer for the server side
         :param log: logger for this component
-        :param config: MITM configuration
+        :param statCounter: stat counter object
+        :param state: shared RDP MITM state
         """
         super().__init__()
 
@@ -69,10 +67,8 @@ class DeviceRedirectionMITM(Subject):
         self.state = state
         self.log = log
         self.statCounter = statCounter
-        self.openedFiles: Dict[int, FileProxy] = {}
-        self.openedMappings: Dict[int, FileMapping] = {}
-        self.fileMap: Dict[str, FileMapping] = {}
-        self.fileMapPath = self.config.outDir / "mapping.json"
+        self.mappings: Dict[(int, int), FileMapping] = {}
+        self.filesystemRoot = self.config.filesystemDir / self.state.sessionID
 
         self.currentIORequests: Dict[(int, int), DeviceIORequestPDU] = {}
         self.forgedRequests: Dict[(int, int), DeviceRedirectionMITM.ForgedRequest] = {}
@@ -94,27 +90,17 @@ class DeviceRedirectionMITM(Subject):
             onPDUReceived=self.onServerPDUReceived,
         )
 
-        try:
-            with open(self.fileMapPath, "r") as f:
-                self.fileMap: Dict[str, FileMapping] = json.loads(f.read(), cls=FileMappingDecoder)
-        except IOError:
-            self.log.warning("Could not read the RDPDR file mapping at %(path)s. The file may not exist or it may have incorrect permissions. A new mapping will be created.", {
-                "path": str(self.fileMapPath),
-            })
-        except json.JSONDecodeError:
-            self.log.error("Failed to decode file mapping, overwriting previous file")
+    def deviceRoot(self, deviceID: int):
+        return self.filesystemRoot / f"device{deviceID}"
+
+    def createDeviceRoot(self, deviceID: int):
+        path = self.deviceRoot(deviceID)
+        path.mkdir(parents=True, exist_ok=True)
+        return path
 
     @property
     def config(self):
         return self.state.config
-
-    def saveMapping(self):
-        """
-        Save the file mapping to a file in JSON format.
-        """
-
-        with open(self.fileMapPath, "w") as f:
-            f.write(json.dumps(self.fileMap, cls=FileMappingEncoder, indent=4, sort_keys=True))
 
     def onClientPDUReceived(self, pdu: DeviceRedirectionPDU):
         self.statCounter.increment(STAT.DEVICE_REDIRECTION, STAT.DEVICE_REDIRECTION_CLIENT)
@@ -135,7 +121,7 @@ class DeviceRedirectionMITM(Subject):
         if isinstance(pdu, DeviceIORequestPDU) and destination is self.client:
             self.handleIORequest(pdu)
         elif isinstance(pdu, DeviceIOResponsePDU) and destination is self.server:
-            dropPDU = pdu.completionID in self.forgedRequests
+            dropPDU = (pdu.deviceID, pdu.completionID) in self.forgedRequests
             self.handleIOResponse(pdu)
 
         elif isinstance(pdu, DeviceListAnnounceRequest):
@@ -198,6 +184,7 @@ class DeviceRedirectionMITM(Subject):
                 "deviceName": device.preferredDOSName
             })
 
+            self.createDeviceRoot(device.deviceID)
             self.observer.onDeviceAnnounce(device)
 
     def handleCreateResponse(self, request: DeviceCreateRequestPDU, response: DeviceCreateResponsePDU):
@@ -210,23 +197,12 @@ class DeviceRedirectionMITM(Subject):
         """
 
         isFileRead = request.desiredAccess & (FileAccessMask.GENERIC_READ | FileAccessMask.FILE_READ_DATA) != 0
-        isNotDirectory = request.createOptions & CreateOption.FILE_NON_DIRECTORY_FILE != 0
+        isDirectory = request.createOptions & CreateOption.FILE_NON_DIRECTORY_FILE == 0
 
-        if isFileRead and isNotDirectory:
-            remotePath = Path(request.path)
-            mapping = FileMapping.generate(remotePath, self.config.fileDir)
-            proxy = FileProxy(mapping.localPath, "wb")
-
-            key = (response.deviceID, response.completionID, response.fileID)
-            self.openedFiles[key] = proxy
-            self.openedMappings[key] = mapping
-
-            proxy.createObserver(
-                onFileCreated = lambda _: self.log.info("Saving file '%(remotePath)s' to '%(localPath)s'", {
-                    "localPath": mapping.localPath, "remotePath": mapping.remotePath
-                }),
-                onFileClosed = lambda _: self.log.debug("Closing file %(path)s", {"path": mapping.localPath})
-            )
+        if isFileRead and not isDirectory:
+            mapping = FileMapping.generate(request.path, self.config.fileDir, self.deviceRoot(response.deviceID), self.log)
+            key = (response.deviceID, response.fileID)
+            self.mappings[key] = mapping
 
     def handleReadResponse(self, request: DeviceReadRequestPDU, response: DeviceReadResponsePDU):
         """
@@ -234,66 +210,27 @@ class DeviceRedirectionMITM(Subject):
         :param request: the device read request
         :param response: the device IO response to the request
         """
-        key = (response.deviceID, response.completionID, request.fileID)
+        key = (response.deviceID, request.fileID)
 
-        if key in self.openedFiles:
-            file = self.openedFiles[key]
-            file.seek(request.offset)
-            file.write(response.payload)
-
-            # Save the mapping permanently
-            mapping = self.openedMappings[key]
-            fileName = mapping.localPath.name
-
-            if fileName not in self.fileMap:
-                self.fileMap[fileName] = mapping
-                self.saveMapping()
+        if key in self.mappings:
+            mapping = self.mappings[key]
+            mapping.seek(request.offset)
+            mapping.write(response.payload)
 
     def handleCloseResponse(self, request: DeviceCloseRequestPDU, response: DeviceCloseResponsePDU):
         """
         Close the file if it was open. Compute the hash of the file, then delete it if we already have a file with the
         same hash.
         :param request: the device close request
-        :param _: the device IO response to the request
+        :param response: the device IO response to the request
         """
 
         self.statCounter.increment(STAT.DEVICE_REDIRECTION_FILE_CLOSE)
-        key = (response.deviceID, response.completionID, request.fileID)
+        key = (response.deviceID, request.fileID)
 
-        if key in self.openedFiles:
-            file = self.openedFiles.pop(key)
-            file.close()
-
-            if file.file is None:
-                return
-
-            currentMapping = self.openedMappings.pop(key)
-
-            # Compute the hash for the final file
-            with open(currentMapping.localPath, "rb") as f:
-                sha1 = hashlib.sha1()
-
-                while True:
-                    buffer = f.read(65536)
-
-                    if len(buffer) == 0:
-                        break
-
-                    sha1.update(buffer)
-
-                currentMapping.hash = sha1.hexdigest()
-
-            # Check if a file with the same hash exists. If so, keep that one and remove the current file.
-            for localPath, mapping in self.fileMap.items():
-                if mapping is currentMapping:
-                    continue
-
-                if mapping.hash == currentMapping.hash:
-                    currentMapping.localPath.unlink()
-                    self.fileMap.pop(currentMapping.localPath.name)
-                    break
-
-            self.saveMapping()
+        if key in self.mappings:
+            mapping = self.mappings.pop(key)
+            mapping.finalize()
 
     def handleClientLogin(self):
         """
@@ -301,7 +238,9 @@ class DeviceRedirectionMITM(Subject):
         """
 
         if self.state.credentialsCandidate or self.state.inputBuffer:
-            self.log.info("Credentials candidate from heuristic: %(credentials_candidate)s", {"credentials_candidate" : (self.state.credentialsCandidate or self.state.inputBuffer) })
+            self.log.info("Credentials candidate from heuristic: %(credentials_candidate)s", {
+                "credentials_candidate" : (self.state.credentialsCandidate or self.state.inputBuffer)
+            })
 
         # Deactivate the logger for this client
         self.state.loggedIn = True
@@ -318,7 +257,7 @@ class DeviceRedirectionMITM(Subject):
         """
         completionID = DeviceRedirectionMITM.FORGED_COMPLETION_ID
 
-        while completionID in self.forgedRequests:
+        while completionID in [key[1] for key in self.forgedRequests]:
             completionID += 1
 
         return completionID
@@ -333,7 +272,7 @@ class DeviceRedirectionMITM(Subject):
 
         if not self.config.extractFiles:
             self.log.info('Ignored attempt to forge file reads because file extraction is disabled.')
-            return
+            return 0
 
         self.statCounter.increment(STAT.DEVICE_REDIRECTION_FORGED_FILE_READ)
 
@@ -357,7 +296,7 @@ class DeviceRedirectionMITM(Subject):
 
         if not self.config.extractFiles:
             self.log.info('Ignored attempt to forge directory listing because file extraction is disabled.')
-            return
+            return 0
 
         self.statCounter.increment(STAT.DEVICE_REDIRECTION_FORGED_DIRECTORY_LISTING)
 
@@ -516,7 +455,7 @@ class DeviceRedirectionMITM(Subject):
                 openPath = self.path[: self.path.index("*")]
 
             if openPath.endswith("\\"):
-                openPath = self.path[: -1]
+                openPath = openPath[: -1]
 
             # We need to start by opening the directory.
             request = DeviceCreateRequestPDU(
