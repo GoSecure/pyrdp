@@ -13,6 +13,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 *Tools*
 
 * Added a JSON output format to `pyrdp-convert` (See {uri-issue}236[#236])
+* Use a proper progress bar with completion percentage and ETA in `pyrdp-convert` (See {uri-issue}274[#274])
 
 *MITM*
 
