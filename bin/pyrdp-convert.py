@@ -5,6 +5,7 @@
 # Copyright (C) 2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+from progressbar import progressbar
 
 from pyrdp.logging import LOGGER_NAMES, SessionLogger
 from pyrdp.mitm import MITMConfig, RDPMITM
@@ -15,20 +16,21 @@ from pyrdp.player.BaseEventHandler import BaseEventHandler
 from pyrdp.player.JsonEventHandler import JsonEventHandler
 from pyrdp.player.Replay import Replay
 from pyrdp.layer import PlayerLayer, LayerChainItem
-from pyrdp.player import HAS_GUI
-
-import progressbar
 
 from pyrdp.player import HAS_GUI
 
 import argparse
 from binascii import unhexlify, hexlify
-import logging
 from pathlib import Path
+
+# No choice but to import * here for load_layer to work properly.
+from scapy.all import *  # noqa
+
+import logging
 import struct
-import sys
 import time
 import sys
+
 
 """
 Supported conversion handlers.
@@ -39,12 +41,7 @@ HANDLERS = {"replay": (None, "pyrdp"), "json": (JsonEventHandler, "json")}
 
 if HAS_GUI:
     from pyrdp.player.Mp4EventHandler import Mp4EventHandler
-
     HANDLERS["mp4"] = (Mp4EventHandler, "mp4")
-
-
-if HAS_GUI:
-    from pyrdp.player.Mp4EventHandler import Mp4EventHandler
 else:
     # Class stub for when MP4 support is not available.
     # It would be a good idea to refactor this so that Mp4EventHandler is
@@ -54,8 +51,6 @@ else:
         def __init__(self, _unused: str):
             pass
 
-# No choice but to import * here for load_layer to work properly.
-from scapy.all import *  # noqa
 
 load_layer("tls")  # noqa
 
@@ -79,6 +74,7 @@ class ConversionLayer(LayerChainItem):
     """Thin layer that adds a conversion sink to the player."""
 
     def __init__(self, sink: BaseEventHandler):
+        super().__init__()
         self.sink = sink
         self.player = PlayerLayer()
         self.player.addObserver(sink)
@@ -152,13 +148,14 @@ class RDPReplayer(RDPMITM):
     def connectToServer(self):
         pass
 
-    def startTLS(self):
+    def startTLS(self, onTlsReady):
         pass
 
     def sendPayload(self):
         pass
 
 
+# noinspection PyUnresolvedReferences
 def tcp_both(p) -> str:
     """Session extractor which merges both sides of a TCP channel."""
 
@@ -169,6 +166,7 @@ def tcp_both(p) -> str:
     return "Other"
 
 
+# noinspection PyUnresolvedReferences
 def findClientRandom(stream: PacketList, limit: int = 10) -> str:
     """Find the client random offset and value of a stream."""
     for n, p in enumerate(stream):
@@ -228,6 +226,7 @@ class Decrypted:
     def __iter__(self):
         return self
 
+    # noinspection PyUnresolvedReferences
     def __next__(self):
         p = next(self.ipkt)
         ip = p.getlayer(IP)
@@ -312,6 +311,7 @@ def decrypted(stream: PacketList, master_secret: bytes) -> Decrypted:
     return Decrypted(stream, master_secret)
 
 
+# noinspection PyUnresolvedReferences
 def getStreamInfo(s: PacketList) -> (str, str, float, bool):
     """Attempt to retrieve an (src, dst, ts, isPlaintext) tuple for a data stream."""
     packet = s[0]
@@ -351,7 +351,7 @@ class Converter:
 
         replayer = RDPReplayer(outfile, format=self.args.format)
         (client, server, _, _) = info
-        for packet in progressbar.progressbar(stream):
+        for packet in progressbar(stream):
             src = ".".join(str(b) for b in packet.load[12:16])
             dst = ".".join(str(b) for b in packet.load[20:24])
             data = packet.load[60:]
@@ -370,13 +370,14 @@ class Converter:
                 "Are you sure you got source and destination correct?"
             )
 
+    # noinspection PyUnresolvedReferences
     def processTLS(self, stream: Decrypted, outfile: str):
         """Process an encrypted TCP stream into a replay file."""
 
         replayer = RDPReplayer(outfile, format=self.args.format)
         client = None  # The RDP client's IP.
 
-        for packet in progressbar.progressbar(stream):
+        for packet in progressbar(stream):
             ip = packet.getlayer(IP)
 
             if not client:
@@ -403,6 +404,7 @@ class Converter:
                 "Are you sure you got source and destination correct?"
             )
 
+    # noinspection PyUnboundLocalVariable
     def processPcap(self, infile: Path):
         print(f"[*] Analyzing PCAP '{infile}' ...")
         pcap = sniff(offline=str(infile))
@@ -413,7 +415,6 @@ class Converter:
         streams = []
         for stream in sessions.values():
             (src, dst, ts, plaintext) = info = getStreamInfo(stream)
-            name = f"{src} -> {dst}"
             print(f"    - {src} -> {dst}:", end="", flush=True)
 
             if plaintext:
@@ -453,26 +454,23 @@ class Converter:
                 print(f"\n[-] Failed: {e}")
 
     def processReplay(self, infile: Path):
-        # FIXME: Sinks need to support progress bar.
-        widgets = [
-            progressbar.FormatLabel(f'Converting to {self.args.format.upper()}'),
-            progressbar.BouncingBar(),
-            progressbar.FormatLabel(' Elapsed: %(elapsed)s'),
-        ]
-        with progressbar.ProgressBar(widgets=widgets) as progress:
-            print(f"[*] Converting '{infile}' to {self.args.format.upper()}")
-            outfile = self.prefix + infile.stem
+        with open(infile, "rb") as f:
+            replay = Replay(f)
 
-            sink, outfile = getSink(self.args.format, outfile, progress=lambda: progress.update(0))
+            print(f"[*] Converting '{infile}' to {self.args.format.upper()}")
+
+            outfile = self.prefix + infile.stem
+            sink, outfile = getSink(self.args.format, outfile)
+
             if not sink:
                 print("The input file is already a replay file. Nothing to do.")
                 sys.exit(1)
 
-            fd = open(infile, "rb")
-            replay = Replay(fd, handler=sink)
+            for event, _ in progressbar(replay):
+                sink.onPDUReceived(event)
+
             print(f"\n[+] Succesfully wrote '{outfile}'")
             sink.cleanup()
-            fd.close()
 
     def run(self):
         args = self.args
