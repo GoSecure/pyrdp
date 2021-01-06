@@ -11,6 +11,31 @@ import logging
 from logging import Logger
 
 
+class FilePositionGuard:
+    """
+    Object that can be used in a 'with' statement that will restore a file's pointer to the position it had at
+    the start of the with statement. E.g:
+
+    # file position is 200
+    with FilePositionGuard(file):
+        file.read(10)
+        file.tell() # file position is now 210
+
+    file.tell() # file position is now 200 again
+    """
+
+    def __init__(self, file):
+        self.file = file
+        self.startingPosition = None
+
+    def __enter__(self):
+        self.startingPosition = self.file.tell()
+        return self
+
+    def __exit__(self, exc_type, exception, traceback):
+        self.file.seek(self.startingPosition)
+
+
 def decodeUTF16LE(data: bytes) -> str:
     """
     Decode the provided bytes in UTF-16 in a way that does not crash when invalid input is provided.

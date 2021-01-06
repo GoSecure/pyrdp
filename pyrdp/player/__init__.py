@@ -4,7 +4,7 @@
 # Licensed under the GPLv3 or later.
 #
 
-from pyrdp.player.Replay import Replay
+from pyrdp.player.Replay import Replay, ReplayReader
 from .BaseEventHandler import BaseEventHandler
 from .HeadlessEventHandler import HeadlessEventHandler
 
