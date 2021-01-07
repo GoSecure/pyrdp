@@ -111,7 +111,9 @@ slim one. Install the dependencies according to your use case.
 sudo apt install python3 python3-pip python3-dev python3-setuptools python3-venv \
         build-essential python3-dev git openssl \
         libdbus-1-dev libdbus-glib-1-dev libgl1-mesa-glx \
-        notify-osd dbus-x11 libxkbcommon-x11-0
+        notify-osd dbus-x11 libxkbcommon-x11-0 \
+        libavformat-dev libavcodec-dev libavdevice-dev \
+        libavutil-dev libswscale-dev libswresample-dev libavfilter-dev
 
 # Slim install (no GUI, no transcoding)
 sudo apt install python3 python3-pip python3-setuptools python3-venv \
