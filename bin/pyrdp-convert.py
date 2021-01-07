@@ -104,6 +104,12 @@ class RDPReplayerConfig(MITMConfig):
 
 
 class RDPReplayer(RDPMITM):
+    """
+    This class emulates an RDP MITM instance, but without any actual connections.
+    This is used to build replays from data obtained from a packet capture.
+    It is useful because it reuses the usual components that would be used in a live session.
+    """
+
     def __init__(self, output_path: str, format: str = None):
         def sendBytesStub(_: bytes):
             pass
@@ -129,9 +135,6 @@ class RDPReplayer(RDPMITM):
         self.client.tcp.sendBytes = sendBytesStub
         self.server.tcp.sendBytes = sendBytesStub
         self.state.useTLS = True
-
-    def start(self):
-        pass
 
     def recv(self, data: bytes, from_client: bool):
         try:
