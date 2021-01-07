@@ -309,11 +309,6 @@ class Decrypted:
         return p
 
 
-def decrypted(stream: PacketList, master_secret: bytes) -> Decrypted:
-    """An iterator function that decrypts a stream."""
-    return Decrypted(stream, master_secret)
-
-
 # noinspection PyUnresolvedReferences
 def getStreamInfo(s: PacketList) -> (str, str, float, bool):
     """Attempt to retrieve an (src, dst, ts, isPlaintext) tuple for a data stream."""
@@ -416,9 +411,13 @@ class Converter:
 
         sessions = pcap.sessions(tcp_both)
         streams = []
+        n = 0
+
         for stream in sessions.values():
+            n += 1
+
             (src, dst, ts, plaintext) = info = getStreamInfo(stream)
-            print(f"    - {src} -> {dst}:", end="", flush=True)
+            print(f"    - Session #{n}: {src} -> {dst}:", end="", flush=True)
 
             if plaintext:
                 print(" plaintext")
@@ -426,11 +425,16 @@ class Converter:
                 continue
 
             rnd = findClientRandom(stream)
+
+            if rnd == "":
+                print(f" no client random found, skipping session")
+                continue
+
             if rnd not in self.secrets and rnd != "":
-                print(" unknown master secret")
+                print(f" unknown master secret")
             else:
-                print(" master secret available (!)")
-                streams.append((info, decrypted(stream, self.secrets[rnd]["master"])))
+                print(f" master secret available (!)")
+                streams.append((info, Decrypted(stream, self.secrets[rnd]["master"])))
 
         if args.list:
             return  # List only.
@@ -440,21 +444,19 @@ class Converter:
                 continue
             if len(args.dst) > 0 and dst not in args.dst:
                 continue
-            try:
-                print(f"[*] Processing {src} -> {dst}")
-                ts = time.strftime("%Y%M%d%H%m%S", time.gmtime(ts))
-                outfile = OUTFILE_FORMAT.format(
-                    **{"prefix": self.prefix, "timestamp": ts, "src": src, "dst": dst}
-                )
 
-                if plaintext:
-                    self.processPlaintext(s, outfile, info)
-                else:
-                    self.processTLS(s, outfile)
+            print(f"[*] Processing {src} -> {dst}")
+            ts = time.strftime("%Y%M%d%H%m%S", time.gmtime(ts))
+            outfile = OUTFILE_FORMAT.format(
+                **{"prefix": self.prefix, "timestamp": ts, "src": src, "dst": dst}
+            )
 
-                print(f"\n[+] Successfully wrote '{outfile}'")
-            except Exception as e:
-                print(f"\n[-] Failed: {e}")
+            if plaintext:
+                self.processPlaintext(s, outfile, info)
+            else:
+                self.processTLS(s, outfile)
+
+            print(f"\n[+] Successfully wrote '{outfile}'")
 
     def processReplay(self, infile: Path):
         with open(infile, "rb") as f:
