@@ -94,7 +94,7 @@ def buildArgParser():
     parser.add_argument("--auth", help="Specify allowed authentication mechanisms (Comma-separated, choose from: tls, ssp)", default="tls")
     parser.add_argument(
         "-s", "--sensor-id", help="Sensor ID (to differentiate multiple instances of the MITM"
-        " where logs are aggregated at one place)", default="PyRDP")
+        " where logs are aggregated at one place)")
     parser.add_argument("--payload", help="Command to run automatically upon connection", default=None)
     parser.add_argument("--payload-powershell",
                         help="PowerShell command to run automatically upon connection", default=None)
@@ -149,6 +149,8 @@ def configure(cmdline=None) -> MITMConfig:
         cfg.set('logs', 'filter', args.log_filter)
     if args.log_level:
         cfg.set('vars', 'level', args.log_level)
+    if args.sensor_id:
+        cfg.set('vars', 'sensor_id', args.sensor_id)
 
     outDir = Path(cfg.get('vars', 'output_dir'))
     outDir.mkdir(exist_ok=True)
