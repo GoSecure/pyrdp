@@ -10,6 +10,10 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 === Enhancements
 
+*Security*
+
+* Cryptography dependency updated to 3.2 due to upstream security issue which we are not really concerned about for this project's use case (See {uri-issue}259[#259])
+
 *Tools*
 
 * Added a JSON output format to `pyrdp-convert` (See {uri-issue}236[#236])
@@ -27,6 +31,8 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 * Fixed a bug preventing files opened by the RDPDR file stealer from being closed ({uri-issue}264[#264])
 * Fixed an issue with ghost mouse pointers in replays converted to MP4 ({uri-issue}271[#271])
+* Fixed a regression with the `--sensor-id` (`-s`) command line argument.
+  It would not work since 1.0. ({uri-issue}279[#279])
 
 === Infrastructure
 
