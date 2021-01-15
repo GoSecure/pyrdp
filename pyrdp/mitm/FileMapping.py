@@ -5,6 +5,7 @@
 #
 
 import hashlib
+import os
 import tempfile
 from logging import LoggerAdapter
 from pathlib import Path
@@ -74,7 +75,8 @@ class FileMapping:
             if self.filesystemPath.exists():
                 self.filesystemPath.unlink()
 
-            self.filesystemPath.symlink_to(hashPath)
+            # Make the symlink relative so you can move the output folder around and it will still work.
+            self.filesystemPath.symlink_to(Path(os.path.relpath(hashPath, self.filesystemPath)))
 
             self.log.info("SHA1 '%(path)s' = '%(hash)s'", {
                 "path": self.filesystemPath.relative_to(self.filesystemDir), "hash": fileHash
