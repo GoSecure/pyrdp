@@ -23,12 +23,13 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 * Files intercepted or crawled by the MITM are now named according to the sha1 hash of their contents and stored in the `pyrdp_output/files` folder (see {uri-issue}261[#261])
 * Files that are currently being downloaded by the MITM but are not complete are stored in the `pyrdp_output/files/tmp` folder
-* Both the file stealer and the file crawler components now mimick the victim's filesystem by creating the same file hierarchy in the `pyrdp_output/filesystems/<SESSION_ID>` folders. Files in these folders are symbolic links to files in the `pyrdp_output/files` folder to avoid useless duplication. (See {uri-issue}270[#270])
+* Both the file stealer and the file crawler components now mimick the victim's filesystem by creating the same file hierarchy in the `pyrdp_output/filesystems/<SESSION_ID>` folders. Files in these folders are symbolic links to files in the `pyrdp_output/files` folder to avoid useless duplication. The symlinks are relative, which allows you to move the folder around without losing the mapping. (See {uri-issue}270[#270])
 * Removed `mapping.json` file since all the information it would contain can be obtained by checking the `pyrdp_output/filesystems` folder
 * Added tests for the DeviceRedirectionMITM and FileMapping classes
 
 === Bug fixes
 
+* Fixed a bug causing the connection to crash when the client sends no connection negotiation flags (See {uri-issue}283[#283])
 * Fixed a bug preventing files opened by the RDPDR file stealer from being closed ({uri-issue}264[#264])
 * Fixed an issue with ghost mouse pointers in replays converted to MP4 ({uri-issue}271[#271])
 * Fixed a regression with the `--sensor-id` (`-s`) command line argument.
