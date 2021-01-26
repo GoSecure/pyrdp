@@ -59,7 +59,7 @@ class X224MITM:
         self.originalRequest = parser.parse(pdu.payload)
         self.state.requestedProtocols = self.originalRequest.requestedProtocols
 
-        if self.originalRequest.flags & NegotiationRequestFlags.RESTRICTED_ADMIN_MODE_REQUIRED:
+        if self.originalRequest.flags is not None and self.originalRequest.flags & NegotiationRequestFlags.RESTRICTED_ADMIN_MODE_REQUIRED:
             self.log.warning("Client has enabled Restricted Admin Mode, which forces Network-Level Authentication (NLA)."
                              " Connection will fail.", {"restrictedAdminActivated": True})
 
