@@ -30,6 +30,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 === Bug fixes
 
+* Fixed a bug causing the connection to crash when the pointerCacheSize field is absent in PointerCapability (See {uri-issue}287[#287])
 * Fixed a bug causing the connection to crash when the client sends no connection negotiation flags (See {uri-issue}283[#283])
 * Fixed a bug preventing files opened by the RDPDR file stealer from being closed ({uri-issue}264[#264])
 * Fixed an issue with ghost mouse pointers in replays converted to MP4 ({uri-issue}271[#271])

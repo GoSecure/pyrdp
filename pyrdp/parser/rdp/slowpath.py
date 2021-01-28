@@ -618,7 +618,11 @@ class SlowPathParser(Parser):
         stream = BytesIO(data)
         colorPointerFlag = Uint16LE.unpack(stream)
         colorPointerCacheSize = Uint16LE.unpack(stream)
-        pointerCacheSize = Uint16LE.unpack(stream)
+
+        if len(data) == 6:
+            pointerCacheSize = Uint16LE.unpack(stream)
+        else:
+            pointerCacheSize = None
 
         return PointerCapability(colorPointerFlag, colorPointerCacheSize, pointerCacheSize)
 
@@ -628,7 +632,9 @@ class SlowPathParser(Parser):
 
         Uint16LE.pack(capability.colorPointerFlag, substream)
         Uint16LE.pack(capability.colorPointerCacheSize, substream)
-        Uint16LE.pack(capability.pointerCacheSize, substream)
+
+        if capability.pointerCacheSize is not None:
+            Uint16LE.pack(capability.pointerCacheSize, substream)
 
         Uint16LE.pack(len(substream.getvalue()) + 4, stream)
         stream.write(substream.getvalue())
