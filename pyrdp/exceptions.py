@@ -9,7 +9,20 @@ class PyRDPError(Exception):
 
 
 class ParsingError(PyRDPError, ValueError):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.layers = []
+
     """A parser tried to parse a malformed PDU"""
+    def addLayer(self, parser: object, data: bytes):
+        self.layers.insert(0, (type(parser).__name__, data))
+
+    def formatLayer(self, index: int) -> str:
+        layer = self.layers[index]
+        return f"{layer[0]} = {layer[1].hex()}"
+
+    def formatLayers(self) -> str:
+        return ",".join(self.formatLayer(i) for i in range(len(self.layers)))
 
 
 class WritingError(PyRDPError, ValueError):

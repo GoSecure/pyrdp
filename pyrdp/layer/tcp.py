@@ -11,6 +11,7 @@ from binascii import hexlify
 from twisted.internet.protocol import connectionDone, Protocol
 
 from pyrdp.core import ObservedBy
+from pyrdp.exceptions import ParsingError
 from pyrdp.layer.layer import IntermediateLayer, LayerObserver
 from pyrdp.logging import LOGGER_NAMES, getSSLLogger
 from pyrdp.parser.tcp import TCPParser
@@ -93,7 +94,12 @@ class TwistedTCPLayer(IntermediateLayer, Protocol):
             raise
         except Exception as e:
             self.log.exception(e)
+
+            if isinstance(e, ParsingError):
+                self.log.error("Parser information: %(info)s", {"info": e.formatLayer(len(e.layers) - 1)})
+
             self.log.error("Exception occurred when receiving: %(data)s" , {"data": hexlify(data).decode()})
+
             raise
 
     def sendBytes(self, data: bytes):

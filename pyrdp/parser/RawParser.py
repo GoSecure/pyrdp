@@ -15,7 +15,7 @@ class RawParser(Parser):
     The use case for this is for layers with PDUs that we're not really interested in parsing.
     """
 
-    def parse(self, data: bytes) -> PDU:
+    def doParse(self, data: bytes) -> PDU:
         return PDU(data)
 
     def write(self, pdu: PDU) -> bytes:

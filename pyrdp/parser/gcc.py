@@ -35,7 +35,7 @@ class GCCParser(Parser):
             GCCPDUType.CREATE_CONFERENCE_RESPONSE: self.writeConferenceCreateResponse,
         }
 
-    def parse(self, data: bytes) -> GCCPDU:
+    def doParse(self, data: bytes) -> GCCPDU:
         """
         Parses the raw data bytes into a GCCPDU
         :param data: PDU data.

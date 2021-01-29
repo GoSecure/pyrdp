@@ -29,7 +29,7 @@ class ClipboardParser(Parser):
             ClipboardMessageType.CB_FILECONTENTS_RESPONSE: self.parseFileContentsResponse,
         }
 
-    def parse(self, data):
+    def doParse(self, data):
         stream = BytesIO(data)
         msgType = Uint16LE.unpack(stream)
         msgFlags = Uint16LE.unpack(stream)

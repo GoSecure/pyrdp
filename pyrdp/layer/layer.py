@@ -8,7 +8,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Union
 
 from pyrdp.core import EventEngine, ObservedBy, Observer, Subject
-from pyrdp.exceptions import UnknownPDUTypeError
+from pyrdp.exceptions import UnknownPDUTypeError, ParsingError
 from pyrdp.parser import Parser
 from pyrdp.pdu import PDU
 
@@ -140,7 +140,12 @@ class Layer(BaseLayer):
         :param data: bytes received.
         """
         pdu = self.mainParser.parse(data)
-        self.pduReceived(pdu)
+
+        try:
+            self.pduReceived(pdu)
+        except ParsingError as e:
+            e.addLayer(self.mainParser, data)
+            raise
 
     def sendPDU(self, pdu: PDU):
         """

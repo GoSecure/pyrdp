@@ -20,7 +20,7 @@ class BasicSecurityParser(Parser):
     Writing is split between 3 methods for reusability.
     """
 
-    def parse(self, data):
+    def doParse(self, data):
         """
         Decode a security PDU from bytes.
         :type data: bytes

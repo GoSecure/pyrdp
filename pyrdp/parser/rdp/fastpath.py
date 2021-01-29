@@ -50,7 +50,7 @@ class BasicFastPathParser(BasicSecurityParser):
 
         return len(data) >= self.getPDULength(data)
 
-    def parse(self, data: bytes) -> FastPathPDU:
+    def doParse(self, data: bytes) -> FastPathPDU:
         stream = BytesIO(data)
         header = Uint8.unpack(stream)
         eventCount = self.parseEventCount(header)
@@ -145,7 +145,7 @@ class SignedFastPathParser(BasicFastPathParser):
         self.crypter = crypter
         self.eventData = b""
 
-    def parse(self, data: bytes) -> FastPathPDU:
+    def doParse(self, data: bytes) -> FastPathPDU:
         stream = BytesIO(data)
         header = Uint8.unpack(stream)
         eventCount = self.parseEventCount(header)
@@ -191,7 +191,7 @@ class FIPSFastPathParser(SignedFastPathParser):
     def __init__(self, crypter: RC4Crypter, mode: ParserMode):
         SignedFastPathParser.__init__(self, crypter, mode)
 
-    def parse(self, data: bytes) -> FastPathPDU:
+    def doParse(self, data: bytes) -> FastPathPDU:
         stream = BytesIO(data)
         header = Uint8.unpack(stream)
         eventCount = self.parseEventCount(header)
@@ -253,7 +253,7 @@ class FastPathInputParser(Parser):
 
         raise ValueError("Unsupported event type?")
 
-    def parse(self, data: bytes) -> FastPathEvent:
+    def doParse(self, data: bytes) -> FastPathEvent:
         stream = BytesIO(data)
         eventHeader = Uint8.unpack(stream.read(1))
         eventCode = (eventHeader & 0b11100000) >> 5
@@ -360,7 +360,7 @@ class FastPathOutputParser(Parser):
     def isCompressed(self, header: int) -> bool:
         return (header >> 6) & FastPathOutputCompressionType.FASTPATH_OUTPUT_COMPRESSION_USED != 0
 
-    def parse(self, data: bytes) -> FastPathOutputEvent:
+    def doParse(self, data: bytes) -> FastPathOutputEvent:
         """
         Parse TS_FP_UPDATE.
 
