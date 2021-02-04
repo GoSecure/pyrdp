@@ -53,7 +53,7 @@ class SlowPathParser(Parser):
             SlowPathDataType.PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST: self.writePersistentCacheKeys,
         }
 
-    def parse(self, data: bytes) -> PDU:
+    def doParse(self, data: bytes) -> PDU:
         """
         Decode a data PDU from bytes.
         :return: an instance of an RDP Data PDU class.

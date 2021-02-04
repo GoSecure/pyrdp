@@ -101,7 +101,7 @@ class DeviceRedirectionParser(Parser):
         self.informationClassForParsingResponse: Dict[int, FileSystemInformationClass] = {}
 
 
-    def parse(self, data: bytes) -> DeviceRedirectionPDU:
+    def doParse(self, data: bytes) -> DeviceRedirectionPDU:
         stream = BytesIO(data)
         component = DeviceRedirectionComponent(Uint16LE.unpack(stream))
         packetID = DeviceRedirectionPacketID(Uint16LE.unpack(stream))

@@ -42,7 +42,7 @@ class ClientConnectionParser(Parser):
 
         }
 
-    def parse(self, data: bytes) -> ClientDataPDU:
+    def doParse(self, data: bytes) -> ClientDataPDU:
         """
         Decode a Client Data PDU from bytes.
         :param data: Client Data PDU data.
@@ -263,7 +263,7 @@ class ServerConnectionParser(Parser):
             ConnectionDataType.SERVER_SECURITY: self.writeServerSecurityData,
         }
 
-    def parse(self, data: bytes) -> ServerDataPDU:
+    def doParse(self, data: bytes) -> ServerDataPDU:
         """
         Parse a Server Data PDU from bytes.
         """
