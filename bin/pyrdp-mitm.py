@@ -32,6 +32,7 @@ def main():
         try:
             if not s.getsockopt(socket.SOL_IP, socket.IP_TRANSPARENT):
                 s.setsockopt(socket.SOL_IP, socket.IP_TRANSPARENT, 1)
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         except Exception:
             logger.warning('Unable to set transparent socket. Are you running as root?')
 
