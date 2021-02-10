@@ -14,7 +14,7 @@ from Crypto.Util.number import bytes_to_long, long_to_bytes
 from pyrdp.core import decodeUTF16LE, encodeUTF16LE, StrictStream, Uint16LE, Uint32LE, Uint8
 from pyrdp.enum import ColorDepth, ConnectionDataType, ConnectionType, DesktopOrientation, EncryptionLevel, \
     EncryptionMethod, HighColorDepth, RDPVersion, ServerCertificateType
-from pyrdp.exceptions import ParsingError, UnknownPDUTypeError
+from pyrdp.exceptions import ParsingError, UnknownPDUTypeError, ExploitError
 from pyrdp.parser.parser import Parser
 from pyrdp.pdu import ClientChannelDefinition, ClientClusterData, ClientCoreData, ClientDataPDU, ClientNetworkData, \
     ClientSecurityData, ProprietaryCertificate, ServerCoreData, ServerDataPDU, ServerNetworkData, ServerSecurityData
@@ -136,7 +136,13 @@ class ClientConnectionParser(Parser):
         extEncryptionMethods = Uint32LE.unpack(stream)
         return ClientSecurityData(encryptionMethods, extEncryptionMethods)
 
+    def detectBlueKeepScan(self, data: bytes):
+        return b"MS_T120" in data.upper()
+
     def parseClientNetworkData(self, stream: BytesIO) -> ClientNetworkData:
+        if self.detectBlueKeepScan(stream.getvalue()):
+            raise ExploitError("BlueKeep scan or exploit attempted")
+
         channelCount = Uint32LE.unpack(stream)
         data = stream.getvalue()[4 :]
 

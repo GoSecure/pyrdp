@@ -11,7 +11,7 @@ from binascii import hexlify
 from twisted.internet.protocol import connectionDone, Protocol
 
 from pyrdp.core import ObservedBy
-from pyrdp.exceptions import ParsingError
+from pyrdp.exceptions import ParsingError, ExploitError
 from pyrdp.layer.layer import IntermediateLayer, LayerObserver
 from pyrdp.logging import LOGGER_NAMES, getSSLLogger
 from pyrdp.parser.tcp import TCPParser
@@ -92,11 +92,17 @@ class TwistedTCPLayer(IntermediateLayer, Protocol):
             self.recv(data)
         except KeyboardInterrupt:
             raise
+        except ExploitError as e:
+            # Ideally it would be nice to have a system for detecting exploits without interrupting the connection
+            self.log.info("Exploit detected: %(exploitInfo)s. %(parserInfo)s", {
+                "exploitInfo": str(e),
+                "parserInfo": e.formatLayer(len(e.layers) - 1)
+            })
         except Exception as e:
             self.log.exception(e)
 
             if isinstance(e, ParsingError):
-                self.log.error("Parser information: %(info)s", {"info": e.formatLayer(len(e.layers) - 1)})
+                self.log.error("Parser information: %(parserInfo)s", {"parserInfo": e.formatLayer(len(e.layers) - 1)})
 
             self.log.error("Exception occurred when receiving: %(data)s" , {"data": hexlify(data).decode()})
 
