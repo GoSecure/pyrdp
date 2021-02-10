@@ -22,6 +22,8 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 *MITM*
 
+* Added detection function for BlueKeep scans / exploit attempts. PyRDP will log the attempt and shut down the connection. The JSON log has an exploitInfo attribute as well as a parserInfo attribute to help investigate what happened.
+* Added better logging for parser errors. PyRDP will now log which parser crashed and the data that was fed to that parser to make it crash. This makes it easier to investigate bugs and exploits. In JSON logs, this information shows up in the parserInfo attribute.
 * Files intercepted or crawled by the MITM are now named according to the sha1 hash of their contents and stored in the `pyrdp_output/files` folder (see {uri-issue}261[#261])
 * Files that are currently being downloaded by the MITM but are not complete are stored in the `pyrdp_output/files/tmp` folder
 * Both the file stealer and the file crawler components now mimick the victim's filesystem by creating the same file hierarchy in the `pyrdp_output/filesystems/<SESSION_ID>` folders. Files in these folders are symbolic links to files in the `pyrdp_output/files` folder to avoid useless duplication. The symlinks are relative, which allows you to move the folder around without losing the mapping. (See {uri-issue}270[#270])
@@ -30,6 +32,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 === Bug fixes
 
+* Added SO_REUSEADDR to MITM socket to avoid having to wait for sockets stuck in `TIME_WAIT`
 * Fixed a bug causing the connection to crash when the pointerCacheSize field is absent in PointerCapability (See {uri-issue}287[#287])
 * Fixed a bug causing the connection to crash when the client sends no connection negotiation flags (See {uri-issue}283[#283])
 * Fixed a bug preventing files opened by the RDPDR file stealer from being closed ({uri-issue}264[#264])
