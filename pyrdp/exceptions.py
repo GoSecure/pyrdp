@@ -25,6 +25,15 @@ class ParsingError(PyRDPError, ValueError):
         return ",".join(self.formatLayer(i) for i in range(len(self.layers)))
 
 
+class ExploitError(ParsingError):
+    """
+    Class used when an exploit attempt or scan is detected in a parser and we want to shut down the connection.
+    """
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+
 class WritingError(PyRDPError, ValueError):
     """A parser tried to write a malformed PDU"""
 
