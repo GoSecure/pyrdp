@@ -82,6 +82,11 @@ class FileMappingTest(unittest.TestCase):
             mock_symlink_to.assert_called_once()
 
             self.assertEqual(mock_mkdir.call_args[0][0], mapping.filesystemPath.parents[0])
+            self.assertEqual(len(mock_mkdir.call_args.kwargs), 2)
+            self.assertTrue("exist_ok" in mock_mkdir.call_args.kwargs)
+            self.assertTrue("parents" in mock_mkdir.call_args.kwargs)
+            self.assertTrue(mock_mkdir.call_args.kwargs["exist_ok"])
+            self.assertTrue(mock_mkdir.call_args.kwargs["parents"])
 
             # The symlink must be a relative symlink.
             # The symlink is in filesystems/ so the link path will start with '..'.

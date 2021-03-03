@@ -70,7 +70,7 @@ class FileMapping:
 
         # Whether it's a duplicate or a new file, we need to create a link to it in the filesystem clone
         if self.written:
-            self.filesystemPath.parents[0].mkdir(exist_ok=True)
+            self.filesystemPath.parents[0].mkdir(exist_ok=True, parents=True)
 
             if self.filesystemPath.exists():
                 self.filesystemPath.unlink()
