@@ -82,7 +82,6 @@ class FileMappingTest(unittest.TestCase):
             mock_symlink_to.assert_called_once()
 
             self.assertEqual(mock_mkdir.call_args[0][0], mapping.filesystemPath.parents[0])
-            self.assertEqual(len(mock_mkdir.call_args.kwargs), 2)
             self.assertTrue("exist_ok" in mock_mkdir.call_args.kwargs)
             self.assertTrue("parents" in mock_mkdir.call_args.kwargs)
             self.assertTrue(mock_mkdir.call_args.kwargs["exist_ok"])
