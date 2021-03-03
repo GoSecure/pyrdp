@@ -7,8 +7,9 @@
 #
 import asyncio
 import logging
-
 # Need to install this reactor before importing other twisted code
+import os
+
 from twisted.internet import asyncioreactor
 
 asyncioreactor.install(asyncio.get_event_loop())
@@ -42,6 +43,9 @@ def main():
     s.close()  # reactor creates a copy of the fd.
 
     logger.info("MITM Server listening on port %(port)d", {"port": config.listenPort})
+
+    if "HOST_IP" in os.environ:
+        logger.info("Host IP: %(host_ip)s", {"host_ip": os.environ["HOST_IP"]})
 
     reactor.run()
 
