@@ -127,6 +127,10 @@ def buildArgParser():
         "--transparent", help="Spoof source IP for connections to the server (See README)", action="store_true")
     parser.add_argument("--no-gdi", help="Disable accelerated graphics pipeline (MS-RDPEGDI) extension",
                         action="store_true")
+    parser.add_argument("--spoof-rdpdr",
+                        help="Create a fake RDPDR channel if not requested by the client."
+                             "Since our non-NLA credential logging is based on RDPDR, this can help collect more credentials.",
+                        action="store_true")
 
     return parser
 
@@ -191,6 +195,7 @@ def configure(cmdline=None) -> MITMConfig:
     config.extractFiles = not args.no_files
     config.disableActiveClipboardStealing = args.disable_active_clipboard
     config.useGdi = not args.no_gdi
+    config.spoofRdpdr = args.spoof_rdpdr
 
     payload = None
     powershell = None

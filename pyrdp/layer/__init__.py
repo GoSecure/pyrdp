@@ -19,4 +19,5 @@ from pyrdp.layer.rdp.virtual_channel.virtual_channel import VirtualChannelLayer
 from pyrdp.layer.segmentation import SegmentationLayer, SegmentationObserver
 from pyrdp.layer.tcp import AsyncIOTCPLayer, TCPObserver, TwistedTCPLayer
 from pyrdp.layer.tpkt import TPKTLayer
+from pyrdp.layer.void import VoidLayer
 from pyrdp.layer.x224 import X224Layer, X224Observer

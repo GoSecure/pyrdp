@@ -17,7 +17,8 @@ from pyrdp.parser import ClientConnectionParser, GCCParser, ServerConnectionPars
 from pyrdp.pdu import GCCConferenceCreateRequestPDU, GCCConferenceCreateResponsePDU, MCSAttachUserConfirmPDU, \
     MCSAttachUserRequestPDU, MCSChannelJoinConfirmPDU, MCSChannelJoinRequestPDU, MCSConnectInitialPDU, \
     MCSConnectResponsePDU, MCSDisconnectProviderUltimatumPDU, MCSErectDomainRequestPDU, MCSSendDataIndicationPDU, \
-    MCSSendDataRequestPDU, ProprietaryCertificate, ServerDataPDU, ServerSecurityData, ClientDataPDU
+    MCSSendDataRequestPDU, ProprietaryCertificate, ServerDataPDU, ServerSecurityData, ClientDataPDU, \
+    ClientChannelDefinition
 from pyrdp.recording import Recorder
 
 
@@ -48,6 +49,8 @@ class MCSMITM:
         self.state = state
         self.recorder = recorder
         self.buildChannelCallback = buildChannelCallback
+        self.spoofRdpdrJoinRequestSent = False
+        self.savedJoinRequest = None
 
         self.clientChannels: Dict[int, MCSServerChannel] = {}
         """MCS channels for the client side. From the point of view of the MITM, these are server MCS channels."""
@@ -110,6 +113,12 @@ class MCSMITM:
 
         if rdpClientDataPDU.networkData:
             self.state.channelDefinitions = rdpClientDataPDU.networkData.channelDefinitions
+            hasRdpdr = any(c.name == "rdpdr" for c in self.state.channelDefinitions)
+            self.state.spoofRdpdr = not hasRdpdr and self.state.config.spoofRdpdr
+
+            if self.state.spoofRdpdr:
+                rdpClientDataPDU.networkData.channelDefinitions.append(ClientChannelDefinition("rdpdr", 0xc0800000))
+                self.log.info("Spoofing rdpdr channel")
 
         serverGCCPDU = GCCConferenceCreateRequestPDU("1", rdpClientConnectionParser.write(rdpClientDataPDU))
         serverMCSPDU = MCSConnectInitialPDU(
@@ -181,6 +190,10 @@ class MCSMITM:
             # The clientRequestedProtocols field MUST be the same as the one received in the X224 Connection Request
             serverData.coreData.clientRequestedProtocols = self.state.requestedProtocols
 
+            # If we're spoofing RDPDR, we have to avoid sending that channel ID back to the client
+            if self.state.spoofRdpdr:
+                serverData.networkData.channels.pop(-1)
+
             modifiedServerData = ServerDataPDU(serverData.coreData, security, serverData.networkData)
             modifiedGCCPDU = GCCConferenceCreateResponsePDU(gccPDU.nodeID, gccPDU.tag, gccPDU.result, rdpParser.write(modifiedServerData))
             modifiedMCSPDU = MCSConnectResponsePDU(pdu.result, pdu.calledConnectID, pdu.domainParams, gccParser.write(modifiedGCCPDU))
@@ -213,6 +226,14 @@ class MCSMITM:
         Forward a channel join request to the server.
         :param pdu: the channel join request
         """
+
+        # If we want to spoof an rdpdr connection, save the current join request and send one for rdpdr first
+        if self.state.spoofRdpdr and not self.spoofRdpdrJoinRequestSent:
+            self.spoofRdpdrJoinRequestSent = True
+            self.savedJoinRequest = pdu
+            channelID = next(id for id, channel in self.state.channelMap.items() if channel == MCSChannelName.DEVICE_REDIRECTION)
+            pdu = MCSChannelJoinRequestPDU(pdu.initiator, channelID, b"")
+
         self.server.sendPDU(pdu)
 
     def onChannelJoinConfirm(self, pdu: MCSChannelJoinConfirmPDU):
@@ -221,6 +242,9 @@ class MCSMITM:
         :param pdu: the confirmation PDU
         """
 
+        # If this is a spoofed request, then we have a request from the actual client saved in this variable
+        spoofed = self.savedJoinRequest is not None
+
         if pdu.result == 0:
             clientChannel = MCSServerChannel(self.client, pdu.initiator, pdu.channelID)
             serverChannel = MCSClientChannel(self.server, pdu.initiator, pdu.channelID)
@@ -228,7 +252,11 @@ class MCSMITM:
             self.serverChannels[pdu.channelID] = serverChannel
             self.buildChannelCallback(clientChannel, serverChannel)
 
-        self.client.sendPDU(pdu)
+        if spoofed:
+            self.server.sendPDU(self.savedJoinRequest)
+            self.savedJoinRequest = None
+        else:
+            self.client.sendPDU(pdu)
 
     def onSendDataRequest(self, pdu: MCSSendDataRequestPDU):
         """

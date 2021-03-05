@@ -15,7 +15,7 @@ from pyrdp.core import AsyncIOSequencer, AwaitableClientFactory, connectTranspar
 from pyrdp.core.ssl import ClientTLSContext, ServerTLSContext, CertificateCache
 from pyrdp.enum import MCSChannelName, ParserMode, PlayerPDUType, ScanCode, SegmentationPDUType
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, LayerChainItem, RawLayer, \
-    VirtualChannelLayer
+    VirtualChannelLayer, VoidLayer
 from pyrdp.logging import RC4LoggingObserver
 from pyrdp.logging.adapters import SessionLogger
 from pyrdp.logging.observers import FastPathLogger, LayerLogger, MCSLogger, SecurityLogger, \
@@ -354,7 +354,7 @@ class RDPMITM:
 
         clientSecurity = self.state.createSecurityLayer(ParserMode.SERVER, True)
         clientVirtualChannel = VirtualChannelLayer(activateShowProtocolFlag=False)
-        clientLayer = DeviceRedirectionLayer()
+        clientLayer = VoidLayer() if not self.state.spoofRdpdr else DeviceRedirectionLayer()
         serverSecurity = self.state.createSecurityLayer(ParserMode.CLIENT, True)
         serverVirtualChannel = VirtualChannelLayer(activateShowProtocolFlag=False)
         serverLayer = DeviceRedirectionLayer()

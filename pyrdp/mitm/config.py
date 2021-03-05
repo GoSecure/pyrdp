@@ -49,6 +49,12 @@ class MITMConfig:
         self.extractFiles: bool = True
         """Whether to extract file transferred between the client and server."""
 
+        self.spoofRdpdr: bool = True
+        """
+        Whether we should create an RDPDR channel if not requested by the client.
+        Since our non-NLA method of capturing passwords relies on rdpdr, this helps us gather more credentials.
+        """
+
         self.recordReplays: bool = True
         """Whether replays should be recorded or not"""
 

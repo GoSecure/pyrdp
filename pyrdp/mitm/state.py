@@ -40,6 +40,9 @@ class RDPMITMState:
         self.channelMap: Dict[int, str] = {}
         """Dictionary of channel names to channel IDs"""
 
+        self.spoofRdpdr: bool = False
+        """Boolean to check if we're using a spoofed rdpdr channel (unrequested by the client) or a real one"""
+
         self.rc4RSAKey = RSA.generate(2048)
         """The RSA key for the RC4 key exchange"""
 
