@@ -1,6 +1,6 @@
 import unittest
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, mock_open
+from unittest.mock import Mock, patch, MagicMock, mock_open, call
 
 from pyrdp.mitm.FileMapping import FileMapping
 
@@ -81,7 +81,7 @@ class FileMappingTest(unittest.TestCase):
             mock_mkdir.assert_called_once()
             mock_symlink_to.assert_called_once()
 
-            self.assertEqual(mock_mkdir.call_args[0][0], mapping.filesystemPath.parents[0])
+            self.assertEqual(mock_mkdir.mock_calls[0], call(mapping.filesystemPath.parents[0], exist_ok=True, parents=True))
 
             # The symlink must be a relative symlink.
             # The symlink is in filesystems/ so the link path will start with '..'.
