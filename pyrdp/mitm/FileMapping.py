@@ -79,7 +79,7 @@ class FileMapping:
             self.filesystemPath.symlink_to(Path(os.path.relpath(hashPath, self.filesystemPath.parent)))
 
             self.log.info("SHA1 '%(path)s' = '%(shasum)s'", {
-                "path": self.filesystemPath.relative_to(self.filesystemDir), "shasum": fileHash
+                "path": str(self.filesystemPath.relative_to(self.filesystemDir)), "shasum": fileHash
             })
 
     @staticmethod
@@ -94,7 +94,7 @@ class FileMapping:
         file = open(handle, "wb")
 
         log.info("Saving file '%(remotePath)s' to '%(localPath)s'", {
-            "localPath": tmpPath, "remotePath": remotePath
+            "localPath": str(tmpPath), "remotePath": str(remotePath)
         })
 
         return FileMapping(file, Path(tmpPath), filesystemPath, filesystemDir, log)
