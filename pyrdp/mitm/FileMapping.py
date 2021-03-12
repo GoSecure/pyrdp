@@ -78,8 +78,8 @@ class FileMapping:
             # Make the symlink relative so you can move the output folder around and it will still work.
             self.filesystemPath.symlink_to(Path(os.path.relpath(hashPath, self.filesystemPath.parent)))
 
-            self.log.info("SHA1 '%(path)s' = '%(hash)s'", {
-                "path": self.filesystemPath.relative_to(self.filesystemDir), "hash": fileHash
+            self.log.info("SHA1 '%(path)s' = '%(shasum)s'", {
+                "path": self.filesystemPath.relative_to(self.filesystemDir), "shasum": fileHash
             })
 
     @staticmethod
