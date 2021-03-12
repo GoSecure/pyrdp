@@ -17,7 +17,7 @@ class FileMappingTest(unittest.TestCase):
     def createMapping(self, mkdir: MagicMock, mkstemp: MagicMock, mock_open_object):
         mkstemp.return_value = (1, str(self.outDir / "tmp" / "tmp_test"))
         mapping = FileMapping.generate("/test", self.outDir, Path("filesystems"), self.log)
-        mapping.getHash = Mock(return_value = self.hash)
+        mapping.getSha1Hash = Mock(return_value = self.hash)
         return mapping, mkdir, mkstemp, mock_open_object
 
     def test_generate_createsTempFile(self):

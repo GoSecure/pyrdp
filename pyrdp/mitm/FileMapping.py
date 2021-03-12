@@ -39,7 +39,7 @@ class FileMapping:
         self.file.write(data)
         self.written = True
 
-    def getHash(self):
+    def getSha1Hash(self):
         with open(self.dataPath, "rb") as f:
             sha1 = hashlib.sha1()
 
@@ -57,7 +57,7 @@ class FileMapping:
         self.log.debug("Closing file %(path)s", {"path": self.dataPath})
         self.file.close()
 
-        fileHash = self.getHash()
+        fileHash = self.getSha1Hash()
 
         # Go up one directory because files are saved to outDir / tmp while we're downloading them
         hashPath = (self.dataPath.parents[1] / fileHash)
