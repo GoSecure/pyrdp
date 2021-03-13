@@ -3,6 +3,7 @@
 # Copyright (C) 2019 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+from logging import LoggerAdapter
 
 from pyrdp.layer import FastPathLayer
 from pyrdp.logging.StatCounter import StatCounter, STAT
@@ -16,14 +17,14 @@ class FastPathMITM(BasePathMITM):
     MITM component for the fast-path layer.
     """
 
-    def __init__(self, client: FastPathLayer, server: FastPathLayer, state: RDPMITMState, statCounter: StatCounter):
+    def __init__(self, client: FastPathLayer, server: FastPathLayer, state: RDPMITMState, statCounter: StatCounter, log: LoggerAdapter):
         """
         :param client: fast-path layer for the client side
         :param server: fast-path layer for the server side
         :param state: the MITM state.
         """
 
-        super().__init__(state, client, server, statCounter)
+        super().__init__(state, client, server, statCounter, log)
 
         self.client.createObserver(
             onPDUReceived=self.onClientPDUReceived,

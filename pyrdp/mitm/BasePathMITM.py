@@ -3,6 +3,7 @@
 # Copyright (C) 2019-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+from logging import LoggerAdapter
 
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.enum import ScanCode
@@ -16,11 +17,12 @@ class BasePathMITM:
     Base MITM component for the fast-path and slow-path layers.
     """
 
-    def __init__(self, state: RDPMITMState, client: Layer, server: Layer, statCounter: StatCounter):
+    def __init__(self, state: RDPMITMState, client: Layer, server: Layer, statCounter: StatCounter, log: LoggerAdapter):
         self.state = state
         self.client = client
         self.server = server
         self.statCounter = statCounter
+        self.log = log
 
     def onClientPDUReceived(self, pdu: PDU):
         raise NotImplementedError("onClientPDUReceived must be overridden")
@@ -53,10 +55,17 @@ class BasePathMITM:
         # CTRL + A
         elif scanCodeTuple == ScanCode.KEY_A and self.state.ctrlPressed and not isReleased:
             self.state.inputBuffer += "<ctrl-a>"
+        elif scanCodeTuple == ScanCode.SPACE and not isReleased:
+            self.state.inputBuffer += " "
         # Return
         elif scanCodeTuple == ScanCode.RETURN and not isReleased:
             self.state.credentialsCandidate = self.state.inputBuffer
             self.state.inputBuffer = ""
+
+            self.log.info("Credentials attempt from heuristic: %(credentials_attempt)s", {
+                "credentials_attempt": (self.state.credentialsCandidate)
+            })
+
         # Normal input
         elif len(keyName) == 1:
             if not isReleased:

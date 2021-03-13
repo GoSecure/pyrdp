@@ -3,6 +3,7 @@
 # Copyright (C) 2019-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+from logging import LoggerAdapter
 
 from pyrdp.enum import CapabilityType, KeyboardFlag, OrderFlag, VirtualChannelCompressionFlag, Order
 from pyrdp.layer import SlowPathLayer, SlowPathObserver
@@ -17,12 +18,12 @@ class SlowPathMITM(BasePathMITM):
     MITM component for the slow-path layer.
     """
 
-    def __init__(self, client: SlowPathLayer, server: SlowPathLayer, state: RDPMITMState, statCounter: StatCounter):
+    def __init__(self, client: SlowPathLayer, server: SlowPathLayer, state: RDPMITMState, statCounter: StatCounter, log: LoggerAdapter):
         """
         :param client: slow-path layer for the client side
         :param server: slow-path layer for the server side
         """
-        super().__init__(state, client, server, statCounter)
+        super().__init__(state, client, server, statCounter, log)
 
         self.clientObserver = self.client.createObserver(
             onPDUReceived=self.onClientPDUReceived,
