@@ -76,6 +76,8 @@ class RDPMITMState:
         self.sessionID = sessionID
         """The current session ID"""
 
+        self.windowSize = None
+
         self.securitySettings.addObserver(self.crypters[ParserMode.CLIENT])
         self.securitySettings.addObserver(self.crypters[ParserMode.SERVER])
 

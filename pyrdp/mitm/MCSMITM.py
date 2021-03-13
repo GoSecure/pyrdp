@@ -88,6 +88,8 @@ class MCSMITM:
         rdpClientDataPDU.securityData.encryptionMethods &= ~EncryptionMethod.ENCRYPTION_FIPS
         rdpClientDataPDU.securityData.extEncryptionMethods &= ~EncryptionMethod.ENCRYPTION_FIPS
 
+        self.state.windowSize = (rdpClientDataPDU.coreData.desktopWidth, rdpClientDataPDU.coreData.desktopHeight)
+
         if self.state.config.downgrade:
             #  This disables the support for the Graphics pipeline extension, which is a completely different way to
             #  transfer graphics from server to client. https://msdn.microsoft.com/en-us/library/dn366933.aspx
