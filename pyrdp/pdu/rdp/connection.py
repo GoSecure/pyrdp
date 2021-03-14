@@ -5,12 +5,14 @@
 #
 
 import socket
-from typing import Optional
+from typing import List, Optional
 
 from Crypto.PublicKey.RSA import RsaKey
 
-from pyrdp.enum import ChannelOption, ConnectionDataType, RDPVersion, ServerCertificateType, EncryptionLevel
-from pyrdp.enum.rdp import ClientCapabilityFlag, ColorDepth, ConnectionType, DesktopOrientation, EncryptionMethod, \
+from pyrdp.enum import ChannelOption, ConnectionDataType, EncryptionLevel, RDPVersion, \
+    ServerCertificateType
+from pyrdp.enum.rdp import ClientCapabilityFlag, ColorDepth, ConnectionType, DesktopOrientation, \
+    EncryptionMethod, \
     HighColorDepth, KeyboardType, NegotiationProtocols, SupportedColorDepth
 from pyrdp.pdu.pdu import PDU
 
@@ -140,13 +142,48 @@ class ClientClusterData:
         self.redirectedSessionID = redirectedSessionID
 
 
+class MonitorDef:
+    """
+    https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/c3964b39-3d54-4ae1-a84a-ceaed311e0f6
+    """
+
+    def __init__(self, left: int, top: int, right: int, bottom: int, flags: int):
+        self.left = left
+        self.top = top
+        self.right = right
+        self.bottom = bottom
+        self.flags = flags
+
+
+class ClientMonitorData:
+    """
+    https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/a8029f8e-01e1-4f19-af67-bcad5bdef624
+    """
+    def __init__(self, flags: int, monitorCount: int, monitorDefArray: List[MonitorDef]):
+        self.header = ConnectionDataType.CLIENT_MONITOR
+        self.flags = flags
+        self.monitorCount = monitorCount
+        self.monitorDefArray = monitorDefArray
+
+
+class ClientUnparsedData:
+
+    def __init__(self, header: int, data):
+        self.header = header
+        self.payload = data
+
+
 class ClientDataPDU(PDU):
-    def __init__(self, coreData: ClientCoreData, securityData: ClientSecurityData, networkData: ClientNetworkData, clusterData: Optional[ClientClusterData]):
+    def __init__(self, coreData: ClientCoreData, securityData: ClientSecurityData, networkData: ClientNetworkData,
+                 clusterData: Optional[ClientClusterData], monitorData: Optional[ClientMonitorData], rest: List[ClientUnparsedData]):
         PDU.__init__(self)
         self.coreData = coreData
         self.securityData = securityData
         self.networkData = networkData
         self.clusterData = clusterData
+        self.monitorData = monitorData
+        self.rest = rest
+        """ The unparsed structures """
 
     @staticmethod
     def generate(serverSelectedProtocol: NegotiationProtocols,

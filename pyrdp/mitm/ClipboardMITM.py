@@ -7,7 +7,6 @@
 from logging import LoggerAdapter
 from io import BytesIO
 from functools import partial
-
 from pathlib import Path
 
 from pyrdp.core import decodeUTF16LE, Uint64LE

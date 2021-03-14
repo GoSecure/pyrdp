@@ -8,12 +8,13 @@ import typing
 from logging import LoggerAdapter
 
 from pyrdp.core import defer
-from pyrdp.enum import NegotiationFailureCode, NegotiationProtocols, NegotiationType, NegotiationRequestFlags
+from pyrdp.enum import NegotiationFailureCode, NegotiationRequestFlags, NegotiationType
+from pyrdp.enum.negotiation import NegotiationResponseFlags
 from pyrdp.layer import X224Layer
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.parser import NegotiationRequestParser, NegotiationResponseParser
-from pyrdp.pdu import NegotiationRequestPDU, NegotiationResponsePDU, X224ConnectionConfirmPDU, X224ConnectionRequestPDU, \
-    X224DisconnectRequestPDU, X224ErrorPDU, NegotiationFailurePDU
+from pyrdp.pdu import NegotiationFailurePDU, NegotiationRequestPDU, NegotiationResponsePDU, \
+    X224ConnectionConfirmPDU, X224ConnectionRequestPDU, X224DisconnectRequestPDU, X224ErrorPDU
 
 
 class X224MITM:
@@ -111,7 +112,10 @@ class X224MITM:
             self.log.info("The server failed the negotiation. Error: %(error)s", {"error": NegotiationFailureCode.getMessage(response.failureCode)})
             payload = pdu.payload
         else:
-            payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, response.selectedProtocols))
+            # If the server supports extended client data blocks in the clientData PDU, we want the client to send them.
+            flagsToSend = response.flags & NegotiationResponseFlags.EXTENDED_CLIENT_DATA_SUPPORTED
+            payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, flagsToSend, response.selectedProtocols))
+        self.client.sendConnectionConfirm(payload, source=0x1234)
 
         # FIXME: This should be done based on what authentication method the server selected, not on what
         #        the client supports.
