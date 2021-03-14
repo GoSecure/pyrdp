@@ -318,3 +318,14 @@ def getKeyName(scanCode: int, isExtended: bool, shiftPressed: bool, capsLockOn: 
 
     key = code[1] if shiftPressed else code[0]
     return f'{key}' if len(key) > 1 else key
+
+
+def isModifier(scanCode: int):
+    """
+    Return true if the scancode is one of:
+        - Control
+        - Alt
+        - Shift
+        - Windows Key (Meta)
+    """
+    return scanCode in [0x1D, 0x2A, 0x36, 0x38, 0x5B, 0x5C]

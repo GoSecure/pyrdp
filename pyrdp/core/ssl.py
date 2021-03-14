@@ -1,23 +1,17 @@
 #
-# Copyright (c) 2014-2015 Sylvain Peyrefitte
+# Copyright (c) 2014-2020 Sylvain Peyrefitte
+# Copyright (c) 2020 GoSecure Inc.
 #
-# This file is part of rdpy.
+# This file is part of the PyRDP project.
 #
-# rdpy is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
+# Licensed under the GPLv3 or later.
 #
 
+from os import path
+
+import OpenSSL
 from OpenSSL import SSL
+
 from twisted.internet import ssl
 
 
@@ -60,3 +54,61 @@ class ServerTLSContext(ssl.DefaultOpenSSLContextFactory):
         # See comment in ClientTLSContext
         ssl.DefaultOpenSSLContextFactory.__init__(self, privateKeyFileName, certificateFileName, SSL.SSLv23_METHOD,
                                                   TPDUSSLContext)
+
+
+class CertificateCache():
+    """
+    Handle multiple certificates.
+    """
+
+    def __init__(self, cachedir, log):
+        self._root = cachedir
+        self.log = log
+
+    def clone(self, cert: OpenSSL.crypto.X509) -> (OpenSSL.crypto.PKey, OpenSSL.crypto.X509):
+        """Clone the provided certificate."""
+
+        # Generate a private key for the server.
+        key = OpenSSL.crypto.PKey()
+        key.generate_key(OpenSSL.crypto.TYPE_RSA, cert.get_pubkey().bits())
+
+        # Actual type is str, but this prevents warnings
+        digestAlgorithm: bytes = cert.get_signature_algorithm().decode()
+
+        # Force digest algorithm to be sha256
+        if digestAlgorithm in ["md4", "md5"]:
+            digestAlgorithm = "sha256"
+
+        cert.set_pubkey(key)
+        cert.sign(key, digestAlgorithm)
+
+        return key, cert
+
+    def lookup(self, cert: OpenSSL.crypto.X509) -> (str, str):
+        subject = cert.get_subject()
+        parts = dict(subject.get_components())
+        commonName = parts[b'CN'].decode()
+        base = str(self._root / commonName)
+
+        if path.exists(base + '.pem'):
+            self.log.info('Using cached certificate for %s', commonName)
+
+            # Recover cache entry from disk.
+            privKey = base + '.pem'
+            certFile = base + '.crt'
+            return privKey, certFile
+        else:
+            priv, cert = self.clone(cert)
+            privKey = base + '.pem'
+            certFile = base + '.crt'
+
+            # Save Certificate to disk
+            with open(certFile, "wb") as f:
+                f.write(OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert))
+
+            with open(privKey, "wb") as f:
+                f.write(OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, priv))
+
+            self.log.info('Cloned server certificate to %s', certFile)
+
+            return privKey, certFile

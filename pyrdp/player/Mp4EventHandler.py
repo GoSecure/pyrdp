@@ -132,8 +132,7 @@ class Mp4EventHandler(RenderingEventHandler):
     def _writeFrame(self, surface: QImage):
         w = self.stream.width
         h = self.stream.height
-        surface = surface.scaled(w, h) if self.scale else surface
-        frame = av.VideoFrame.from_image(ImageQt.fromqimage(surface))
+        surface = surface.scaled(w, h) if self.scale else surface.copy()
 
         # Draw the mouse pointer. Render mouse clicks?
         p = QPainter(surface)

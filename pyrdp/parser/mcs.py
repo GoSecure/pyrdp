@@ -55,7 +55,7 @@ class MCSParser(Parser):
         self.headerOptions[MCSPDUType.ATTACH_USER_CONFIRM] = 2
         self.headerOptions[MCSPDUType.CHANNEL_JOIN_CONFIRM] = 2
 
-    def parse(self, data: bytes) -> MCSPDU:
+    def doParse(self, data: bytes) -> MCSPDU:
         """
         Parse raw data bytes into a MCSPDU
         :param data: raw bytes to parse

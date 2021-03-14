@@ -21,7 +21,7 @@ class RDPMITMState:
     State object for the RDP MITM. This is for data that needs to be shared across components.
     """
 
-    def __init__(self, config: MITMConfig):
+    def __init__(self, config: MITMConfig, sessionID: str):
         self.requestedProtocols: Optional[NegotiationProtocols] = None
         """The original request protocols"""
 
@@ -72,6 +72,9 @@ class RDPMITMState:
 
         self.ctrlPressed = False
         """The current keybaord ctrl state"""
+
+        self.sessionID = sessionID
+        """The current session ID"""
 
         self.securitySettings.addObserver(self.crypters[ParserMode.CLIENT])
         self.securitySettings.addObserver(self.crypters[ParserMode.SERVER])

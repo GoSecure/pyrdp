@@ -9,7 +9,7 @@ from PySide2.QtWidgets import QApplication, QWidget
 from pyrdp.layer import PlayerLayer
 from pyrdp.player.BaseTab import BaseTab
 from pyrdp.player.PlayerEventHandler import PlayerEventHandler
-from pyrdp.player.Replay import Replay
+from pyrdp.player.Replay import Replay, ReplayReader
 from pyrdp.player.ReplayBar import ReplayBar
 from pyrdp.player.ReplayThread import ReplayThread
 from pyrdp.ui import QRemoteDesktop
@@ -34,6 +34,7 @@ class ReplayTab(BaseTab):
         self.eventHandler = PlayerEventHandler(self.widget, self.text)
 
         replay = Replay(self.file)
+        self.reader = ReplayReader(replay)
         self.thread = ReplayThread(replay)
         self.thread.eventReached.connect(self.readEvent)
         self.thread.timeUpdated.connect(self.onTimeUpdated)
@@ -50,9 +51,6 @@ class ReplayTab(BaseTab):
 
         self.tabLayout.insertWidget(0, self.controlBar)
 
-        self.player = PlayerLayer()
-        self.player.addObserver(self.eventHandler)
-
     def play(self):
         self.controlBar.button.setPlaying(True)
         self.controlBar.play.emit()
@@ -62,14 +60,8 @@ class ReplayTab(BaseTab):
         Read an event from the file at the given position.
         :param position: the position of the event in the file.
         """
-        self.file.seek(position)
-
-        data = self.file.read(8)
-        self.player.recv(data)
-
-        length = self.player.getDataLengthRequired()
-        data = self.file.read(length)
-        self.player.recv(data)
+        event = self.reader.readEvent(position)
+        self.eventHandler.onPDUReceived(event)
 
     def onTimeUpdated(self, currentTime: float):
         """

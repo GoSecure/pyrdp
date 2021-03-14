@@ -96,6 +96,20 @@ class MITMConfig:
         """
         return self.outDir / "files"
 
+    @property
+    def filesystemDir(self) -> Path:
+        """
+        Get the directory for filesystem clones.
+        """
+        return self.outDir / "filesystems"
+
+    @property
+    def certDir(self) -> Path:
+        """
+        Get the directory for dynamically generated certificates.
+        """
+        return self.outDir / "certs"
+
 
 """
 The default MITM configuration.

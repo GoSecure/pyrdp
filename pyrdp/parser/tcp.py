@@ -10,7 +10,7 @@ from pyrdp.pdu.tcp import TCPPDU
 
 
 class TCPParser(Parser):
-    def parse(self, data: bytes) -> TCPPDU:
+    def doParse(self, data: bytes) -> TCPPDU:
         return TCPPDU(data)
 
     def write(self, pdu: PDU) -> bytes:

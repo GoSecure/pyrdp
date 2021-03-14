@@ -12,7 +12,7 @@ import setuptools
 from distutils.core import Extension, setup
 
 setup(name='pyrdp',
-    version='0.4.2.dev0',
+    version='1.0.1.dev0',
     description='Remote Desktop Protocol Man-in-the-Middle and library for Python 3',
     long_description="""Remote Desktop Protocol Man-in-the-Middle and library for Python 3""",
     author='Émilio Gonzalez, Francis Labelle',
@@ -32,7 +32,7 @@ setup(name='pyrdp',
     ],
     install_requires=[
         'appdirs>=1,<2',
-        'cryptography>=2.2,<3',
+        'cryptography>=3.3.2,<4',
         'names>=0,<1',
         'progressbar2>=3.20,<4',
         'pyasn1>=0,<1',

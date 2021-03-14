@@ -6,47 +6,119 @@
 This document provides a high-level view of the changes introduced in {project-name} by release.
 For a detailed view of what has changed, refer to the {uri-repo}/commits/master[commit history] on GitHub.
 
-== <master> - <unreleased>
+== master - <unreleased>
 
 === Enhancements
+
+*Security*
+
+* Cryptography dependency updated to 3.3.2 due to upstream security issues which we are not really concerned about for this project's use case
+  (See {uri-issue}259[#259], {uri-issue}295[#295])
+
+*Tools*
+
+* `pyrdp-convert` MP4 conversion is now 2x faster! (See {uri-issue}234[#234] and {uri-issue}273[#273])
+* Added a JSON output format to `pyrdp-convert` (See {uri-issue}236[#236])
+* Use a proper progress bar with completion percentage and ETA in `pyrdp-convert` (See {uri-issue}274[#274])
+
+*MITM*
+
+* Added detection function for BlueKeep scans / exploit attempts. PyRDP will log the attempt and shut down the connection. The JSON log has an exploitInfo attribute as well as a parserInfo attribute to help investigate what happened.
+* Added better logging for parser errors. PyRDP will now log which parser crashed and the data that was fed to that parser to make it crash. This makes it easier to investigate bugs and exploits. In JSON logs, this information shows up in the parserInfo attribute.
+* Files intercepted or crawled by the MITM are now named according to the sha1 hash of their contents and stored in the `pyrdp_output/files` folder (see {uri-issue}261[#261])
+* Files that are currently being downloaded by the MITM but are not complete are stored in the `pyrdp_output/files/tmp` folder
+* Both the file stealer and the file crawler components now mimick the victim's filesystem by creating the same file hierarchy in the `pyrdp_output/filesystems/<SESSION_ID>` folders.
+  Files in these folders are symbolic links to files in the `pyrdp_output/files` folder to avoid useless duplication.
+  The symlinks are relative, which allows you to move the folder around without losing the mapping.
+  (See {uri-issue}270[#270] and {uri-issue}299[#299])
+* Removed `mapping.json` file since all the information it would contain can be obtained by checking the `pyrdp_output/filesystems` folder
+* Added tests for the DeviceRedirectionMITM and FileMapping classes
+
+=== Bug fixes
+
+* Added SO_REUSEADDR to MITM socket to avoid having to wait for sockets stuck in `TIME_WAIT`
+* Fixed a bug causing the connection to crash when the pointerCacheSize field is absent in PointerCapability (See {uri-issue}287[#287])
+* Fixed a bug causing the connection to crash when the client sends no connection negotiation flags (See {uri-issue}283[#283])
+* Fixed a bug preventing files opened by the RDPDR file stealer from being closed ({uri-issue}264[#264])
+* Fixed an issue with ghost mouse pointers in replays converted to MP4 ({uri-issue}271[#271])
+* Fixed a regression with the `--sensor-id` (`-s`) command line argument.
+  It would not work since 1.0. ({uri-issue}279[#279])
+
+=== Infrastructure
+
+* Add automated tests to CI configuration
+
+== 1.0.0 - 2020-10-19
+
+We added many interesting features in the last couple of months and have used this tool in enough contexts to officially mark it as stable.
+Some of the noteworthy features are described https://www.gosecure.net/blog/2020/10/20/announcing-pyrdp-1/[in our announcement blog post].
+
+This release has a dedicated SecTor 2020 presentation: https://sector.ca/sessions/achieving-pyrdp-1-0-the-remote-desktop-pwnage-mitm-and-library/[Achieving PyRDP 1.0 – The Remote Desktop Pwnage MITM and Library].
+
+=== Enhancements
+
+*Tools*
 
 * Introduced the `pyrdp-convert` tool to convert between pcaps, PyRDP replay files and MP4 video files.
   Read link:README.md#using-pyrdp-convert[its section in the README for details].
   See {uri-issue}199[#199], {uri-issue}188[#188] and {uri-issue}170[#170].
-* `pyrdp-player` can now run in headless mode (`--headless`).
+
+*Player*
+
+* New `--headless` mode to output replay data to the terminal.
   All GUI dependencies are now optional enabling further Docker image size reduction.
   See {uri-issue}151[#151], {uri-issue}163[#163] and {uri-issue}190[#190].
-* `pyrdp-player` now support window scaling of the RDP session ({uri-issue}101[#101], {uri-issue}208[#208])
+* Added window scaling support for session replays ({uri-issue}101[#101], {uri-issue}208[#208])
+
+*MITM*
+
+* Added support for dynamic certificate cloning when no certificate is specified. ({uri-issue}94[#94], {uri-issue}243[#243]).
+  This is enabled by default and can be overridden through the existing `-c` and `-k` arguments.
+* File interception now saves files transferred via clipboard copy/paste ({uri-issue}100[#100])
 * Added a transparent proxy mode where source or destination packets are unaltered from the client or the server's perspective.
-  Read link:docs/transparent-proxy.md[the feature's documentation for setup and details.].
-  Also see {uri-issue}197[#197], {uri-issue}204[#204] and {uri-issue}205[#205].
-* Loosen up TLS version checks to allow a broader set of clients and server ({uri-issue}192[#192], {uri-issue}193[#193])
-* Explicitly disabled TLS 1.3 for now since we don't (can't?) record TLS 1.3 master secrets yet ({uri-issue}116[#116], {uri-issue}193[#193])
-* All logging can be customized using configuration files ({uri-issue}191[#191])
-* Added `sessionID` to replay filename ({uri-issue}180[#180])
-* Added `replayfilename` to the connection report log entry ({uri-issue}180[#180])
+  See link:docs/transparent-proxy.md[feature documentation for details and usage examples].
+  See also {uri-issue}197[#197], {uri-issue}204[#204], {uri-issue}205[#205] and {uri-issue}239[#239].
+* Added support for Network Level Authentication (NLA) by passing CredSSP authentication untouched.
+  Activate it with the `--auth ssp` switch.
+  It requires the RDP server's private key which must be given to PyRDP.
+  See {uri-issue}229[#229] for details.
+* Support for 32-bit x86 operating systems when not using the graphical interface ({uri-issue}150[#150])
 * Added a `twistd` plugin ({uri-issue}174[#174], {uri-issue}177[#177], {uri-issue}191[#191])
-* Support for 32-bit x86 operating systems now that the GUI is optional ({uri-issue}150[#150])
-* Documentation updates and fixes ({uri-issue}165[#165], {uri-issue}166[#166], {uri-issue}172[#172])
-* Added `--disable-active-clipboard` switch to prevent clipboard request injection
-* Added `--no-downgrade` switch to prevent protocol downgrading where possible {uri-issue}189[#189]
-* Added `--no-files` switch to prevent extracting transferred files {uri-issue}195[#195]
-* Added `--gdi` MITM switch to enable accelerated graphics pipeline (MS-RDPEGDI) ({uri-issue}50[#50])
-* PyRDP no longer create replay files for garbage sessions with less than 19 bytes ({uri-issue}169[#169], {uri-issue}207[#207])
+* Loosen up TLS version checks to allow a broader set of clients and server ({uri-issue}192[#192], {uri-issue}193[#193])
+* Explicitly disabled TLS 1.3 for now since we don't record TLS 1.3 master secrets yet ({uri-issue}116[#116], {uri-issue}193[#193])
+* Logging can be customized using configuration files ({uri-issue}191[#191])
+* Improvements on log correlation ({uri-issue}180[#180]):
+  - Added `replayfilename` to the connection report log entry
+  - Added `sessionID` to replay filename
+* Added several switches to selectively disable features of PyRDP:
+  - `--disable-active-clipboard` switch to prevent clipboard request injection
+  - `--no-downgrade` switch to prevent protocol downgrading where possible {uri-issue}189[#189]
+  - `--no-files` switch to prevent extracting transferred files {uri-issue}195[#195]
+* Added support for the GDI graphics as the default graphics pipeline.
+  The `--no-gdi` switch was added to force the previous behavior (bitmaps).
+  See {uri-issue}50[#50] and {uri-issue}209[#209] for details.
 
 === Bug fixes
 
 * Python 3.8 supported by fixing a logging.Formatter misuse ({uri-issue}176[#176])
-* Fixed stack traces in the player when attempting to print strings with ending null character ({uri-issue}182[#182])
-* Remove NLA argument from `pyrdp-mitm`.
-  It was never supported and thus misleading.
+* PyRDP no longer creates replay files for sessions with no activity ({uri-issue}169[#169], {uri-issue}207[#207])
+* Fixed stack traces in the player when attempting to print strings ending with a null character ({uri-issue}182[#182])
+* Removed NLA argument from `pyrdp-mitm`
+* Updated and clarified documentation ({uri-issue}165[#165], {uri-issue}166[#166], {uri-issue}172[#172])
 
 === Infrastructure
 
+* Docker images are now based on Ubuntu 20.04 ({uri-issue}251[#251])
 * Docker image size reduced and split in default and `-slim` variants ({uri-issue}173[#173], {uri-issue}198[#198])
-* Better use of Docker caching for faster development iterations ({uri-issue}217[#217], {uri-issue}219[#219])
-* Default Docker Compose command now `pyrdp-mitm -h` to avoid confusing crash on `docker-compose up` ({uri-issue}173[#173])
-* Added continuous integration leveraging GitHub Actions that builds the docker image and runs an integration test on both Ubuntu and Windows ({uri-issue}194[#194], {uri-issue}201[#201], {uri-issue}202[#202])
+* Improved docker caching for faster development iterations ({uri-issue}217[#217], {uri-issue}219[#219])
+* Changed default docker compose command now `pyrdp-mitm -h` to avoid confusing crash on `docker-compose up` ({uri-issue}173[#173])
+* Added continuous integration with GitHub Actions that builds docker images and runs basic smoke tests ({uri-issue}194[#194], {uri-issue}201[#201], {uri-issue}202[#202], {uri-issue}253[#253])
+
+=== Credits
+
+Thanks to the following people who contributed to this release:
+
+Olivier Bilodeau (@obilodeau), Alexandre Beaulieu (@alxbl), Émilio Gonzalez (@res260), Francis Labelle (@xshill), @robeving, @sotebob
 
 
 == 0.4.1 - 2019-11-03

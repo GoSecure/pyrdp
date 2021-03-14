@@ -9,12 +9,12 @@ from io import BytesIO
 from pyrdp.core import Uint16LE, Uint32LE
 from pyrdp.enum import PointerEventType
 from pyrdp.exceptions import ParsingError
-from pyrdp.parser.parser import Parser
+from pyrdp.parser.parser import Parser, StreamParser
 from pyrdp.pdu import Point, PointerCacheEvent, PointerColorEvent, PointerNewEvent, PointerPositionEvent, \
     PointerSystemEvent
 
 
-class PointerEventParser(Parser):
+class PointerEventParser(StreamParser):
     def __init__(self):
         super().__init__()
         self.parsers = {
@@ -33,7 +33,7 @@ class PointerEventParser(Parser):
             PointerEventType.TS_PTRMSGTYPE_POINTER: self.writeNewEvent,
         }
 
-    def parse(self, stream):
+    def doParse(self, stream):
         messageType = Uint16LE.unpack(stream)
         stream.read(2)
 
