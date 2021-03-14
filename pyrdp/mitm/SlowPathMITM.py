@@ -9,7 +9,7 @@ from pyrdp.enum import CapabilityType, KeyboardFlag, OrderFlag, VirtualChannelCo
 from pyrdp.layer import SlowPathLayer, SlowPathObserver
 from pyrdp.logging.StatCounter import StatCounter, STAT
 from pyrdp.mitm.state import RDPMITMState
-from pyrdp.pdu import Capability, ConfirmActivePDU, DemandActivePDU, InputPDU, KeyboardEvent, SlowPathPDU
+from pyrdp.pdu import Capability, ConfirmActivePDU, DemandActivePDU, InputPDU, KeyboardEvent, SlowPathPDU, MouseEvent
 from pyrdp.mitm.BasePathMITM import BasePathMITM
 
 
@@ -48,6 +48,8 @@ class SlowPathMITM(BasePathMITM):
                     if isinstance(event, KeyboardEvent):
                         self.onScanCode(event.keyCode, event.flags & KeyboardFlag.KBDFLAGS_DOWN == 0,
                                         event.flags & KeyboardFlag.KBDFLAGS_EXTENDED != 0)
+                    elif isinstance(event, MouseEvent):
+                        self.onMouse(event.x, event.y, event.flags)
 
     def onServerPDUReceived(self, pdu: SlowPathPDU):
         self.statCounter.increment(STAT.IO_OUTPUT_SLOWPATH)

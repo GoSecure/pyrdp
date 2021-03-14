@@ -8,7 +8,7 @@ from logging import LoggerAdapter
 from pyrdp.layer import FastPathLayer
 from pyrdp.logging.StatCounter import StatCounter, STAT
 from pyrdp.mitm.state import RDPMITMState
-from pyrdp.pdu import FastPathPDU, FastPathScanCodeEvent
+from pyrdp.pdu import FastPathPDU, FastPathScanCodeEvent, FastPathMouseEvent
 from pyrdp.enum import scancode
 from pyrdp.mitm.BasePathMITM import BasePathMITM
 
@@ -43,6 +43,8 @@ class FastPathMITM(BasePathMITM):
             for event in pdu.events:
                 if isinstance(event, FastPathScanCodeEvent):
                     self.onScanCode(event.scanCode, event.isReleased, event.rawHeaderByte & scancode.KBDFLAGS_EXTENDED != 0)
+                elif isinstance(event, FastPathMouseEvent):
+                    self.onMouse(event.mouseX, event.mouseY, event.pointerFlags)
 
     def onServerPDUReceived(self, pdu: FastPathPDU):
         self.statCounter.increment(STAT.IO_OUTPUT_FASTPATH)
