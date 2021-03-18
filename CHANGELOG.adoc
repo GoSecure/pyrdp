@@ -23,6 +23,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 *MITM*
 
+* PyRDP will log the value of the `HOST_IP` variable on start if it exists. You can set it to the IP address of the host running PyRDP. This is mostly helpful when you're using PyRDP in Docker and you want the IP of the Docker host in the logs.
 * Added detection function for BlueKeep scans / exploit attempts. PyRDP will log the attempt and shut down the connection. The JSON log has an exploitInfo attribute as well as a parserInfo attribute to help investigate what happened.
 * Added better logging for parser errors. PyRDP will now log which parser crashed and the data that was fed to that parser to make it crash. This makes it easier to investigate bugs and exploits. In JSON logs, this information shows up in the parserInfo attribute.
 * Files intercepted or crawled by the MITM are now named according to the sha1 hash of their contents and stored in the `pyrdp_output/files` folder (see {uri-issue}261[#261])
