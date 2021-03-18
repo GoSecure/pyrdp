@@ -565,7 +565,7 @@ If you are the only non-root user on the system, usually your user will be assig
 
 #### Logging the host IP address
 
-If you want PyRDP to log the host IP address in its logs, you can set the HOST_IP environment variable when using `docker run`:
+If you want PyRDP to log the host IP address in its logs, you can set the `HOST_IP` environment variable when using `docker run`:
 
 ```
 docker run -p 3389:3389 -e HOST_IP=192.168.1.9 gosecure/pyrdp pyrdp-mitm.py 192.168.1.10
