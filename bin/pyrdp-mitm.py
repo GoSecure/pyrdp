@@ -43,7 +43,7 @@ def main():
     reactor.adoptStreamPort(s.fileno(), socket.AF_INET, MITMServerFactory(config))
     s.close()  # reactor creates a copy of the fd.
 
-    message = "MITM Server listening on port %(port)d"
+    message = "MITM Server listening on 0.0.0.0:%(port)d"
     params = {"port": config.listenPort}
 
     if "HOST_IP" in os.environ:
