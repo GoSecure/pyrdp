@@ -3,12 +3,13 @@
 # Copyright (C) 2019-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+from logging import LoggerAdapter
 
 from pyrdp.enum import CapabilityType, KeyboardFlag, OrderFlag, VirtualChannelCompressionFlag, Order
 from pyrdp.layer import SlowPathLayer, SlowPathObserver
 from pyrdp.logging.StatCounter import StatCounter, STAT
 from pyrdp.mitm.state import RDPMITMState
-from pyrdp.pdu import Capability, ConfirmActivePDU, DemandActivePDU, InputPDU, KeyboardEvent, SlowPathPDU
+from pyrdp.pdu import Capability, ConfirmActivePDU, DemandActivePDU, InputPDU, KeyboardEvent, SlowPathPDU, MouseEvent
 from pyrdp.mitm.BasePathMITM import BasePathMITM
 
 
@@ -17,12 +18,12 @@ class SlowPathMITM(BasePathMITM):
     MITM component for the slow-path layer.
     """
 
-    def __init__(self, client: SlowPathLayer, server: SlowPathLayer, state: RDPMITMState, statCounter: StatCounter):
+    def __init__(self, client: SlowPathLayer, server: SlowPathLayer, state: RDPMITMState, statCounter: StatCounter, log: LoggerAdapter):
         """
         :param client: slow-path layer for the client side
         :param server: slow-path layer for the server side
         """
-        super().__init__(state, client, server, statCounter)
+        super().__init__(state, client, server, statCounter, log)
 
         self.clientObserver = self.client.createObserver(
             onPDUReceived=self.onClientPDUReceived,
@@ -47,6 +48,8 @@ class SlowPathMITM(BasePathMITM):
                     if isinstance(event, KeyboardEvent):
                         self.onScanCode(event.keyCode, event.flags & KeyboardFlag.KBDFLAGS_DOWN == 0,
                                         event.flags & KeyboardFlag.KBDFLAGS_EXTENDED != 0)
+                    elif isinstance(event, MouseEvent):
+                        self.onMouse(event.x, event.y, event.flags)
 
     def onServerPDUReceived(self, pdu: SlowPathPDU):
         self.statCounter.increment(STAT.IO_OUTPUT_SLOWPATH)
