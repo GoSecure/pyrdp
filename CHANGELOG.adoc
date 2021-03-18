@@ -33,6 +33,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
   (See {uri-issue}270[#270] and {uri-issue}299[#299])
 * Removed `mapping.json` file since all the information it would contain can be obtained by checking the `pyrdp_output/filesystems` folder
 * Added tests for the DeviceRedirectionMITM and FileMapping classes
+* Log fields changes: `hash` is now `shasum` ({uri-issue}302[#302])
 
 === Bug fixes
 
@@ -43,6 +44,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Fixed an issue with ghost mouse pointers in replays converted to MP4 ({uri-issue}271[#271])
 * Fixed a regression with the `--sensor-id` (`-s`) command line argument.
   It would not work since 1.0. ({uri-issue}279[#279])
+* doc: README update to fix Windows install ({uri-issue}301[#301])
 
 === Infrastructure
 
