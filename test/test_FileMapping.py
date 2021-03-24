@@ -1,6 +1,11 @@
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2020-2021 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
 import unittest
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, mock_open
+from unittest.mock import Mock, patch, MagicMock, mock_open, call
 
 from pyrdp.mitm.FileMapping import FileMapping
 
@@ -17,7 +22,7 @@ class FileMappingTest(unittest.TestCase):
     def createMapping(self, mkdir: MagicMock, mkstemp: MagicMock, mock_open_object):
         mkstemp.return_value = (1, str(self.outDir / "tmp" / "tmp_test"))
         mapping = FileMapping.generate("/test", self.outDir, Path("filesystems"), self.log)
-        mapping.getHash = Mock(return_value = self.hash)
+        mapping.getSha1Hash = Mock(return_value = self.hash)
         return mapping, mkdir, mkstemp, mock_open_object
 
     def test_generate_createsTempFile(self):
@@ -81,7 +86,7 @@ class FileMappingTest(unittest.TestCase):
             mock_mkdir.assert_called_once()
             mock_symlink_to.assert_called_once()
 
-            self.assertEqual(mock_mkdir.call_args[0][0], mapping.filesystemPath.parents[0])
+            self.assertEqual(mock_mkdir.mock_calls[0], call(mapping.filesystemPath.parents[0], exist_ok=True, parents=True))
 
             # The symlink must be a relative symlink.
             # The symlink is in filesystems/ so the link path will start with '..'.

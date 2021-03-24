@@ -107,7 +107,7 @@ class RDPMITM:
         self.security: SecurityMITM = None
         """Security MITM component"""
 
-        self.slowPath = SlowPathMITM(self.client.slowPath, self.server.slowPath, self.state, self.statCounter)
+        self.slowPath = SlowPathMITM(self.client.slowPath, self.server.slowPath, self.state, self.statCounter, self.getLog("slowpath"))
         """Slow-path MITM component"""
 
         self.fastPath: FastPathMITM = None
@@ -289,7 +289,7 @@ class RDPMITM:
         self.server.fastPath.addObserver(RecordingFastPathObserver(self.recorder, PlayerPDUType.FAST_PATH_OUTPUT))
 
         self.security = SecurityMITM(self.client.security, self.server.security, self.getLog("security"), self.config, self.state, self.recorder)
-        self.fastPath = FastPathMITM(self.client.fastPath, self.server.fastPath, self.state, self.statCounter)
+        self.fastPath = FastPathMITM(self.client.fastPath, self.server.fastPath, self.state, self.statCounter, self.getLog("fastpath"))
 
         if self.player.tcp.transport or self.config.payload:
             self.attacker = AttackerMITM(self.client.fastPath, self.server.fastPath, self.player.player, self.log, self.state, self.recorder)

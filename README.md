@@ -194,7 +194,7 @@ Finally, you can install the project with Pip:
 
 ```
 pip3 install -U pip setuptools wheel
-pip3 install -U -e '.[full]'
+pip3 install -U -e ".[full]"
 ```
 
 This should install all the dependencies required to run PyRDP.
@@ -562,6 +562,14 @@ docker run -v $PWD/pyrdp_output:/home/pyrdp/pyrdp_output -p 3389:3389 gosecure/p
 
 Make sure that your destination directory is owned by a user with a UID of 1000, otherwise you will get permission denied errors.
 If you are the only non-root user on the system, usually your user will be assigned UID 1000.
+
+#### Logging the host IP address
+
+If you want PyRDP to log the host IP address in its logs, you can set the `HOST_IP` environment variable when using `docker run`:
+
+```
+docker run -p 3389:3389 -e HOST_IP=192.168.1.9 gosecure/pyrdp pyrdp-mitm.py 192.168.1.10
+```
 
 #### Using the GUI Player in Docker
 
