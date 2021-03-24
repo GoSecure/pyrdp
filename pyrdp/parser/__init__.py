@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -17,6 +17,7 @@ from pyrdp.parser.rdp.orders import OrdersParser
 from pyrdp.parser.rdp.input import SlowPathInputParser
 from pyrdp.parser.rdp.licensing import LicensingParser
 from pyrdp.parser.rdp.negotiation import NegotiationRequestParser, NegotiationResponseParser
+from pyrdp.parser.rdp.ntlmssp import NTLMSSPParser
 from pyrdp.parser.rdp.pointer import PointerEventParser
 from pyrdp.parser.rdp.security import BasicSecurityParser, FIPSSecurityParser, SignedSecurityParser
 from pyrdp.parser.rdp.slowpath import SlowPathParser
