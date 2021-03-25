@@ -17,40 +17,31 @@ from pyrdp.enum import MCSChannelName, ParserMode, PlayerPDUType, ScanCode, Segm
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, LayerChainItem, RawLayer, \
     VirtualChannelLayer
 from pyrdp.logging import RC4LoggingObserver
+from pyrdp.logging.StatCounter import StatCounter
 from pyrdp.logging.adapters import SessionLogger
 from pyrdp.logging.observers import FastPathLogger, LayerLogger, MCSLogger, SecurityLogger, \
     SlowPathLogger, X224Logger
-from pyrdp.logging.StatCounter import StatCounter
 from pyrdp.mcs import MCSClientChannel, MCSServerChannel
 from pyrdp.mitm.AttackerMITM import AttackerMITM
 from pyrdp.mitm.ClipboardMITM import ActiveClipboardStealer, PassiveClipboardStealer
-from pyrdp.mitm.config import MITMConfig
 from pyrdp.mitm.DeviceRedirectionMITM import DeviceRedirectionMITM
 from pyrdp.mitm.FastPathMITM import FastPathMITM
 from pyrdp.mitm.FileCrawlerMITM import FileCrawlerMITM
-from pyrdp.mitm.layerset import RDPLayerSet
 from pyrdp.mitm.MCSMITM import MCSMITM
 from pyrdp.mitm.MITMRecorder import MITMRecorder
 from pyrdp.mitm.PlayerLayerSet import TwistedPlayerLayerSet
 from pyrdp.mitm.SecurityMITM import SecurityMITM
 from pyrdp.mitm.SlowPathMITM import SlowPathMITM
-from pyrdp.mitm.state import RDPMITMState
 from pyrdp.mitm.TCPMITM import TCPMITM
 from pyrdp.mitm.VirtualChannelMITM import VirtualChannelMITM
 from pyrdp.mitm.X224MITM import X224MITM
+from pyrdp.mitm.config import MITMConfig
+from pyrdp.mitm.layerset import RDPLayerSet
+from pyrdp.mitm.state import RDPMITMState
 from pyrdp.recording import FileLayer, RecordingFastPathObserver, RecordingSlowPathObserver, \
     Recorder
-
-from pyrdp.layer.segmentation import SegmentationObserver
-
-
-class PacketForwarder(SegmentationObserver):
-    """Handles unknown segmentation packets by forwarding them transparently."""
-    def __init__(self, sink):
-        self._forwarder = sink
-
-    def onUnknownHeader(self, header, data: bytes):
-        self._forwarder.sendBytes(data)
+from pyrdp.security import NTLMSSPState
+from pyrdp.security.nla import NLAHandler
 
 
 class RDPMITM:
@@ -237,8 +228,9 @@ class RDPMITM:
         self.onTlsReady = None
 
         # Add unknown packet handlers.
-        self.client.segmentation.addObserver(PacketForwarder(self.server.tcp))
-        self.server.segmentation.addObserver(PacketForwarder(self.client.tcp))
+        ntlmSSPState = NTLMSSPState()
+        self.client.segmentation.addObserver(NLAHandler(self.server.tcp, ntlmSSPState, self.getLog("ntlmssp")))
+        self.server.segmentation.addObserver(NLAHandler(self.client.tcp, ntlmSSPState, self.getLog("ntlmssp")))
 
     def startTLS(self, onTlsReady: typing.Callable[[], None]):
         """
