@@ -206,7 +206,7 @@ class RDPMITM:
 
         await serverFactory.connected.wait()
 
-        if self.config.attackerHost is not None and self.config.attackerPort is not None:
+        if self.config.attackerHost is not None and self.config.attackerPort is not None and not self.player.tcp.connectedEvent.is_set():
             attackerFactory = AwaitableClientFactory(self.player.tcp)
             reactor.connectTCP(self.config.attackerHost, self.config.attackerPort, attackerFactory)
 
