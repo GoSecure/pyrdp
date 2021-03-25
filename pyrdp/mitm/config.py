@@ -82,6 +82,12 @@ class MITMConfig:
         self.authMethods: NegotiationProtocols = NegotiationProtocols.SSL
         """Specifies the list of authentication protocols that PyRDP accepts."""
 
+        self.redirectionHost = None
+        """Host to redirect the connection to if NLA is enforced"""
+
+        self.redirectionPort = None
+        """Port of the redirection host"""
+
     @property
     def replayDir(self) -> Path:
         """

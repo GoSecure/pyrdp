@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -27,3 +27,8 @@ class RDPLayerSet:
         self.tcp.setNext(self.segmentation)
         self.segmentation.attachLayer(SegmentationPDUType.TPKT, self.tpkt)
         LayerChainItem.chain(self.tpkt, self.x224, self.mcs)
+
+    def replaceTCP(self):
+        self.tcp = TwistedTCPLayer()
+        self.tcp.setNext(self.segmentation)
+        self.segmentation.attachLayer(SegmentationPDUType.TPKT, self.tpkt)

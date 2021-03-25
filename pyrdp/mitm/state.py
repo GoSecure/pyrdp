@@ -78,6 +78,12 @@ class RDPMITMState:
 
         self.windowSize = None
 
+        self.effectiveTargetHost = self.config.targetHost
+        """The host that is currently used as a connection target. It becomes the redirection host when redirection is necessary."""
+
+        self.effectiveTargetPort = self.config.targetPort
+        """Port for the effective host"""
+
         self.securitySettings.addObserver(self.crypters[ParserMode.CLIENT])
         self.securitySettings.addObserver(self.crypters[ParserMode.SERVER])
 
@@ -104,3 +110,10 @@ class RDPMITMState:
 
         parser = createFastPathParser(self.useTLS, self.securitySettings.encryptionMethod, self.crypters[mode], mode)
         return FastPathLayer(parser)
+
+    def canRedirect(self) -> bool:
+        return None not in [self.config.redirectionHost, self.config.redirectionPort] and self.effectiveTargetHost != self.config.redirectionHost
+
+    def useRedirectionHost(self):
+        self.effectiveTargetHost = self.config.redirectionHost
+        self.effectiveTargetPort = self.config.redirectionPort

@@ -49,9 +49,9 @@ class RDPMITM:
     Main MITM class. The job of this class is to orchestrate the components for all the protocols.
     """
 
-    def __init__(self, mainLogger: SessionLogger, crawlerLogger: SessionLogger, config: MITMConfig, state: RDPMITMState=None, recorder: Recorder=None):
+    def __init__(self, mainLogger: SessionLogger, crawlerLogger: SessionLogger, config: MITMConfig, state: RDPMITMState = None, recorder: Recorder = None):
         """
-        :param log: base logger to use for the connection
+        :param mainLogger: base logger to use for the connection
         :param config: the MITM configuration
         """
 
@@ -94,11 +94,13 @@ class RDPMITM:
         self.channelMITMs = {}
         """MITM components for virtual channels"""
 
-        serverConnector = self.connectToServer()
-        self.tcp = TCPMITM(self.client.tcp, self.server.tcp, self.player.tcp, self.getLog("tcp"), self.state, self.recorder, serverConnector, self.statCounter)
+        self.onTlsReady = None
+        """Callback for when TLS is done"""
+
+        self.tcp = TCPMITM(self.client.tcp, self.server.tcp, self.player.tcp, self.getLog("tcp"), self.state, self.recorder, self.statCounter)
         """TCP MITM component"""
 
-        self.x224 = X224MITM(self.client.x224, self.server.x224, self.getLog("x224"), self.state, serverConnector, self.startTLS)
+        self.x224 = X224MITM(self.client.x224, self.server.x224, self.getLog("x224"), self.state, self.connectToServer, self.disconnectFromServer, self.startTLS)
         """X224 MITM component"""
 
         self.mcs = MCSMITM(self.client.mcs, self.server.mcs, self.state, self.recorder, self.buildChannel, self.getLog("mcs"), self.statCounter)
@@ -140,15 +142,17 @@ class RDPMITM:
 
         if config.recordReplays:
             date = datetime.datetime.now()
-            replayFileName = "rdp_replay_{}_{}_{}.pyrdp"\
-                    .format(date.strftime('%Y%m%d_%H-%M-%S'),
-                            date.microsecond // 1000,
-                            self.state.sessionID)
+            replayFileName = f"rdp_replay_{date.strftime('%Y%m%d_%H-%M-%S')}_{date.microsecond // 1000}_{self.state.sessionID}.pyrdp"
             self.recorder.setRecordFilename(replayFileName)
             self.recorder.addTransport(FileLayer(self.config.replayDir / replayFileName))
 
         if config.enableCrawler:
-            self.crawler: FileCrawlerMITM = FileCrawlerMITM(self.getClientLog(MCSChannelName.DEVICE_REDIRECTION).createChild("crawler"), crawlerLogger, self.config, self.state)
+            self.crawler: FileCrawlerMITM = FileCrawlerMITM(
+                self.getClientLog(MCSChannelName.DEVICE_REDIRECTION).createChild("crawler"),
+                crawlerLogger,
+                self.config,
+                self.state
+            )
 
     def getProtocol(self) -> Protocol:
         """
@@ -177,6 +181,10 @@ class RDPMITM:
         """
         return self.serverLog.createChild(name)
 
+    def disconnectFromServer(self):
+        self.server.replaceTCP()
+        self.tcp.setServer(self.server.tcp)
+
     async def connectToServer(self):
         """
         Coroutine that connects to the target RDP server and the attacker.
@@ -186,15 +194,15 @@ class RDPMITM:
         serverFactory = AwaitableClientFactory(self.server.tcp)
         if self.config.transparent:
             src = self.client.tcp.transport.client
-            if self.config.targetHost:
+            if self.state.effectiveTargetHost:
                 # Fully Transparent (with a specific poisoned target.)
-                connectTransparent(self.config.targetHost, self.config.targetPort, serverFactory, bindAddress=(src[0], 0))
+                connectTransparent(self.state.effectiveTargetHost, self.state.effectiveTargetPort, serverFactory, bindAddress=(src[0], 0))
             else:
                 # Half Transparent (for client-side only)
                 dst = self.client.tcp.transport.getHost().host
-                reactor.connectTCP(dst, self.config.targetPort, serverFactory)
+                reactor.connectTCP(dst, self.state.effectiveTargetPort, serverFactory)
         else:
-            reactor.connectTCP(self.config.targetHost, self.config.targetPort, serverFactory)
+            reactor.connectTCP(self.state.effectiveTargetHost, self.state.effectiveTargetPort, serverFactory)
 
         await serverFactory.connected.wait()
 
