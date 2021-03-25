@@ -193,9 +193,9 @@ class RDPMITM:
 
         serverFactory = AwaitableClientFactory(self.server.tcp)
         if self.config.transparent:
-            src = self.client.tcp.transport.client
             if self.state.effectiveTargetHost:
-                # Fully Transparent (with a specific poisoned target.)
+                # Fully Transparent (with a specific poisoned target, or when using redirection)
+                src = self.client.tcp.transport.client
                 connectTransparent(self.state.effectiveTargetHost, self.state.effectiveTargetPort, serverFactory, bindAddress=(src[0], 0))
             else:
                 # Half Transparent (for client-side only)

@@ -112,7 +112,10 @@ class RDPMITMState:
         return FastPathLayer(parser)
 
     def canRedirect(self) -> bool:
-        return None not in [self.config.redirectionHost, self.config.redirectionPort] and self.effectiveTargetHost != self.config.redirectionHost
+        return None not in [self.config.redirectionHost, self.config.redirectionPort] and not self.isRedirected()
+
+    def isRedirected(self) -> bool:
+        return self.effectiveTargetHost == self.config.redirectionHost
 
     def useRedirectionHost(self):
         self.effectiveTargetHost = self.config.redirectionHost
