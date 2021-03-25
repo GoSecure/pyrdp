@@ -14,6 +14,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 * Cryptography dependency updated to 3.3.2 due to upstream security issues which we are not really concerned about for this project's use case
   (See {uri-issue}259[#259], {uri-issue}295[#295])
+* Pillow dependency updated to 8.1.1 due to upstream security issues (see {uri-issue}306[#306])
 
 *Tools*
 
