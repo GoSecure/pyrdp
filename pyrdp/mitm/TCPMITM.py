@@ -78,7 +78,9 @@ class TCPMITM:
         self.connectionTime = time.time()
 
         ip = self.client.transport.client[0]
-        self.log.info("New client connected from %(clientIp)s", {"clientIp": ip})
+        port = self.client.transport.client[1]
+        self.log.info("New client connected from %(clientIp)s:%(clientPort)i",
+                      {"clientIp": ip, "clientPort": port})
 
     def onClientDisconnection(self, reason):
         """
