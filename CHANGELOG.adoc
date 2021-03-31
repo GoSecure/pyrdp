@@ -42,6 +42,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Removed `mapping.json` file since all the information it would contain can be obtained by checking the `pyrdp_output/filesystems` folder
 * Added tests for the DeviceRedirectionMITM and FileMapping classes
 * Log fields changes: `hash` is now `shasum` ({uri-issue}302[#302])
+* Added `clientPort` field to the message when a new client is connected ({uri-issue}310[#310])
 
 === Bug fixes
 
