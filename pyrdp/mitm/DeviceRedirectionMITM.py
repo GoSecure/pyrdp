@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019-2020 GoSecure Inc.
+# Copyright (C) 2019-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -16,6 +16,7 @@ from pyrdp.layer import DeviceRedirectionLayer
 from pyrdp.logging.StatCounter import StatCounter, STAT
 from pyrdp.mitm.FileMapping import FileMapping
 from pyrdp.mitm.state import RDPMITMState
+from pyrdp.mitm.TCPMITM import TCPMITM
 from pyrdp.pdu import DeviceAnnounce, DeviceCloseRequestPDU, DeviceCloseResponsePDU, DeviceCreateRequestPDU, \
     DeviceCreateResponsePDU, DeviceDirectoryControlResponsePDU, DeviceIORequestPDU, DeviceIOResponsePDU, \
     DeviceListAnnounceRequest, DeviceQueryDirectoryRequestPDU, DeviceQueryDirectoryResponsePDU, DeviceReadRequestPDU, \
@@ -52,13 +53,14 @@ class DeviceRedirectionMITM(Subject):
     FORGED_COMPLETION_ID = 1000000
 
     def __init__(self, client: DeviceRedirectionLayer, server: DeviceRedirectionLayer, log: LoggerAdapter,
-                 statCounter: StatCounter, state: RDPMITMState):
+                 statCounter: StatCounter, state: RDPMITMState, tcp: TCPMITM):
         """
         :param client: device redirection layer for the client side
         :param server: device redirection layer for the server side
         :param log: logger for this component
         :param statCounter: stat counter object
         :param state: shared RDP MITM state
+        :param tcp: TCP MITM component
         """
         super().__init__()
 
@@ -67,6 +69,7 @@ class DeviceRedirectionMITM(Subject):
         self.state = state
         self.log = log
         self.statCounter = statCounter
+        self.tcp = tcp
         self.mappings: Dict[(int, int), FileMapping] = {}
         self.filesystemRoot = self.config.filesystemDir / self.state.sessionID
 
@@ -90,6 +93,14 @@ class DeviceRedirectionMITM(Subject):
             onPDUReceived=self.onServerPDUReceived,
         )
 
+        self.tcp.client.createObserver(
+            onDisconnection=self.onDisconnection
+        )
+
+        self.tcp.server.createObserver(
+            onDisconnection=self.onDisconnection
+        )
+
     def deviceRoot(self, deviceID: int):
         return self.filesystemRoot / f"device{deviceID}"
 
@@ -101,6 +112,10 @@ class DeviceRedirectionMITM(Subject):
     @property
     def config(self):
         return self.state.config
+
+    def onDisconnection(self, reason):
+        for mapping in self.mappings.values():
+            mapping.onDisconnection(reason)
 
     def onClientPDUReceived(self, pdu: DeviceRedirectionPDU):
         self.statCounter.increment(STAT.DEVICE_REDIRECTION, STAT.DEVICE_REDIRECTION_CLIENT)
