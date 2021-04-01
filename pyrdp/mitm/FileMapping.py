@@ -33,7 +33,8 @@ class FileMapping:
         self.written = False
 
     def seek(self, offset: int):
-        self.file.seek(offset)
+        if not self.file.closed:
+            self.file.seek(offset)
 
     def write(self, data: bytes):
         self.file.write(data)
@@ -54,6 +55,9 @@ class FileMapping:
         return sha1.hexdigest()
 
     def finalize(self):
+        if self.file.closed:
+            return
+
         self.log.debug("Closing file %(path)s", {"path": self.dataPath})
         self.file.close()
 
@@ -81,6 +85,11 @@ class FileMapping:
             self.log.info("SHA1 '%(path)s' = '%(shasum)s'", {
                 "path": str(self.filesystemPath.relative_to(self.filesystemDir)), "shasum": fileHash
             })
+
+    def onDisconnection(self, reason):
+        if not self.file.closed:
+            self.file.close()
+            Path(self.file.name).unlink(missing_ok=True)
 
     @staticmethod
     def generate(remotePath: str, outDir: Path, filesystemDir: Path, log: LoggerAdapter):

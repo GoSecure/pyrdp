@@ -29,7 +29,7 @@ class DeviceRedirectionMITMTest(unittest.TestCase):
         self.state = Mock()
         self.state.config = MagicMock()
         self.state.config.outDir = Path("/tmp")
-        self.mitm = DeviceRedirectionMITM(self.client, self.server, self.log, self.statCounter, self.state)
+        self.mitm = DeviceRedirectionMITM(self.client, self.server, self.log, self.statCounter, self.state, Mock())
 
     @patch("pyrdp.mitm.FileMapping.FileMapping.generate")
     def sendCreateResponse(self, request, response, generate):
