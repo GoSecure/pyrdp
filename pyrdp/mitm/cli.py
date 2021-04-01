@@ -127,8 +127,8 @@ def buildArgParser():
         "--transparent", help="Spoof source IP for connections to the server (See README)", action="store_true")
     parser.add_argument("--no-gdi", help="Disable accelerated graphics pipeline (MS-RDPEGDI) extension",
                         action="store_true")
-    parser.add_argument("--redirection-host", help="Redirection target ip if NLA is enforced", default=None)
-    parser.add_argument("--redirection-port", help="Redirection target port if NLA is enforced", type=int, default=None)
+    parser.add_argument("--nla-redirection-host", help="Redirection target ip if NLA is enforced", default=None)
+    parser.add_argument("--nla-redirection-port", help="Redirection target port if NLA is enforced", type=int, default=None)
 
     return parser
 
@@ -165,8 +165,8 @@ def configure(cmdline=None) -> MITMConfig:
         sys.stderr.write('error: A relay target is required unless running in transparent proxy mode.\n')
         sys.exit(1)
 
-    if (args.redirection_host is None) != (args.redirection_port is None):
-        sys.stderr.write('Error: please provide both --redirection-host and --redirection-port')
+    if (args.nla_redirection_host is None) != (args.nla_redirection_port is None):
+        sys.stderr.write('Error: please provide both --nla-redirection-host and --nla-redirection-port')
         sys.exit(1)
 
     if args.target:
@@ -197,8 +197,8 @@ def configure(cmdline=None) -> MITMConfig:
     config.extractFiles = not args.no_files
     config.disableActiveClipboardStealing = args.disable_active_clipboard
     config.useGdi = not args.no_gdi
-    config.redirectionHost = args.redirection_host
-    config.redirectionPort = args.redirection_port
+    config.redirectionHost = args.nla_redirection_host
+    config.redirectionPort = args.nla_redirection_port
 
     payload = None
     powershell = None
