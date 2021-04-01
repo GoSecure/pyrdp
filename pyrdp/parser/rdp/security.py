@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018, 2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -20,7 +20,7 @@ class BasicSecurityParser(Parser):
     Writing is split between 3 methods for reusability.
     """
 
-    def parse(self, data):
+    def doParse(self, data):
         """
         Decode a security PDU from bytes.
         :type data: bytes

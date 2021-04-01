@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018, 2019 GoSecure Inc.
+# Copyright (C) 2018, 2019, 2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -17,7 +17,7 @@ class NegotiationRequestParser(Parser):
     """
     Parser for RDP negotiaton requests (Connection Request payloads).
     """
-    def parse(self, data: bytes) -> NegotiationRequestPDU:
+    def doParse(self, data: bytes) -> NegotiationRequestPDU:
         """
         Parse a negotiation request.
         :param data: the request data.
@@ -83,7 +83,7 @@ class NegotiationResponseParser(Parser):
     """
     Parser for RDP negotiation responses (Connection Confirm payloads).
     """
-    def parse(self, data: bytes) -> Union[NegotiationResponsePDU, NegotiationFailurePDU]:
+    def doParse(self, data: bytes) -> Union[NegotiationResponsePDU, NegotiationFailurePDU]:
         """
         Parse a negotiation response.
         :param data: the response data.

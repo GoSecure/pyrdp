@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018, 2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -21,7 +21,7 @@ class DynamicChannelParser(Parser):
     def __init__(self):
         super().__init__()
 
-    def parse(self, data: bytes) -> PDU:
+    def doParse(self, data: bytes) -> PDU:
         stream = BytesIO(data)
         header = Uint8.unpack(stream)
         cbid = (header & 0b00000011)

@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019, 2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -15,7 +15,7 @@ class RawParser(Parser):
     The use case for this is for layers with PDUs that we're not really interested in parsing.
     """
 
-    def parse(self, data: bytes) -> PDU:
+    def doParse(self, data: bytes) -> PDU:
         return PDU(data)
 
     def write(self, pdu: PDU) -> bytes:

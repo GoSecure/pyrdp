@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018, 2019 GoSecure Inc.
+# Copyright (C) 2018, 2019, 2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -101,7 +101,7 @@ class DeviceRedirectionParser(Parser):
         self.informationClassForParsingResponse: Dict[int, FileSystemInformationClass] = {}
 
 
-    def parse(self, data: bytes) -> DeviceRedirectionPDU:
+    def doParse(self, data: bytes) -> DeviceRedirectionPDU:
         stream = BytesIO(data)
         component = DeviceRedirectionComponent(Uint16LE.unpack(stream))
         packetID = DeviceRedirectionPacketID(Uint16LE.unpack(stream))

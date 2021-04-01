@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018, 2019, 2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -35,7 +35,7 @@ class GCCParser(Parser):
             GCCPDUType.CREATE_CONFERENCE_RESPONSE: self.writeConferenceCreateResponse,
         }
 
-    def parse(self, data: bytes) -> GCCPDU:
+    def doParse(self, data: bytes) -> GCCPDU:
         """
         Parses the raw data bytes into a GCCPDU
         :param data: PDU data.

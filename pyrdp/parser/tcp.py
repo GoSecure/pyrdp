@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019, 2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -10,7 +10,7 @@ from pyrdp.pdu.tcp import TCPPDU
 
 
 class TCPParser(Parser):
-    def parse(self, data: bytes) -> TCPPDU:
+    def doParse(self, data: bytes) -> TCPPDU:
         return TCPPDU(data)
 
     def write(self, pdu: PDU) -> bytes:

@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018, 2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -18,7 +18,7 @@ class ClientInfoParser(Parser):
     See https://msdn.microsoft.com/en-us/library/cc240475.aspx
     """
 
-    def parse(self, data: bytes) -> ClientInfoPDU:
+    def doParse(self, data: bytes) -> ClientInfoPDU:
         """
         Decode a Client Info PDU from bytes.
         :param data: the Client Info PDU bytes.

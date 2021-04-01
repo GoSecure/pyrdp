@@ -1,11 +1,9 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-import time
 from logging import LoggerAdapter
-from typing import Coroutine
 
 from pyrdp.layer import TwistedTCPLayer
 from pyrdp.logging.StatCounter import StatCounter
@@ -20,44 +18,50 @@ class TCPMITM:
     """
 
     def __init__(self, client: TwistedTCPLayer, server: TwistedTCPLayer, attacker: TwistedTCPLayer, log: LoggerAdapter,
-                 state: RDPMITMState, recorder: Recorder, serverConnector: Coroutine, statCounter: StatCounter):
+                 state: RDPMITMState, recorder: Recorder, statCounter: StatCounter):
         """
         :param client: TCP layer for the client side
         :param server: TCP layer for the server side
         :param attacker: TCP layer for the attacker side
         :param log: logger for this component
         :param recorder: recorder for this connection
-        :param serverConnector: coroutine that connects to the server side, closed when the client disconnects
         """
 
         self.statCounter = statCounter
         # To keep track of useful statistics for the connection.
-
         self.client = client
-        self.server = server
+        self.server = None
         self.attacker = attacker
         self.log = log
         self.state = state
         self.recorder = recorder
-        self.serverConnector = serverConnector
 
         # Allows a lower layer to raise error tagged with the correct sessionID
         self.client.log = log
-        self.server.log = log
 
         self.clientObserver = self.client.createObserver(
             onConnection = self.onClientConnection,
             onDisconnection = self.onClientDisconnection,
         )
 
-        self.serverObserver = self.server.createObserver(
-            onConnection = self.onServerConnection,
-            onDisconnection = self.onServerDisconnection,
-        )
-
         self.attacker.createObserver(
             onConnection = self.onAttackerConnection,
             onDisconnection = self.onAttackerDisconnection,
+        )
+
+        self.serverObserver = None
+        self.setServer(server)
+
+    def setServer(self, server: TwistedTCPLayer):
+        if self.server is not None:
+            self.server.removeObserver(self.serverObserver)
+            self.server.disconnect(True)
+
+        self.server = server
+        self.server.log = self.log
+        self.serverObserver = self.server.createObserver(
+            onConnection=self.onServerConnection,
+            onDisconnection=self.onServerDisconnection,
         )
 
     def detach(self):
@@ -75,10 +79,11 @@ class TCPMITM:
         
         # Statistics
         self.statCounter.start()        
-        self.connectionTime = time.time()
 
         ip = self.client.transport.client[0]
-        self.log.info("New client connected from %(clientIp)s", {"clientIp": ip})
+        port = self.client.transport.client[1]
+        self.log.info("New client connected from %(clientIp)s:%(clientPort)i",
+                      {"clientIp": ip, "clientPort": port})
 
     def onClientDisconnection(self, reason):
         """
@@ -94,7 +99,7 @@ class TCPMITM:
                                                   self.recorder.recordFilename})
         else:
             self.statCounter.logReport(self.log)
-        self.serverConnector.close()
+
         self.server.disconnect(True)
 
         # For the attacker, we want to make sure we don't abort the connection to make sure that the close event is sent

@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018-2020 GoSecure Inc.
+# Copyright (C) 2018-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -19,6 +19,7 @@ class LOGGER_NAMES:
     MITM_CONNECTIONS = f"{MITM}.connections"
     PLAYER = f"{PYRDP}.player"
     PLAYER_UI = f"{PLAYER}.ui"
+    NTLMSSP = f"ntlmssp"
 
     # Independent logger
     CRAWLER = "crawler"

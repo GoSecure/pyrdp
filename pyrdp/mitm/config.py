@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019-2020 GoSecure Inc.
+# Copyright (C) 2019-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -81,6 +81,12 @@ class MITMConfig:
 
         self.authMethods: NegotiationProtocols = NegotiationProtocols.SSL
         """Specifies the list of authentication protocols that PyRDP accepts."""
+
+        self.redirectionHost = None
+        """Host to redirect the connection to if NLA is enforced"""
+
+        self.redirectionPort = None
+        """Port of the redirection host"""
 
     @property
     def replayDir(self) -> Path:

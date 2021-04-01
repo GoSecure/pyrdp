@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018, 2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -9,11 +9,11 @@ from io import BytesIO
 from pyrdp.core import Uint16LE, Uint32LE
 from pyrdp.enum import InputEventType
 from pyrdp.exceptions import ParsingError, WritingError
-from pyrdp.parser.parser import Parser
+from pyrdp.parser.parser import Parser, StreamParser
 from pyrdp.pdu import ExtendedMouseEvent, KeyboardEvent, MouseEvent, SynchronizeEvent, UnicodeKeyboardEvent, UnusedEvent
 
 
-class SlowPathInputParser(Parser):
+class SlowPathInputParser(StreamParser):
     def __init__(self):
         super().__init__()
         self.parsers = {
@@ -34,7 +34,7 @@ class SlowPathInputParser(Parser):
             InputEventType.INPUT_EVENT_MOUSEX: self.writeExtendedMouseEvent,
         }
 
-    def parse(self, stream):
+    def doParse(self, stream):
         eventTime = Uint32LE.unpack(stream)
         messageType = Uint16LE.unpack(stream)
 

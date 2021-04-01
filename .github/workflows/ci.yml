@@ -46,6 +46,8 @@ jobs:
       - name: Pip version
         run: pip --version
 
+      - name: Update apt
+        run: sudo apt update -y
       - name: Install setuptools
         run: sudo apt install python3-setuptools
       - name: Install PyRDP dependencies

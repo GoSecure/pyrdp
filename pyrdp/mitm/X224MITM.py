@@ -1,14 +1,14 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019-2020 GoSecure Inc.
+# Copyright (C) 2019-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
-import typing
+from typing import Callable, Coroutine, Optional
 from logging import LoggerAdapter
 
 from pyrdp.core import defer
-from pyrdp.enum import NegotiationFailureCode, NegotiationProtocols, NegotiationType, NegotiationRequestFlags
+from pyrdp.enum import NegotiationFailureCode, NegotiationType, NegotiationRequestFlags
 from pyrdp.layer import X224Layer
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.parser import NegotiationRequestParser, NegotiationResponseParser
@@ -17,14 +17,17 @@ from pyrdp.pdu import NegotiationRequestPDU, NegotiationResponsePDU, X224Connect
 
 
 class X224MITM:
-    def __init__(self, client: X224Layer, server: X224Layer, log: LoggerAdapter, state: RDPMITMState, connector: typing.Coroutine, startTLSCallback: typing.Callable[[typing.Callable[[], None]], None]):
+    def __init__(self, client: X224Layer, server: X224Layer, log: LoggerAdapter, state: RDPMITMState,
+                 connector: Callable[[], Coroutine], disconnector: Callable[[], None],
+                 startTLSCallback: Callable[[Callable[[], None]], None]):
         """
 
         :param client: X224 layer for the client side
         :param server: X224 layer for the server side
         :param log: logger for this component
         :param state: state of the MITM
-        :param connector: coroutine that connects to the server, awaited when a connection request is received
+        :param connector: function that connects to the server, called when a connection request is received
+        :param disconnector: function that disconnects from the server, called when using a redirection host and NLA is enforced
         :param startTLSCallback: callback that should execute a startTLS on the client and server sides
         """
 
@@ -34,8 +37,10 @@ class X224MITM:
         self.log = log
         self.state = state
         self.connector = connector
+        self.disconnector = disconnector
         self.startTLSCallback = startTLSCallback
-        self.originalRequest: typing.Optional[NegotiationRequestPDU] = None
+        self.originalConnectionRequest: Optional[X224ConnectionRequestPDU] = None
+        self.originalNegotiationRequest: Optional[NegotiationRequestPDU] = None
 
         self.client.createObserver(
             onConnectionRequest = self.onConnectionRequest,
@@ -56,30 +61,31 @@ class X224MITM:
         """
 
         parser = NegotiationRequestParser()
-        self.originalRequest = parser.parse(pdu.payload)
-        self.state.requestedProtocols = self.originalRequest.requestedProtocols
+        self.originalConnectionRequest = pdu
+        self.originalNegotiationRequest = parser.parse(pdu.payload)
+        self.state.requestedProtocols = self.originalNegotiationRequest.requestedProtocols
 
-        if self.originalRequest.flags & NegotiationRequestFlags.RESTRICTED_ADMIN_MODE_REQUIRED:
+        if self.originalNegotiationRequest.flags is not None and self.originalNegotiationRequest.flags & NegotiationRequestFlags.RESTRICTED_ADMIN_MODE_REQUIRED:
             self.log.warning("Client has enabled Restricted Admin Mode, which forces Network-Level Authentication (NLA)."
                              " Connection will fail.", {"restrictedAdminActivated": True})
 
-        if self.originalRequest.cookie:
-            self.log.info("%(cookie)s", {"cookie": self.originalRequest.cookie.decode()})
+        if self.originalNegotiationRequest.cookie:
+            self.log.info("%(cookie)s", {"cookie": self.originalNegotiationRequest.cookie.decode()})
         else:
             self.log.info("No cookie for this connection")
 
-        chosenProtocols = self.originalRequest.requestedProtocols
+        chosenProtocols = self.originalNegotiationRequest.requestedProtocols
 
         if chosenProtocols is not None:
             # Tell the server we only support the allowed authentication methods.
             chosenProtocols &= self.state.config.authMethods
 
         modifiedRequest = NegotiationRequestPDU(
-            self.originalRequest.cookie,
-            self.originalRequest.flags,
+            self.originalNegotiationRequest.cookie,
+            self.originalNegotiationRequest.flags,
             chosenProtocols,
-            self.originalRequest.correlationFlags,
-            self.originalRequest.correlationID,
+            self.originalNegotiationRequest.correlationFlags,
+            self.originalNegotiationRequest.correlationID,
         )
 
         payload = parser.write(modifiedRequest)
@@ -90,13 +96,13 @@ class X224MITM:
         Awaits the coroutine that connects to the server.
         :param payload: the connection request payload
         """
-        await self.connector
+        await self.connector()
         self.server.sendConnectionRequest(payload = payload)
 
     def onConnectionConfirm(self, pdu: X224ConnectionConfirmPDU):
         """
         Execute a startTLS if the SSL protocol was selected.
-        :param _: the connection confirm PDU
+        :param pdu: the connection confirm PDU
         """
 
         # FIXME: In case the server picks anything other than what we support, PyRDP is
@@ -108,14 +114,28 @@ class X224MITM:
         parser = NegotiationResponseParser()
         response = parser.parse(pdu.payload)
         if isinstance(response, NegotiationFailurePDU):
-            self.log.info("The server failed the negotiation. Error: %(error)s", {"error": NegotiationFailureCode.getMessage(response.failureCode)})
-            payload = pdu.payload
+            if response.failureCode == NegotiationFailureCode.HYBRID_REQUIRED_BY_SERVER and self.state.canRedirect():
+                self.log.info("The server forces the use of NLA. Using redirection host: %(redirectionHost)s:%(redirectionPort)d", {
+                    "redirectionHost": self.state.config.redirectionHost,
+                    "redirectionPort": self.state.config.redirectionPort
+                })
+
+                # Disconnect from current server
+                self.disconnector()
+
+                # Use redirection host and replay sequence starting from the connection request
+                self.state.useRedirectionHost()
+                self.onConnectionRequest(self.originalConnectionRequest)
+                return
+            else:
+                self.log.info("The server failed the negotiation. Error: %(error)s", {"error": NegotiationFailureCode.getMessage(response.failureCode)})
+                payload = pdu.payload
         else:
             payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, response.selectedProtocols))
 
         # FIXME: This should be done based on what authentication method the server selected, not on what
         #        the client supports.
-        if self.originalRequest.tlsSupported:
+        if self.originalNegotiationRequest.tlsSupported:
             # If a TLS tunnel is requested, then we establish the server-side tunnel before
             # replying to the client, so that we can clone the certificate if needed.
             self.startTLSCallback(lambda: self.client.sendConnectionConfirm(payload, source=0x1234))

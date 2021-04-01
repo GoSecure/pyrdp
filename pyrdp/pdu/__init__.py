@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018-2020 GoSecure Inc.
+# Copyright (C) 2018-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 # flake8: noqa
@@ -35,6 +35,7 @@ from pyrdp.pdu.rdp.input import ExtendedMouseEvent, KeyboardEvent, MouseEvent, S
     UnicodeKeyboardEvent, UnusedEvent
 from pyrdp.pdu.rdp.licensing import LicenseBinaryBlob, LicenseErrorAlertPDU, LicensingPDU
 from pyrdp.pdu.rdp.negotiation import NegotiationFailurePDU, NegotiationRequestPDU, NegotiationResponsePDU
+from pyrdp.pdu.rdp.ntlmssp import NTLMSSPPDU, NTLMSSPNegotiatePDU, NTLMSSPChallengePDU, NTLMSSPAuthenticatePDU
 from pyrdp.pdu.rdp.pointer import Point, PointerCacheEvent, PointerColorEvent, PointerEvent, PointerNewEvent, \
     PointerPositionEvent, PointerSystemEvent
 from pyrdp.pdu.rdp.security import SecurityExchangePDU, SecurityPDU

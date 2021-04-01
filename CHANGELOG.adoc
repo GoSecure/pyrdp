@@ -10,23 +10,51 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 === Enhancements
 
+*Security*
+
+* Cryptography dependency updated to 3.3.2 due to upstream security issues which we are not really concerned about for this project's use case
+  (See {uri-issue}259[#259], {uri-issue}295[#295])
+* Pillow dependency updated to 8.1.1 due to upstream security issues (see {uri-issue}306[#306])
+
 *Tools*
 
+* `pyrdp-convert` MP4 conversion is now 2x faster! (See {uri-issue}234[#234] and {uri-issue}273[#273])
 * Added a JSON output format to `pyrdp-convert` (See {uri-issue}236[#236])
 * Use a proper progress bar with completion percentage and ETA in `pyrdp-convert` (See {uri-issue}274[#274])
 
 *MITM*
 
+* Added NTLMSSP hash logging when NLA is used with NTLM as the authentication protocol.
+  Hashes are logged to `pyrdp_output/logs/ntlmssp.log` in addition to stdout and JSON.
+  (See {uri-issue}307[#307])
+* Added _attempted_ credentials logging when using graphical login (non-NLA).
+  It is using a heuristic of Enter being pressed or mouse being clicked in specific areas.
+  (See {uri-issue}303[#303])
+* PyRDP will log the value of the `HOST_IP` variable on start if it exists. You can set it to the IP address of the host running PyRDP. This is mostly helpful when you're using PyRDP in Docker and you want the IP of the Docker host in the logs.
+* Added detection function for BlueKeep scans / exploit attempts. PyRDP will log the attempt and shut down the connection. The JSON log has an exploitInfo attribute as well as a parserInfo attribute to help investigate what happened.
+* Added better logging for parser errors. PyRDP will now log which parser crashed and the data that was fed to that parser to make it crash. This makes it easier to investigate bugs and exploits. In JSON logs, this information shows up in the parserInfo attribute.
 * Files intercepted or crawled by the MITM are now named according to the sha1 hash of their contents and stored in the `pyrdp_output/files` folder (see {uri-issue}261[#261])
 * Files that are currently being downloaded by the MITM but are not complete are stored in the `pyrdp_output/files/tmp` folder
-* Both the file stealer and the file crawler components now mimick the victim's filesystem by creating the same file hierarchy in the `pyrdp_output/filesystems/<SESSION_ID>` folders. Files in these folders are symbolic links to files in the `pyrdp_output/files` folder to avoid useless duplication. (See {uri-issue}270[#270])
+* Both the file stealer and the file crawler components now mimick the victim's filesystem by creating the same file hierarchy in the `pyrdp_output/filesystems/<SESSION_ID>` folders.
+  Files in these folders are symbolic links to files in the `pyrdp_output/files` folder to avoid useless duplication.
+  The symlinks are relative, which allows you to move the folder around without losing the mapping.
+  (See {uri-issue}270[#270] and {uri-issue}299[#299])
 * Removed `mapping.json` file since all the information it would contain can be obtained by checking the `pyrdp_output/filesystems` folder
 * Added tests for the DeviceRedirectionMITM and FileMapping classes
+* Log fields changes: `hash` is now `shasum` ({uri-issue}302[#302])
+* Added `clientPort` field to the message when a new client is connected ({uri-issue}310[#310])
 
 === Bug fixes
 
+* Added SO_REUSEADDR to MITM socket to avoid having to wait for sockets stuck in `TIME_WAIT`
+* Fixed a bug causing the connection to crash when the pointerCacheSize field is absent in PointerCapability (See {uri-issue}287[#287])
+* Fixed a bug causing the connection to crash when the client sends no connection negotiation flags (See {uri-issue}283[#283])
 * Fixed a bug preventing files opened by the RDPDR file stealer from being closed ({uri-issue}264[#264])
 * Fixed an issue with ghost mouse pointers in replays converted to MP4 ({uri-issue}271[#271])
+* Fixed a regression with the `--sensor-id` (`-s`) command line argument.
+  It would not work since 1.0. ({uri-issue}279[#279])
+* doc: README update to fix Windows install ({uri-issue}301[#301])
+* Now handling space characters in password attempts ({uri-issue}303[#303])
 
 === Infrastructure
 

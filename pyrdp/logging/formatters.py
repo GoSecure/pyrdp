@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -74,6 +74,21 @@ class SSLSecretFormatter(logging.Formatter):
     def __init__(self):
         super().__init__()
 
-    def format(self, record: logging.LogRecord):
+    def format(self, record: logging.LogRecord) -> str:
         return "CLIENT_RANDOM {} {}".format(binascii.hexlify(record.msg).decode(),
                                             binascii.hexlify(record.args[0]).decode())
+
+
+class NTLMSSPHashFormatter(logging.Formatter):
+    """
+    Custom formatter used to log NTLMSSP hashes.
+    """
+
+    @staticmethod
+    def formatNTLMSSPHash(user: str, domain: str, serverChallenge: bytes, proof: bytes, response: bytes) -> str:
+        return f"{user}::{domain}:{serverChallenge.hex()}:{proof.hex()}:{response.hex()}"
+
+    def format(self, record: logging.LogRecord) -> str:
+        user = record.msg
+        domain, serverChallenge, proof, response = record.args[0 : 4]
+        return NTLMSSPHashFormatter.formatNTLMSSPHash(user, domain, serverChallenge, proof, response)

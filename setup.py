@@ -3,7 +3,7 @@
 
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019, 2020 GoSecure Inc.
+# Copyright (C) 2019-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -32,7 +32,7 @@ setup(name='pyrdp',
     ],
     install_requires=[
         'appdirs>=1,<2',
-        'cryptography>=2.2,<3',
+        'cryptography>=3.3.2,<4',
         'names>=0,<1',
         'progressbar2>=3.20,<4',
         'pyasn1>=0,<1',

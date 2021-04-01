@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018, 2019 GoSecure Inc.
+# Copyright (C) 2018, 2019, 2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -32,7 +32,7 @@ class LicensingParser(Parser):
             LicensingPDUType.ERROR_ALERT: self.parseErrorAlert,
         }
 
-    def parse(self, data):
+    def doParse(self, data):
         """
         Read the provided byte stream and return the corresponding RDPLicensingPDU.
         :type data: bytes

@@ -1,3 +1,9 @@
+#
+# This file is part of the PyRDP project.
+# Copyright (C) 2020-2021 GoSecure Inc.
+# Licensed under the GPLv3 or later.
+#
+
 import unittest
 from pathlib import Path
 from unittest.mock import Mock, MagicMock, patch
@@ -23,7 +29,7 @@ class DeviceRedirectionMITMTest(unittest.TestCase):
         self.state = Mock()
         self.state.config = MagicMock()
         self.state.config.outDir = Path("/tmp")
-        self.mitm = DeviceRedirectionMITM(self.client, self.server, self.log, self.statCounter, self.state)
+        self.mitm = DeviceRedirectionMITM(self.client, self.server, self.log, self.statCounter, self.state, Mock())
 
     @patch("pyrdp.mitm.FileMapping.FileMapping.generate")
     def sendCreateResponse(self, request, response, generate):

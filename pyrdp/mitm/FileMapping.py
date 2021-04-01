@@ -1,10 +1,11 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
 import hashlib
+import os
 import tempfile
 from logging import LoggerAdapter
 from pathlib import Path
@@ -32,13 +33,14 @@ class FileMapping:
         self.written = False
 
     def seek(self, offset: int):
-        self.file.seek(offset)
+        if not self.file.closed:
+            self.file.seek(offset)
 
     def write(self, data: bytes):
         self.file.write(data)
         self.written = True
 
-    def getHash(self):
+    def getSha1Hash(self):
         with open(self.dataPath, "rb") as f:
             sha1 = hashlib.sha1()
 
@@ -53,10 +55,13 @@ class FileMapping:
         return sha1.hexdigest()
 
     def finalize(self):
+        if self.file.closed:
+            return
+
         self.log.debug("Closing file %(path)s", {"path": self.dataPath})
         self.file.close()
 
-        fileHash = self.getHash()
+        fileHash = self.getSha1Hash()
 
         # Go up one directory because files are saved to outDir / tmp while we're downloading them
         hashPath = (self.dataPath.parents[1] / fileHash)
@@ -69,16 +74,22 @@ class FileMapping:
 
         # Whether it's a duplicate or a new file, we need to create a link to it in the filesystem clone
         if self.written:
-            self.filesystemPath.parents[0].mkdir(exist_ok=True)
+            self.filesystemPath.parents[0].mkdir(exist_ok=True, parents=True)
 
             if self.filesystemPath.exists():
                 self.filesystemPath.unlink()
 
-            self.filesystemPath.symlink_to(hashPath)
+            # Make the symlink relative so you can move the output folder around and it will still work.
+            self.filesystemPath.symlink_to(Path(os.path.relpath(hashPath, self.filesystemPath.parent)))
 
-            self.log.info("SHA1 '%(path)s' = '%(hash)s'", {
-                "path": self.filesystemPath.relative_to(self.filesystemDir), "hash": fileHash
+            self.log.info("SHA1 '%(path)s' = '%(shasum)s'", {
+                "path": str(self.filesystemPath.relative_to(self.filesystemDir)), "shasum": fileHash
             })
+
+    def onDisconnection(self, reason):
+        if not self.file.closed:
+            self.file.close()
+            Path(self.file.name).unlink(missing_ok=True)
 
     @staticmethod
     def generate(remotePath: str, outDir: Path, filesystemDir: Path, log: LoggerAdapter):
@@ -92,7 +103,7 @@ class FileMapping:
         file = open(handle, "wb")
 
         log.info("Saving file '%(remotePath)s' to '%(localPath)s'", {
-            "localPath": tmpPath, "remotePath": remotePath
+            "localPath": str(tmpPath), "remotePath": str(remotePath)
         })
 
         return FileMapping(file, Path(tmpPath), filesystemPath, filesystemDir, log)
