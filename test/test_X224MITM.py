@@ -13,7 +13,7 @@ from pyrdp.pdu import X224ConnectionRequestPDU, NegotiationRequestPDU
 
 class X224MITMTest(unittest.TestCase):
     def setUp(self):
-        self.mitm = X224MITM(Mock(), Mock(), Mock(), Mock(), Mock(), MagicMock())
+        self.mitm = X224MITM(Mock(), Mock(), Mock(), Mock(), MagicMock(), MagicMock(), MagicMock())
 
     def test_negotiationFlagsNone_doesntRaise(self):
         connectionRequest = X224ConnectionRequestPDU(0, 0, 0, 0, b"")
