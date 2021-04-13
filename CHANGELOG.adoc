@@ -24,6 +24,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 *MITM*
 
+* NLA Redirection: if the original destination server requires NLA we can now redirect the connection to a different destination server as specified by the `--nla-redirection-host` and `--nla-redirection-port` switches ({uri-issue}260[#260], {uri-issue}308[#308])
 * Added NTLMSSP hash logging when NLA is used with NTLM as the authentication protocol.
   Hashes are logged to `pyrdp_output/logs/ntlmssp.log` in addition to stdout and JSON.
   (See {uri-issue}307[#307])
