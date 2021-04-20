@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2020 GoSecure Inc.
+# Copyright (C) 2020-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -10,14 +10,13 @@ from pyrdp.player.BaseEventHandler import BaseEventHandler
 from pyrdp.parser import ClientInfoParser, ClientConnectionParser, ClipboardParser
 from pyrdp.core import decodeUTF16LE
 
-import logging
 import json
 
 JSON_KEY_INFO = "info"
 JSON_KEY_EVENTS = "events"
 
 
-class JsonEventHandler(BaseEventHandler):
+class JSONEventHandler(BaseEventHandler):
     """
     Playback event handler that converts events to JSON.
 

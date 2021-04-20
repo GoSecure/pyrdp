@@ -1,5 +1,5 @@
-#
 # This file is part of the PyRDP project.
+#
 # Copyright (C) 2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
@@ -7,6 +7,7 @@
 from pyrdp.enum import BitmapFlags, CapabilityType, SlowPathUpdateType
 from pyrdp.parser import BitmapParser, FastPathOutputParser, OrdersParser
 from pyrdp.pdu import BitmapUpdateData, FastPathBitmapEvent, FastPathOutputEvent, FastPathOrdersEvent, UpdatePDU
+from pyrdp.player import ImageHandler
 from pyrdp.player.BaseEventHandler import BaseEventHandler
 from pyrdp.player.gdi.draw import GdiQtFrontend
 from pyrdp.ui import RDPBitmapToQtImage
@@ -15,23 +16,24 @@ import logging
 
 
 class RenderingEventHandler(BaseEventHandler):
-    """Abstract class for video rendering sinks."""
+    """Abstract class for rendering handlers."""
 
-    def __init__(self, sink):
+    def __init__(self, imageHandler: ImageHandler):
         BaseEventHandler.__init__(self)
         self._fastPath = FastPathOutputParser()
         self._bitmap = BitmapParser()
+        self.gdi: GdiQtFrontend = None
         self._orders: OrdersParser = None
         self.log = logging.getLogger(__name__)
-        self.sink = sink
+        self.imageHandler = imageHandler
 
     def onCapabilities(self, caps):
         if CapabilityType.CAPSTYPE_ORDER in caps:
-            self.gdi = GdiQtFrontend(self.sink)
+            self.gdi = GdiQtFrontend(self.imageHandler)
             self._orders = OrdersParser(self.gdi)
             self._orders.onCapabilities(caps)
 
-    # Generic Video Parsing Routines.
+    # Generic Parsing Routines.
     def onFastPathOutput(self, event: FastPathOutputEvent):
         self.onBeginRender()
         if isinstance(event, FastPathBitmapEvent):
@@ -67,7 +69,7 @@ class RenderingEventHandler(BaseEventHandler):
             bitmapData.bitmapData
         )
 
-        self.sink.notifyImage(
+        self.imageHandler.notifyImage(
             bitmapData.destLeft,
             bitmapData.destTop,
             image,

@@ -25,5 +25,9 @@ class PlayerLayer(BufferedLayer):
         pdu = PlayerPDU(messageType, timeStamp, data)
         self.sendPDU(pdu)
 
-    def getCurrentTimeStamp(self) -> int:
+    @staticmethod
+    def timeStampFunction() -> int:
         return int(time.time() * 1000)
+
+    def getCurrentTimeStamp(self) -> int:
+        return PlayerLayer.timeStampFunction()

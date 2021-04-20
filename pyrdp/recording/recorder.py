@@ -79,7 +79,7 @@ class Recorder:
             layer.sendMessage(data, messageType, timeStamp)
 
     def getCurrentTimeStamp(self) -> int:
-        return PlayerLayer().getCurrentTimeStamp()
+        return PlayerLayer.timeStampFunction()
 
 
 class FileLayer(LayerChainItem):
