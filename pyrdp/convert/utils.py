@@ -47,7 +47,11 @@ class TCPFlags(enum.IntEnum):
 
 
 def createHandler(format: str, outputFileBase: str, progress=None) -> (str, str):
-    """Gets the appropriate handler and returns the filename with extension."""
+    """
+    Gets the appropriate handler and returns the filename with extension.
+    Returns None if the format is replay.
+    TODO: Returning None if the format is replay is kind of janky. This could use a refactor to handle replays and other formats differently.
+    """
 
     if format not in HANDLERS:
         print("[-] Unsupported conversion format.")
