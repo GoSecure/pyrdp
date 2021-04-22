@@ -145,7 +145,7 @@ class TestMITM(RDPMITM):
         self.server.tcp.recv(data)
 
     def setTimeStamp(self, timeStamp: float):
-        self.recorder.setCurrentTimeStamp(int(timeStamp * 1000))
+        self.recorder.setTimeStamp(int(timeStamp * 1000))
 
     def connectToServer(self):
         pass
