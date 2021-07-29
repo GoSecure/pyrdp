@@ -16,7 +16,7 @@ pycryptodome==3.9.8
 PyHamcrest==2.0.2
 pyOpenSSL==19.1.0
 pytz==2020.1
-rsa==4.6
+rsa==4.7
 scapy==2.4.4
 service-identity==18.1.0
 six==1.15.0

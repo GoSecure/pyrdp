@@ -23,7 +23,7 @@ pyOpenSSL==19.1.0
 PySide2==5.15.1
 python-utils==2.4.0
 pytz==2020.1
-rsa==4.6
+rsa==4.7
 scapy==2.4.4
 service-identity==18.1.0
 shiboken2==5.15.1
