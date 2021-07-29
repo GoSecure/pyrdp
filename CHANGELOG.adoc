@@ -62,6 +62,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 * Add automated tests to CI configuration
 * Fixed pip timeout issues when building full docker image on slow networks ({uri-issue}320[#320])
+* Updated our dependencies to the latest stable versions for Docker builds ({uri-issue}327[#327])
 
 
 == 1.0.0 - 2020-10-19
