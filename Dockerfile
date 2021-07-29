@@ -24,7 +24,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY requirements.txt /pyrdp/requirements.txt
 RUN cd /pyrdp && \
     pip3 install wheel && \
-    pip3 --no-cache-dir install -r requirements.txt
+    pip3 --no-cache-dir install --default-timeout=100 -r requirements.txt
 
 # Compile only our C extension and install
 # This way changes to source tree will not trigger full images rebuilds
