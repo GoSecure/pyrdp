@@ -1,12 +1,13 @@
 #
 # Copyright (c) 2014-2020 Sylvain Peyrefitte
-# Copyright (c) 2020 GoSecure Inc.
+# Copyright (c) 2020-2021 GoSecure Inc.
 #
 # This file is part of the PyRDP project.
 #
 # Licensed under the GPLv3 or later.
 #
 
+from typing import Tuple
 from os import path
 
 import OpenSSL
@@ -65,7 +66,7 @@ class CertificateCache():
         self._root = cachedir
         self.log = log
 
-    def clone(self, cert: OpenSSL.crypto.X509) -> (OpenSSL.crypto.PKey, OpenSSL.crypto.X509):
+    def clone(self, cert: OpenSSL.crypto.X509) -> Tuple[OpenSSL.crypto.PKey, OpenSSL.crypto.X509]:
         """Clone the provided certificate."""
 
         # Generate a private key for the server.
@@ -84,7 +85,7 @@ class CertificateCache():
 
         return key, cert
 
-    def lookup(self, cert: OpenSSL.crypto.X509) -> (str, str):
+    def lookup(self, cert: OpenSSL.crypto.X509) -> Tuple[str, str]:
         subject = cert.get_subject()
         parts = dict(subject.get_components())
         commonName = parts[b'CN'].decode()
