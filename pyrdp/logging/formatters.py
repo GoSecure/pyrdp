@@ -60,6 +60,11 @@ class JSONFormatter(logging.Formatter):
                 "sessionID": record.sessionID
             })
 
+        if hasattr(record, "clientIp"):
+            data.update({
+                "clientIp": record.clientIp
+            })
+
         if isinstance(record.args, dict):
             data.update(record.args)
 

@@ -190,6 +190,7 @@ class RDPMITM:
         Coroutine that connects to the target RDP server and the attacker.
         Connection to the attacker side has a 1 second timeout to avoid hanging the connection.
         """
+        self.addClientIpToLoggers(self.state.clientIp)
 
         serverFactory = AwaitableClientFactory(self.server.tcp)
         if self.config.transparent:
@@ -453,3 +454,20 @@ class RDPMITM:
         self.config.replayDir.mkdir(exist_ok=True)
         self.config.fileDir.mkdir(exist_ok=True)
         self.config.certDir.mkdir(exist_ok=True)
+
+    def addClientIpToLoggers(self, clientIp: str):
+        """
+        Add the client IP address to all relevant loggers.
+        """
+        self.log.extra['clientIp'] = self.state.clientIp
+        self.clientLog.extra['clientIp'] = self.state.clientIp
+        self.serverLog.extra['clientIp'] = self.state.clientIp
+        self.attackerLog.extra['clientIp'] = self.state.clientIp
+        self.rc4Log.extra['clientIp'] = self.state.clientIp
+
+        self.x224.log.extra['clientIp'] = self.state.clientIp
+        self.mcs.log.extra['clientIp'] = self.state.clientIp
+        self.slowPath.log.extra['clientIp'] = self.state.clientIp
+
+        if self.certs:
+            self.certs.log.extra['clientIp'] = self.state.clientIp
