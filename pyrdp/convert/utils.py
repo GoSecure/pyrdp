@@ -32,8 +32,6 @@ else:
         def __init__(self, _unused: str):
             pass
 
-OUTFILE_FORMAT = "{prefix}{timestamp}_{src}-{dst}"
-
 
 class TCPFlags(enum.IntEnum):
     FIN = 0x01
