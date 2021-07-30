@@ -19,7 +19,7 @@ from pyrdp.convert.utils import tcp_both, getSessionInfo, findClientRandom, crea
 
 
 class PCAPConverter(Converter):
-    OUTFILE_FORMAT = "{timestamp}_{src}-{dst}"
+    SESSIONID_FORMAT = "{timestamp}_{src}-{dst}"
 
     def __init__(self, inputFile: Path, outputPrefix: str, format: str, secrets: Dict = None, srcFilter = None, dstFilter = None, listOnly = False):
         super().__init__(inputFile, outputPrefix, format)
@@ -90,7 +90,7 @@ class PCAPConverter(Converter):
 
     def processStream(self, startTimeStamp: int, stream: PCAPStream):
         startTimeStamp = time.strftime("%Y%M%d%H%m%S", time.gmtime(startTimeStamp))
-        sessionID = PCAPConverter.OUTFILE_FORMAT.format(**{
+        sessionID = PCAPConverter.SESSIONID_FORMAT.format(**{
             "timestamp": startTimeStamp,
             "src": stream.client,
             "dst": stream.server
