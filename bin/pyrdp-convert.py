@@ -18,7 +18,8 @@ from pyrdp.player import HAS_GUI
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("input", help="Path to a .pcap or .pyrdp file")
+    parser.add_argument("input", help="Path to a .pcap or .pyrdp file. "
+                                      "Converting from a .pcap will always extract file transfer artifacts in addition to the actual replay.")
     parser.add_argument(
         "-l",
         "--list-only",
@@ -52,8 +53,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "-o",
         "--output",
-        help="Path to write the converted files to. If a file name is specified, it will be used as a prefix,"
-        "otherwise the result is output next to the source file with the proper extension.",
+        help="Path to write the converted files to. If a file name is specified, it will be used as a prefix, "
+        "otherwise the result is output next to the source file with the proper extension. "
+        "However if the source of the conversion is a .pcap then this option will create a directory where all files will be stored.",
     )
 
     args = parser.parse_args()
