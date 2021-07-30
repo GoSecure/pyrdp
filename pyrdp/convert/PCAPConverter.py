@@ -19,7 +19,7 @@ from pyrdp.convert.utils import tcp_both, getSessionInfo, findClientRandom, crea
 
 
 class PCAPConverter(Converter):
-    OUTFILE_FORMAT = "{prefix}{timestamp}_{src}-{dst}"
+    OUTFILE_FORMAT = "{timestamp}_{src}-{dst}"
 
     def __init__(self, inputFile: Path, outputPrefix: str, format: str, secrets: Dict = None, srcFilter = None, dstFilter = None, listOnly = False):
         super().__init__(inputFile, outputPrefix, format)
@@ -90,15 +90,14 @@ class PCAPConverter(Converter):
 
     def processStream(self, startTimeStamp: int, stream: PCAPStream):
         startTimeStamp = time.strftime("%Y%M%d%H%m%S", time.gmtime(startTimeStamp))
-        outputFileBase = PCAPConverter.OUTFILE_FORMAT.format(**{
-            "prefix": self.outputPrefix,
+        sessionID = PCAPConverter.OUTFILE_FORMAT.format(**{
             "timestamp": startTimeStamp,
             "src": stream.client,
             "dst": stream.server
         })
 
-        handler, outputPath = createHandler(self.format, outputFileBase)
-        replayer = RDPReplayer(handler, outputPath)
+        # Passing None to handler here will use fallback FileLayer handler
+        replayer = RDPReplayer(None, self.outputPrefix, sessionID)
 
         print(f"[*] Processing {stream.client} -> {stream.server}")
 
@@ -111,4 +110,4 @@ class PCAPConverter(Converter):
         except struct.error:
             sys.stderr.write("[!] Couldn't close the session cleanly. Make sure that --src and --dst are correct.")
 
-        print(f"\n[+] Successfully wrote '{outputPath}'")
+        print(f"\n[+] Successfully wrote all files to '{self.outputPrefix}'")

@@ -7,6 +7,7 @@ import logging
 from pathlib import Path
 from typing import List
 
+from pyrdp.convert.utils import HANDLERS
 from pyrdp.layer import LayerChainItem, PlayerLayer
 from pyrdp.logging import LOGGER_NAMES, SessionLogger
 from pyrdp.mitm import MITMConfig, RDPMITM
@@ -19,10 +20,6 @@ from pyrdp.recording import FileLayer
 class RDPReplayerConfig(MITMConfig):
     @property
     def replayDir(self) -> Path:
-        return self.outDir
-
-    @property
-    def fileDir(self) -> Path:
         return self.outDir
 
 
@@ -52,22 +49,24 @@ class ConversionLayer(LayerChainItem):
 
 
 class RDPReplayer(RDPMITM):
-    def __init__(self, handler, outputPath: str):
+    def __init__(self, handler, outputPath: str, sessionID: str):
         def sendBytesStub(_: bytes):
             pass
 
-        output_directory = Path(outputPath).absolute().parent
+        output_directory = Path(outputPath)
         logger = logging.getLogger(LOGGER_NAMES.MITM_CONNECTIONS)
         log = SessionLogger(logger, "replay")
 
         config = RDPReplayerConfig()
         config.outDir = output_directory
+        config.outDir.mkdir(exist_ok=True)
+
         # We'll set up the recorder ourselves
         config.recordReplays = False
 
-        state = RDPMITMState(config, log.sessionID)
+        state = RDPMITMState(config, sessionID)
 
-        transport = ConversionLayer(handler) if handler else FileLayer(outputPath)
+        transport = ConversionLayer(handler) if handler else FileLayer(output_directory / (sessionID + '.' + HANDLERS['replay'][1]))
         rec = OfflineRecorder([transport], state)
 
         super().__init__(log, log, config, state, rec)
