@@ -8,6 +8,11 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 == master - <unreleased>
 
+=== Breaking Changes
+
+* `pyrdp-convert` command-line interface change: `--list` is now `--list-only` to better reflect what it does.
+  The short form `-l` didn't change. ({uri-issue}311[#311])
+
 === Enhancements
 
 *Security*
