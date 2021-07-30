@@ -96,8 +96,8 @@ class PCAPConverter(Converter):
             "dst": stream.server
         })
 
-        # Passing None to handler here will use fallback FileLayer handler
-        replayer = RDPReplayer(None, self.outputPrefix, sessionID)
+        handler, _ = createHandler(self.format, self.outputPrefix + sessionID)
+        replayer = RDPReplayer(handler, self.outputPrefix, sessionID)
 
         print(f"[*] Processing {stream.client} -> {stream.server}")
 

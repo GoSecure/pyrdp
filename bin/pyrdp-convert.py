@@ -69,7 +69,8 @@ if __name__ == "__main__":
 
     if args.output:
         output = Path(args.output)
-        if output.is_dir() or args.format == "replay":
+        # Pcaps create directory structures since they also extract transfered artifacts
+        if output.is_dir() or inputFile.suffix in [".pcap"]:
             outputPrefix = str(output.absolute()) + "/"
         else:
             outputPrefix = str(output.parent.absolute() / output.stem) + "-"
