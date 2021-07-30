@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     if args.output:
         output = Path(args.output)
-        if output.is_dir():
+        if output.is_dir() or args.format == "replay":
             outputPrefix = str(output.absolute()) + "/"
         else:
             outputPrefix = str(output.parent.absolute() / output.stem) + "-"
