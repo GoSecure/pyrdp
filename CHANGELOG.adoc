@@ -12,6 +12,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 * `pyrdp-convert` command-line interface change: `--list` is now `--list-only` to better reflect what it does.
   The short form `-l` didn't change. ({uri-issue}311[#311])
+* Log fields changes: `hash` is now `shasum` ({uri-issue}302[#302])
 
 === Enhancements
 
@@ -48,10 +49,9 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Both the file stealer and the file crawler components now mimick the victim's filesystem by creating the same file hierarchy in the `pyrdp_output/filesystems/<SESSION_ID>` folders.
   Files in these folders are symbolic links to files in the `pyrdp_output/files` folder to avoid useless duplication.
   The symlinks are relative, which allows you to move the folder around without losing the mapping.
-  (See {uri-issue}270[#270] and {uri-issue}299[#299])
+  (See {uri-issue}270[#270], {uri-issue}272[#272] and {uri-issue}299[#299])
 * Removed `mapping.json` file since all the information it would contain can be obtained by checking the `pyrdp_output/filesystems` folder
-* Added tests for the DeviceRedirectionMITM and FileMapping classes
-* Log fields changes: `hash` is now `shasum` ({uri-issue}302[#302])
+* Added tests for the DeviceRedirectionMITM and FileMapping classes ({uri-issue}268[#268])
 * Added `clientPort` field to the message when a new client is connected ({uri-issue}310[#310])
 
 === Bug fixes
@@ -65,6 +65,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
   It would not work since 1.0. ({uri-issue}279[#279])
 * doc: README update to fix Windows install ({uri-issue}301[#301])
 * Now handling space characters in password attempts ({uri-issue}303[#303])
+* Fixed 'Too Many Files Open' situations ({uri-issue}265[#265], {uri-issue}309[#309])
 
 === Infrastructure
 
