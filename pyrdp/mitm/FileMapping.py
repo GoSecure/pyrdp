@@ -89,7 +89,8 @@ class FileMapping:
     def onDisconnection(self, reason):
         if not self.file.closed:
             self.file.close()
-            Path(self.file.name).unlink(missing_ok=True)
+            if not self.written:
+                self.dataPath.unlink(missing_ok=True)
 
     @staticmethod
     def generate(remotePath: str, outDir: Path, filesystemDir: Path, log: LoggerAdapter):
