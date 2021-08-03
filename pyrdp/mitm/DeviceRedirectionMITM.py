@@ -204,12 +204,13 @@ class DeviceRedirectionMITM(Subject):
 
     def handleCreateResponse(self, request: DeviceCreateRequestPDU, response: DeviceCreateResponsePDU):
         """
-        Prepare to intercept a file: create a FileProxy object, which will only create the file when we actually write
+        Prepare to intercept a file: create a FileMapping object, which will only create the file when we actually write
         to it. When listing a directory, Windows sends a lot of create requests without actually reading the files. We
-        use a FileProxy object to avoid creating a lot of empty files whenever a directory is listed.
+        verify the request to avoid creating a lot of empty files whenever a directory is listed.
         :param request: the device create request
         :param response: the device IO response to the request
         """
+        self.log.debug("Handling a DeviceCreateRequest. Path: '%(path)s'", {"path": request.path})
 
         isFileRead = request.desiredAccess & (FileAccessMask.GENERIC_READ | FileAccessMask.FILE_READ_DATA) != 0
         isDirectory = request.createOptions & CreateOption.FILE_NON_DIRECTORY_FILE == 0

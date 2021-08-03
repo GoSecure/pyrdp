@@ -88,8 +88,12 @@ class FileMapping:
 
     def onDisconnection(self, reason):
         if not self.file.closed:
+            self.log.info("Got disconnected with an active file mapping. Path: '%(path)s'. "
+                          "Non-zero partial file transfer is kept here: '%(dataPath)s'. Closing.",
+                          {"path": str(self.filesystemPath.relative_to(self.filesystemDir)), "dataPath": str(self.dataPath)})
             self.file.close()
-            Path(self.file.name).unlink(missing_ok=True)
+            if not self.written:
+                self.dataPath.unlink(missing_ok=True)
 
     @staticmethod
     def generate(remotePath: str, outDir: Path, filesystemDir: Path, log: LoggerAdapter):
