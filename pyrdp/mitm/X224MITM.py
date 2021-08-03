@@ -65,6 +65,9 @@ class X224MITM:
         self.originalNegotiationRequest = parser.parse(pdu.payload)
         self.state.requestedProtocols = self.originalNegotiationRequest.requestedProtocols
 
+        # We assign clientIp here since this is fired before RDPMITM has the chance to update all loggers
+        self.log.extra['clientIp'] = self.state.clientIp
+
         if self.originalNegotiationRequest.flags is not None and self.originalNegotiationRequest.flags & NegotiationRequestFlags.RESTRICTED_ADMIN_MODE_REQUIRED:
             self.log.warning("Client has enabled Restricted Admin Mode, which forces Network-Level Authentication (NLA)."
                              " Connection will fail.", {"restrictedAdminActivated": True})

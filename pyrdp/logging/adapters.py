@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019, 2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -32,4 +32,10 @@ class SessionLogger(logging.LoggerAdapter):
             sessionID = self.extra["sessionID"]
 
         logger = logging.getLogger(f"{self.name}.{childName}")
-        return SessionLogger(logger, sessionID)
+        sessionLogger = SessionLogger(logger, sessionID)
+
+        # passdown clientIp if present: useful in all JSON log messages
+        if 'clientIp' in self.extra:
+            sessionLogger.extra['clientIp'] = self.extra['clientIp']
+
+        return sessionLogger

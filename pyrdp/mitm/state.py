@@ -76,6 +76,9 @@ class RDPMITMState:
         self.sessionID = sessionID
         """The current session ID"""
 
+        self.clientIp = None
+        """The current client IP address"""
+
         self.windowSize = None
 
         self.effectiveTargetHost = self.config.targetHost

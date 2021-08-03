@@ -82,6 +82,8 @@ class TCPMITM:
 
         ip = self.client.transport.client[0]
         port = self.client.transport.client[1]
+        self.state.clientIp = ip
+        self.log.extra['clientIp'] = ip
         self.log.info("New client connected from %(clientIp)s:%(clientPort)i",
                       {"clientIp": ip, "clientPort": port})
 
@@ -101,6 +103,7 @@ class TCPMITM:
             self.statCounter.logReport(self.log)
 
         self.server.disconnect(True)
+        self.state.clientIp = None
 
         # For the attacker, we want to make sure we don't abort the connection to make sure that the close event is sent
         self.attacker.disconnect()
