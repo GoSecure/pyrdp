@@ -6,7 +6,7 @@
 This document provides a high-level view of the changes introduced in {project-name} by release.
 For a detailed view of what has changed, refer to the {uri-repo}/commits/master[commit history] on GitHub.
 
-== master - <unreleased>
+== v1.1.0 - <unreleased>
 
 === Breaking Changes
 
@@ -77,6 +77,12 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Add automated tests to CI configuration
 * Fixed pip timeout issues when building full docker image on slow networks ({uri-issue}320[#320])
 * Updated our dependencies to the latest stable versions for Docker builds ({uri-issue}327[#327])
+
+=== Credits
+
+Thanks to the following people who contributed to this release:
+
+Alexandre Beaulieu (@alxbl), @dependabot[bot], @exys228, Francis Labelle (@xshill), Olivier Bilodeau (@obilodeau)
 
 
 == 1.0.0 - 2020-10-19
