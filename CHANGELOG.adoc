@@ -50,6 +50,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
   Files in these folders are symbolic links to files in the `pyrdp_output/files` folder to avoid useless duplication.
   The symlinks are relative, which allows you to move the folder around without losing the mapping.
   (See {uri-issue}270[#270], {uri-issue}272[#272] and {uri-issue}299[#299])
+* All JSON logs now have a `clientIp` field once a client IP address is known ({uri-issue}321[#321], {uri-issue}326[#326])
 * Removed `mapping.json` file since all the information it would contain can be obtained by checking the `pyrdp_output/filesystems` folder
 * Added tests for the DeviceRedirectionMITM and FileMapping classes ({uri-issue}268[#268])
 * Added `clientPort` field to the message when a new client is connected ({uri-issue}310[#310])
@@ -66,6 +67,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * doc: README update to fix Windows install ({uri-issue}301[#301])
 * Now handling space characters in password attempts ({uri-issue}303[#303])
 * Fixed 'Too Many Files Open' situations ({uri-issue}265[#265], {uri-issue}309[#309])
+* `core.ssl` JSON logs now properly carry the `commonName` and `certFile` variables ({uri-issue}326[#326])
 
 === Infrastructure
 
