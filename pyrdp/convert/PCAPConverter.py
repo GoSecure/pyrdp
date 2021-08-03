@@ -89,7 +89,7 @@ class PCAPConverter(Converter):
         return streams
 
     def processStream(self, startTimeStamp: int, stream: PCAPStream):
-        startTimeStamp = time.strftime("%Y%M%d%H%m%S", time.gmtime(startTimeStamp))
+        startTimeStamp = time.strftime("%Y%m%d%H%M%S", time.gmtime(startTimeStamp))
         sessionID = PCAPConverter.SESSIONID_FORMAT.format(**{
             "timestamp": startTimeStamp,
             "src": stream.client,
