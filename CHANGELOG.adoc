@@ -50,6 +50,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
   Files in these folders are symbolic links to files in the `pyrdp_output/files` folder to avoid useless duplication.
   The symlinks are relative, which allows you to move the folder around without losing the mapping.
   (See {uri-issue}270[#270], {uri-issue}272[#272] and {uri-issue}299[#299])
+* File interceptor will keep a copy of interrupted file transfers in `pyrdp_output/files/tmp/` and mention it in the logs ({uri-issue}333[#333])
 * All JSON logs now have a `clientIp` field once a client IP address is known ({uri-issue}321[#321], {uri-issue}326[#326])
 * Removed `mapping.json` file since all the information it would contain can be obtained by checking the `pyrdp_output/filesystems` folder
 * Added tests for the DeviceRedirectionMITM and FileMapping classes ({uri-issue}268[#268])
@@ -69,6 +70,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Fixed 'Too Many Files Open' situations ({uri-issue}265[#265], {uri-issue}309[#309])
 * `core.ssl` JSON logs now properly carry the `commonName` and `certFile` variables ({uri-issue}326[#326])
 * Fixed wrong date format string for sessions converted from a pcap ({uri-issue}330[#330], {uri-issue}332[#332])
+* Fixed a crash when deleting active file transfers on a disconnect ({uri-issue}322[#322], {uri-issue}333[#333])
 
 === Infrastructure
 
