@@ -68,6 +68,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Now handling space characters in password attempts ({uri-issue}303[#303])
 * Fixed 'Too Many Files Open' situations ({uri-issue}265[#265], {uri-issue}309[#309])
 * `core.ssl` JSON logs now properly carry the `commonName` and `certFile` variables ({uri-issue}326[#326])
+* Fixed wrong date format string for sessions converted from a pcap ({uri-issue}330[#330], {uri-issue}332[#332])
 
 === Infrastructure
 
