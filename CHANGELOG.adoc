@@ -24,6 +24,9 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 *Tools*
 
+* `pyrdp-convert` now relies on scapy for session reconstruction from a pcap.
+  This is more reliable and can handle multiple sessions at once.
+  ({uri-issue}311[#311], {uri-issue}221[#221])
 * `pyrdp-convert` MP4 conversion is now 2x faster! (See {uri-issue}234[#234] and {uri-issue}273[#273])
 * Added a JSON output format to `pyrdp-convert` (See {uri-issue}236[#236])
 * Use a proper progress bar with completion percentage and ETA in `pyrdp-convert` (See {uri-issue}274[#274])
