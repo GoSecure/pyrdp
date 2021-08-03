@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2020 GoSecure Inc.
+# Copyright (C) 2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -27,6 +27,8 @@ from .raster import set_rop3, set_rop2
 
 from PySide2.QtCore import Qt, QPoint
 from PySide2.QtGui import QImage, QPainter, QColor, QPixmap, QBrush, QPen, QPolygon
+
+from pyrdp.player.ImageHandler import ImageHandler
 
 LOG = logging.getLogger(__name__)
 
@@ -102,8 +104,8 @@ class GdiQtFrontend(GdiFrontend):
     (Make sure that the trace does not contain any sensitive information)
     """
 
-    def __init__(self, dc: QRemoteDesktop):
-        self.dc = dc
+    def __init__(self, imageHandler: ImageHandler):
+        self.imageHandler = imageHandler
         self._warned = False
 
         # Initialize caches.
@@ -114,8 +116,8 @@ class GdiQtFrontend(GdiFrontend):
 
         self.bounds = None
 
-        screen = dc.screen
-        fallback = QImage(dc.width(), dc.height(), QImage.Format_ARGB32_Premultiplied)
+        screen = self.imageHandler.screen
+        fallback = QImage(self.imageHandler.screen.width(), self.imageHandler.screen.height(), QImage.Format_ARGB32_Premultiplied)
         fallback.fill(0)
 
         self.surfaces = {
@@ -463,8 +465,8 @@ class GdiQtFrontend(GdiFrontend):
     def frameMarker(self, state: FrameMarker):
         LOG.debug(state)
         if state.action == 0x01:  # END
-            # self.dc.notifyImage(0, 0, self.screen, self.dc.width(), self.dc.height())
-            self.dc.update()
+            # self.imageHandler.notifyImage(0, 0, self.screen, self.imageHandler.width(), self.imageHandler.height())
+            self.imageHandler.update()
 
     def createOffscreenBitmap(self, state: CreateOffscreenBitmap):
         LOG.debug(state)

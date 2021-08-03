@@ -1,6 +1,6 @@
 #
 # Copyright (c) 2014-2015 Sylvain Peyrefitte
-# Copyright (c) 2018-2020 GoSecure Inc.
+# Copyright (c) 2018-2021 GoSecure Inc.
 #
 # This file is part of PyRDP.
 # This file was part of rdpy.
@@ -35,6 +35,7 @@ from PySide2.QtGui import QColor, QImage, QMatrix, QPainter
 from PySide2.QtWidgets import QWidget
 
 from pyrdp.logging import log
+from pyrdp.player.ImageHandler import ImageHandler
 
 
 def RDPBitmapToQtImage(width: int, height: int, bitsPerPixel: int, isCompressed: bool, data: bytes):
@@ -123,7 +124,7 @@ def convert8bppTo16bpp(buf: bytes):
     return buf2
 
 
-class QRemoteDesktop(QWidget):
+class QRemoteDesktop(QWidget, ImageHandler):
     """
     Qt RDP display widget. It is the widget directly responsible to display the "screen" of the
     client in the RDP session being shown/replayed.
@@ -160,13 +161,6 @@ class QRemoteDesktop(QWidget):
 
         self.mainThreadHook.connect(self.runOnMainThread)
 
-    def runOnMainThread(self, target: callable):
-        target()
-
-    @property
-    def screen(self):
-        return self._buffer
-
     def notifyImage(self, x: int, y: int, qimage: QImage, width: int, height: int):
         """
         Draw an image on the buffer.
@@ -183,6 +177,28 @@ class QRemoteDesktop(QWidget):
 
         # Force update
         self.update()
+
+    def resize(self, width: int, height: int):
+        """
+        Resize the image buffer. This is called when the clientData is parsed, which
+        contains the screen size used for the connection.
+        :param width: new width of the replay client's screen
+        :param height: new height of the replay client's screen.
+        """
+        self._buffer = QImage(width, height, QImage.Format_ARGB32_Premultiplied)
+        self.sessionWidth = width
+        self.sessionHeight = height
+        self._updateWidgetSize()
+
+    def update(self):
+        QWidget.update(self)
+
+    @property
+    def screen(self):
+        return self._buffer
+
+    def runOnMainThread(self, target: callable):
+        target()
 
     def setMousePosition(self, x: int, y: int):
         self.mouseX = x
@@ -210,18 +226,6 @@ class QRemoteDesktop(QWidget):
 
     def setScaleToWindow(self, status):
         self.scaleToWindow = status > 0
-
-    def resize(self, width: int, height: int):
-        """
-        Resize the image buffer. This is called when the clientData is parsed, which
-        contains the screen size used for the connection.
-        :param width: new width of the replay client's screen
-        :param height: new height of the replay client's screen.
-        """
-        self._buffer = QImage(width, height, QImage.Format_ARGB32_Premultiplied)
-        self.sessionWidth = width
-        self.sessionHeight = height
-        self._updateWidgetSize()
 
     def paintEvent(self, e: QEvent):
         """
