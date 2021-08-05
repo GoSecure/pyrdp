@@ -8,6 +8,18 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 == v1.1.0 - 2021-08-05
 
+Released just in time for our BlackHat USA Arsenal 2021 presentation! Here are
+the high-level release highlights:
+
+* Network-Level Authentication (NLA) redirection: if target is NLA redirect to a different non-NLA host
+  (see this as a dynamic downgrade attack)
+* Improved file collection capabilities: file deduplication, preserving client-side file hierarchies and preserve partial copies
+* More reliable, powerful and faster `pyrdp-convert`
+* Attempted credentials collection (NTLMSSP hashes in NLA context and plaintext otherwise)
+* Improved logging in error conditions and general bug fixes
+
+Full list of changes follows.
+
 === Breaking Changes
 
 * `pyrdp-convert` command-line interface change: `--list` is now `--list-only` to better reflect what it does.
