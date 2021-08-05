@@ -6,7 +6,7 @@
 This document provides a high-level view of the changes introduced in {project-name} by release.
 For a detailed view of what has changed, refer to the {uri-repo}/commits/master[commit history] on GitHub.
 
-== v1.1.0 - <unreleased>
+== v1.1.0 - 2021-08-05
 
 === Breaking Changes
 
