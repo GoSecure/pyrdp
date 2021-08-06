@@ -6,6 +6,13 @@
 This document provides a high-level view of the changes introduced in {project-name} by release.
 For a detailed view of what has changed, refer to the {uri-repo}/commits/master[commit history] on GitHub.
 
+== <master> - <unreleased>
+
+=== Infrastructure
+
+* Docker images are now built and pushed via GitHub Actions ({uri-issue}334[#334], {uri-issue}341[#341])
+
+
 == v1.1.0 - 2021-08-05
 
 Released just in time for our BlackHat USA Arsenal 2021 presentation! Here are
