@@ -1,5 +1,5 @@
 # Inspired from: https://docs.github.com/en/actions/guides/publishing-docker-images
-name: Publish Docker images from master and tags
+name: Publish Docker images
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   regular-image:
-    name: Push regular Docker image to Docker Hub
+    name: Regular image
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
@@ -37,7 +37,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
   slim-image:
-    name: Push slim Docker image to Docker Hub
+    name: Slim image
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
