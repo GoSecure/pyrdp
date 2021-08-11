@@ -4,7 +4,7 @@
 # Licensed under the GPLv3 or later.
 #
 
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from Crypto.PublicKey import RSA
 
@@ -34,7 +34,7 @@ class RDPMITMState:
         self.securitySettings = SecuritySettings()
         """The security settings for the connection"""
 
-        self.channelDefinitions: [ClientChannelDefinition] = []
+        self.channelDefinitions: List[ClientChannelDefinition] = []
         """The channel definitions from the client"""
 
         self.channelMap: Dict[int, str] = {}
