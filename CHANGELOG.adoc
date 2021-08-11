@@ -12,6 +12,10 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 * Minor CLI improvements
 
+=== Bug fixes
+
+* Fixed NLA redirection problems if original target and NLA redirection target are the same ({uri-issue}342[#342], {uri-issue}343[#343])
+
 === Infrastructure
 
 * Docker images are now built and pushed via GitHub Actions ({uri-issue}334[#334], {uri-issue}341[#341])
