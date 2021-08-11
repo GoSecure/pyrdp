@@ -8,6 +8,10 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 == <master> - <unreleased>
 
+=== Enhancements
+
+* Minor CLI improvements
+
 === Infrastructure
 
 * Docker images are now built and pushed via GitHub Actions ({uri-issue}334[#334], {uri-issue}341[#341])

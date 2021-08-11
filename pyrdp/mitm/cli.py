@@ -41,7 +41,7 @@ def parseTarget(target: str) -> Tuple[str, int]:
 
 def validateKeyAndCertificate(private_key: str, certificate: str) -> Tuple[str, str]:
     if (private_key is None) != (certificate is None):
-        sys.stderr.write("You must provide both the private key and the certificate")
+        sys.stderr.write("You must provide both the private key and the certificate\n")
         sys.exit(1)
 
     if private_key is None:
@@ -166,7 +166,7 @@ def configure(cmdline=None) -> MITMConfig:
         sys.exit(1)
 
     if (args.nla_redirection_host is None) != (args.nla_redirection_port is None):
-        sys.stderr.write('Error: please provide both --nla-redirection-host and --nla-redirection-port')
+        sys.stderr.write('Error: please provide both --nla-redirection-host and --nla-redirection-port\n')
         sys.exit(1)
 
     if args.target:
