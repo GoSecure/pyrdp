@@ -11,6 +11,11 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 === Enhancements
 
 * Minor CLI improvements
+* Improved type hints
+
+=== Bug fixes
+
+* Fixed NLA redirection problems if original target and NLA redirection target are the same ({uri-issue}342[#342], {uri-issue}343[#343])
 
 === Infrastructure
 
