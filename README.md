@@ -2,12 +2,12 @@
 
 ![pipeline status](https://github.com/GoSecure/pyrdp/workflows/Build/badge.svg?branch=master)
 
-PyRDP is a Python 3 Remote Desktop Protocol (RDP) Man-in-the-Middle (MITM) and library.
+PyRDP is a Python Remote Desktop Protocol (RDP) Monster-in-the-Middle (MITM) tool and library.
 
 ![PyRDP Logo](https://raw.githubusercontent.com/GoSecure/pyrdp/master/docs/pyrdp-logo.svg?sanitize=true)
 
 It features a few tools:
-- RDP Man-in-the-Middle
+- RDP Monster-in-the-Middle
     - Logs credentials used when connecting
     - Steals data copied to the clipboard
     - Saves a copy of the files transferred over the network
@@ -40,7 +40,7 @@ research use cases in mind.
   * [Building the Docker Image](#building-the-docker-image)
   * [Migrating away from pycrypto](#migrating-away-from-pycrypto)
 - [Using PyRDP](#using-pyrdp)
-  * [Using the PyRDP Man-in-the-Middle](#using-the-pyrdp-man-in-the-middle)
+  * [Using the PyRDP Monster-in-the-Middle](#using-the-pyrdp-monster-in-the-middle)
     + [Specifying the private key and certificate](#specifying-the-private-key-and-certificate)
     + [Connecting to the PyRDP player](#connecting-to-the-pyrdp-player)
       - [Connecting to a PyRDP player when the MITM is running on a server](#connecting-to-a-pyrdp-player-when-the-mitm-is-running-on-a-server)
@@ -251,7 +251,7 @@ pip3 install -U -e .
 
 ## Using PyRDP
 
-### Using the PyRDP Man-in-the-Middle
+### Using the PyRDP Monster-in-the-Middle
 Use `pyrdp-mitm.py <ServerIP>` or `pyrdp-mitm.py <ServerIP>:<ServerPort>` to run the MITM.
 
 Assuming you have an RDP server running on `192.168.1.10` and listening on port 3389, you would run:
@@ -540,7 +540,7 @@ docker-compose run -p 3389:3389 pyrdp twistd --debug pyrdp --target 192.168.1.10
 This will allocate a TTY and you will have access to `Pdb`'s REPL. Trying to add `--debug` to the `docker-compose.yml` command will fail because there is no TTY allocated.
 
 ### Using PyRDP with Bettercap
-We developped our own Bettercap module, `rdp.proxy`, to man-in-the-middle all RDP connections
+We developped our own Bettercap module, `rdp.proxy`, to monster-in-the-middle all RDP connections
 on a given LAN. Check out [this document](docs/bettercap-rdp-mitm.md) for more information.
 
 ### Docker Specific Usage Instructions
@@ -551,7 +551,7 @@ We refer to the publicly provided docker image but if you [built your own](#buil
 
 #### Mapping a Listening Port
 
-In most of the man-in-the-middle cases you will need to map a port of your host into the docker image. This is achieved by the `--publish` (`-p`) parameters applied to `docker run`.
+In most of the monster-in-the-middle cases you will need to map a port of your host into the docker image. This is achieved by the `--publish` (`-p`) parameters applied to `docker run`.
 
 For example, to listen on 3389 (RDP's default port) on all interfaces, use:
 
