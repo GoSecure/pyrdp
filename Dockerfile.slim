@@ -14,14 +14,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         # Required for venv setup
         python3-venv \
         # Required to build RLE module
-        build-essential python3-dev
+        build-essential python3-dev \
+        # Required for ARM builds (because we need to build cryptography instead of using a prebuilt wheel)
+        libssl-dev libffi-dev
 
 RUN python3 -m venv /opt/venv
 # Make sure we use the virtualenv:
 ENV PATH="/opt/venv/bin:$PATH"
 
+# Required for ARM builds
+# Building dependencies didn't work without an upgraded pip and wheel on ARM
+RUN pip3 --no-cache-dir install -U pip wheel
+
 # Install dependencies only (speeds repetitive builds)
 COPY requirements-slim.txt /pyrdp/requirements.txt
+# The following allows us to install the cryptography package.
+# Eventually we will add rust to our compile-image and build with rust but
+# rust's cargo is broken on docker ARM right now and we will wait until
+# upstream is fixed.
+ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
 RUN cd /pyrdp && pip3 --no-cache-dir install -r requirements.txt
 
 # Compile only our C extension and install
