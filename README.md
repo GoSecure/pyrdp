@@ -1,6 +1,8 @@
 # PyRDP
 
 ![pipeline status](https://github.com/GoSecure/pyrdp/workflows/Build/badge.svg?branch=master)
+[![Black Hat Arsenal 2019](https://raw.githubusercontent.com/toolswatch/badges/master/arsenal/usa/2019.svg?sanitize=true)](https://www.blackhat.com/us-19/arsenal/schedule/index.html)
+[![Black Hat Arsenal 2021](https://raw.githubusercontent.com/toolswatch/badges/master/arsenal/usa/2021.svg?sanitize=true)](https://www.blackhat.com/us-21/arsenal/schedule/index.html)
 
 PyRDP is a Python Remote Desktop Protocol (RDP) Monster-in-the-Middle (MITM) tool and library.
 
