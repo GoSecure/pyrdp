@@ -76,10 +76,10 @@ research use cases in mind.
 
 
 ## Supported Systems
-PyRDP should work on Python 3.6 and up.
+PyRDP should work on Python 3.6 and up on the x86-64, ARM and ARM64 platforms.
 
-This tool has been tested to work on Python 3.6 on Linux (Ubuntu 18.04) and Windows (See section [Installing on
-Windows](#installing-on-windows)). It has not been tested on OSX.
+This tool has been tested to work on Python 3.6 on Linux (Ubuntu 18.04), Raspberry Pi and Windows
+(see section [Installing on Windows](#installing-on-windows)). It has not been tested on macOS.
 
 ## Installing
 
@@ -92,6 +92,7 @@ docker pull gosecure/pyrdp:latest
 ```
 
 As an alternative we have a slimmer image without the GUI and ffmpeg dependencies.
+This is the only provided image on ARM platforms.
 
 ```
 docker pull gosecure/pyrdp:latest-slim
@@ -223,6 +224,12 @@ docker build -f Dockerfile.slim -t pyrdp .
 ```
 
 Afterwards, you can execute PyRDP by invoking the `pyrdp` docker container. See [Usage instructions](#using-pyrdp) and the [Docker specific instructions](#docker-specific-usage-instructions) for details.
+
+Cross-platform builds can be achieved using `buildx`:
+
+```
+docker buildx build --platform linux/arm,linux/amd64 -t pyrdp -f Dockerfile.slim .
+```
 
 ### Migrating away from pycrypto
 Since pycrypto isn't maintained anymore, we chose to migrate to pycryptodome.
