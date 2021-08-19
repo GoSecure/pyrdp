@@ -12,7 +12,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 * Minor CLI improvements
 * Improved type hints
-* Documentation updates ({uri-issue}335[#335], {uri-issue}339[#339])
+* Documentation updates ({uri-issue}335[#335], {uri-issue}339[#339], {uri-issue}340[#340])
 
 === Bug fixes
 
