@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -17,7 +17,7 @@ from pyrdp.parser import ClientConnectionParser, GCCParser, ServerConnectionPars
 from pyrdp.pdu import GCCConferenceCreateRequestPDU, GCCConferenceCreateResponsePDU, MCSAttachUserConfirmPDU, \
     MCSAttachUserRequestPDU, MCSChannelJoinConfirmPDU, MCSChannelJoinRequestPDU, MCSConnectInitialPDU, \
     MCSConnectResponsePDU, MCSDisconnectProviderUltimatumPDU, MCSErectDomainRequestPDU, MCSSendDataIndicationPDU, \
-    MCSSendDataRequestPDU, ProprietaryCertificate, ServerDataPDU, ServerSecurityData
+    MCSSendDataRequestPDU, ProprietaryCertificate, ServerDataPDU, ServerSecurityData, ClientDataPDU
 from pyrdp.recording import Recorder
 
 
@@ -82,11 +82,13 @@ class MCSMITM:
         gccParser = GCCParser()
         rdpClientConnectionParser = ClientConnectionParser()
         gccConferenceCreateRequestPDU: GCCConferenceCreateRequestPDU = gccParser.parse(pdu.payload)
-        rdpClientDataPDU = rdpClientConnectionParser.parse(gccConferenceCreateRequestPDU.payload)
+        rdpClientDataPDU: ClientDataPDU = rdpClientConnectionParser.parse(gccConferenceCreateRequestPDU.payload)
 
         # FIPS is not implemented, so remove this flag if it's set
         rdpClientDataPDU.securityData.encryptionMethods &= ~EncryptionMethod.ENCRYPTION_FIPS
         rdpClientDataPDU.securityData.extEncryptionMethods &= ~EncryptionMethod.ENCRYPTION_FIPS
+
+        self.state.windowSize = (rdpClientDataPDU.coreData.desktopWidth, rdpClientDataPDU.coreData.desktopHeight)
 
         if self.state.config.downgrade:
             #  This disables the support for the Graphics pipeline extension, which is a completely different way to

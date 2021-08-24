@@ -1,10 +1,10 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019-2020 GoSecure Inc.
+# Copyright (C) 2019-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from Crypto.PublicKey import RSA
 
@@ -21,7 +21,7 @@ class RDPMITMState:
     State object for the RDP MITM. This is for data that needs to be shared across components.
     """
 
-    def __init__(self, config: MITMConfig):
+    def __init__(self, config: MITMConfig, sessionID: str):
         self.requestedProtocols: Optional[NegotiationProtocols] = None
         """The original request protocols"""
 
@@ -34,7 +34,7 @@ class RDPMITMState:
         self.securitySettings = SecuritySettings()
         """The security settings for the connection"""
 
-        self.channelDefinitions: [ClientChannelDefinition] = []
+        self.channelDefinitions: List[ClientChannelDefinition] = []
         """The channel definitions from the client"""
 
         self.channelMap: Dict[int, str] = {}
@@ -73,6 +73,20 @@ class RDPMITMState:
         self.ctrlPressed = False
         """The current keybaord ctrl state"""
 
+        self.sessionID = sessionID
+        """The current session ID"""
+
+        self.clientIp = None
+        """The current client IP address"""
+
+        self.windowSize = None
+
+        self.effectiveTargetHost = self.config.targetHost
+        """The host that is currently used as a connection target. It becomes the redirection host when redirection is necessary."""
+
+        self.effectiveTargetPort = self.config.targetPort
+        """Port for the effective host"""
+
         self.securitySettings.addObserver(self.crypters[ParserMode.CLIENT])
         self.securitySettings.addObserver(self.crypters[ParserMode.SERVER])
 
@@ -99,3 +113,13 @@ class RDPMITMState:
 
         parser = createFastPathParser(self.useTLS, self.securitySettings.encryptionMethod, self.crypters[mode], mode)
         return FastPathLayer(parser)
+
+    def canRedirect(self) -> bool:
+        return None not in [self.config.redirectionHost, self.config.redirectionPort] and not self.isRedirected()
+
+    def isRedirected(self) -> bool:
+        return self.effectiveTargetHost == self.config.redirectionHost and self.effectiveTargetPort == self.config.redirectionPort
+
+    def useRedirectionHost(self):
+        self.effectiveTargetHost = self.config.redirectionHost
+        self.effectiveTargetPort = self.config.redirectionPort

@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018, 2019, 2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -38,7 +38,7 @@ class X224Parser(Parser):
             X224PDUType.X224_TPDU_ERROR: self.writeError,
         }
 
-    def parse(self, data: bytes) -> X224PDU:
+    def doParse(self, data: bytes) -> X224PDU:
         """
         Read the byte stream and return a corresponding X224PDU
         """

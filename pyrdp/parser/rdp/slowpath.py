@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018-2020 GoSecure Inc.
+# Copyright (C) 2018-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -53,7 +53,7 @@ class SlowPathParser(Parser):
             SlowPathDataType.PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST: self.writePersistentCacheKeys,
         }
 
-    def parse(self, data: bytes) -> PDU:
+    def doParse(self, data: bytes) -> PDU:
         """
         Decode a data PDU from bytes.
         :return: an instance of an RDP Data PDU class.
@@ -618,7 +618,11 @@ class SlowPathParser(Parser):
         stream = BytesIO(data)
         colorPointerFlag = Uint16LE.unpack(stream)
         colorPointerCacheSize = Uint16LE.unpack(stream)
-        pointerCacheSize = Uint16LE.unpack(stream)
+
+        if len(data) == 6:
+            pointerCacheSize = Uint16LE.unpack(stream)
+        else:
+            pointerCacheSize = None
 
         return PointerCapability(colorPointerFlag, colorPointerCacheSize, pointerCacheSize)
 
@@ -628,7 +632,9 @@ class SlowPathParser(Parser):
 
         Uint16LE.pack(capability.colorPointerFlag, substream)
         Uint16LE.pack(capability.colorPointerCacheSize, substream)
-        Uint16LE.pack(capability.pointerCacheSize, substream)
+
+        if capability.pointerCacheSize is not None:
+            Uint16LE.pack(capability.pointerCacheSize, substream)
 
         Uint16LE.pack(len(substream.getvalue()) + 4, stream)
         stream.write(substream.getvalue())

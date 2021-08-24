@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018-2020 GoSecure Inc.
+# Copyright (C) 2018-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -50,7 +50,7 @@ class ReplayThread(QThread):
         step = 16 / 1000
         currentIndex = 0
         runThread = True
-        timestamps = sorted(self.replay.events.keys())
+        timestamps = self.replay.getSortedTimestamps()
 
         while runThread:
             self.timer.update()

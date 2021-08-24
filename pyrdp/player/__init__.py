@@ -1,10 +1,10 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018-2020 GoSecure Inc.
+# Copyright (C) 2018-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
-from pyrdp.player.Replay import Replay
+from pyrdp.player.Replay import Replay, ReplayReader
 from .BaseEventHandler import BaseEventHandler
 from .HeadlessEventHandler import HeadlessEventHandler
 

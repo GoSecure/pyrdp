@@ -1,15 +1,15 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
 from io import BytesIO
 
-from pyrdp.core import Uint16LE, Uint32LE
-from pyrdp.enum import ClipboardMessageFlags, ClipboardMessageType
+from pyrdp.core import Uint16LE, Uint32LE, Uint64LE
+from pyrdp.enum import ClipboardMessageFlags, ClipboardMessageType, ClipboardFormatName, ClipboardFormatNumber
 from pyrdp.parser.parser import Parser
-from pyrdp.pdu import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU, FormatListPDU, LongFormatName
+from pyrdp.pdu import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU, FormatListPDU, LongFormatName, FileContentsRequestPDU, FileContentsResponsePDU
 
 
 class ClipboardParser(Parser):
@@ -17,31 +17,80 @@ class ClipboardParser(Parser):
     Parser class for clipboard PDUs
     """
 
-    def parse(self, data):
+    def __init__(self):
+        self.formats = {}  # Supported Clipboard Formats
+        self.req = None  # Active Request
+
+        self.dispatch = {
+            ClipboardMessageType.CB_FORMAT_DATA_REQUEST: self.parseFormatDataRequest,
+            ClipboardMessageType.CB_FORMAT_DATA_RESPONSE: self.parseFormatDataResponse,
+            ClipboardMessageType.CB_FORMAT_LIST: self.parseFormatList,
+            ClipboardMessageType.CB_FILECONTENTS_REQUEST: self.parseFileContentsRequest,
+            ClipboardMessageType.CB_FILECONTENTS_RESPONSE: self.parseFileContentsResponse,
+        }
+
+    def doParse(self, data):
         stream = BytesIO(data)
         msgType = Uint16LE.unpack(stream)
         msgFlags = Uint16LE.unpack(stream)
         dataLen = Uint32LE.unpack(stream)
         payload = stream.read(dataLen)
 
-        if msgType == ClipboardMessageType.CB_FORMAT_DATA_RESPONSE:
-            clipboardPDU = self.parseFormatDataResponse(payload, msgFlags)
-        elif msgType == ClipboardMessageType.CB_FORMAT_LIST:
-            clipboardPDU = self.parseFormatList(payload, msgFlags)
+        if msgType in self.dispatch:
+            clipboardPDU = self.dispatch[msgType](payload, msgFlags)
         else:
             clipboardPDU = ClipboardPDU(ClipboardMessageType(msgType), msgFlags, payload)
 
         return clipboardPDU
 
+    def parseFileContentsRequest(self, payload, msgFlags):
+        stream = BytesIO(payload)
+        streamId = Uint32LE.unpack(stream)
+        lindex = Uint32LE.unpack(stream)
+        dwFlags =  Uint32LE.unpack(stream)
+        posLo = Uint32LE.unpack(stream)
+        posHi = Uint32LE.unpack(stream)
+        cbRequested = Uint32LE.unpack(stream)
+        clipDataId = Uint32LE.unpack(stream)
+
+        pos = posHi << 32 | posLo
+        return FileContentsRequestPDU(payload, streamId, lindex, msgFlags, dwFlags, pos, cbRequested, clipDataId)
+
+    def parseFileContentsResponse(self, payload, msgFlags):
+        stream = BytesIO(payload)
+        streamId = Uint32LE.unpack(stream)
+        # FIXME: Need to grab the actual file size from the reply.
+        data = stream.read()
+        return FileContentsResponsePDU(payload, msgFlags, streamId, data)
+
+    def parseFormatDataRequest(self, payload, msgFlags):
+        s = BytesIO(payload)
+        out = FormatDataRequestPDU(Uint32LE.unpack(s))
+        self.req = out
+        return out
+
     def parseFormatDataResponse(self, payload, msgFlags):
         isSuccessful = True if msgFlags & ClipboardMessageFlags.CB_RESPONSE_OK else False
-        return FormatDataResponsePDU(payload, isSuccessful)
+        fid = self.req.requestedFormatId if self.req else ClipboardFormatNumber.GENERIC
+        pdu = FormatDataResponsePDU(payload, isSuccessful, fid)
+
+        if isSuccessful and fid in self.formats:
+            fmt = str(self.formats[fid])
+
+            if fmt == ClipboardFormatName.FILE_LIST.value:
+                stream = BytesIO(payload)
+                cItems = Uint32LE.unpack(stream)
+                pdu.files = [FileDescriptor.parse(stream) for _ in range(cItems)]
+
+        self.req = None
+        return pdu
 
     def parseFormatList(self, payload, msgFlags):
         # Assumes LongFormatNames. This might be bad. Should check capabilities beforehand
 
         stream = BytesIO(payload)
-        formats = {}
+
+        self.formats = {}
 
         while stream.tell() < len(stream.getvalue()):
             formatId = Uint32LE.unpack(stream)
@@ -52,9 +101,9 @@ class ClipboardParser(Parser):
                 lastChar = stream.read(2)
                 formatName += lastChar
 
-            formats[formatId] = LongFormatName(formatId, formatName)
+            self.formats[formatId] = LongFormatName(formatId, formatName)
 
-        return FormatListPDU(formats, msgFlags)
+        return FormatListPDU(dict(self.formats), msgFlags)
 
     def write(self, pdu):
         """
@@ -115,3 +164,34 @@ class ClipboardParser(Parser):
         """
         Uint32LE.pack(4, stream)  # datalen
         Uint32LE.pack(pdu.requestedFormatId, stream)
+
+
+
+class FileDescriptor:
+    """
+    https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpeclip/a765d784-2b39-4b88-9faa-88f8666f9c35
+    """
+    def __init__(self):
+        self.flags = 0
+        self.attribs = 0
+        self.lastWrite = 0
+        self.size = 0
+        self.filename = ''
+
+    def parse(stream: BytesIO) -> 'FileDescriptor':
+        fd = FileDescriptor()
+        fd.flags = Uint32LE.unpack(stream)
+        stream.read(32)  # reserved1
+        fd.attribs = Uint32LE.unpack(stream)
+        stream.read(16)  # reserved2
+
+        fd.lastWrite = Uint64LE.unpack(stream)
+        sizeHi = Uint32LE.unpack(stream)
+        sizeLo = Uint32LE.unpack(stream)
+        fd.size = (sizeHi << 32) | sizeLo
+        filename = stream.read(520)
+
+        fd.filename = filename.decode('utf-16le').strip('\x00')
+
+        return fd
+

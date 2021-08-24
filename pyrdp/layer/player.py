@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018, 2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -25,5 +25,9 @@ class PlayerLayer(BufferedLayer):
         pdu = PlayerPDU(messageType, timeStamp, data)
         self.sendPDU(pdu)
 
-    def getCurrentTimeStamp(self) -> int:
+    @staticmethod
+    def timeStampFunction() -> int:
         return int(time.time() * 1000)
+
+    def getCurrentTimeStamp(self) -> int:
+        return PlayerLayer.timeStampFunction()

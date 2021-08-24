@@ -4,6 +4,26 @@
 
 NOTE: This is a work in progress
 
+.Update dependencies
+
+For developement and normal installation we rely on `setup.py` with loose dependencies.
+For docker images we rely on `requirements.txt` and `requirements-slim.txt` with strict dependencies.
+It is important to keep both approaches in sync and to peridiocally update the requirements files (like before releases).
+See https://github.com/GoSecure/pyrdp/pull/219[the PR where we improved our use of the docker cache] for the reasoning behind this approach.
+
+In a clean tree, on master:
+
+* install and load the venv
+* do a `pip freeze > requirements.txt`
+* manually inspect updated dependencies
+* copy over to `requirements-slim.txt` those that make sense (don't add av, PySide2, etc.)
+
+If you are unsure about which to keep and which to discard between `requirements.txt` and `requirements-slim.txt`, just look at a diff of a previous version.
+
+.Test
+
+docker images (latest, slim), on linux, on Windows
+
 .Update the changelog
 * You can generate author list with where `<tag>` is replaced with previous release's tag:
 +
@@ -15,12 +35,15 @@ NOTE: This is a work in progress
 * You can optionally do a release commit (with `--allow-empty` if needed) msg: Release %version%
 
 .Tag the release commit
+* `git tag -a v%version%` like `git tag -a v1.0.0` (docker builds rely on this tag)
 * Annotated Tag msg: Version %version%
 
 .Push your changes (don't forget the tag!)
 
 .Make a release on github (from changelog and copy sections themes from previous releases)
 * linkify issues with vim's: `%s/{uri-issue}\d\+\[#\(\d\+\)\]/#\1/gc`
+* sections, vim's: `%s/^=== \(.*\)$/## \1/gc`
+* asciidoc links to markdown with vim: `%s/link:\([^\[]\+\)\(\[[^\[]\+\]\)/\2(\1)/gc`
 
 .Post-release
 * Update version in `setup.py` (+1 bugfix, append '.dev0') and commit

@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018-2020 GoSecure Inc.
+# Copyright (C) 2018-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -79,7 +79,7 @@ class Recorder:
             layer.sendMessage(data, messageType, timeStamp)
 
     def getCurrentTimeStamp(self) -> int:
-        return PlayerLayer().getCurrentTimeStamp()
+        return PlayerLayer.timeStampFunction()
 
 
 class FileLayer(LayerChainItem):

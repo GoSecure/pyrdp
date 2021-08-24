@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018, 2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -9,6 +9,31 @@ File that contains helper methods to use in the library.
 """
 import logging
 from logging import Logger
+
+
+class FilePositionGuard:
+    """
+    Object that can be used in a 'with' statement that will restore a file's pointer to the position it had at
+    the start of the with statement. E.g:
+
+    # file position is 200
+    with FilePositionGuard(file):
+        file.read(10)
+        file.tell() # file position is now 210
+
+    file.tell() # file position is now 200 again
+    """
+
+    def __init__(self, file):
+        self.file = file
+        self.startingPosition = None
+
+    def __enter__(self):
+        self.startingPosition = self.file.tell()
+        return self
+
+    def __exit__(self, exc_type, exception, traceback):
+        self.file.seek(self.startingPosition)
 
 
 def decodeUTF16LE(data: bytes) -> str:

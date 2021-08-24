@@ -3,7 +3,7 @@
 
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019, 2020 GoSecure Inc.
+# Copyright (C) 2019-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -12,11 +12,11 @@ import setuptools
 from distutils.core import Extension, setup
 
 setup(name='pyrdp',
-    version='0.4.2.dev0',
-    description='Remote Desktop Protocol Man-in-the-Middle and library for Python 3',
-    long_description="""Remote Desktop Protocol Man-in-the-Middle and library for Python 3""",
-    author='Émilio Gonzalez, Francis Labelle',
-    author_email='egg997@gmail.com, flabelle@gosecure.ca',
+    version='1.1.1.dev0',
+    description='Remote Desktop Protocol Monster-in-the-Middle tool and Python library',
+    long_description="""Remote Desktop Protocol Monster-in-the-Middle tool and Python library""",
+    author='Émilio Gonzalez, Francis Labelle, Olivier Bilodeau, Alexandre Beaulieu',
+    author_email='obilodeau@gosecure.net',
     url='https://github.com/GoSecure/pyrdp',
     packages=setuptools.find_packages(include=["pyrdp", "pyrdp.*"]),
     package_data={
@@ -32,7 +32,7 @@ setup(name='pyrdp',
     ],
     install_requires=[
         'appdirs>=1,<2',
-        'cryptography>=2.2,<3',
+        'cryptography>=3.3.2,<4',
         'names>=0,<1',
         'progressbar2>=3.20,<4',
         'pyasn1>=0,<1',

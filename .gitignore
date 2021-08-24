@@ -36,3 +36,6 @@ mitm.json
 
 # twisted
 /twisted/plugins/dropin.cache
+
+# code coverage
+htmlcov/

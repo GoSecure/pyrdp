@@ -2,7 +2,7 @@
 
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018, 2020 GoSecure Inc.
+# Copyright (C) 2018, 2020, 2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 import logging
@@ -122,7 +122,7 @@ class TestMITM(RDPMITM):
         config.outDir = output_directory
 
         # replay_transport = FileLayer(output_path)
-        state = RDPMITMState(config)
+        state = RDPMITMState(config, log.sessionID)
         super().__init__(log, log, config, state, CustomMITMRecorder([], state))
 
         self.client.tcp.sendBytes = sendBytesStub

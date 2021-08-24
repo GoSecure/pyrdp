@@ -2,7 +2,7 @@
 
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018-2020 GoSecure Inc.
+# Copyright (C) 2018-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -96,12 +96,18 @@ def main():
         logger.info('Starting PyRDP Player in headless mode.')
         from pyrdp.player import HeadlessEventHandler
         from pyrdp.player.Replay import Replay
-        processEvents = HeadlessEventHandler()
-        for replay in args.replay:
-            processEvents.output.write(f'== REPLAY FILE: {replay}\n')
-            fd = open(replay, "rb")
-            replay = Replay(fd, handler=processEvents)
-            processEvents.output.write('\n-- END --------------------------------\n')
+        eventHandler = HeadlessEventHandler()
+
+        for replayPath in args.replay:
+            eventHandler.output.write(f'== REPLAY FILE: {replayPath}\n')
+
+            with open(replayPath, "rb") as f:
+                replay = Replay(f)
+
+                for event, _ in replay:
+                    eventHandler.onPDUReceived(event)
+
+            eventHandler.output.write('\n-- END --------------------------------\n')
 
 
 if __name__ == '__main__':
