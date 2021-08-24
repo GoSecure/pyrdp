@@ -3,7 +3,7 @@
 # Copyright (C) 2018-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-import typing
+from typing import List, Union
 from binascii import hexlify
 from io import BytesIO
 
@@ -77,7 +77,7 @@ class BasicFastPathParser(BasicSecurityParser):
 
         return length
 
-    def parseEvents(self, data: bytes) -> [FastPathEvent]:
+    def parseEvents(self, data: bytes) -> List[FastPathEvent]:
         events = []
 
         while len(data) > 0:
@@ -443,9 +443,9 @@ class FastPathOutputParser(Parser):
 
 def createFastPathParser(tls: bool,
                          encryptionMethod: EncryptionMethod,
-                         crypter: typing.Union[RC4Crypter, RC4CrypterProxy],
+                         crypter: Union[RC4Crypter, RC4CrypterProxy],
                          mode: ParserMode) \
-        -> typing.Union[BasicFastPathParser, SignedFastPathParser, FIPSFastPathParser]:
+        -> Union[BasicFastPathParser, SignedFastPathParser, FIPSFastPathParser]:
     """
     Create a fast-path parser based on which encryption method is used.
     :param tls: whether TLS is used or not.
