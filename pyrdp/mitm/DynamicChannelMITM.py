@@ -52,7 +52,7 @@ class DynamicChannelMITM(Subject):
         self.handlePDU(pdu, self.server)
 
     def onServerPDUReceived(self, pdu: DynamicChannelPDU):
-        self.statCounter.increment(STAT.DYNAMIC_CHANNEL_SERVER, STAT.DEVICE_REDIRECTION)
+        self.statCounter.increment(STAT.DYNAMIC_CHANNEL_SERVER, STAT.DYNAMIC_CHANNEL)
         self.handlePDU(pdu, self.client)
 
     def handlePDU(self, pdu: DynamicChannelPDU, destination: DynamicChannelLayer):
