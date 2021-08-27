@@ -10,6 +10,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 === Enhancements
 
+* `pyrdp-convert` video conversion is now 6x faster! (See {uri-issue}349[#349])
 * Minor CLI improvements
 * Improved type hints
 * Updated instructions to extract the RDP certificate and private key ({uri-issue}345[#345])
