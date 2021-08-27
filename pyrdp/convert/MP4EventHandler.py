@@ -51,6 +51,11 @@ class MP4EventHandler(RenderingEventHandler):
         self.filename = filename
         self.mp4 = f = av.open(filename, 'w')
         self.stream = f.add_stream('h264', rate=fps)
+        # TODO: this undocumented PyAV stream feature needs to be properly investigated
+        #       we could probably batch the encoding of several frames and benefit from threads
+        #       but trying this as-is lead to no gains
+        #       (actually a degradation but that could be statistically irrelevant)
+        #self.stream.thread_count = 4
         self.stream.pix_fmt = 'yuv420p'
         self.progress = progress
         self.scale = False
