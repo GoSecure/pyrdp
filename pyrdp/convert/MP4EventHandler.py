@@ -13,6 +13,7 @@ from pyrdp.ui import RDPBitmapToQtImage
 import logging
 
 import av
+import qimage2ndarray
 from PIL import ImageQt
 from PySide2.QtGui import QImage, QPainter, QColor
 
@@ -135,7 +136,7 @@ class MP4EventHandler(RenderingEventHandler):
         p.end()
 
         # Output frame.
-        frame = av.VideoFrame.from_image(ImageQt.fromqimage(surface))
+        frame = av.VideoFrame.from_ndarray(qimage2ndarray.rgb_view(surface))
         for packet in self.stream.encode(frame):
             if self.progress:
                 self.progress()

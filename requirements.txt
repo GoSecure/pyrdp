@@ -22,6 +22,7 @@ pyOpenSSL==19.1.0
 PySide2==5.15.2
 python-utils==2.5.6
 pytz==2021.1
+qimage2ndarray==1.8.3
 rsa==4.7.2
 scapy==2.4.5
 service-identity==21.1.0
