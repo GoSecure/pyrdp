@@ -48,7 +48,11 @@ class MP4EventHandler(RenderingEventHandler):
         :param progress: An optional callback (sig: `() -> ()`) whenever a frame is muxed.
         """
         self.filename = filename
-        self.mp4 = f = av.open(filename, 'w')
+        # The movflags puts the encoder in an MP4 Streaming Format. This has two benefits:
+        # - recover partial videos in case of a pyrdp-convert crash
+        # - reduce memory consumption (especially for long captures)
+        # See: https://ffmpeg.org/ffmpeg-formats.html#mov_002c-mp4_002c-ismv
+        self.mp4 = f = av.open(filename, 'w', options={'movflags': 'frag_keyframe+empty_moov'})
         self.stream = f.add_stream('h264', rate=fps)
         # TODO: this undocumented PyAV stream feature needs to be properly investigated
         #       we could probably batch the encoding of several frames and benefit from threads
