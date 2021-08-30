@@ -4,8 +4,8 @@
 # Licensed under the GPLv3 or later.
 #
 
-from pyrdp.enum import BitmapFlags, CapabilityType
-from pyrdp.pdu import BitmapUpdateData, PlayerPDU
+from pyrdp.enum import CapabilityType
+from pyrdp.pdu import PlayerPDU
 from pyrdp.player.ImageHandler import ImageHandler
 from pyrdp.player.RenderingEventHandler import RenderingEventHandler
 from pyrdp.ui import RDPBitmapToQtImage
