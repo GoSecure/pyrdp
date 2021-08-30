@@ -48,8 +48,8 @@ setup(name='pyrdp',
         "full": [
             'wheel>=0.34.2',
             'av>=8',
-            'pillowcase>=2',
             'PySide2>=5.12,<6',
+            'qimage2ndarray>=1.6',
             'dbus-python>=1.2<1.3;platform_system!="Windows"',
             'notify2>=0.3,<1;platform_system!="Windows"'
         ]

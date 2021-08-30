@@ -4,8 +4,8 @@
 # Licensed under the GPLv3 or later.
 #
 
-from pyrdp.enum import BitmapFlags, CapabilityType
-from pyrdp.pdu import BitmapUpdateData, PlayerPDU
+from pyrdp.enum import CapabilityType
+from pyrdp.pdu import PlayerPDU
 from pyrdp.player.ImageHandler import ImageHandler
 from pyrdp.player.RenderingEventHandler import RenderingEventHandler
 from pyrdp.ui import RDPBitmapToQtImage
@@ -13,7 +13,7 @@ from pyrdp.ui import RDPBitmapToQtImage
 import logging
 
 import av
-from PIL import ImageQt
+import qimage2ndarray
 from PySide2.QtGui import QImage, QPainter, QColor
 
 
@@ -50,6 +50,11 @@ class MP4EventHandler(RenderingEventHandler):
         self.filename = filename
         self.mp4 = f = av.open(filename, 'w')
         self.stream = f.add_stream('h264', rate=fps)
+        # TODO: this undocumented PyAV stream feature needs to be properly investigated
+        #       we could probably batch the encoding of several frames and benefit from threads
+        #       but trying this as-is lead to no gains
+        #       (actually a degradation but that could be statistically irrelevant)
+        #self.stream.thread_count = 4
         self.stream.pix_fmt = 'yuv420p'
         self.progress = progress
         self.scale = False
@@ -135,7 +140,7 @@ class MP4EventHandler(RenderingEventHandler):
         p.end()
 
         # Output frame.
-        frame = av.VideoFrame.from_image(ImageQt.fromqimage(surface))
+        frame = av.VideoFrame.from_ndarray(qimage2ndarray.rgb_view(surface))
         for packet in self.stream.encode(frame):
             if self.progress:
                 self.progress()
