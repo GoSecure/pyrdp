@@ -14,7 +14,6 @@ import logging
 
 import av
 import qimage2ndarray
-from PIL import ImageQt
 from PySide2.QtGui import QImage, QPainter, QColor
 
 
