@@ -80,6 +80,14 @@ jobs:
         working-directory: ./
         run: coverage run --append bin/pyrdp-player.py --headless test/files/test_session.replay
 
+      - name: pyrdp-convert.py to MP4
+        working-directory: ./
+        run: coverage run --append bin/pyrdp-convert.py test/files/test_session.replay -f mp4
+
+      - name: Verify the MP4 file
+        working-directory: ./
+        run: file test_session.mp4 | grep "MP4 Base Media"
+
       - name: Run unit tests
         working-directory: ./
         run: coverage run --append -m unittest discover -v
@@ -131,6 +139,14 @@ jobs:
       - name: pyrdp-player.py read a replay in headless mode test
         working-directory: ./
         run: coverage run --append bin/pyrdp-player.py --headless test/files/test_session.replay
+
+      - name: pyrdp-convert.py to MP4
+        working-directory: ./
+        run: coverage run --append bin/pyrdp-convert.py test/files/test_session.replay -f mp4
+
+      - name: Verify the MP4 file
+        working-directory: ./
+        run: file test_session.mp4 | grep "MP4 Base Media"
 
       - name: Run unit tests
         working-directory: ./
