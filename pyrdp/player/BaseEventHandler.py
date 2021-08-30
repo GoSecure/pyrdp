@@ -3,7 +3,7 @@
 # Copyright (C) 2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-from typing import Optional
+from typing import Optional, Tuple
 from pyrdp.core import decodeUTF16LE, Observer
 from pyrdp.enum import PlayerPDUType, CapabilityType, ParserMode, \
     FastPathFragmentation, \
@@ -176,7 +176,7 @@ class BaseEventHandler(Observer):
                 3: event.pointerFlags & PointerFlag.PTRFLAGS_BUTTON3
             }, (event.mouseX, event.mouseY))
 
-    def onMouseButton(self, buttons: dict, pos: (int, int)):
+    def onMouseButton(self, buttons: dict, pos: Tuple[int, int]):
         """
         Called when mouse buttons have been pressed.
 
