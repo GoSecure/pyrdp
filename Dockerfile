@@ -46,7 +46,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 \
         # Required for the setup.py install
         python3-distutils \
         # GUI and notifications stuff
-        libgl1-mesa-glx \
+        libgl1-mesa-glx libxcb-xinerama0 \
         notify-osd dbus-x11 libxkbcommon-x11-0 \
         # Runtime requirement for PyAV (pyrdp-convert to MP4)
         libavcodec58 libavdevice58 \
