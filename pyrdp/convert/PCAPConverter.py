@@ -4,6 +4,7 @@
 # Licensed under the GPLv3 or later.
 #
 from pathlib import Path
+from typing import Dict, List, Tuple
 
 from progressbar import progressbar
 from scapy.layers.inet import TCP
