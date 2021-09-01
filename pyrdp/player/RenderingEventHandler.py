@@ -61,7 +61,7 @@ class RenderingEventHandler(BaseEventHandler):
             self.onFinishRender()
 
     def onBitmap(self, bitmapData: BitmapUpdateData):
-        image = RDPBitmapToQtImage(
+        image, _ = RDPBitmapToQtImage(
             bitmapData.width,
             bitmapData.heigth,
             bitmapData.bitsPerPixel,

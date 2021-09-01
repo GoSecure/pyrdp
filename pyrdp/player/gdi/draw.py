@@ -300,7 +300,7 @@ class GdiQtFrontend(GdiFrontend):
             if src == dst:
                 src = dst.copy()  # Can't paint to same surface.
         else:
-            src = self.bitmaps.get(state.cacheId, state.cacheIndex)
+            src, _ = self.bitmaps.get(state.cacheId, state.cacheIndex)
 
             if src is None:
                 return  # Ignore cache misses.
@@ -314,7 +314,7 @@ class GdiQtFrontend(GdiFrontend):
             # Use offscreen bitmap as a source.
             src = self.surfaces[state.cacheIndex]
         else:
-            src = self.bitmaps.get(state.cacheId, state.cacheIndex)
+            src, _ = self.bitmaps.get(state.cacheId, state.cacheIndex)
 
             if src is None:
                 return  # Ignore cache misses.
@@ -431,18 +431,18 @@ class GdiQtFrontend(GdiFrontend):
     # Secondary Handlers
     def cacheBitmapV1(self, state: CacheBitmapV1):
         LOG.debug(state)
-        bmp = RDPBitmapToQtImage(state.width, state.height,  state.bpp, True, state.data)
-        self.bitmaps.add(state.cacheId, state.cacheIndex, bmp)
+        bmp, buf = RDPBitmapToQtImage(state.width, state.height,  state.bpp, True, state.data)
+        self.bitmaps.add(state.cacheId, state.cacheIndex, bmp, buf)
 
     def cacheBitmapV2(self, state: CacheBitmapV2):
         LOG.debug(state)
-        bmp = RDPBitmapToQtImage(state.width, state.height,  state.bpp, True, state.data)
-        self.bitmaps.add(state.cacheId, state.cacheIndex, bmp)
+        bmp, buf = RDPBitmapToQtImage(state.width, state.height,  state.bpp, True, state.data)
+        self.bitmaps.add(state.cacheId, state.cacheIndex, bmp, buf)
 
     def cacheBitmapV3(self, state: CacheBitmapV3):
         LOG.debug(state)
-        bmp = RDPBitmapToQtImage(state.width, state.height,  state.bpp, True, state.data)
-        self.bitmaps.add(state.cacheId, state.cacheIndex, bmp)
+        bmp, buf = RDPBitmapToQtImage(state.width, state.height,  state.bpp, True, state.data)
+        self.bitmaps.add(state.cacheId, state.cacheIndex, bmp, buf)
 
     def cacheColorTable(self, state: CacheColorTable):
         LOG.debug(state)

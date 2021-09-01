@@ -48,6 +48,7 @@ def RDPBitmapToQtImage(width: int, height: int, bitsPerPixel: int, isCompressed:
     :param data: bitmap data
     """
     image = None
+    buf = None
     
     if bitsPerPixel == 15:
         if isCompressed:
@@ -55,7 +56,8 @@ def RDPBitmapToQtImage(width: int, height: int, bitsPerPixel: int, isCompressed:
             rle.bitmap_decompress(buf, width, height, data, 2)
             image = QImage(buf, width, height, QImage.Format_RGB555)
         else:
-            image = QImage(data, width, height, QImage.Format_RGB555).transformed(QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
+            buf = data
+            image = QImage(buf, width, height, QImage.Format_RGB555).transformed(QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
     
     elif bitsPerPixel == 16:
         if isCompressed:
@@ -63,7 +65,8 @@ def RDPBitmapToQtImage(width: int, height: int, bitsPerPixel: int, isCompressed:
             rle.bitmap_decompress(buf, width, height, data, 2)
             image = QImage(buf, width, height, QImage.Format_RGB16)
         else:
-            image = QImage(data, width, height, QImage.Format_RGB16).transformed(QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
+            buf = data
+            image = QImage(buf, width, height, QImage.Format_RGB16).transformed(QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
     
     elif bitsPerPixel == 24:
         if isCompressed:
@@ -81,7 +84,8 @@ def RDPBitmapToQtImage(width: int, height: int, bitsPerPixel: int, isCompressed:
 
             image = QImage(buf, width, height, QImage.Format_RGB888)
         else:
-            image = QImage(data, width, height, QImage.Format_RGB888).transformed(QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
+            buf = data
+            image = QImage(buf, width, height, QImage.Format_RGB888).transformed(QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
             
     elif bitsPerPixel == 32:
         if isCompressed:
@@ -89,7 +93,8 @@ def RDPBitmapToQtImage(width: int, height: int, bitsPerPixel: int, isCompressed:
             rle.bitmap_decompress(buf, width, height, data, 4)
             image = QImage(buf, width, height, QImage.Format_RGB32)
         else:
-            image = QImage(data, width, height, QImage.Format_RGB32).transformed(QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
+            buf = data
+            image = QImage(buf, width, height, QImage.Format_RGB32).transformed(QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
     elif bitsPerPixel == 8:
         if isCompressed:
             buf = bytearray(width * height * 1)
@@ -97,12 +102,12 @@ def RDPBitmapToQtImage(width: int, height: int, bitsPerPixel: int, isCompressed:
             buf2 = convert8bppTo16bpp(buf)
             image = QImage(buf2, width, height, QImage.Format_RGB16)
         else:
-            buf2 = convert8bppTo16bpp(data)
-            image = QImage(buf2, width, height, QImage.Format_RGB16).transformed(QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
+            buf = convert8bppTo16bpp(data)
+            image = QImage(buf, width, height, QImage.Format_RGB16).transformed(QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
     else:
         log.error("Receive image in bad format")
         image = QImage(width, height, QImage.Format_RGB32)
-    return image
+    return (image, buf)
 
 
 def convert8bppTo16bpp(buf: bytes):

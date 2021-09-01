@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2020 GoSecure Inc.
+# Copyright (C) 2020-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -8,6 +8,7 @@
 GDI Cache Management Layer.
 """
 
+from typing import List
 from PySide2.QtCore import QSize
 from PySide2.QtGui import QBrush, QImage, QBitmap
 
@@ -15,7 +16,7 @@ from pyrdp.parser.rdp.orders.common import Glyph
 
 
 class BitmapCache:
-    """Bitmap cache."""
+    """Bitmap cache. Structured like this: [cache id][cache index] = (image, buffer)"""
 
     def __init__(self, persist=False):
         self.caches = {}
@@ -53,16 +54,14 @@ class BitmapCache:
             return None
         return cache[idx]
 
-    def add(self, cid: int, idx: int, entry: QImage) -> bool:
+    def add(self, cid: int, idx: int, image: QImage, buffer: bytes) -> bool:
         """
         Add an entry to the cache.
-
-        :returns: True if the entry is a fresh entry, False if it replaced an existing one.
         """
         if cid not in self.caches:
             self.caches[cid] = {}
         cache = self.caches[cid]
-        cache[idx] = entry
+        cache[idx] = (image, buffer)
 
     def evict(self, cid: int, idx: int) -> bool:
         """
@@ -106,13 +105,13 @@ class PaletteCache:
     def has(self, idx: int) -> bool:
         return idx in self.entries
 
-    def get(self, idx: int) -> [int]:
+    def get(self, idx: int) -> List[int]:
         if idx in self.entries:
             return self.entries[idx]
         else:
             return None
 
-    def add(self, idx: int, colors: [int]):
+    def add(self, idx: int, colors: List[int]):
         self.entries[idx] = colors
 
 
