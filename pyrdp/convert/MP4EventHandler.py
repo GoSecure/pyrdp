@@ -8,7 +8,6 @@ from pyrdp.enum import CapabilityType
 from pyrdp.pdu import PlayerPDU
 from pyrdp.player.ImageHandler import ImageHandler
 from pyrdp.player.RenderingEventHandler import RenderingEventHandler
-from pyrdp.ui import RDPBitmapToQtImage
 
 import logging
 
