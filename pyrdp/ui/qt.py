@@ -52,8 +52,7 @@ def RDPBitmapToQtImage(width: int, height: int, bitsPerPixel: int, isCompressed:
     
     if bitsPerPixel == 15:
         if isCompressed:
-            buf = bytearray(width * height * 2)
-            rle.bitmap_decompress(buf, width, height, data, 2)
+            buf = rle.bitmap_decompress(data, width, height, 2)
             image = QImage(buf, width, height, QImage.Format_RGB555)
         else:
             buf = data
@@ -61,8 +60,7 @@ def RDPBitmapToQtImage(width: int, height: int, bitsPerPixel: int, isCompressed:
     
     elif bitsPerPixel == 16:
         if isCompressed:
-            buf = bytearray(width * height * 2)
-            rle.bitmap_decompress(buf, width, height, data, 2)
+            buf = rle.bitmap_decompress(data, width, height, 2)
             image = QImage(buf, width, height, QImage.Format_RGB16)
         else:
             buf = data
@@ -70,8 +68,7 @@ def RDPBitmapToQtImage(width: int, height: int, bitsPerPixel: int, isCompressed:
     
     elif bitsPerPixel == 24:
         if isCompressed:
-            buf = bytearray(width * height * 3)
-            rle.bitmap_decompress(buf, width, height, data, 3)
+            buf = rle.bitmap_decompress(data, width, height, 3)
 
             # This is a ugly patch because there is a bug in the 24bpp decompression in rle.c
             # where the red and the blue colors are inverted. Fixing this in python causes a performance
@@ -89,18 +86,16 @@ def RDPBitmapToQtImage(width: int, height: int, bitsPerPixel: int, isCompressed:
             
     elif bitsPerPixel == 32:
         if isCompressed:
-            buf = bytearray(width * height * 4)
-            rle.bitmap_decompress(buf, width, height, data, 4)
+            buf = rle.bitmap_decompress(data, width, height, 4)
             image = QImage(buf, width, height, QImage.Format_RGB32)
         else:
             buf = data
             image = QImage(buf, width, height, QImage.Format_RGB32).transformed(QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
     elif bitsPerPixel == 8:
         if isCompressed:
-            buf = bytearray(width * height * 1)
-            rle.bitmap_decompress(buf, width, height, data, 1)
-            buf2 = convert8bppTo16bpp(buf)
-            image = QImage(buf2, width, height, QImage.Format_RGB16)
+            _buf = rle.bitmap_decompress(data, width, height, 1)
+            buf = convert8bppTo16bpp(_buf)
+            image = QImage(buf, width, height, QImage.Format_RGB16)
         else:
             buf = convert8bppTo16bpp(data)
             image = QImage(buf, width, height, QImage.Format_RGB16).transformed(QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
