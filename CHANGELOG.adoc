@@ -11,6 +11,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 === Enhancements
 
 * `pyrdp-convert` video conversion is now 6x faster! (See {uri-issue}349[#349])
+* `pyrdp-convert` video format can be viewed during encoding and will play even if the conversion process crashes or is halted ({uri-issue}352[#352], {uri-issue}353[#353])
 * Minor CLI improvements
 * Improved type hints
 * Updated instructions to extract the RDP certificate and private key ({uri-issue}345[#345])
@@ -18,6 +19,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 === Bug fixes
 
+* Fixed a memory leak in the bitmap decoding routine preventing the conversion or the replay of very large captures ({uri-issue}352[#352], {uri-issue}353[#353])
 * Fixed NLA redirection problems if original target and NLA redirection target are the same ({uri-issue}342[#342], {uri-issue}343[#343])
 * Added a missing dependency for the GUI on Ubuntu 20.04 LTS ({uri-issue}351[#351], {uri-issue}355[#355])
 

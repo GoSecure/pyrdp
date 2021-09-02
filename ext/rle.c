@@ -2,6 +2,8 @@
    rdesktop: A Remote Desktop Protocol client.
    Bitmap decompression routines
    Copyright (C) Matthew Chapman <matthewc.unsw.edu.au> 1999-2008
+   Copyright (C) GoSecure 2021
+   Copyright (C) Olivier Bilodeau <obilodeau@gosecure.net> 2021
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -24,6 +26,7 @@
 /* indent is confused by this file */
 /* *INDENT-OFF* */
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 /* Specific rename for RDPY integration */
@@ -921,6 +924,41 @@ bitmap_decompress(uint8 * output, int width, int height, uint8* input, int size,
 static PyObject*
 bitmap_decompress_wrapper(PyObject* self, PyObject* args)
 {
+	unsigned char* input;
+	Py_ssize_t input_len;
+	int width = 0, height = 0, bpp = 0;
+	unsigned char* dest;
+	int dest_size;
+	PyObject *result;
+
+	if (!PyArg_ParseTuple(args, "y#iii", &input, &input_len, &width, &height, &bpp))
+		return NULL;
+
+	dest_size = width * height * bpp;
+	dest = PyMem_Malloc (dest_size);
+	if (dest == NULL)
+	{
+		return PyErr_NoMemory();
+	}
+
+	if(bitmap_decompress((uint8*)dest, width, height, (uint8*)input, input_len, bpp) == False) {
+		return NULL;
+	}
+
+	result = PyByteArray_FromStringAndSize(dest, dest_size);
+
+	PyMem_Free (dest);
+	if (result == NULL)
+	{
+		return PyErr_NoMemory ();
+	}
+
+	return result;
+}
+
+static PyObject*
+leaky_bitmap_decompress_wrapper(PyObject* self, PyObject* args)
+{
 	Py_buffer output, input;
 	int width = 0, height = 0, bpp = 0;
 
@@ -935,6 +973,7 @@ bitmap_decompress_wrapper(PyObject* self, PyObject* args)
  
 static PyMethodDef rle_methods[] =
 {
+     {"bitmap_decompress_v1", leaky_bitmap_decompress_wrapper, METH_VARARGS, "decompress bitmap from microsoft rle algorithm."},
      {"bitmap_decompress", bitmap_decompress_wrapper, METH_VARARGS, "decompress bitmap from microsoft rle algorithm."},
      {NULL, NULL, 0, NULL}
 };
