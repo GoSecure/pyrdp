@@ -4,6 +4,7 @@
 # Licensed under the GPLv3 or later.
 #
 import enum
+from typing import Tuple
 
 from scapy.layers.inet import IP
 from scapy.layers.l2 import Ether
@@ -44,7 +45,7 @@ class TCPFlags(enum.IntEnum):
     CWR = 0x80
 
 
-def createHandler(format: str, outputFileBase: str, progress=None) -> (str, str):
+def createHandler(format: str, outputFileBase: str, progress=None) -> Tuple[str, str]:
     """
     Gets the appropriate handler and returns the filename with extension.
     Returns None if the format is replay.
@@ -111,7 +112,7 @@ def canExtractSessionInfo(session: PacketList) -> bool:
     packet = session[0]
     return IP in packet or Ether not in packet
 
-def getSessionInfo(session: PacketList) -> (str, str, float, bool):
+def getSessionInfo(session: PacketList) -> Tuple[str, str, float, bool]:
     """Attempt to retrieve an (src, dst, ts, isPlaintext) tuple for a data stream."""
     packet = session[0]
 

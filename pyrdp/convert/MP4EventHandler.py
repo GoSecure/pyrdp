@@ -8,7 +8,6 @@ from pyrdp.enum import CapabilityType
 from pyrdp.pdu import PlayerPDU
 from pyrdp.player.ImageHandler import ImageHandler
 from pyrdp.player.RenderingEventHandler import RenderingEventHandler
-from pyrdp.ui import RDPBitmapToQtImage
 
 import logging
 
@@ -66,7 +65,7 @@ class MP4EventHandler(RenderingEventHandler):
         self.fps = fps
         self.delta = 1000 // fps  # ms per frame
         self.log = logging.getLogger(__name__)
-        self.log.info('Begin MP4 export to %s: %d FPS', filename)
+        self.log.info('Begin MP4 export to %s: %d FPS', filename, fps)
         self.timestamp = self.prevTimestamp = None
 
         super().__init__(MP4Image())
