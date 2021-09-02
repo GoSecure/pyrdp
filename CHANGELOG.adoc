@@ -8,6 +8,11 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 == <master> - <unreleased>
 
+=== Security
+
+* Backported security fixes from rdesktop to our Python C extension doing RLE processing.
+  Exploitability wasn't verified. ({uri-issue}357[#357])
+
 === Enhancements
 
 * `pyrdp-convert` video conversion is now 6x faster! (See {uri-issue}349[#349])
