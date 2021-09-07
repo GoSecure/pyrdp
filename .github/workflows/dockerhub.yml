@@ -61,7 +61,7 @@ jobs:
         with:
           images: gosecure/pyrdp
           flavor: |
-            suffix=-slim
+            suffix=-slim,onlatest=true
 
       - name: Build and push regular Docker image
         uses: docker/build-push-action@v2
