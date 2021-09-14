@@ -3,6 +3,7 @@
 # Copyright (C) 2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+import traceback
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -45,7 +46,10 @@ class PCAPConverter(Converter):
             try:
                 self.processStream(startTimeStamp, stream)
             except Exception as e:
-                print(f"\n[-] Failed: {e}")
+                trace = traceback.format_exc()
+                print() # newline
+                print(trace)
+                print(f"[-] Failed: {e}")
 
     def listSessions(self) -> List[Tuple[int, PCAPStream]]:
         print(f"[*] Analyzing PCAP '{self.inputFile}' ...")
