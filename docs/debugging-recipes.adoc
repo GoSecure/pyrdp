@@ -1,0 +1,40 @@
+= Debugging recipes
+
+== Debugging from the docker container
+
+Build the container (or use an existing tag):
+
+    docker build -t pyrdp -f Dockerfile .
+
+Run it interactive to get a shell but specify root user (to be able to run `pip install`):
+
+    docker run -ti -v $PWD:/home/pyrdp/ --user root pyrdp bash
+
+In the container, install pip:
+
+    apt update
+    apt install python3-pip
+
+Now move away from `/home/pyrdp/` to avoid loading order conflicts and activate the `venv`:
+
+    cd /
+    source /opt/venv/bin/activate
+
+Install the debugger:
+
+    pip install ipdb
+
+Run pyrdp, for example:
+
+    ipdb3 /opt/venv/bin/pyrdp-convert.py -f mp4 /home/pyrdp/rdp_replay_20210112_16-14-08_535_Elizabeth685320.pyrdp
+
+Run `c` to continue on loading breakpoint:
+
+```
+> /opt/venv/bin/pyrdp-convert.py(3)<module>()
+      2 # EASY-INSTALL-SCRIPT: 'pyrdp==1.1.1.dev0','pyrdp-convert.py'
+----> 3 __requires__ = 'pyrdp==1.1.1.dev0'
+      4 __import__('pkg_resources').run_script('pyrdp==1.1.1.dev0', 'pyrdp-convert.py')
+
+ipdb> c
+```
