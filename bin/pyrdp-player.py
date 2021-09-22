@@ -25,6 +25,7 @@ import logging  # noqa
 import logging.handlers  # noqa
 import sys  # noqa
 import os  # noqa
+# Workaround a macOS bug: https://bugreports.qt.io/browse/QTBUG-87014
 os.environ['QT_MAC_WANTS_LAYER']='1'
 if HAS_GUI:
     from pyrdp.player import MainWindow
