@@ -25,7 +25,8 @@ import logging  # noqa
 import logging.handlers  # noqa
 import sys  # noqa
 import os  # noqa
-
+# Workaround a macOS bug: https://bugreports.qt.io/browse/QTBUG-87014
+os.environ['QT_MAC_WANTS_LAYER']='1'
 if HAS_GUI:
     from pyrdp.player import MainWindow
     from PySide2.QtWidgets import QApplication
@@ -34,7 +35,7 @@ if HAS_GUI:
 def enableNotifications(logger):
     """Enable notifications if supported."""
     # https://docs.python.org/3/library/os.html
-    if os.name != "nt":
+    if os.name != "nt" and sys.platform != "darwin":
         notifyHandler = NotifyHandler()
         notifyHandler.setFormatter(logging.Formatter("[{asctime}] - {message}", style="{"))
 
