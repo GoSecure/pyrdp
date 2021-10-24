@@ -89,13 +89,14 @@ class MP4EventHandler(RenderingEventHandler):
 
         # Prevent drifting when fps doesn't perfectly divide a second.
         nframes = (dt / self.delta) + self.drift
-        self.drift = nframes - floor(nframes)  # update drift.
+        nwhole = floor(nframes)
+        self.drift = nframes - nwhole  # update drift.
 
-        if floor(nframes) > 0:  # Only take whole frames.
-            for _ in range(nframes):
+        if nwhole > 0:  # Only take whole frames.
+            for _ in range(nwhole):
                 self.writeFrame()
             self.prevTimestamp = ts
-            self.log.debug('Rendered %d still frame(s)', nframes)
+            self.log.debug('Rendered %d still frame(s) Drift=%f', nwhole, self.drift)
 
     def cleanup(self):
         # Add one second worth of padding so that the video doesn't end too abruptly.
