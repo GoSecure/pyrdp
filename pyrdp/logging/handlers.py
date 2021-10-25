@@ -8,7 +8,7 @@ import logging
 
 # Dependency not installed on Windows. Notifications are not supported
 try:
-    import notify2
+    from pynotifier import Notification
 except ImportError:
     pass
 
@@ -18,7 +18,6 @@ class NotifyHandler(logging.StreamHandler):
     """
 
     def __init__(self):
-        notify2.init("pyrdp-player")
         super(NotifyHandler, self).__init__()
 
     def emit(self, record):
@@ -26,5 +25,13 @@ class NotifyHandler(logging.StreamHandler):
         Send a notification.
         :param record: the LogRecord object
         """
-        notification = notify2.Notification(record.getMessage())
-        notification.show()
+        try:
+            Notification(
+                title='PyRDP',
+                description=record.getMessage(),
+                # duration=5,  # seconds
+                urgency='normal'
+            ).send()
+        except:
+            # Either libnotify-bin is not installed or the platform does not support notifications.
+            pass
