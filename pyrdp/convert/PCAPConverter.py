@@ -10,13 +10,13 @@ from typing import Dict, List, Tuple
 from progressbar import progressbar
 from scapy.layers.inet import TCP
 from scapy.layers.tls.record import TLS
+from pyrdp.convert.pyrdp_scapy import *
 
 from pyrdp.convert.Converter import Converter
 from pyrdp.convert.ExportedPDUStream import ExportedPDUStream
+from pyrdp.convert.TLSPDUStream import TLSPDUStream
 from pyrdp.convert.PCAPStream import PCAPStream
 from pyrdp.convert.RDPReplayer import RDPReplayer
-from pyrdp.convert.TLSPDUStream import TLSPDUStream
-from pyrdp.convert.pyrdp_scapy import *
 from pyrdp.convert.utils import tcp_both, getSessionInfo, findClientRandom, createHandler, canExtractSessionInfo
 
 
@@ -106,13 +106,18 @@ class PCAPConverter(Converter):
 
         print(f"[*] Processing {stream.client} -> {stream.server}")
 
-        for data, timeStamp, src, _ in progressbar(stream):
-            replayer.setTimeStamp(timeStamp)
-            replayer.recv(data, src == stream.client)
+        try:
+            for data, timeStamp, src, _dst in progressbar(stream):
+                replayer.setTimeStamp(timeStamp)
+                replayer.recv(data, src == stream.client)
+        except StopIteration:
+            # Done processing the stream.
+            pass
 
         try:
             replayer.tcp.recordConnectionClose()
+            handler.cleanup()
         except struct.error:
             sys.stderr.write("[!] Couldn't close the session cleanly. Make sure that --src and --dst are correct.")
 
-        print(f"\n[+] Successfully wrote all files to '{self.outputPrefix}'")
+        print(f"\n[+] Successfully wrote '{handler.filename}'")
