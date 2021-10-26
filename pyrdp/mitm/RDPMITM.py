@@ -218,10 +218,11 @@ class RDPMITM:
                 self.log.error("Failed to connect to recording host: timeout expired")
 
     def doClientTls(self):
-        cert = self.server.tcp.transport.getPeerCertificate()
-        if not cert:
-            # Wait for server certificate
-            reactor.callLater(1, self.doClientTls)
+        if not self.state.ntlmCatch:
+            cert = self.server.tcp.transport.getPeerCertificate()
+            if not cert:
+                # Wait for server certificate
+                reactor.callLater(1, self.doClientTls)
 
         # Clone certificate if necessary.
         if self.certs:
@@ -238,8 +239,11 @@ class RDPMITM:
 
         # Add unknown packet handlers.
         ntlmSSPState = NTLMSSPState()
-        self.client.segmentation.addObserver(NLAHandler(self.server.tcp, ntlmSSPState, self.getLog("ntlmssp")))
-        self.server.segmentation.addObserver(NLAHandler(self.client.tcp, ntlmSSPState, self.getLog("ntlmssp")))
+        if self.state.ntlmCatch:
+            self.client.segmentation.addObserver(NLAHandler(self.client.tcp, ntlmSSPState, self.getLog("ntlmssp"), True))
+        else:
+            self.client.segmentation.addObserver(NLAHandler(self.server.tcp, ntlmSSPState, self.getLog("ntlmssp")))
+            self.server.segmentation.addObserver(NLAHandler(self.client.tcp, ntlmSSPState, self.getLog("ntlmssp")))
 
     def startTLS(self, onTlsReady: typing.Callable[[], None]):
         """
@@ -248,8 +252,9 @@ class RDPMITM:
         self.onTlsReady = onTlsReady
 
         # Establish TLS tunnel with target server...
-        contextForServer = ClientTLSContext()
-        self.server.tcp.startTLS(contextForServer)
+        if not self.state.ntlmCatch:
+            contextForServer = ClientTLSContext()
+            self.server.tcp.startTLS(contextForServer)
 
         # Establish TLS tunnel with client.
         reactor.callLater(1, self.doClientTls)

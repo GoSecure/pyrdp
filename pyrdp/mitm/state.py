@@ -87,6 +87,9 @@ class RDPMITMState:
         self.effectiveTargetPort = self.config.targetPort
         """Port for the effective host"""
 
+        self.ntlmCatch = False
+        """Hijack connection from server and catch NTML hash"""
+
         self.securitySettings.addObserver(self.crypters[ParserMode.CLIENT])
         self.securitySettings.addObserver(self.crypters[ParserMode.SERVER])
 

