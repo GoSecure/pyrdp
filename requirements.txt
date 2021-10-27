@@ -5,7 +5,6 @@ av==8.0.3
 cffi==1.14.6
 constantly==15.1.0
 cryptography==3.4.7
-dbus-python==1.2.16
 hyperlink==21.0.0
 idna==3.2
 incremental==21.3.0
