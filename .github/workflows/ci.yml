@@ -51,7 +51,7 @@ jobs:
       - name: Install setuptools
         run: sudo apt install python3-setuptools
       - name: Install PyRDP dependencies
-        run: sudo apt install libdbus-1-dev libdbus-glib-1-dev libgl1-mesa-glx git python3-dev
+        run: sudo apt install libgl1-mesa-glx git python3-dev
       - name: Install wheel
         working-directory: .
         run: pip install wheel

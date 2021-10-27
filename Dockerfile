@@ -9,9 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         python3-setuptools \
         # Required for venv setup
         python3-venv \
-        # Required to build RLE module and dbus-python (GUI)
+        # Required to build RLE module (GUI)
         build-essential python3-dev \
-        libdbus-1-dev libdbus-glib-1-dev \
         # Required to build PyAV (pyrdp-convert to MP4)
         libavformat-dev libavcodec-dev libavdevice-dev \
         libavutil-dev libswscale-dev libswresample-dev libavfilter-dev
@@ -47,7 +46,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 \
         python3-distutils \
         # GUI and notifications stuff
         libgl1-mesa-glx libxcb-xinerama0 \
-        notify-osd dbus-x11 libxkbcommon-x11-0 \
+        notify-osd libxkbcommon-x11-0 \
         libnotify-bin \
         # Runtime requirement for PyAV (pyrdp-convert to MP4)
         libavcodec58 libavdevice58 \
