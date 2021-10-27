@@ -46,7 +46,7 @@ class ConversionLayer(LayerChainItem):
 
     @property
     def filename(self):
-        return self.handler.filename
+        return self.sink.filename
 
     def sendBytes(self, data: bytes):
         self.player.recv(data)
