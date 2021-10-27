@@ -44,6 +44,10 @@ class ConversionLayer(LayerChainItem):
         self.player = PlayerLayer()
         self.player.addObserver(handler)
 
+    @property
+    def filename(self):
+        return self.handler.filename
+
     def sendBytes(self, data: bytes):
         self.player.recv(data)
 
@@ -66,8 +70,9 @@ class RDPReplayer(RDPMITM):
 
         state = RDPMITMState(config, sessionID)
 
-        transport = ConversionLayer(handler) if handler else FileLayer(output_directory / (sessionID + '.' + HANDLERS['replay'][1]))
-        rec = OfflineRecorder([transport], state)
+        self.transport = ConversionLayer(handler) if handler else FileLayer(output_directory / (sessionID + '.' + HANDLERS['replay'][1]))
+
+        rec = OfflineRecorder([self.transport], state)
 
         super().__init__(log, log, config, state, rec)
 
@@ -98,3 +103,8 @@ class RDPReplayer(RDPMITM):
 
     def sendPayload(self):
         pass
+
+    @property
+    def filename(self):
+        """The destination filename for this replay"""
+        return self.transport.filename
