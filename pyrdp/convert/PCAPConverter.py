@@ -120,4 +120,4 @@ class PCAPConverter(Converter):
         except struct.error:
             sys.stderr.write("[!] Couldn't close the session cleanly. Make sure that --src and --dst are correct.")
 
-        print(f"\n[+] Successfully wrote '{handler.filename}'")
+        print(f"\n[+] Successfully wrote all files to '{self.outputPrefix}'")
