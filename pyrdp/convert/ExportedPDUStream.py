@@ -5,7 +5,7 @@
 #
 from pyrdp.convert.PCAPStream import PCAPStream
 from pyrdp.convert.pyrdp_scapy import *
-from pyrdp.convert.utils import extractInetAddressesFromPDUPacket, InetAddress
+from pyrdp.convert.utils import Exported, extractInetAddressesFromPDUPacket, InetAddress
 
 
 class ExportedPDUStream(PCAPStream):
@@ -25,17 +25,14 @@ class ExportedPDUStream(PCAPStream):
         return self
 
     def __next__(self):
-
         while True:
             if self.n >= len(self):
                 raise StopIteration
 
+            #packet = Exported(self.packets[self.n].load)
             packet = self.packets[self.n]
             src, dst = extractInetAddressesFromPDUPacket(packet)
             data = packet.load[60:]
             self.n += 1
-
-            if any(ip not in self.ips for ip in [src.ip, dst.ip]):
-                continue  # Skip packets not meant for this stream.
 
             return PCAPStream.output(data, packet.time, src, dst)
