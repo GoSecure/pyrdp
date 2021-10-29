@@ -116,7 +116,7 @@ slim one. Install the dependencies according to your use case.
 sudo apt install python3 python3-pip python3-dev python3-setuptools python3-venv \
         build-essential python3-dev git openssl \
         libgl1-mesa-glx \
-        libnotify-bin notify-osd \
+        libnotify-bin \
         libxkbcommon-x11-0 libxcb-xinerama0 \
         libavformat-dev libavcodec-dev libavdevice-dev \
         libavutil-dev libswscale-dev libswresample-dev libavfilter-dev
