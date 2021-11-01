@@ -9,7 +9,7 @@ from pyrdp.enum.core import ParserMode
 from pyrdp.enum.gcc import GCCPDUType
 from pyrdp.enum.mcs import MCSChannelID, MCSChannelName, MCSPDUType, MCSResult
 from pyrdp.enum.negotiation import NegotiationRequestFlags, NegotiationType
-from pyrdp.enum.ntlmssp import NTLMSSPMessageType, NTLMSSPChallengeType
+from pyrdp.enum.ntlmssp import NTLMSSPMessageType, NTLMSSPChallengeType, NTLMSSPChallengeVersion
 from pyrdp.enum.player import MouseButton, PlayerPDUType
 from pyrdp.enum.rdp import *
 from pyrdp.enum.orders import DrawingOrderControlFlags

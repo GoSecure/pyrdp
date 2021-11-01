@@ -56,14 +56,14 @@ class NLAHandler(SegmentationObserver):
                 randomChallenge = self.getRandChallenge()
                 self.log.info("NTLMSSP Negotiation")
                 challenge: NTLMSSPChallengePDU = NTLMSSPChallengePDU(randomChallenge)
-
+                
                 # There might be no state if server side connection was shutdown
                 if not self.ntlmSSPState:
                     self.ntlmSSPState = NTLMSSPState()
                 self.ntlmSSPState.setMessage(challenge)
                 self.ntlmSSPState.challenge.serverChallenge = randomChallenge
-                data = bytes(challenge)
-
+                data = challenge.write('WINNT')
+            
             if message.messageType == NTLMSSPMessageType.AUTHENTICATE_MESSAGE:
                 message: NTLMSSPAuthenticatePDU
                 user = message.user
