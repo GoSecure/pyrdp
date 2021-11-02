@@ -12,8 +12,7 @@ class NTLMSSPMessageType(IntEnum):
     AUTHENTICATE_MESSAGE = 3
 
 class NTLMSSPChallengeType(IntEnum):
-    NTLMSSP_START_OFFSET = 0x17
-    WORKSTATION_BUFFER_OFFSET = NTLMSSP_START_OFFSET + 0x38
+    WORKSTATION_BUFFER_OFFSET = 0x38
     
     # http://davenport.sourceforge.net/ntlm.html#theNtlmFlags
     # https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-nlmp/99d90ff4-957f-4c8a-80e4-5bfe5a9a9832
