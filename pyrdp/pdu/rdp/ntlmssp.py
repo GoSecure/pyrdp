@@ -58,7 +58,6 @@ class NTLMSSPChallengePDU(NTLMSSPPDU):
         message = stream.getvalue()
         messageLen = len(message)
 
-        # import ipdb; ipdb.set_trace()
         # ASN.1 description
         # SEQUENCE (2 elem)
         #   [0] (1 elem)
@@ -70,17 +69,16 @@ class NTLMSSPChallengePDU(NTLMSSPPDU):
         #           OCTET STRING (...)
         stream.seek(0)
         stream.write(ber.writeUniversalTag(ber.Tag.BER_TAG_SEQUENCE, True))
-        stream.write(ber.writeLength(messageLen + 20))
-        stream.write(b'\xa0\x03' + ber.writeInteger(NTLMSSPChallengeVersion.CREDSSP_VERSION)) # CredSSP version
-        stream.write(b'\xa1\x81' + (messageLen + 12).to_bytes(1,'little'))
+        stream.write(ber.writeLength(messageLen + 25))
+        stream.write(b'\xa0' + ber.writeLength(3))
+        stream.write(ber.writeInteger(NTLMSSPChallengeVersion.CREDSSP_VERSION)) # CredSSP version
+        stream.write(b'\xa1' + ber.writeLength(messageLen + 16))
         stream.write(ber.writeUniversalTag(ber.Tag.BER_TAG_SEQUENCE, True))
-        stream.write(b'\x81'     + (messageLen + 9).to_bytes(1, 'little'))
+        stream.write(ber.writeLength(messageLen + 12))
         stream.write(ber.writeUniversalTag(ber.Tag.BER_TAG_SEQUENCE, True))
-        stream.write(b'\x81'     + (messageLen + 6).to_bytes(1, 'little'))
-        stream.write(b'\xa0\x81' + (messageLen + 3).to_bytes(1, 'little'))
-        stream.write(ber.writeUniversalTag(ber.Tag.BER_TAG_OCTET_STRING, False))
-        stream.write(b'\x81'     + messageLen.to_bytes(1, 'little'))
-        stream.write(message)
+        stream.write(ber.writeLength(messageLen + 8))
+        stream.write(b'\xa0' + ber.writeLength(messageLen + 4))
+        stream.write(ber.writeOctetString(message))
 
     def writePayload(self, stream: BytesIO, workstation: bytes, length: int):
         pairsLen = 0
