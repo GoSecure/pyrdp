@@ -140,7 +140,27 @@ def writeApplicationTag(tag: Tag, size: int) -> bytes:
         return Uint8.pack((Class.BER_CLASS_APPL | PC.BER_CONSTRUCT) | Tag.BER_TAG_MASK) + Uint8.pack(tag) + writeLength(size)
     else:
         return Uint8.pack((Class.BER_CLASS_APPL | PC.BER_CONSTRUCT) | (Tag.BER_TAG_MASK & tag)) + writeLength(size)
-    
+
+def readContextualTag(s: BinaryIO, tag: Tag, isConstruct: bool) -> bool:
+    """
+    Unpack contextual tag and return True if the proper tag was read.
+    :param s: stream
+    :param tag: BER tag
+    :param isConstruct: True if a construct is expected
+    """
+    byte = Uint8.unpack(s.read(1))
+    if byte != ((Class.BER_CLASS_CTXT | berPC(isConstruct)) | (Tag.BER_TAG_MASK & tag)):
+        raise ValueError("Unexpected contextual tag")
+    return readLength(s)
+
+def writeContextualTag(tag: Tag, size: int) -> bytes:
+    """
+    Pack contextual tag.
+    :param tag: BER tag
+    :param size: the size of the contextual packet.
+    """
+    return Uint8.pack((Class.BER_CLASS_CTXT | PC.BER_CONSTRUCT) | (Tag.BER_TAG_MASK & tag)) + writeLength(size)
+
 def readBoolean(s: BinaryIO) -> bool:
     """
     Unpack a BER boolean

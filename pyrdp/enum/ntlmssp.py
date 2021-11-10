@@ -37,7 +37,7 @@ class NTLMSSPChallengeVersion(IntEnum):
     CREDSSP_VERSION = 0x05
 
     # https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-nlmp/b1a6ceb2-f8ad-462b-b5af-f18527c48175
-    NEG_PROD_MAJOR_VERSION_HIGH = 0x05
+    NEG_PROD_MAJOR_VERSION_HIGH = 0x06
     NEG_PROD_MINOR_VERSION_LOW  = 0x02
     NEG_PROD_VERSION_BUILT      = 0x0ECE
     NEG_NTLM_REVISION_CURRENT   = 0x0F      # NTLMSSP_REVISION_W2K3

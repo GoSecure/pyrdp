@@ -46,10 +46,10 @@ class NLAHandler(SegmentationObserver):
         return decode(challenge, 'hex')
 
     def onUnknownHeader(self, header, data: bytes):
-        messageOffset = self.ntlmSSPParser.findMessage(data)
+        signatureOffset = self.ntlmSSPParser.findMessage(data)
 
-        if messageOffset != -1:
-            message: NTLMSSPPDU = self.ntlmSSPParser.parse(data[messageOffset:])
+        if signatureOffset != -1:
+            message: NTLMSSPPDU = self.ntlmSSPParser.parse(data)
             self.ntlmSSPState.setMessage(message)
 
             if message.messageType == NTLMSSPMessageType.NEGOTIATE_MESSAGE and self.catch:
@@ -62,7 +62,7 @@ class NLAHandler(SegmentationObserver):
                     self.ntlmSSPState = NTLMSSPState()
                 self.ntlmSSPState.setMessage(challenge)
                 self.ntlmSSPState.challenge.serverChallenge = randomChallenge
-                data = challenge.write('WINNT')
+                data = self.ntlmSSPParser.writeNTLMSSPChallenge('WINNT', randomChallenge)
             
             if message.messageType == NTLMSSPMessageType.AUTHENTICATE_MESSAGE:
                 message: NTLMSSPAuthenticatePDU
