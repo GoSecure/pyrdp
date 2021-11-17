@@ -156,6 +156,10 @@ class NTLMSSPParser(Parser):
         return stream.getvalue()
 
     def writeNTLMSSPTSRequest(self, stream: BytesIO, version: int, negoTokens: bytes):
+        """
+        Write NTLMSSP TSRequest for NEGOTIATION/CHALLENGE/AUTHENTICATION messages
+        https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-cssp/6aac4dea-08ef-47a6-8747-22ea7f6d8685
+        """
         negoLen = len(negoTokens)
         
         stream.write(ber.writeUniversalTag(ber.Tag.BER_TAG_SEQUENCE, True))
@@ -171,6 +175,10 @@ class NTLMSSPParser(Parser):
         stream.write(ber.writeOctetString(negoTokens))
 
     def writeNTLMSSPChallengePayload(self, stream: BytesIO, workstation: str) -> int:
+        """
+        Write CHALLENGE message payload
+        https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-nlmp/801a4681-8809-4be9-ab0d-61dcfe762786
+        """
         length   = len(workstation)
 
         stream.seek(NTLMSSPChallengeType.WORKSTATION_BUFFER_OFFSET)
