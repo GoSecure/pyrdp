@@ -6,7 +6,7 @@
 
 import logging
 from codecs import decode
-from random import getrandbits
+from secrets import randbits
 
 from pyrdp.enum import NTLMSSPMessageType
 from pyrdp.layer import SegmentationObserver, IntermediateLayer
@@ -41,7 +41,7 @@ class NLAHandler(SegmentationObserver):
         """
         Generate a random 32-bit challenge
         """
-        challenge = b'%016x' % getrandbits(16 * 4)
+        challenge = b'%016x' % randbits(16 * 4)
         return decode(challenge, 'hex')
 
     def onUnknownHeader(self, header, data: bytes):
