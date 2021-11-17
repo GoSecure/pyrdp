@@ -141,9 +141,9 @@ def writeApplicationTag(tag: Tag, size: int) -> bytes:
     else:
         return Uint8.pack((Class.BER_CLASS_APPL | PC.BER_CONSTRUCT) | (Tag.BER_TAG_MASK & tag)) + writeLength(size)
 
-def readContextualTag(s: BinaryIO, tag: Tag, isConstruct: bool) -> bool:
+def readContextualTag(s: BinaryIO, tag: Tag, isConstruct: bool) -> int:
     """
-    Unpack contextual tag and return True if the proper tag was read.
+    Unpack contextual tag and return the tag length.
     :param s: stream
     :param tag: BER tag
     :param isConstruct: True if a construct is expected
