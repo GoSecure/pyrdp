@@ -132,10 +132,10 @@ class X224MITM:
                     self.onConnectionRequest(self.originalConnectionRequest)
                     return
                 else:
-                    # Respond with a RDP negotiation answer to proceed and catch NTLM
-                    self.log.info("Server requires CredSSP. Closing connection with server and attempting to catch NTML hashes.")
+                    # Respond with a RDP negotiation answer to proceed and capture NTLM hashes
+                    self.log.info("Server requires CredSSP. Closing connection with server and attempting to capture NTLM hashes.")
                     payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, NegotiationProtocols.CRED_SSP))
-                    self.state.ntlmCatch = True
+                    self.state.ntlmCapture = True
 
                     self.disconnector()
             else:
