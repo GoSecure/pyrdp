@@ -239,11 +239,13 @@ class RDPMITM:
 
         # Add unknown packet handlers.
         ntlmSSPState = NTLMSSPState()
+        self.client.segmentation.addObserver(NLAHandler(self.client.tcp, ntlmSSPState, self.getLog("ntlmssp")))
         if self.state.ntlmCapture:
-            self.client.segmentation.addObserver(NLAHandler(self.client.tcp, ntlmSSPState, self.getLog("ntlmssp"), True))
-        else:
-            self.client.segmentation.addObserver(NLAHandler(self.server.tcp, ntlmSSPState, self.getLog("ntlmssp")))
-            self.server.segmentation.addObserver(NLAHandler(self.client.tcp, ntlmSSPState, self.getLog("ntlmssp")))
+            # We are capturing the NLA NTLMv2 hash
+            ntlmSSPState.ntlmCapture = True
+            return
+
+        self.server.segmentation.addObserver(NLAHandler(self.client.tcp, ntlmSSPState, self.getLog("ntlmssp")))
 
     def startTLS(self, onTlsReady: typing.Callable[[], None]):
         """

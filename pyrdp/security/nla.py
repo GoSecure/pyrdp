@@ -24,7 +24,7 @@ class NLAHandler(SegmentationObserver):
     This also logs the hash of NLA connection attempts.
     """
 
-    def __init__(self, sink: IntermediateLayer, state: NTLMSSPState, log: logging.LoggerAdapter, ntlmCapture: bool = False):
+    def __init__(self, sink: IntermediateLayer, state: NTLMSSPState, log: logging.LoggerAdapter):
         """
         Create a new NLA Handler.
         sink: layer to forward packets to.
@@ -35,7 +35,6 @@ class NLAHandler(SegmentationObserver):
         self.sink = sink
         self.ntlmSSPState = state
         self.log = log
-        self.capture = ntlmCapture
         self.ntlmSSPParser = NTLMSSPParser()
 
     def getRandChallenge(self):
@@ -52,7 +51,7 @@ class NLAHandler(SegmentationObserver):
             message: NTLMSSPPDU = self.ntlmSSPParser.parse(data)
             self.ntlmSSPState.setMessage(message)
 
-            if message.messageType == NTLMSSPMessageType.NEGOTIATE_MESSAGE and self.capture:
+            if message.messageType == NTLMSSPMessageType.NEGOTIATE_MESSAGE and self.ntlmSSPState.ntlmCapture:
                 randomChallenge = self.getRandChallenge()
                 self.log.info("NTLMSSP Negotiation")
                 challenge: NTLMSSPChallengePDU = NTLMSSPChallengePDU(randomChallenge)
