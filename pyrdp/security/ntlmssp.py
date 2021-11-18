@@ -15,7 +15,6 @@ class NTLMSSPState:
         self.negotiate: Optional[NTLMSSPNegotiatePDU] = None
         self.challenge: Optional[NTLMSSPChallengePDU] = None
         self.authenticate: Optional[NTLMSSPAuthenticatePDU] = None
-        self.ntlmCapture: bool = False
 
     def setMessage(self, pdu: NTLMSSPPDU):
         if pdu.messageType == NTLMSSPMessageType.NEGOTIATE_MESSAGE:
@@ -24,3 +23,4 @@ class NTLMSSPState:
             self.challenge = pdu
         else:
             self.authenticate = pdu
+
