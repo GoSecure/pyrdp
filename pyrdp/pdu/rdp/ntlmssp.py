@@ -52,3 +52,4 @@ class NTLMSSPTSRequestPDU(PDU):
         super().__init__()
         self.version = version
         self.negoTokens = negoTokens
+
