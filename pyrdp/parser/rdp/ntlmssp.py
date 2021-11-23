@@ -8,6 +8,7 @@ from io import BytesIO
 from typing import Callable, Dict
 
 from pyrdp.core import ber, Uint8, Uint16LE, Uint32LE, Uint64LE
+from pyrdp.exceptions import UnknownPDUTypeError, ParsingError
 from pyrdp.parser.parser import Parser
 from pyrdp.pdu import NTLMSSPChallengePayloadPDU, NTLMSSPTSRequestPDU, NTLMSSPChallengePDU, NTLMSSPAuthenticatePDU, \
     NTLMSSPNegotiatePDU, NTLMSSPPDU
@@ -100,15 +101,15 @@ class NTLMSSPParser(Parser):
         length = ber.readLength(stream)
         if length > len(stream.getvalue()):
             raise ParsingError("Invalid size for TSRequest (got %d, %d bytes left)" % (length, len(stream.getvalue())))
-        
+
         version = None
         negoTokens = None
-        
+
         # [0] version
         if not ber.readContextualTag(stream, 0, True):
             return NTLMSSPTSRequestPDU(version, negoTokens, data)
         version = ber.readInteger(stream)
-        
+
         # [1] negoTokens
         if not ber.readContextualTag(stream, 1, True):
             return NTLMSSPTSRequestPDU(version, negoTokens, data)
@@ -117,22 +118,22 @@ class NTLMSSPParser(Parser):
         ber.readUniversalTag(stream, ber.Tag.BER_TAG_SEQUENCE, True) # NegoDataItem
         ber.readLength(stream)
         ber.readContextualTag(stream, 0, True)
-        
+
         negoTokens = BytesIO(ber.readOctetString(stream))            # NegoData
         return NTLMSSPTSRequestPDU(version, negoTokens)
 
     def parseNTLMSSPChallengePayload(self, data: bytes, stream: BytesIO, workstationLen: int) -> NTLMSSPChallengePayloadPDU:
-        stream.read(workstationLen)
+        workstation = stream.read(workstationLen)
         return NTLMSSPChallengePayloadPDU(workstation)
 
     def writeNTLMSSPChallenge(self, workstation: str, serverChallenge: bytes) -> bytes:
         stream = BytesIO()
         substream = BytesIO()
-        
+
         workstation = workstation.encode('utf-16le')
         nameLen = len(workstation)
         pairsLen = self.writeNTLMSSPChallengePayload(substream, workstation)
-        
+
         substream.write(b'NTLMSSP\x00')                                                    # signature
         substream.write(Uint32LE.pack(NTLMSSPMessageType.CHALLENGE_MESSAGE))               # message type
         substream.write(Uint16LE.pack(nameLen))                                            # workstation length
@@ -151,7 +152,7 @@ class NTLMSSPParser(Parser):
         substream.write(Uint8.pack(0))                                                     # reserved
         substream.write(Uint8.pack(0))                                                     # reserved
         substream.write(Uint8.pack(NTLMSSPChallengeVersion.NEG_NTLM_REVISION_CURRENT))     # NTLM revision current
-        
+
         self.writeNTLMSSPTSRequest(stream, NTLMSSPChallengeVersion.CREDSSP_VERSION, substream.getvalue())
         return stream.getvalue()
 
@@ -161,7 +162,7 @@ class NTLMSSPParser(Parser):
         https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-cssp/6aac4dea-08ef-47a6-8747-22ea7f6d8685
         """
         negoLen = len(negoTokens)
-        
+
         stream.write(ber.writeUniversalTag(ber.Tag.BER_TAG_SEQUENCE, True))
         stream.write(ber.writeLength(negoLen + 25))
         stream.write(ber.writeContextualTag(0, 3))
@@ -204,5 +205,6 @@ class NTLMSSPParser(Parser):
         stream.write(Uint16LE.pack(0))
         pairsLen = stream.tell() - pairsLen
         stream.seek(0)
-        
+
         return pairsLen
+
