@@ -113,9 +113,9 @@ class NTLMSSPParser(Parser):
         # [1] negoTokens
         if not ber.readContextualTag(stream, 1, True):
             return NTLMSSPTSRequestPDU(version, negoTokens, data)
-        ber.readUniversalTag(stream, ber.Tag.BER_TAG_SEQUENCE, True) # SEQUENCE OF NegoDataItem
+        ber.readUniversalTag(stream, ber.Tag.BER_TAG_SEQUENCE, True)  # SEQUENCE OF NegoDataItem
         ber.readLength(stream)
-        ber.readUniversalTag(stream, ber.Tag.BER_TAG_SEQUENCE, True) # NegoDataItem
+        ber.readUniversalTag(stream, ber.Tag.BER_TAG_SEQUENCE, True)  # NegoDataItem
         ber.readLength(stream)
         ber.readContextualTag(stream, 0, True)
 
@@ -134,24 +134,24 @@ class NTLMSSPParser(Parser):
         nameLen = len(workstation)
         pairsLen = self.writeNTLMSSPChallengePayload(substream, workstation)
 
-        substream.write(b'NTLMSSP\x00')                                                    # signature
-        substream.write(Uint32LE.pack(NTLMSSPMessageType.CHALLENGE_MESSAGE))               # message type
-        substream.write(Uint16LE.pack(nameLen))                                            # workstation length
-        substream.write(Uint16LE.pack(nameLen))                                            # workstation max length
-        substream.write(Uint32LE.pack(NTLMSSPChallengeType.WORKSTATION_BUFFER_OFFSET))     # workstation buffer offset
-        substream.write(Uint32LE.pack(NTLMSSPChallengeType.NEGOTIATE_FLAGS))               # negotiate flags
-        substream.write(serverChallenge)                                                   # server challenge
-        substream.write(Uint64LE.pack(0))                                                  # reserved
-        substream.write(Uint16LE.pack(pairsLen))                                           # target info len
-        substream.write(Uint16LE.pack(pairsLen))                                           # target info max len
-        substream.write(Uint32LE.pack(NTLMSSPChallengeType.WORKSTATION_BUFFER_OFFSET + nameLen)) # target info buffer offset
-        substream.write(Uint8.pack(NTLMSSPChallengeVersion.NEG_PROD_MAJOR_VERSION_HIGH))   # product major version
-        substream.write(Uint8.pack(NTLMSSPChallengeVersion.NEG_PROD_MINOR_VERSION_LOW))    # product minor version
-        substream.write(Uint16LE.pack(NTLMSSPChallengeVersion.NEG_PROD_VERSION_BUILT))     # product build
-        substream.write(Uint8.pack(0))                                                     # reserved
-        substream.write(Uint8.pack(0))                                                     # reserved
-        substream.write(Uint8.pack(0))                                                     # reserved
-        substream.write(Uint8.pack(NTLMSSPChallengeVersion.NEG_NTLM_REVISION_CURRENT))     # NTLM revision current
+        substream.write(b'NTLMSSP\x00')
+        Uint32LE.pack(NTLMSSPMessageType.CHALLENGE_MESSAGE, substream)
+        Uint16LE.pack(nameLen, substream)
+        Uint16LE.pack(nameLen, substream)
+        Uint32LE.pack(NTLMSSPChallengeType.WORKSTATION_BUFFER_OFFSET, substream)
+        Uint32LE.pack(NTLMSSPChallengeType.NEGOTIATE_FLAGS, substream)
+        substream.write(serverChallenge)
+        Uint64LE.pack(0, substream)
+        Uint16LE.pack(pairsLen, substream)
+        Uint16LE.pack(pairsLen, substream)
+        Uint32LE.pack(NTLMSSPChallengeType.WORKSTATION_BUFFER_OFFSET + nameLen, substream)
+        Uint8.pack(NTLMSSPChallengeVersion.NEG_PROD_MAJOR_VERSION_HIGH, substream)
+        Uint8.pack(NTLMSSPChallengeVersion.NEG_PROD_MINOR_VERSION_LOW, substream)
+        Uint16LE.pack(NTLMSSPChallengeVersion.NEG_PROD_VERSION_BUILT, substream)
+        Uint8.pack(0, substream)
+        Uint8.pack(0, substream)
+        Uint8.pack(0, substream)
+        Uint8.pack(NTLMSSPChallengeVersion.NEG_NTLM_REVISION_CURRENT, substream)
 
         self.writeNTLMSSPTSRequest(stream, NTLMSSPChallengeVersion.CREDSSP_VERSION, substream.getvalue())
         return stream.getvalue()
@@ -166,7 +166,7 @@ class NTLMSSPParser(Parser):
         stream.write(ber.writeUniversalTag(ber.Tag.BER_TAG_SEQUENCE, True))
         stream.write(ber.writeLength(negoLen + 25))
         stream.write(ber.writeContextualTag(0, 3))
-        stream.write(ber.writeInteger(version)) # CredSSP version
+        stream.write(ber.writeInteger(version))  # CredSSP version
         stream.write(ber.writeContextualTag(1, negoLen + 16))
         stream.write(ber.writeUniversalTag(ber.Tag.BER_TAG_SEQUENCE, True))
         stream.write(ber.writeLength(negoLen + 12))
@@ -180,29 +180,29 @@ class NTLMSSPParser(Parser):
         Write CHALLENGE message payload
         https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-nlmp/801a4681-8809-4be9-ab0d-61dcfe762786
         """
-        length   = len(workstation)
+        length = len(workstation)
 
         stream.seek(NTLMSSPChallengeType.WORKSTATION_BUFFER_OFFSET)
         stream.write(workstation)
 
         pairsLen = stream.tell()
-        stream.write(Uint16LE.pack(NTLMSSPChallengeType.NTLMSSP_NTLM_CHALLENGE_AV_PAIRS_ID))
-        stream.write(Uint16LE.pack(length))
+        Uint16LE.pack(NTLMSSPChallengeType.NTLMSSP_NTLM_CHALLENGE_AV_PAIRS_ID, stream)
+        Uint16LE.pack(length, stream)
         stream.write(workstation)
-        stream.write(Uint16LE.pack(NTLMSSPChallengeType.NTLMSSP_NTLM_CHALLENGE_AV_PAIRS1_ID))
-        stream.write(Uint16LE.pack(length))
+        Uint16LE.pack(NTLMSSPChallengeType.NTLMSSP_NTLM_CHALLENGE_AV_PAIRS1_ID, stream)
+        Uint16LE.pack(length, stream)
         stream.write(workstation)
-        stream.write(Uint16LE.pack(NTLMSSPChallengeType.NTLMSSP_NTLM_CHALLENGE_AV_PAIRS2_ID))
-        stream.write(Uint16LE.pack(length))
+        Uint16LE.pack(NTLMSSPChallengeType.NTLMSSP_NTLM_CHALLENGE_AV_PAIRS2_ID, stream)
+        Uint16LE.pack(length, stream)
         stream.write(workstation)
-        stream.write(Uint16LE.pack(NTLMSSPChallengeType.NTLMSSP_NTLM_CHALLENGE_AV_PAIRS3_ID))
-        stream.write(Uint16LE.pack(length))
+        Uint16LE.pack(NTLMSSPChallengeType.NTLMSSP_NTLM_CHALLENGE_AV_PAIRS3_ID, stream)
+        Uint16LE.pack(length, stream)
         stream.write(workstation)
-        stream.write(Uint16LE.pack(NTLMSSPChallengeType.NTLMSSP_NTLM_CHALLENGE_AV_PAIRS5_ID))
-        stream.write(Uint16LE.pack(length))
+        Uint16LE.pack(NTLMSSPChallengeType.NTLMSSP_NTLM_CHALLENGE_AV_PAIRS5_ID, stream)
+        Uint16LE.pack(length, stream)
         stream.write(workstation)
-        stream.write(Uint16LE.pack(NTLMSSPChallengeType.NTLMSSP_NTLM_CHALLENGE_AV_PAIRS6_ID))
-        stream.write(Uint16LE.pack(0))
+        Uint16LE.pack(NTLMSSPChallengeType.NTLMSSP_NTLM_CHALLENGE_AV_PAIRS6_ID, stream)
+        Uint16LE.pack(0, stream)
         pairsLen = stream.tell() - pairsLen
         stream.seek(0)
 
