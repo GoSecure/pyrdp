@@ -218,11 +218,10 @@ class RDPMITM:
                 self.log.error("Failed to connect to recording host: timeout expired")
 
     def doClientTls(self):
-        if not self.state.ntlmCapture:
-            cert = self.server.tcp.transport.getPeerCertificate()
-            if not cert:
-                # Wait for server certificate
-                reactor.callLater(1, self.doClientTls)
+        cert = self.server.tcp.transport.getPeerCertificate()
+        if not cert:
+            # Wait for server certificate
+            reactor.callLater(1, self.doClientTls)
 
         # Clone certificate if necessary.
         if self.certs:
@@ -254,9 +253,8 @@ class RDPMITM:
         self.onTlsReady = onTlsReady
 
         # Establish TLS tunnel with target server...
-        if not self.state.ntlmCapture:
-            contextForServer = ClientTLSContext()
-            self.server.tcp.startTLS(contextForServer)
+        contextForServer = ClientTLSContext()
+        self.server.tcp.startTLS(contextForServer)
 
         # Establish TLS tunnel with client.
         reactor.callLater(1, self.doClientTls)

