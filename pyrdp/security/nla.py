@@ -5,15 +5,15 @@
 #
 
 import logging
-from codecs import decode
-from secrets import randbits
+import codecs
+import secrets
 
 from pyrdp.enum import NTLMSSPMessageType
 from pyrdp.layer import SegmentationObserver, IntermediateLayer
 from pyrdp.logging import LOGGER_NAMES
 from pyrdp.logging.formatters import NTLMSSPHashFormatter
 from pyrdp.parser import NTLMSSPParser
-from pyrdp.pdu import NTLMSSPPDU, NTLMSSPNegotiatePDU, NTLMSSPChallengePDU, NTLMSSPAuthenticatePDU
+from pyrdp.pdu import NTLMSSPPDU, NTLMSSPChallengePDU, NTLMSSPAuthenticatePDU
 from pyrdp.security import NTLMSSPState
 
 
@@ -40,10 +40,10 @@ class NLAHandler(SegmentationObserver):
 
     def getRandChallenge(self):
         """
-        Generate a random 32-bit challenge
+        Generate a random 64-bit challenge
         """
-        challenge = b'%016x' % randbits(16 * 4)
-        return decode(challenge, 'hex')
+        challenge = b'%016x' % secrets.randbits(16 * 4)
+        return codecs.decode(challenge, 'hex')
 
     def onUnknownHeader(self, header, data: bytes):
         signatureOffset = self.ntlmSSPParser.findMessage(data)
@@ -54,7 +54,7 @@ class NLAHandler(SegmentationObserver):
 
             if message.messageType == NTLMSSPMessageType.NEGOTIATE_MESSAGE and self.ntlmCapture:
                 randomChallenge = self.getRandChallenge()
-                self.log.info("NTLMSSP Negotiation")
+                self.log.debug("NTLMSSP Negotiation")
                 challenge: NTLMSSPChallengePDU = NTLMSSPChallengePDU(randomChallenge)
                 
                 # There might be no state if server side connection was shutdown
