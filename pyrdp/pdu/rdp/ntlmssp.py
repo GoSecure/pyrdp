@@ -6,9 +6,7 @@
 
 from io import BytesIO
 
-from pyrdp.core import ber
-from pyrdp.core.packing import Uint8, Uint16LE, Uint32LE, Uint64LE
-from pyrdp.enum import NTLMSSPMessageType, NTLMSSPChallengeType, NTLMSSPChallengeVersion
+from pyrdp.enum import NTLMSSPMessageType
 from pyrdp.pdu.pdu import PDU
 
 
@@ -17,14 +15,17 @@ class NTLMSSPPDU(PDU):
         super().__init__()
         self.messageType = messageType
 
+
 class NTLMSSPNegotiatePDU(NTLMSSPPDU):
     def __init__(self):
         super().__init__(NTLMSSPMessageType.NEGOTIATE_MESSAGE)
+
 
 class NTLMSSPChallengePDU(NTLMSSPPDU):
     def __init__(self, serverChallenge: bytes):
         super().__init__(NTLMSSPMessageType.CHALLENGE_MESSAGE)
         self.serverChallenge = serverChallenge
+
 
 class NTLMSSPChallengePayloadPDU(PDU):
     """
@@ -35,6 +36,7 @@ class NTLMSSPChallengePayloadPDU(PDU):
         super().__init__()
         self.workstation = workstation
 
+
 class NTLMSSPAuthenticatePDU(NTLMSSPPDU):
     def __init__(self, user: str, domain: str, proof: bytes, response: bytes):
         super().__init__(NTLMSSPMessageType.AUTHENTICATE_MESSAGE)
@@ -42,6 +44,7 @@ class NTLMSSPAuthenticatePDU(NTLMSSPPDU):
         self.domain = domain
         self.proof = proof
         self.response = response
+
 
 class NTLMSSPTSRequestPDU(PDU):
     """
@@ -52,4 +55,3 @@ class NTLMSSPTSRequestPDU(PDU):
         super().__init__()
         self.version = version
         self.negoTokens = negoTokens
-
