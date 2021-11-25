@@ -135,7 +135,8 @@ class X224MITM:
                     # Use redirection host and replay sequence starting from the connection request
                     self.state.useRedirectionHost()
                 else:
-                    self.log.info("Server requires CredSSP. Reconnecting with server and attempting to capture client's NTLM hashes.")
+                    # If we are not configured to redirect then we should capture the NTLM hash
+                    self.log.info("Server requires CredSSP/NLA and we are not configured to support it. Attempting to capture client's NTLM hashes.")
                     self.state.ntlmCapture = True
 
                 self.onConnectionRequest(self.originalConnectionRequest)
