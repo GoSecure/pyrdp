@@ -143,11 +143,10 @@ class X224MITM:
             else:
                 self.log.info("The server failed the negotiation. Error: %(error)s", {"error": NegotiationFailureCode.getMessage(response.failureCode)})
                 payload = pdu.payload
+        elif self.state.ntlmCapture:
+            payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, NegotiationProtocols.CRED_SSP))
         else:
-            if self.state.ntlmCapture:
-                payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, NegotiationProtocols.CRED_SSP))
-            else:
-                payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, response.selectedProtocols))
+            payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, response.selectedProtocols))
 
         # FIXME: This should be done based on what authentication method the server selected, not on what
         #        the client supports.
