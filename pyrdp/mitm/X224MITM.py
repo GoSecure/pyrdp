@@ -84,6 +84,8 @@ class X224MITM:
             chosenProtocols &= self.state.config.authMethods
 
         if self.state.ntlmCapture:
+            # If we want to capture the NTLM hash, we need to put back CredSSP in here.
+            # If we don't do that we will not get to the state where we can clone the certificate if needed.
             chosenProtocols = NegotiationProtocols.SSL | NegotiationProtocols.CRED_SSP
 
         modifiedRequest = NegotiationRequestPDU(
