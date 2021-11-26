@@ -50,8 +50,8 @@ setup(name='pyrdp',
             'av>=8',
             'PySide2>=5.12,<6',
             'qimage2ndarray>=1.6',
-            'dbus-python>=1.2<1.3;platform_system!="Windows"',
-            'notify2>=0.3,<1;platform_system!="Windows"'
+            'py-notifier>=0.3.0',
+            'win10toast>=0.9;platform_system=="Windows"',
         ]
     }
 )
