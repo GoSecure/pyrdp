@@ -236,8 +236,13 @@ class RDPMITM:
         self.client.tcp.startTLS(contextForClient)
         self.onTlsReady = None
 
-        # Add unknown packet handlers.
+        # Handle NLA connection for client/server
         ntlmSSPState = NTLMSSPState()
+        if self.state.ntlmCapture:
+            # We are capturing the NLA NTLMv2 hash
+            self.client.segmentation.addObserver(NLAHandler(self.client.tcp, ntlmSSPState, self.getLog("ntlmssp"), ntlmCapture=True))
+            return
+
         self.client.segmentation.addObserver(NLAHandler(self.server.tcp, ntlmSSPState, self.getLog("ntlmssp")))
         self.server.segmentation.addObserver(NLAHandler(self.client.tcp, ntlmSSPState, self.getLog("ntlmssp")))
 
