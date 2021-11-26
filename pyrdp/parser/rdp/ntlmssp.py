@@ -56,18 +56,18 @@ class NTLMSSPParser(Parser):
         return NTLMSSPNegotiatePDU()
 
     def parseNTLMSSPChallenge(self, data: bytes, stream: BytesIO) -> NTLMSSPChallengePDU:
-        workstationLen = stream.read(2)
-        workstationMaxLen = stream.read(2)
-        workstationBufferOffset = stream.read(4)
-        negotiateFlags = stream.read(4)
+        workstationLen = Uint16LE.unpack(stream)
+        workstationMaxLen = Uint16LE.unpack(stream)
+        workstationBufferOffset = Uint32LE.unpack(stream)
+        negotiateFlags = Uint32LE.unpack(stream)
         serverChallenge = stream.read(8)
-        reserved = stream.read(8)
-        targetInfoLen = stream.read(2)
-        targetInfoMaxLen = stream.read(2)
-        targetInfoBufferOffset = stream.read(4)
-        version = stream.read(4)
+        reserved = Uint64LE.unpack(stream)
+        targetInfoLen = Uint16LE.unpack(stream)
+        targetInfoMaxLen = Uint16LE.unpack(stream)
+        targetInfoBufferOffset = Uint32LE.unpack(stream)
+        version = Uint32LE.unpack(stream)
         reserved = stream.read(3)
-        revisionCurrent = stream.read(1)
+        revisionCurrent = Uint8.unpack(stream)
 
         return NTLMSSPChallengePDU(serverChallenge)
 
@@ -119,7 +119,7 @@ class NTLMSSPParser(Parser):
         ber.readLength(stream)
         ber.readContextualTag(stream, 0, True)
 
-        negoTokens = BytesIO(ber.readOctetString(stream))            # NegoData
+        negoTokens = BytesIO(ber.readOctetString(stream))  # NegoData
         return NTLMSSPTSRequestPDU(version, negoTokens)
 
     def parseNTLMSSPChallengePayload(self, data: bytes, stream: BytesIO, workstationLen: int) -> NTLMSSPChallengePayloadPDU:
@@ -134,6 +134,10 @@ class NTLMSSPParser(Parser):
         nameLen = len(workstation)
         pairsLen = self.writeNTLMSSPChallengePayload(substream, workstation)
 
+        """
+        CHALLENGE_MESSAGE structure
+        https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-nlmp/801a4681-8809-4be9-ab0d-61dcfe762786
+        """
         substream.write(b'NTLMSSP\x00')
         Uint32LE.pack(NTLMSSPMessageType.CHALLENGE_MESSAGE, substream)
         Uint16LE.pack(nameLen, substream)
@@ -177,8 +181,9 @@ class NTLMSSPParser(Parser):
 
     def writeNTLMSSPChallengePayload(self, stream: BytesIO, workstation: str) -> int:
         """
-        Write CHALLENGE message payload
+        Write CHALLENGE message payload and AV_PAIRS
         https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-nlmp/801a4681-8809-4be9-ab0d-61dcfe762786
+        https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-nlmp/83f5e789-660d-4781-8491-5f8c6641f75e
         """
         length = len(workstation)
 
