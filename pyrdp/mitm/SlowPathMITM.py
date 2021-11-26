@@ -109,5 +109,6 @@ class SlowPathMITM(BasePathMITM):
             supported[Order.TS_NEG_DRAWNINEGRID_INDEX] = 0
             orders.orderSupport = supported
 
-        pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].flags = \
-            VirtualChannelCompressionFlag.VCCAPS_NO_COMPR
+        if CapabilityType.CAPSTYPE_VIRTUALCHANNEL in pdu.parsedCapabilitySets:
+            pdu.parsedCapabilitySets[CapabilityType.CAPSTYPE_VIRTUALCHANNEL].flags = \
+                VirtualChannelCompressionFlag.VCCAPS_NO_COMPR
