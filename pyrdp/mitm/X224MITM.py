@@ -84,6 +84,8 @@ class X224MITM:
             chosenProtocols &= self.state.config.authMethods
 
         if self.state.ntlmCapture:
+            # If we want to capture the NTLM hash, we need to put back CredSSP in here.
+            # If we don't do that we will not get to the state where we can clone the certificate if needed.
             chosenProtocols = NegotiationProtocols.SSL | NegotiationProtocols.CRED_SSP
 
         modifiedRequest = NegotiationRequestPDU(
@@ -135,7 +137,8 @@ class X224MITM:
                     # Use redirection host and replay sequence starting from the connection request
                     self.state.useRedirectionHost()
                 else:
-                    self.log.info("Server requires CredSSP. Reconnecting with server and attempting to capture client's NTLM hashes.")
+                    # If we are not configured to redirect then we should capture the NTLM hash
+                    self.log.info("Server requires CredSSP/NLA and we are not configured to support it. Attempting to capture client's NTLM hashes.")
                     self.state.ntlmCapture = True
 
                 self.onConnectionRequest(self.originalConnectionRequest)
