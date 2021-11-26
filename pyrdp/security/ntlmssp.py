@@ -23,3 +23,4 @@ class NTLMSSPState:
             self.challenge = pdu
         else:
             self.authenticate = pdu
+

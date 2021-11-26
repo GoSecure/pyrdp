@@ -5,13 +5,15 @@
 #
 
 import logging
+import codecs
+import secrets
 
 from pyrdp.enum import NTLMSSPMessageType
 from pyrdp.layer import SegmentationObserver, IntermediateLayer
 from pyrdp.logging import LOGGER_NAMES
 from pyrdp.logging.formatters import NTLMSSPHashFormatter
 from pyrdp.parser import NTLMSSPParser
-from pyrdp.pdu import NTLMSSPPDU, NTLMSSPAuthenticatePDU
+from pyrdp.pdu import NTLMSSPPDU, NTLMSSPChallengePDU, NTLMSSPAuthenticatePDU
 from pyrdp.security import NTLMSSPState
 
 
@@ -22,7 +24,7 @@ class NLAHandler(SegmentationObserver):
     This also logs the hash of NLA connection attempts.
     """
 
-    def __init__(self, sink: IntermediateLayer, state: NTLMSSPState, log: logging.LoggerAdapter):
+    def __init__(self, sink: IntermediateLayer, state: NTLMSSPState, log: logging.LoggerAdapter, ntlmCapture: bool = False):
         """
         Create a new NLA Handler.
         sink: layer to forward packets to.
@@ -32,16 +34,36 @@ class NLAHandler(SegmentationObserver):
         super().__init__()
         self.sink = sink
         self.ntlmSSPState = state
-        self.log = log
         self.ntlmSSPParser = NTLMSSPParser()
+        self.ntlmCapture = ntlmCapture
+        self.log = log
+
+    def getRandChallenge(self):
+        """
+        Generate a random 64-bit challenge
+        """
+        challenge = b'%016x' % secrets.randbits(16 * 4)
+        return codecs.decode(challenge, 'hex')
 
     def onUnknownHeader(self, header, data: bytes):
-        messageOffset = self.ntlmSSPParser.findMessage(data)
+        signatureOffset = self.ntlmSSPParser.findMessage(data)
 
-        if messageOffset != -1:
-            message: NTLMSSPPDU = self.ntlmSSPParser.parse(data[messageOffset :])
+        if signatureOffset != -1:
+            message: NTLMSSPPDU = self.ntlmSSPParser.parse(data)
             self.ntlmSSPState.setMessage(message)
 
+            if message.messageType == NTLMSSPMessageType.NEGOTIATE_MESSAGE and self.ntlmCapture:
+                randomChallenge = self.getRandChallenge()
+                self.log.debug("NTLMSSP Negotiation")
+                challenge: NTLMSSPChallengePDU = NTLMSSPChallengePDU(randomChallenge)
+                
+                # There might be no state if server side connection was shutdown
+                if not self.ntlmSSPState:
+                    self.ntlmSSPState = NTLMSSPState()
+                self.ntlmSSPState.setMessage(challenge)
+                self.ntlmSSPState.challenge.serverChallenge = randomChallenge
+                data = self.ntlmSSPParser.writeNTLMSSPChallenge('WINNT', randomChallenge)
+            
             if message.messageType == NTLMSSPMessageType.AUTHENTICATE_MESSAGE:
                 message: NTLMSSPAuthenticatePDU
                 user = message.user
