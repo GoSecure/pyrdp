@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         python3-setuptools \
         # Required for venv setup
         python3-venv \
-        # Required to build RLE module (GUI)
+        # Required to build RLE module
         build-essential python3-dev \
         # Required to build PyAV (pyrdp-convert to MP4)
         libavformat-dev libavcodec-dev libavdevice-dev \
