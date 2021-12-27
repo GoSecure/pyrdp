@@ -5,6 +5,8 @@
 #
 from pyrdp.convert.PCAPStream import PCAPStream
 from pyrdp.convert.pyrdp_scapy import *
+from pyrdp.convert.utils import InetSocketAddress
+from pyrdp.core import Uint32BE
 
 
 class ExportedPDUStream(PCAPStream):
@@ -12,7 +14,7 @@ class ExportedPDUStream(PCAPStream):
     PDU stream for converting sessions that contain Wireshark Exported PDU.
     """
 
-    def __init__(self, client: str, server: str, packets: PacketList):
+    def __init__(self, client: InetSocketAddress, server: InetSocketAddress, packets: PacketList):
         super().__init__(client, server)
         self.packets = packets
         self.n = 0
@@ -30,12 +32,14 @@ class ExportedPDUStream(PCAPStream):
                 raise StopIteration
 
             packet = self.packets[self.n]
-            src = ".".join(str(b) for b in packet.load[12:16])
-            dst = ".".join(str(b) for b in packet.load[20:24])
+            src = InetSocketAddress(".".join(str(b) for b in packet.load[12:16]),
+                                    Uint32BE.unpack(packet.load[36:40]))
+            dst = InetSocketAddress(".".join(str(b) for b in packet.load[20:24]),
+                                    Uint32BE.unpack(packet.load[44:48]))
             data = packet.load[60:]
             self.n += 1
 
-            if any(ip not in self.ips for ip in [src, dst]):
+            if any(ip not in self.ips for ip in [src.ip, dst.ip]):
                 continue  # Skip packets not meant for this stream.
 
             return PCAPStream.output(data, packet.time, src, dst)

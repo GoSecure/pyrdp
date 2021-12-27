@@ -6,10 +6,11 @@
 import enum
 from typing import Tuple
 
-from scapy.layers.inet import IP
+from scapy.layers.inet import IP, TCP
 from scapy.layers.l2 import Ether
 
 from pyrdp.convert.JSONEventHandler import JSONEventHandler
+from pyrdp.core import Uint32BE
 from pyrdp.player import HAS_GUI
 
 from pyrdp.convert.pyrdp_scapy import *
@@ -43,6 +44,29 @@ class TCPFlags(enum.IntEnum):
     URG = 0x20
     ECE = 0x40
     CWR = 0x80
+
+
+class InetSocketAddress():
+    def __init__(self, ip: str, port: int):
+        self._ip = ip
+        self._port = port
+
+    @property
+    def ip(self) -> str:
+        return self._ip
+
+    @property
+    def port(self) -> int:
+        return self._port
+
+    def __eq__(self, other):
+        if self.ip == other.ip and self.port == other.port:
+            return True
+        else:
+            return False
+
+    def __str__(self):
+        return f"{self._ip}:{self._port}"
 
 
 def createHandler(format: str, outputFileBase: str, progress=None) -> Tuple[str, str]:
@@ -112,7 +136,7 @@ def canExtractSessionInfo(session: PacketList) -> bool:
     packet = session[0]
     return IP in packet or Ether not in packet
 
-def getSessionInfo(session: PacketList) -> Tuple[str, str, float, bool]:
+def getSessionInfo(session: PacketList) -> Tuple[InetSocketAddress, InetSocketAddress, float, bool]:
     """Attempt to retrieve an (src, dst, ts, isPlaintext) tuple for a data stream."""
     packet = session[0]
 
@@ -122,11 +146,15 @@ def getSessionInfo(session: PacketList) -> Tuple[str, str, float, bool]:
         # FIXME: This relies on the fact that decrypted traces are using EXPORTED_PDU and
         #        thus have no `IP` layer, but it is technically possible to have a true
         #        plaintext capture with very old implementations of RDP.
-        return (packet[IP].src, packet[IP].dst, packet.time, False)
+        return (InetSocketAddress(packet[IP].src, packet[IP][TCP].sport),
+                InetSocketAddress(packet[IP].dst, packet[IP][TCP].dport),
+                packet.time, False)
     elif Ether not in packet:
         # No Ethernet layer, so assume exported PDUs.
-        src = ".".join(str(b) for b in packet.load[12:16])
-        dst = ".".join(str(b) for b in packet.load[20:24])
-        return (src, dst, packet.time, True)
+        return (InetSocketAddress(".".join(str(b) for b in packet.load[12:16]),
+                                  Uint32BE.unpack(packet.load[36:40])),
+                InetSocketAddress(".".join(str(b) for b in packet.load[20:24]),
+                                  Uint32BE.unpack(packet.load[44:48])),
+                packet.time, True)
 
     raise Exception("Invalid stream type. Must be TCP/TLS or EXPORTED PDU.")
