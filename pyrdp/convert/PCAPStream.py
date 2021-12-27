@@ -3,11 +3,11 @@
 # Copyright (C) 2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-from pyrdp.convert.utils import InetSocketAddress
+from pyrdp.convert.utils import InetAddress
 
 
 class PCAPStream:
-    def __init__(self, client: InetSocketAddress, server: InetSocketAddress):
+    def __init__(self, client: InetAddress, server: InetAddress):
         self.client = client
         self.server = server
 
@@ -26,5 +26,5 @@ class PCAPStream:
         return int(timeStamp * 1000)
 
     @staticmethod
-    def output(data: bytes, timeStamp: float, src: InetSocketAddress, dst: InetSocketAddress):
+    def output(data: bytes, timeStamp: float, src: InetAddress, dst: InetAddress):
         return data, PCAPStream.timeStampFloatToInt(timeStamp), src, dst
