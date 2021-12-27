@@ -75,7 +75,7 @@ class PCAPConverter(Converter):
             if self.checkSrcExcluded(client) or self.checkDstExcluded(server):
                 continue
 
-            print(f"    - {client} -> {server}:", end="", flush=True)
+            print(f"    - {client} -> {server} :", end="", flush=True)
 
             if plaintext:
                 print(" plaintext")
