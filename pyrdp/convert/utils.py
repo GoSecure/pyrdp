@@ -46,7 +46,7 @@ class TCPFlags(enum.IntEnum):
     CWR = 0x80
 
 
-class InetSocketAddress():
+class InetAddress():
     def __init__(self, ip: str, port: int):
         self._ip = ip
         self._port = port
@@ -67,6 +67,14 @@ class InetSocketAddress():
 
     def __str__(self):
         return f"{self._ip}:{self._port}"
+
+
+def extractInetAddressesFromPDUPacket(packet) -> Tuple[InetAddress, InetAddress]:
+    """Returns the src and dst InetAddress (IP, port) from a PDU packet"""
+    return (InetAddress(".".join(str(b) for b in packet.load[12:16]),
+                        Uint32BE.unpack(packet.load[36:40])),
+            InetAddress(".".join(str(b) for b in packet.load[20:24]),
+                        Uint32BE.unpack(packet.load[44:48])))
 
 
 def createHandler(format: str, outputFileBase: str, progress=None) -> Tuple[str, str]:
@@ -136,7 +144,7 @@ def canExtractSessionInfo(session: PacketList) -> bool:
     packet = session[0]
     return IP in packet or Ether not in packet
 
-def getSessionInfo(session: PacketList) -> Tuple[InetSocketAddress, InetSocketAddress, float, bool]:
+def getSessionInfo(session: PacketList) -> Tuple[InetAddress, InetAddress, float, bool]:
     """Attempt to retrieve an (src, dst, ts, isPlaintext) tuple for a data stream."""
     packet = session[0]
 
@@ -146,15 +154,12 @@ def getSessionInfo(session: PacketList) -> Tuple[InetSocketAddress, InetSocketAd
         # FIXME: This relies on the fact that decrypted traces are using EXPORTED_PDU and
         #        thus have no `IP` layer, but it is technically possible to have a true
         #        plaintext capture with very old implementations of RDP.
-        return (InetSocketAddress(packet[IP].src, packet[IP][TCP].sport),
-                InetSocketAddress(packet[IP].dst, packet[IP][TCP].dport),
+        return (InetAddress(packet[IP].src, packet[IP][TCP].sport),
+                InetAddress(packet[IP].dst, packet[IP][TCP].dport),
                 packet.time, False)
     elif Ether not in packet:
         # No Ethernet layer, so assume exported PDUs.
-        return (InetSocketAddress(".".join(str(b) for b in packet.load[12:16]),
-                                  Uint32BE.unpack(packet.load[36:40])),
-                InetSocketAddress(".".join(str(b) for b in packet.load[20:24]),
-                                  Uint32BE.unpack(packet.load[44:48])),
-                packet.time, True)
+        src, dst = extractInetAddressesFromPDUPacket(packet)
+        return (src, dst, packet.time, True)
 
     raise Exception("Invalid stream type. Must be TCP/TLS or EXPORTED PDU.")

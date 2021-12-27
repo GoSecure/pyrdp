@@ -11,7 +11,7 @@ from scapy.layers.tls.session import tlsSession
 from scapy.plist import PacketList
 
 from pyrdp.convert.PCAPStream import PCAPStream
-from pyrdp.convert.utils import InetSocketAddress, TCPFlags
+from pyrdp.convert.utils import InetAddress, TCPFlags
 from pyrdp.parser import TPKTParser
 
 
@@ -59,13 +59,13 @@ class TLSPDUStream(PCAPStream):
                 continue
 
             currentTimeStamp = packet.time
-            currentSrcSocket = InetSocketAddress(ip.src, tcp.sport)
+            currentSrcSocket = InetAddress(ip.src, tcp.sport)
 
             # The first couple messages don't use TLS. Check if it's one of those messages and output it as is.
             if hasattr(tcp, "load") and tpktParser.isTPKTPDU(tcp.load):
                 yield PCAPStream.output(tcp.load, currentTimeStamp,
                                         currentSrcSocket,
-                                        InetSocketAddress(ip.dst, tcp.dport))
+                                        InetAddress(ip.dst, tcp.dport))
                 continue
 
             # Create the TLS session context.
@@ -79,7 +79,7 @@ class TLSPDUStream(PCAPStream):
                 )
 
             # Makes sure to reassemble TLS stream properly: client <-> server
-            if currentSrcSocket != InetSocketAddress(tls.ipsrc, tls.sport):
+            if currentSrcSocket != InetAddress(tls.ipsrc, tls.sport):
                 tls = tls.mirror()
 
             # Pass every TLS message through our own custom session so the state is kept properly
@@ -114,4 +114,4 @@ class TLSPDUStream(PCAPStream):
                 elif isinstance(msg, TLSApplicationData):
                     yield PCAPStream.output(msg.data, currentTimeStamp,
                                             currentSrcSocket,
-                                            InetSocketAddress(ip.dst, tcp.dport))
+                                            InetAddress(ip.dst, tcp.dport))
