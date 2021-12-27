@@ -3,6 +3,7 @@
 # Copyright (C) 2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+import math
 import traceback
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -94,7 +95,7 @@ class PCAPConverter(Converter):
         return streams
 
     def processStream(self, startTimeStamp: int, stream: PCAPStream):
-        startTimeStamp = time.strftime("%Y%m%d%H%M%S", time.gmtime(startTimeStamp))
+        startTimeStamp = time.strftime("%Y%m%d%H%M%S", time.gmtime(math.floor(startTimeStamp)))
         sessionID = PCAPConverter.SESSIONID_FORMAT.format(**{
             "timestamp": startTimeStamp,
             "src": stream.client,
