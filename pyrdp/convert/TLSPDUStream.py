@@ -11,7 +11,7 @@ from scapy.layers.tls.session import tlsSession
 from scapy.plist import PacketList
 
 from pyrdp.convert.PCAPStream import PCAPStream
-from pyrdp.convert.utils import TCPFlags
+from pyrdp.convert.utils import InetAddress, TCPFlags
 from pyrdp.parser import TPKTParser
 
 
@@ -59,12 +59,13 @@ class TLSPDUStream(PCAPStream):
                 continue
 
             currentTimeStamp = packet.time
-            currentSrc = ip.src
-            currentDst = ip.dst
+            currentSrcSocket = InetAddress(ip.src, tcp.sport)
 
             # The first couple messages don't use TLS. Check if it's one of those messages and output it as is.
             if hasattr(tcp, "load") and tpktParser.isTPKTPDU(tcp.load):
-                yield PCAPStream.output(tcp.load, currentTimeStamp, ip.src, ip.dst)
+                yield PCAPStream.output(tcp.load, currentTimeStamp,
+                                        currentSrcSocket,
+                                        InetAddress(ip.dst, tcp.dport))
                 continue
 
             # Create the TLS session context.
@@ -77,7 +78,8 @@ class TLSPDUStream(PCAPStream):
                     connection_end="server",
                 )
 
-            if tls.ipsrc != ip.src:
+            # Makes sure to reassemble TLS stream properly: client <-> server
+            if currentSrcSocket != InetAddress(tls.ipsrc, tls.sport):
                 tls = tls.mirror()
 
             # Pass every TLS message through our own custom session so the state is kept properly
@@ -88,6 +90,11 @@ class TLSPDUStream(PCAPStream):
                 if isinstance(msg, TLSClientHello):
                     clientRandom = pkcs_i2osp(msg.gmt_unix_time, 4) + msg.random_bytes
                 elif isinstance(msg, TLSServerHello):
+                    # TODO: faced some cases where random_bytes was the right length already
+                    #       but also it didn't entirely fix that case...
+                    #if len(msg.random_bytes) == 32:
+                    #    serverRandom = msg.random_bytes
+                    #else:
                     serverRandom = pkcs_i2osp(msg.gmt_unix_time, 4) + msg.random_bytes
                 elif isinstance(msg, TLSNewSessionTicket):
                     # Session established, set master secret.
@@ -105,4 +112,6 @@ class TLSPDUStream(PCAPStream):
 
                     tlsKeyGenerated = True
                 elif isinstance(msg, TLSApplicationData):
-                    yield PCAPStream.output(msg.data, currentTimeStamp, ip.src, ip.dst)
+                    yield PCAPStream.output(msg.data, currentTimeStamp,
+                                            currentSrcSocket,
+                                            InetAddress(ip.dst, tcp.dport))
