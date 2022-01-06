@@ -102,7 +102,7 @@ jobs:
 
       - name: Verify the PCAP to JSON file
         working-directory: ./
-        run: ./test/validate_json.sh test_convert.json
+        run: ./test/validate_json.sh "20200319000716_192.168.38.1:20989-192.168.38.1:3389.json"
 
       - name: pyrdp-convert.py PCAP to replay
         working-directory: ./
