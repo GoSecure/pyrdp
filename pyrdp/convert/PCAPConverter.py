@@ -43,6 +43,7 @@ class PCAPConverter(Converter):
         if self.listOnly:
             return
 
+        exitCode = 0
         for startTimeStamp, stream in streams:
             try:
                 self.processStream(startTimeStamp, stream)
@@ -51,6 +52,8 @@ class PCAPConverter(Converter):
                 print() # newline
                 print(trace)
                 print(f"[-] Failed: {e}")
+                exitCode = 1
+        return exitCode
 
     def listSessions(self) -> List[Tuple[int, PCAPStream]]:
         print(f"[*] Analyzing PCAP '{self.inputFile}' ...")

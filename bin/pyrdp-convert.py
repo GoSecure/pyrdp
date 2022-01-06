@@ -92,4 +92,5 @@ if __name__ == "__main__":
         sys.stderr.write("Unknown file extension. (Supported: .pcap, .pyrdp)")
         sys.exit(1)
 
-    converter.process()
+    exitCode = converter.process()
+    sys.exit(exitCode)
