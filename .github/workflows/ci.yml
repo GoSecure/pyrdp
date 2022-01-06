@@ -94,7 +94,7 @@ jobs:
 
       - name: Verify the JSON file
         working-directory: ./
-        run: ./test/validate_json.sh test_convert.pyrdp
+        run: ./test/validate_json.sh test_convert.json
 
       - name: Run unit tests
         working-directory: ./
@@ -162,7 +162,7 @@ jobs:
 
       - name: Verify the JSON file
         working-directory: ./
-        run: ./test/validate_json.sh test_convert.pyrdp
+        run: ./test/validate_json.sh test_convert.json
 
       - name: Run unit tests
         working-directory: ./
