@@ -98,7 +98,7 @@ jobs:
 
       - name: pyrdp-convert.py PCAP to JSON
         working-directory: ./
-        run: coverage run --append bin/pyrdp-convert.py test/files/test_convert.pcap -f json
+        run: coverage run --append bin/pyrdp-convert.py test/files/test_session.pcap -f json
 
       - name: Verify the PCAP to JSON file
         working-directory: ./
@@ -106,7 +106,7 @@ jobs:
 
       - name: pyrdp-convert.py PCAP to replay
         working-directory: ./
-        run: coverage run --append bin/pyrdp-convert.py test/files/test_convert.pcap -f replay
+        run: coverage run --append bin/pyrdp-convert.py test/files/test_session.pcap -f replay
 
       - name: Run unit tests
         working-directory: ./
