@@ -88,6 +88,30 @@ jobs:
         working-directory: ./
         run: file test_convert.mp4 | grep "MP4 Base Media"
 
+      - name: pyrdp-convert.py replay to JSON
+        working-directory: ./
+        run: coverage run --append bin/pyrdp-convert.py test/files/test_convert.pyrdp -f json
+
+      - name: Verify the replay to JSON file
+        working-directory: ./
+        run: ./test/validate_json.sh test_convert.json
+
+      - name: pyrdp-convert.py PCAP to JSON
+        working-directory: ./
+        run: coverage run --append bin/pyrdp-convert.py test/files/test_session.pcap -f json
+
+      - name: Verify the PCAP to JSON file
+        working-directory: ./
+        run: ./test/validate_json.sh "20200319000716_192.168.38.1:20989-192.168.38.1:3389.json"
+
+      - name: pyrdp-convert.py PCAP to replay
+        working-directory: ./
+        run: coverage run --append bin/pyrdp-convert.py test/files/test_session.pcap -f replay
+
+      - name: Verify that the replay file exists
+        working-directory: ./
+        run: file -E "20200319000716_192.168.38.1:20989-192.168.38.1:3389.pyrdp"
+
       - name: Run unit tests
         working-directory: ./
         run: coverage run --append -m unittest discover -v

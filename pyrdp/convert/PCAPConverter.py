@@ -43,6 +43,7 @@ class PCAPConverter(Converter):
         if self.listOnly:
             return
 
+        exitCode = 0
         for startTimeStamp, stream in streams:
             try:
                 self.processStream(startTimeStamp, stream)
@@ -51,6 +52,8 @@ class PCAPConverter(Converter):
                 print() # newline
                 print(trace)
                 print(f"[-] Failed: {e}")
+                exitCode = 1
+        return exitCode
 
     def listSessions(self) -> List[Tuple[int, PCAPStream]]:
         print(f"[*] Analyzing PCAP '{self.inputFile}' ...")
@@ -117,8 +120,9 @@ class PCAPConverter(Converter):
 
         try:
             replayer.tcp.recordConnectionClose()
-            handler.cleanup()
+            if handler:
+                handler.cleanup()
         except struct.error:
             sys.stderr.write("[!] Couldn't close the session cleanly. Make sure that --src and --dst are correct.")
 
-        print(f"\n[+] Successfully wrote all files to '{self.outputPrefix}'")
+        print(f"\n[+] Successfully wrote '{replayer.filename}'")
