@@ -120,7 +120,8 @@ class PCAPConverter(Converter):
 
         try:
             replayer.tcp.recordConnectionClose()
-            handler.cleanup()
+            if handler:
+                handler.cleanup()
         except struct.error:
             sys.stderr.write("[!] Couldn't close the session cleanly. Make sure that --src and --dst are correct.")
 
