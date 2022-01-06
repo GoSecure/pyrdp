@@ -22,7 +22,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * `pyrdp-convert` video conversion is now 6x faster! (See {uri-issue}349[#349])
 * `pyrdp-convert` video format can be viewed during encoding and will play even if the conversion process crashes or is halted ({uri-issue}352[#352], {uri-issue}353[#353])
 * `pyrdp-convert` can now extract session information including keyboard and mouse movement information in JSON from pcap and PDUs ({uri-issue}331[#331], {uri-issues}366[#366])
-* Better error reporting for `pyrdp-convert` ({uri-issue}361[#361])
+* `pyrdp-convert` has better success messages, error reporting and exit status ({uri-issue}361[#361], {uri-issue}369[#369])
 * Minor CLI improvements
 * Improved type hints
 * Updated instructions to extract the RDP certificate and private key ({uri-issue}345[#345])
@@ -44,6 +44,8 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * The slim flavor of our Docker image is now provided for the ARM and ARM64 platforms ({uri-issue}346[#346])
 * Docker images are now built and pushed via GitHub Actions ({uri-issue}334[#334], {uri-issue}341[#341])
 * Added an automated video conversion test to CI configuration ({uri-issue}349[#349])
+* Added an automated JSON conversion test to CI configuration with some validation ({uri-issue}369[#369])
+* Added an automated replay conversion test to CI configuration ({uri-issue}369[#369])
 
 
 == v1.1.0 - 2021-08-05
