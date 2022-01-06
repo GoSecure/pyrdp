@@ -3,14 +3,17 @@
 # Copyright (C) 2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+from pyrdp.convert.utils import InetAddress
+
+
 class PCAPStream:
-    def __init__(self, client: str, server: str):
+    def __init__(self, client: InetAddress, server: InetAddress):
         self.client = client
         self.server = server
 
     @property
     def ips(self):
-        return [self.client, self.server]
+        return [self.client.ip, self.server.ip]
 
     def __len__(self):
         raise NotImplementedError("PCAPStream.__len__ is not implemented.")
@@ -23,5 +26,5 @@ class PCAPStream:
         return int(timeStamp * 1000)
 
     @staticmethod
-    def output(data: bytes, timeStamp: float, srcIp: str, dstIp: str):
-        return data, PCAPStream.timeStampFloatToInt(timeStamp), srcIp, dstIp
+    def output(data: bytes, timeStamp: float, src: InetAddress, dst: InetAddress):
+        return data, PCAPStream.timeStampFloatToInt(timeStamp), src, dst

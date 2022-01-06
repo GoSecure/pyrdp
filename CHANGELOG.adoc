@@ -21,17 +21,20 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Capture and log NetNTLMv2 hash if the server enforces NLA and we don't have the NLA redirection attack activated ({uri-issue}367[#367], {uri-issue}358[#358])
 * `pyrdp-convert` video conversion is now 6x faster! (See {uri-issue}349[#349])
 * `pyrdp-convert` video format can be viewed during encoding and will play even if the conversion process crashes or is halted ({uri-issue}352[#352], {uri-issue}353[#353])
+* `pyrdp-convert` can now extract session information including keyboard and mouse movement information in JSON from pcap and PDUs ({uri-issue}331[#331], {uri-issues}366[#366])
 * Better error reporting for `pyrdp-convert` ({uri-issue}361[#361])
 * Minor CLI improvements
 * Improved type hints
 * Updated instructions to extract the RDP certificate and private key ({uri-issue}345[#345])
 * Documentation updates ({uri-issue}335[#335], {uri-issue}339[#339], {uri-issue}340[#340], {uri-issue}360[#360])
 * Replaced unmaintained dependency notify2 with py-notifier ({uri-issue}363[#363], {uri-issue}365[#365])
+* Some Python 3.10 compatibility work ({uri-issue}366[#366], {uri-issue}380[#380])
 
 === Bug fixes
 
 * Fixed a memory leak in the bitmap decoding routine preventing the conversion or the replay of very large captures ({uri-issue}352[#352], {uri-issue}353[#353])
 * Fixed `pyrdp-player` on macOS platforms ({uri-issue}362[#362])
+* Fixed `pyrdp-convert` pcap processing when victim IP and MITM IP are the same ({uri-issue}366[#366])
 * Fixed NLA redirection problems if original target and NLA redirection target are the same ({uri-issue}342[#342], {uri-issue}343[#343])
 * Added a missing dependency for the GUI on Ubuntu 20.04 LTS ({uri-issue}348[#348], {uri-issue}351[#351], {uri-issue}355[#355])
 * No longer assuming every connection will have VirtualChannels ({uri-issue}375[#375])

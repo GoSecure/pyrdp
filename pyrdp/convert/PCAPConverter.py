@@ -3,6 +3,7 @@
 # Copyright (C) 2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+import math
 import traceback
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -10,13 +11,13 @@ from typing import Dict, List, Tuple
 from progressbar import progressbar
 from scapy.layers.inet import TCP
 from scapy.layers.tls.record import TLS
+from pyrdp.convert.pyrdp_scapy import *
 
 from pyrdp.convert.Converter import Converter
 from pyrdp.convert.ExportedPDUStream import ExportedPDUStream
+from pyrdp.convert.TLSPDUStream import TLSPDUStream
 from pyrdp.convert.PCAPStream import PCAPStream
 from pyrdp.convert.RDPReplayer import RDPReplayer
-from pyrdp.convert.TLSPDUStream import TLSPDUStream
-from pyrdp.convert.pyrdp_scapy import *
 from pyrdp.convert.utils import tcp_both, getSessionInfo, findClientRandom, createHandler, canExtractSessionInfo
 
 
@@ -74,7 +75,7 @@ class PCAPConverter(Converter):
             if self.checkSrcExcluded(client) or self.checkDstExcluded(server):
                 continue
 
-            print(f"    - {client} -> {server}:", end="", flush=True)
+            print(f"    - {client} -> {server} :", end="", flush=True)
 
             if plaintext:
                 print(" plaintext")
@@ -94,7 +95,7 @@ class PCAPConverter(Converter):
         return streams
 
     def processStream(self, startTimeStamp: int, stream: PCAPStream):
-        startTimeStamp = time.strftime("%Y%m%d%H%M%S", time.gmtime(startTimeStamp))
+        startTimeStamp = time.strftime("%Y%m%d%H%M%S", time.gmtime(math.floor(startTimeStamp)))
         sessionID = PCAPConverter.SESSIONID_FORMAT.format(**{
             "timestamp": startTimeStamp,
             "src": stream.client,
@@ -106,12 +107,17 @@ class PCAPConverter(Converter):
 
         print(f"[*] Processing {stream.client} -> {stream.server}")
 
-        for data, timeStamp, src, _ in progressbar(stream):
-            replayer.setTimeStamp(timeStamp)
-            replayer.recv(data, src == stream.client)
+        try:
+            for data, timeStamp, src, _dst in progressbar(stream):
+                replayer.setTimeStamp(timeStamp)
+                replayer.recv(data, src == stream.client)
+        except StopIteration:
+            # Done processing the stream.
+            pass
 
         try:
             replayer.tcp.recordConnectionClose()
+            handler.cleanup()
         except struct.error:
             sys.stderr.write("[!] Couldn't close the session cleanly. Make sure that --src and --dst are correct.")
 
