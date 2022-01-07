@@ -248,9 +248,49 @@ Assuming you have an RDP server running on `192.168.1.10` and listening on port 
 pyrdp-mitm.py 192.168.1.10
 ```
 
-When running the MITM for the first time on Linux, a private key and certificate should be generated for you in `~/.config/pyrdp`.
-These are used when TLS security is used on a connection. You can use them to decrypt PyRDP traffic in Wireshark, for
-example.
+When running the MITM for the first time a directory called `pyrdp_output/`
+will be created relative to the current working directory.
+Here is an example layout of that directory:
+
+```
+pyrdp_output/
+├── certs
+│   ├── WinDev2108Eval.crt
+│   └── WinDev2108Eval.pem
+├── files
+│   ├── 3dc9575a72ea896a3a910af8f4e43c92939a4421
+├── filesystems
+│   ├── Kimberly835337
+│   │   └── device1
+│   └── Stephen215343
+│       ├── device1
+│       └── device2
+|           └── Users/User/3D Objects/desktop.ini
+├── logs
+│   ├── crawl.json
+│   ├── crawl.log
+│   ├── mitm.json
+│   ├── mitm.log
+│   ├── mitm.log.2021-08-26
+│   ├── ntlmssp.log
+│   ├── player.log
+│   └── ssl.log
+└── replays
+    ├── rdp_replay_20210826_12-15-33_512_Stephen215343.pyrdp
+    └── rdp_replay_20211125_12-55-42_352_Kimberly835337.pyrdp
+```
+
+* `certs/` contains the certificates generated stored using the `CN` of the certificate as the file name
+* `files/` contains all files captured and are deduplicated by saving them using the SHA1 hash of the content as the filename
+* `filesystems/` contains a recreation of the filesystem of the targets classified by session IDs.
+   To save space on similar sessions, files are symbolic links to the actual files under `files/`.
+* `logs/` contains all the various logs with most in both JSON and plaintext formats:
+  * `crawl`: the file crawler log
+  * `mitm`: the main MITM log
+  * `ntlmssp.log`: the captured NetNTLM hashes
+  * `player.log`: the player log
+  * `ssl.log`: the TLS master secrets stored in a format compatible with Wireshark
+* `replays/` contains all the previously recorded PyRDP sessions with timestamps and session IDs in the filename
 
 #### Specifying the private key and certificate
 If key generation didn't work or you want to use a custom key and certificate, you can specify them using the
