@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2021 GoSecure Inc.
+# Copyright (C) 2021, 2022 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 import enum
@@ -10,7 +10,6 @@ from scapy.layers.inet import IP, TCP
 from scapy.layers.l2 import Ether
 
 from pyrdp.convert.JSONEventHandler import JSONEventHandler
-from pyrdp.core import Uint32BE
 from pyrdp.player import HAS_GUI
 
 from pyrdp.convert.pyrdp_scapy import *
@@ -71,10 +70,8 @@ class InetAddress():
 
 def extractInetAddressesFromPDUPacket(packet) -> Tuple[InetAddress, InetAddress]:
     """Returns the src and dst InetAddress (IP, port) from a PDU packet"""
-    return (InetAddress(".".join(str(b) for b in packet.load[12:16]),
-                        Uint32BE.unpack(packet.load[36:40])),
-            InetAddress(".".join(str(b) for b in packet.load[20:24]),
-                        Uint32BE.unpack(packet.load[44:48])))
+    x = ExportedPDU(packet.load)
+    return (InetAddress(x.src, x.sport), InetAddress(x.dst, x.dport))
 
 
 def createHandler(format: str, outputFileBase: str, progress=None) -> Tuple[str, str]:
@@ -93,6 +90,30 @@ def createHandler(format: str, outputFileBase: str, progress=None) -> Tuple[str,
     return HandlerClass(outputFileBase, progress=progress) if HandlerClass else None, outputFileBase
 
 
+class ExportedPDU(Packet):
+    """60 byte EXPORTED_PDU header."""
+    # We could properly parse the EXPORTED_PDU struct, but we are mostly dealing with IP exported PDUs
+    # so let's just wing it.
+    name = "ExportedPDU"
+    fields_desc = [ 
+                    IntField("tag1Num", None),  # 4
+                    StrFixedLenField("proto", None, length=4),  # 8
+                    IntField("tag2Num", None),  # 12
+                    IPField("src", None),  # 16
+                    IntField("tag3Num", None),  # 20
+                    IPField("dst", None),  # 24
+                    IntField("tag4Num", None),  # 28
+                    IntField("portType", None),  # 32
+                    IntField("tag5Num", None),  # 36
+                    IntField("sport", None),  # 40
+                    IntField("tag6Num", None),  # 44
+                    IntField("dport", None),  # 48
+                    IntField("tag7Num", None),  # 52
+                    IntField("frame", None),   # 56
+                    IntField("endOfTags", None),  # 60
+    ]
+
+
 # noinspection PyUnresolvedReferences
 def tcp_both(p) -> str:
     """Session extractor which merges both sides of a TCP channel."""
@@ -101,7 +122,15 @@ def tcp_both(p) -> str:
         return str(
             sorted(["TCP", p[IP].src, p[TCP].sport, p[IP].dst, p[TCP].dport], key=str)
         )
-    return "Other"
+
+    # Need to make sure this is OK when non-TCP, non-exported data is present.
+    if Ether not in p:
+        x = ExportedPDU(p.load)
+        return str(
+                sorted([x.proto.upper(), x.src, x.sport, x.dst, x.dport], key=str)
+        )
+
+    return "Unsupported"
 
 
 # noinspection PyUnresolvedReferences
@@ -142,18 +171,19 @@ def loadSecrets(filename: str) -> dict:
 
 def canExtractSessionInfo(session: PacketList) -> bool:
     packet = session[0]
+    # TODO: Eventually we should be able to wrap the session as an ExportedSession
+    # and check for the presence of exported.
     return IP in packet or Ether not in packet
 
 def getSessionInfo(session: PacketList) -> Tuple[InetAddress, InetAddress, float, bool]:
     """Attempt to retrieve an (src, dst, ts, isPlaintext) tuple for a data stream."""
     packet = session[0]
 
-    if IP in packet:
-        # This is a plaintext stream.
-        #
-        # FIXME: This relies on the fact that decrypted traces are using EXPORTED_PDU and
-        #        thus have no `IP` layer, but it is technically possible to have a true
-        #        plaintext capture with very old implementations of RDP.
+    # FIXME: This relies on the fact that decrypted traces are using EXPORTED_PDU and
+    #        thus have no `Ether` layer, but it is technically possible to have a true
+    #        plaintext capture with very old implementations of RDP.
+    if TCP in packet:
+        # Assume an encrypted stream...
         return (InetAddress(packet[IP].src, packet[IP][TCP].sport),
                 InetAddress(packet[IP].dst, packet[IP][TCP].dport),
                 packet.time, False)

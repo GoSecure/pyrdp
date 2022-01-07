@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2021 GoSecure Inc.
+# Copyright (C) 2021, 2022 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 from pyrdp.convert.PCAPStream import PCAPStream
@@ -25,7 +25,6 @@ class ExportedPDUStream(PCAPStream):
         return self
 
     def __next__(self):
-
         while True:
             if self.n >= len(self):
                 raise StopIteration
@@ -34,8 +33,5 @@ class ExportedPDUStream(PCAPStream):
             src, dst = extractInetAddressesFromPDUPacket(packet)
             data = packet.load[60:]
             self.n += 1
-
-            if any(ip not in self.ips for ip in [src.ip, dst.ip]):
-                continue  # Skip packets not meant for this stream.
 
             return PCAPStream.output(data, packet.time, src, dst)
