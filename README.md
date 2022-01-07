@@ -348,6 +348,16 @@ For example, if you expect your payload to take up to 5 seconds to complete, you
 This will block the client's input / output for 5 seconds to hide the console and prevent interference.
 After 5 seconds, input / output is restored back to normal.
 
+#### Capturing NetNTLMv2 hashes
+PyRDP has the ability to capture the client's NetNTLMv2 hashes via a NLA (CredSSP)
+connection by carrying the negotiation and capturing the NTLMSSP authentication
+messages. This will happen even if the connection against the RDP remote server
+is not done via NLA as PyRDP will generate NTLMSSP messages by it's own and
+continue with the authentication process. The capturing NetNTLMv2 hashes can be
+useful for research and offensivepurposes.
+The captured NetNTLMv2 hash can be found in the logs and it's formatted so
+cracking tools (ie. John The Ripper) can ingest it.
+
 #### Other MITM arguments
 Run `pyrdp-mitm.py --help` for a full list of arguments.
 
