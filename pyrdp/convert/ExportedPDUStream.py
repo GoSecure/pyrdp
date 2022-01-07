@@ -1,11 +1,11 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2021 GoSecure Inc.
+# Copyright (C) 2021, 2022 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 from pyrdp.convert.PCAPStream import PCAPStream
 from pyrdp.convert.pyrdp_scapy import *
-from pyrdp.convert.utils import Exported, extractInetAddressesFromPDUPacket, InetAddress
+from pyrdp.convert.utils import extractInetAddressesFromPDUPacket, InetAddress
 
 
 class ExportedPDUStream(PCAPStream):
@@ -29,7 +29,6 @@ class ExportedPDUStream(PCAPStream):
             if self.n >= len(self):
                 raise StopIteration
 
-            #packet = Exported(self.packets[self.n].load)
             packet = self.packets[self.n]
             src, dst = extractInetAddressesFromPDUPacket(packet)
             data = packet.load[60:]

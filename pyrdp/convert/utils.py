@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2021 GoSecure Inc.
+# Copyright (C) 2021, 2022 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 import enum
@@ -10,7 +10,6 @@ from scapy.layers.inet import IP, TCP
 from scapy.layers.l2 import Ether
 
 from pyrdp.convert.JSONEventHandler import JSONEventHandler
-from pyrdp.core import Uint32BE
 from pyrdp.player import HAS_GUI
 
 from pyrdp.convert.pyrdp_scapy import *
@@ -71,10 +70,8 @@ class InetAddress():
 
 def extractInetAddressesFromPDUPacket(packet) -> Tuple[InetAddress, InetAddress]:
     """Returns the src and dst InetAddress (IP, port) from a PDU packet"""
-    return (InetAddress(".".join(str(b) for b in packet.load[12:16]),
-                        Uint32BE.unpack(packet.load[36:40])),
-            InetAddress(".".join(str(b) for b in packet.load[20:24]),
-                        Uint32BE.unpack(packet.load[44:48])))
+    x = ExportedPDU(packet.load)
+    return (InetAddress(x.src, x.sport), InetAddress(x.dst, x.dport))
 
 
 def createHandler(format: str, outputFileBase: str, progress=None) -> Tuple[str, str]:
@@ -93,11 +90,11 @@ def createHandler(format: str, outputFileBase: str, progress=None) -> Tuple[str,
     return HandlerClass(outputFileBase, progress=progress) if HandlerClass else None, outputFileBase
 
 
-class Exported(Packet):
+class ExportedPDU(Packet):
     """60 byte EXPORTED_PDU header."""
     # We could properly parse the EXPORTED_PDU struct, but we are mostly dealing with IP exported PDUs
     # so let's just wing it.
-    name = "Exported"
+    name = "ExportedPDU"
     fields_desc = [ 
                     IntField("tag1Num", None),  # 4
                     StrFixedLenField("proto", None, length=4),  # 8
@@ -128,7 +125,7 @@ def tcp_both(p) -> str:
 
     # Need to make sure this is OK when non-TCP, non-exported data is present.
     if Ether not in p:
-        x = Exported(p.load)
+        x = ExportedPDU(p.load)
         return str(
                 sorted([x.proto.upper(), x.src, x.sport, x.dst, x.dport], key=str)
         )
