@@ -371,8 +371,8 @@ authentication messages. The capturing NetNTLMv2 hashes can be useful for
 research and offensive purposes. As last resort, PyRDP will also try to capture
 hashes from connections where the server enforces NLA but PyRDP was initiated
 as non-NLA (`tls`).
-The captured NetNTLMv2 hash can be found in the logs and it's formatted so
-cracking tools (ie. John The Ripper) can ingest it.
+The captured NetNTLMv2 hash can be found in the `mitm.log` log file and it's
+formatted so cracking tools (ie. John The Ripper) can ingest it.
 
 #### Other MITM arguments
 Run `pyrdp-mitm.py --help` for a full list of arguments.
