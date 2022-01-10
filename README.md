@@ -276,6 +276,22 @@ If key generation didn't work or you want to use a custom key and certificate, y
 pyrdp-mitm.py 192.168.1.10 -k private_key.pem -c certificate.pem
 ```
 
+##### Monster-in-the-Middle NLA/CredSSP connections
+You can also specify the server's key and certificate along with the
+authentication as `ssp` to start an NLA connection against the server:
+```
+--auth ssp
+```
+This will enable the possibility to intercept NLA enabled connections.
+
+##### Alternative host redirection
+If the server you are trying to connect enforces NLA, you can redirect the
+connection to another non-NLA server to keep the connection alive. To enable
+this feature append specify the alternative host's address and port:
+```
+--nla-redirection-host 192.168.1.12 --nla-redirection-port 3389
+```
+
 #### Connecting to the PyRDP player
 If you want to see live RDP connections through the PyRDP player, you will need to specify the ip and port on which the
 player is listening using the `-i` and `-d` arguments. Note: the port argument is optional, the default port is 3000.
@@ -349,12 +365,12 @@ This will block the client's input / output for 5 seconds to hide the console an
 After 5 seconds, input / output is restored back to normal.
 
 #### Capturing NetNTLMv2 hashes
-PyRDP has the ability to capture the client's NetNTLMv2 hashes via a NLA (CredSSP)
-connection by carrying the negotiation and capturing the NTLMSSP authentication
-messages. This will happen even if the connection against the RDP remote server
-is not done via NLA as PyRDP will generate NTLMSSP messages by it's own and
-continue with the authentication process. The capturing NetNTLMv2 hashes can be
-useful for research and offensivepurposes.
+PyRDP has the ability to capture the client's NetNTLMv2 hashes via a NLA
+(CredSSP) connection by carrying the negotiation and capturing the NTLMSSP
+authentication messages. The capturing NetNTLMv2 hashes can be useful for
+research and offensive purposes. As last resort, PyRDP will also try to capture
+hashes from connections where the server enforces NLA but PyRDP was initiated
+as non-NLA (`tls`).
 The captured NetNTLMv2 hash can be found in the logs and it's formatted so
 cracking tools (ie. John The Ripper) can ingest it.
 
