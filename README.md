@@ -282,7 +282,7 @@ authentication as `ssp` to start an NLA connection against the server:
 ```
 --auth ssp
 ```
-This will enable the possibility to intercept NLA enabled connections.
+This will enable the possibility to intercept NLA-enforced connections.
 
 ##### Alternative host redirection
 If the server you are trying to connect enforces NLA, you can redirect the
