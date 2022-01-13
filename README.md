@@ -45,38 +45,14 @@ research use cases in mind.
   * [From Git Source](#from-git-source)
   * [Installing on Windows](#installing-on-windows)
   * [Building the Docker Image](#building-the-docker-image)
-  * [Migrating away from pycrypto](#migrating-away-from-pycrypto)
 - [Using PyRDP](#using-pyrdp)
   * [Using the PyRDP Monster-in-the-Middle](#using-the-pyrdp-monster-in-the-middle)
-    + [Specifying the private key and certificate](#specifying-the-private-key-and-certificate)
-    + [Connecting to the PyRDP player](#connecting-to-the-pyrdp-player)
-      - [Connecting to a PyRDP player when the MITM is running on a server](#connecting-to-a-pyrdp-player-when-the-mitm-is-running-on-a-server)
-    + [Running payloads on new connections](#running-payloads-on-new-connections)
-      - [Setting the payload](#setting-the-payload)
-      - [Choosing when to start the payload](#choosing-when-to-start-the-payload)
-      - [Choosing when to resume normal activity](#choosing-when-to-resume-normal-activity)
-    + [Other MITM arguments](#other-mitm-arguments)
-      - [--no-downgrade](#--no-downgrade)
-      - [--transparent](#--transparent)
-      - [`--no-gdi`: Disable Accelerated Graphics Pipeline](#--no-gdi-disable-accelerated-graphics-pipeline)
   * [Using the PyRDP Player](#using-the-pyrdp-player)
-    + [Playing a replay file](#playing-a-replay-file)
-    + [Listening for live connections](#listening-for-live-connections)
-    + [Changing the listening address](#changing-the-listening-address)
-    + [Other player arguments](#other-player-arguments)
   * [Using the PyRDP Certificate Cloner](#using-the-pyrdp-certificate-cloner)
-    + [Cloning a certificate](#cloning-a-certificate)
-    + [Using a custom private key](#using-a-custom-private-key)
-    + [Other cloner arguments](#other-cloner-arguments)
   * [Using PyRDP Convert](#using-pyrdp-convert)
   * [Configuring PyRDP](#configuring-pyrdp)
-  * [Using PyRDP as a Library](#using-pyrdp-as-a-library)
-  * [Using PyRDP with twistd](#using-pyrdp-with-twistd)
-  * [Using PyRDP with Bettercap](#using-pyrdp-with-bettercap)
+  * [Advanced Usage](#advanced-usage)
   * [Docker Specific Usage Instructions](#docker-specific-usage-instructions)
-    + [Mapping a Listening Port](#mapping-a-listening-port)
-    + [Logs and Artifacts Storage](#logs-and-artifacts-storage)
-    + [Using the GUI Player in Docker](#using-the-gui-player-in-docker)
 - [PyRDP Lore](#pyrdp-lore)
 - [Contributing to PyRDP](#contributing-to-pyrdp)
 - [Acknowledgements](#acknowledgements)
@@ -574,16 +550,18 @@ as a basis for further configuration.
 
 In the future there are plans to support other aspects of PyRDP configuration through those configuration files.
 
-### Using PyRDP as a Library
+### Advanced Usage
+
+#### Using PyRDP as a Library
 If you're interested in experimenting with RDP and making your own tools, head over to our
 [documentation section](docs/README.md) for more information.
 
-### Using PyRDP with twistd
+#### Using PyRDP with twistd
 The PyRDP MITM component was also implemented as a twistd plugin.
 This enables you to run it in debug mode and allows you to get an interactive debugging repl (pdb) if you send a `SIGUSR2` to the twistd process.
 See the [twistd documentation](docs/twistd.md) for more information.
 
-### Using PyRDP with Bettercap
+#### Using PyRDP with Bettercap
 We developped our own Bettercap module, `rdp.proxy`, to monster-in-the-middle all RDP connections
 on a given LAN. Check out [this document](docs/bettercap-rdp-mitm.md) for more information.
 
