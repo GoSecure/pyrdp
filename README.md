@@ -10,7 +10,7 @@ PyRDP is a Python Remote Desktop Protocol (RDP) Monster-in-the-Middle (MITM) too
 
 It features a few tools:
 - RDP Monster-in-the-Middle
-    - Logs credentials used when connecting
+    - Logs plaintext credentials or NetNTLM hashes used when connecting
     - Steals data copied to the clipboard
     - Saves a copy of the files transferred over the network
     - Crawls shared drives in the background and saves them locally
@@ -85,7 +85,7 @@ research use cases in mind.
 ## Supported Systems
 PyRDP should work on Python 3.6 and up on the x86-64, ARM and ARM64 platforms.
 
-This tool has been tested to work on Python 3.6 on Linux (Ubuntu 18.04), Raspberry Pi and Windows
+This tool has been tested to work on Python 3.6 on Linux (Ubuntu 18.04, 20.04), Raspberry Pi and Windows
 (see section [Installing on Windows](#installing-on-windows)). It has not been tested on macOS.
 
 ## Installing
@@ -106,11 +106,12 @@ docker pull gosecure/pyrdp:latest-slim
 ```
 
 You can find the list of all our Docker images [on the gosecure/pyrdp DockerHub page](https://hub.docker.com/r/gosecure/pyrdp/tags).
+The `latest` tag refers to the latest released version while the `master` tag is the docker image built out of our `master` branch.
 
 ### From Git Source
 
 We recommend installing PyRDP in a
-[virtual environment](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/)
+[virtualenv environment](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/)
 to avoid dependency issues.
 
 First, make sure to install the prerequisite packages (on Ubuntu). We provide two types of installs a full one and a
@@ -166,8 +167,8 @@ pip3 install -U -e '.[full]'
 ```
 
 This should install the dependencies required to run PyRDP. If you choose to
-install without GUI or ffmpeg dependencies, it will not be possible to use
-`pyrdp-player` without headless mode (`--headless`) or `pyrdp-convert`.
+install without the GUI or ffmpeg dependencies, it will not be possible to use
+`pyrdp-player` without headless mode (`--headless`) or `pyrdp-convert` to produce video output.
 
 If you ever want to leave your virtual environment, you can simply deactivate it:
 
@@ -306,7 +307,7 @@ pyrdp-mitm.py 192.168.1.10 -k private_key.pem -c certificate.pem
 ```
 
 #### Connecting to the PyRDP player
-If you want to see live RDP connections through the PyRDP player, you will need to specify the ip and port on which the
+If you want to see live RDP connections through the PyRDP player, you will need to specify the IP address and port on which the
 player is listening using the `-i` and `-d` arguments. Note: the port argument is optional, the default port is 3000.
 
 ```
@@ -457,6 +458,10 @@ pyrdp-player.py -b <ADDRESS>
 Run `pyrdp-player.py --help` for a full list of arguments.
 
 ### Using the PyRDP Certificate Cloner
+
+NOTE: Using this tool is optional.
+Since version 1.0 PyRDP generate certificates on-the-fly exactly like this tool would do.
+
 The PyRDP certificate cloner creates a brand new X509 certificate by using the values from an existing RDP server's
 certificate. It connects to an RDP server, downloads its certificate, generates a new private key and replaces the
 public key and signature of the certificate using the new private key. This can be used in a pentest if, for example,
@@ -534,7 +539,7 @@ Now this trace can be used directly in `pyrdp-convert`.
 
 ### Configuring PyRDP
 
-Most of the PyRDP configurations are done through command line switches, but it is also possible to use a
+Most of the PyRDP configuration is done through command line switches, but it is also possible to use a
 configuration file for certain settings such as log configuration.
 
 The default configuration files used by PyRDP are located in [mitm.default.ini](pyrdp/mitm/mitm.default.ini)
@@ -616,6 +621,8 @@ If you plan on using the player, X11 forwarding using an SSH connection would be
 * [BlackHat USA Arsenal 2019 Slides](https://docs.google.com/presentation/d/17P_l2n-hgCehQ5eTWilru4IXXHnGIRTj4ftoW4BiX5A/edit?usp=sharing)
 * [DerbyCon 2019 Slides](https://docs.google.com/presentation/d/1UAiN2EZwDcmBjLe_t5HXB0LzbNclU3nnigC-XM4neIU/edit?usp=sharing) ([Video](https://www.youtube.com/watch?v=zgt3N6Nrnss))
 * [Blog: PyRDP on Autopilot](https://www.gosecure.net/blog/2020/02/26/pyrdp-on-autopilot-unattended-credential-harvesting-and-client-side-file-stealing/)
+* [Blog: PyRDP 1.0](https://www.gosecure.net/blog/2020/10/20/announcing-pyrdp-1-0/)
+* [DefCon 2020 Demo Labs](https://www.youtube.com/watch?v=1q2Eo3x3u0g)
 
 
 ## Contributing to PyRDP
