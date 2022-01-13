@@ -1,3 +1,8 @@
+# RDP Protocol
+
+[CyberArk has a great resource](https://www.cyberark.com/resources/threat-research-blog/explain-like-i-m-5-remote-desktop-protocol-rdp) that introduces the RDP protocol.
+
+
 # The PyRDP library
 Our RDP implementation was designed so it could be used for tools other than our MITM.
 
