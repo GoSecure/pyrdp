@@ -10,7 +10,7 @@ PyRDP is a Python Remote Desktop Protocol (RDP) Monster-in-the-Middle (MITM) too
 
 It features a few tools:
 - RDP Monster-in-the-Middle
-    - Logs credentials used when connecting
+    - Logs plaintext credentials or NetNTLM hashes used when connecting
     - Steals data copied to the clipboard
     - Saves a copy of the files transferred over the network
     - Crawls shared drives in the background and saves them locally
@@ -21,6 +21,11 @@ It features a few tools:
     - View replays of RDP connections
     - Take control of active RDP sessions while hiding your actions
     - List the client's mapped drives and download files from them during active sessions
+- Converter tool:
+    - Convert RDP replays to videos for easier sharing
+    - Convert RDP replays to a sequence of low-level events serialized in JSON format
+    - Convert PCAPs to replays, videos or JSON events
+    - Convert decrypted PCAPs (L7 PDUs) to replays, videos or JSON events
 - RDP Certificate Cloner:
     - Create a self-signed X509 certificate with the same fields as an RDP server's certificate
 
@@ -40,38 +45,14 @@ research use cases in mind.
   * [From Git Source](#from-git-source)
   * [Installing on Windows](#installing-on-windows)
   * [Building the Docker Image](#building-the-docker-image)
-  * [Migrating away from pycrypto](#migrating-away-from-pycrypto)
 - [Using PyRDP](#using-pyrdp)
   * [Using the PyRDP Monster-in-the-Middle](#using-the-pyrdp-monster-in-the-middle)
-    + [Specifying the private key and certificate](#specifying-the-private-key-and-certificate)
-    + [Connecting to the PyRDP player](#connecting-to-the-pyrdp-player)
-      - [Connecting to a PyRDP player when the MITM is running on a server](#connecting-to-a-pyrdp-player-when-the-mitm-is-running-on-a-server)
-    + [Running payloads on new connections](#running-payloads-on-new-connections)
-      - [Setting the payload](#setting-the-payload)
-      - [Choosing when to start the payload](#choosing-when-to-start-the-payload)
-      - [Choosing when to resume normal activity](#choosing-when-to-resume-normal-activity)
-    + [Other MITM arguments](#other-mitm-arguments)
-      - [--no-downgrade](#--no-downgrade)
-      - [--transparent](#--transparent)
-      - [`--no-gdi`: Disable Accelerated Graphics Pipeline](#--no-gdi-disable-accelerated-graphics-pipeline)
   * [Using the PyRDP Player](#using-the-pyrdp-player)
-    + [Playing a replay file](#playing-a-replay-file)
-    + [Listening for live connections](#listening-for-live-connections)
-    + [Changing the listening address](#changing-the-listening-address)
-    + [Other player arguments](#other-player-arguments)
   * [Using the PyRDP Certificate Cloner](#using-the-pyrdp-certificate-cloner)
-    + [Cloning a certificate](#cloning-a-certificate)
-    + [Using a custom private key](#using-a-custom-private-key)
-    + [Other cloner arguments](#other-cloner-arguments)
   * [Using PyRDP Convert](#using-pyrdp-convert)
   * [Configuring PyRDP](#configuring-pyrdp)
-  * [Using PyRDP as a Library](#using-pyrdp-as-a-library)
-  * [Using PyRDP with twistd](#using-pyrdp-with-twistd)
-  * [Using PyRDP with Bettercap](#using-pyrdp-with-bettercap)
+  * [Advanced Usage](#advanced-usage)
   * [Docker Specific Usage Instructions](#docker-specific-usage-instructions)
-    + [Mapping a Listening Port](#mapping-a-listening-port)
-    + [Logs and Artifacts Storage](#logs-and-artifacts-storage)
-    + [Using the GUI Player in Docker](#using-the-gui-player-in-docker)
 - [PyRDP Lore](#pyrdp-lore)
 - [Contributing to PyRDP](#contributing-to-pyrdp)
 - [Acknowledgements](#acknowledgements)
@@ -80,7 +61,7 @@ research use cases in mind.
 ## Supported Systems
 PyRDP should work on Python 3.6 and up on the x86-64, ARM and ARM64 platforms.
 
-This tool has been tested to work on Python 3.6 on Linux (Ubuntu 18.04), Raspberry Pi and Windows
+This tool has been tested to work on Python 3.6 on Linux (Ubuntu 18.04, 20.04), Raspberry Pi and Windows
 (see section [Installing on Windows](#installing-on-windows)). It has not been tested on macOS.
 
 ## Installing
@@ -101,11 +82,12 @@ docker pull gosecure/pyrdp:latest-slim
 ```
 
 You can find the list of all our Docker images [on the gosecure/pyrdp DockerHub page](https://hub.docker.com/r/gosecure/pyrdp/tags).
+The `latest` tag refers to the latest released version while the `master` tag is the docker image built out of our `master` branch.
 
 ### From Git Source
 
 We recommend installing PyRDP in a
-[virtual environment](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/)
+[virtualenv environment](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/)
 to avoid dependency issues.
 
 First, make sure to install the prerequisite packages (on Ubuntu). We provide two types of installs a full one and a
@@ -161,8 +143,8 @@ pip3 install -U -e '.[full]'
 ```
 
 This should install the dependencies required to run PyRDP. If you choose to
-install without GUI or ffmpeg dependencies, it will not be possible to use
-`pyrdp-player` without headless mode (`--headless`) or `pyrdp-convert`.
+install without the GUI or ffmpeg dependencies, it will not be possible to use
+`pyrdp-player` without headless mode (`--headless`) or `pyrdp-convert` to produce video output.
 
 If you ever want to leave your virtual environment, you can simply deactivate it:
 
@@ -236,23 +218,6 @@ Cross-platform builds can be achieved using `buildx`:
 docker buildx build --platform linux/arm,linux/amd64 -t pyrdp -f Dockerfile.slim .
 ```
 
-### Migrating away from pycrypto
-Since pycrypto isn't maintained anymore, we chose to migrate to pycryptodome.
-If you get this error, it means that you are using the module pycrypto instead of pycryptodome.
-
-```
-[...]
-  File "[...]/pyrdp/pyrdp/pdu/rdp/connection.py", line 10, in <module>
-    from Crypto.PublicKey.RSA import RsaKey
-ImportError: cannot import name 'RsaKey'
-```
-
-You will need to remove the module pycrypto and reinstall PyRDP.
-
-```
-pip3 uninstall pycrypto
-pip3 install -U -e .
-```
 
 ## Using PyRDP
 
@@ -265,9 +230,49 @@ Assuming you have an RDP server running on `192.168.1.10` and listening on port 
 pyrdp-mitm.py 192.168.1.10
 ```
 
-When running the MITM for the first time on Linux, a private key and certificate should be generated for you in `~/.config/pyrdp`.
-These are used when TLS security is used on a connection. You can use them to decrypt PyRDP traffic in Wireshark, for
-example.
+When running the MITM for the first time a directory called `pyrdp_output/`
+will be created relative to the current working directory.
+Here is an example layout of that directory:
+
+```
+pyrdp_output/
+├── certs
+│   ├── WinDev2108Eval.crt
+│   └── WinDev2108Eval.pem
+├── files
+│   ├── 3dc9575a72ea896a3a910af8f4e43c92939a4421
+├── filesystems
+│   ├── Kimberly835337
+│   │   └── device1
+│   └── Stephen215343
+│       ├── device1
+│       └── device2
+|           └── Users/User/3D Objects/desktop.ini
+├── logs
+│   ├── crawl.json
+│   ├── crawl.log
+│   ├── mitm.json
+│   ├── mitm.log
+│   ├── mitm.log.2021-08-26
+│   ├── ntlmssp.log
+│   ├── player.log
+│   └── ssl.log
+└── replays
+    ├── rdp_replay_20210826_12-15-33_512_Stephen215343.pyrdp
+    └── rdp_replay_20211125_12-55-42_352_Kimberly835337.pyrdp
+```
+
+* `certs/` contains the certificates generated stored using the `CN` of the certificate as the file name
+* `files/` contains all files captured and are deduplicated by saving them using the SHA1 hash of the content as the filename
+* `filesystems/` contains a recreation of the filesystem of the targets classified by session IDs.
+   To save space on similar sessions, files are symbolic links to the actual files under `files/`.
+* `logs/` contains all the various logs with most in both JSON and plaintext formats:
+  * `crawl`: the file crawler log
+  * `mitm`: the main MITM log
+  * `ntlmssp.log`: the captured NetNTLM hashes
+  * `player.log`: the player log
+  * `ssl.log`: the TLS master secrets stored in a format compatible with Wireshark
+* `replays/` contains all the previously recorded PyRDP sessions with timestamps and session IDs in the filename
 
 #### Specifying the private key and certificate
 If key generation didn't work or you want to use a custom key and certificate, you can specify them using the
@@ -278,7 +283,7 @@ pyrdp-mitm.py 192.168.1.10 -k private_key.pem -c certificate.pem
 ```
 
 #### Connecting to the PyRDP player
-If you want to see live RDP connections through the PyRDP player, you will need to specify the ip and port on which the
+If you want to see live RDP connections through the PyRDP player, you will need to specify the IP address and port on which the
 player is listening using the `-i` and `-d` arguments. Note: the port argument is optional, the default port is 3000.
 
 ```
@@ -429,6 +434,10 @@ pyrdp-player.py -b <ADDRESS>
 Run `pyrdp-player.py --help` for a full list of arguments.
 
 ### Using the PyRDP Certificate Cloner
+
+NOTE: Using this tool is optional.
+Since version 1.0 PyRDP generate certificates on-the-fly exactly like this tool would do.
+
 The PyRDP certificate cloner creates a brand new X509 certificate by using the values from an existing RDP server's
 certificate. It connects to an RDP server, downloads its certificate, generates a new private key and replaces the
 public key and signature of the certificate using the new private key. This can be used in a pentest if, for example,
@@ -456,20 +465,22 @@ Run `pyrdp-clonecert.py --help` for a full list of arguments.
 
 ### Using PyRDP Convert
 
-`pyrdp-convert` is a helper script that performs several useful conversions. The script has the best chance of working
-on traffic captured by PyRDP due to unsupported RDP protocol features that might be used in a non-intercepted
-connection.
+`pyrdp-convert` is a helper script that performs several useful conversions from various input formats to various output formats.
+The script has the best chance of working on traffic captured by PyRDP due to unsupported RDP protocol features that might be used in a non-intercepted connection.
 
-The following conversions are supported:
+The following inputs are supported:
 
-- Network Capture (PCAP) to PyRDP replay file
-- Network Capture to MP4 video file
-- Replay file to MP4 video file
+- Network Capture (PCAP) with TLS master secrets (less reliable)
+- Network Capture (PCAP) in Exported PDUs Layer 7 format (more reliable)
+- Replay file generated by PyRDP
 
-The script supports both encrypted (TLS) network captures (by providing `--secrets ssl.log`) and decrypted PDU exports.
+The following outputs are supported:
 
-> **WARNING**: pcapng and pcap with nanosecond timestamps are not compatible with `pyrdp-convert` and will create
-> replay files that fail to playback or export to MP4. This is due to incompatible timestamp formats.
+- MP4 video file
+- JSON: a sequence of low-level events serialized in JSON format
+- Replay file compatible with `pyrdp-player.py`
+
+Encrypted (TLS) network captures require the TLS master secrets to be provided using `--secrets ssl.log`.
 
 ```
 # Export the session coming client 10.2.0.198 to a .pyrdp file.
@@ -479,14 +490,12 @@ pyrdp-convert.py --src 10.2.0.198 --secrets ssl.log -o path/to/output capture.pc
 pyrdp-convert.py --src 10.2.0.198 --secrets ssl.log -o path/to/output -f mp4 capture.pcap
 
 # List the sessions in a network trace, along with the decryptable ones.
-pyrdp-convert.py --list capture.pcap
+pyrdp-convert.py --list-only capture.pcap
 ```
 
 Note that MP4 conversion requires libavcodec and ffmpeg, so this may require extra steps on Windows.
 
-Manually decrypted network traces can be exported from Wireshark by selecting `File > Export PDUs` and selecting `OSI
-Layer 7`. When using this method, it is also recommended to filter the exported stream to only contain the TCP stream of
-the RDP session which must be converted.
+Manually decrypted network traces can be exported from Wireshark by selecting `File > Export PDUs` and selecting `OSI Layer 7`.
 
 First, make sure you configured wireshark to load TLS secrets:
 
@@ -496,18 +505,17 @@ Next, export OSI Layer 7 PDUs:
 
 ![Export OSI Layer 7](docs/screens/wireshark-export.png)
 
-And lastly, filter down the trace to contain only the conversation of interest (Optional but recommended) by applying a
+And optionally, filter down the trace to contain only the conversation(s) of interest by applying a
 display filter and clicking `File > Export Specified Packets...`
 
-![Filtering the exported trace](docs/screens/wireshark-export-specified.png)
-
+![Optionally filtering the exported trace](docs/screens/wireshark-export-specified.png)
 
 Now this trace can be used directly in `pyrdp-convert`.
 
 
 ### Configuring PyRDP
 
-Most of the PyRDP configurations are done through command line switches, but it is also possible to use a
+Most of the PyRDP configuration is done through command line switches, but it is also possible to use a
 configuration file for certain settings such as log configuration.
 
 The default configuration files used by PyRDP are located in [mitm.default.ini](pyrdp/mitm/mitm.default.ini)
@@ -516,35 +524,18 @@ as a basis for further configuration.
 
 In the future there are plans to support other aspects of PyRDP configuration through those configuration files.
 
-### Using PyRDP as a Library
+### Advanced Usage
+
+#### Using PyRDP as a Library
 If you're interested in experimenting with RDP and making your own tools, head over to our
 [documentation section](docs/README.md) for more information.
 
-### Using PyRDP with twistd
-The PyRDP MITM component was also implemented as a twistd plugin. This enables
-you to run it in debug mode and allows you to get an interactive debugging repl
-(pdb) if you send a `SIGUSR2` to the twistd process.
+#### Using PyRDP with twistd
+The PyRDP MITM component was also implemented as a twistd plugin.
+This enables you to run it in debug mode and allows you to get an interactive debugging repl (pdb) if you send a `SIGUSR2` to the twistd process.
+See the [twistd documentation](docs/twistd.md) for more information.
 
-```
-twistd --debug pyrdp -t <target>
-```
-
-Then to get the repl:
-
-```
-killall -SIGUSR2 twistd
-```
-
-### Using PyRDP with twistd in Docker
-In a directory with our `docker-compose.yml` you can run something like this:
-
-```
-docker-compose run -p 3389:3389 pyrdp twistd --debug pyrdp --target 192.168.1.10:3389
-```
-
-This will allocate a TTY and you will have access to `Pdb`'s REPL. Trying to add `--debug` to the `docker-compose.yml` command will fail because there is no TTY allocated.
-
-### Using PyRDP with Bettercap
+#### Using PyRDP with Bettercap
 We developped our own Bettercap module, `rdp.proxy`, to monster-in-the-middle all RDP connections
 on a given LAN. Check out [this document](docs/bettercap-rdp-mitm.md) for more information.
 
@@ -608,6 +599,8 @@ If you plan on using the player, X11 forwarding using an SSH connection would be
 * [BlackHat USA Arsenal 2019 Slides](https://docs.google.com/presentation/d/17P_l2n-hgCehQ5eTWilru4IXXHnGIRTj4ftoW4BiX5A/edit?usp=sharing)
 * [DerbyCon 2019 Slides](https://docs.google.com/presentation/d/1UAiN2EZwDcmBjLe_t5HXB0LzbNclU3nnigC-XM4neIU/edit?usp=sharing) ([Video](https://www.youtube.com/watch?v=zgt3N6Nrnss))
 * [Blog: PyRDP on Autopilot](https://www.gosecure.net/blog/2020/02/26/pyrdp-on-autopilot-unattended-credential-harvesting-and-client-side-file-stealing/)
+* [Blog: PyRDP 1.0](https://www.gosecure.net/blog/2020/10/20/announcing-pyrdp-1-0/)
+* [DefCon 2020 Demo Labs](https://www.youtube.com/watch?v=1q2Eo3x3u0g)
 
 
 ## Contributing to PyRDP
