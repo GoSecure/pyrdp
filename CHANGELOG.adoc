@@ -27,7 +27,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Minor CLI improvements
 * Improved type hints
 * Updated instructions to extract the RDP certificate and private key ({uri-issue}345[#345])
-* Documentation updates ({uri-issue}335[#335], {uri-issue}339[#339], {uri-issue}340[#340], {uri-issue}360[#360], {uri-issue}381[#381], {uri-issue}384[#384])
+* Documentation updates ({uri-issue}335[#335], {uri-issue}339[#339], {uri-issue}340[#340], {uri-issue}360[#360], {uri-issue}371[#371], {uri-issue}381[#381], {uri-issue}383[#383], {uri-issue}384[#384])
 * Replaced unmaintained dependency notify2 with py-notifier ({uri-issue}363[#363], {uri-issue}365[#365])
 * Some Python 3.10 compatibility work ({uri-issue}366[#366], {uri-issue}380[#380])
 
