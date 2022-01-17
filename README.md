@@ -304,9 +304,13 @@ With the certificate and private key accessible, you just need to set the authen
 This will enable the possibility to intercept NLA-enforced connections.
 
 ###### Alternative host redirection when NLA enforced by server
-If the server you are trying to connect enforces NLA, you can redirect the
-connection to another non-NLA server to keep the connection alive. To enable
-this feature specify the alternative host's address and port:
+![Diagram that explains NLA redirection](docs/nla-redirection.png)
+
+When PyRDP connects to the destination RDP server (1) if that server enforces NLA then PyRDP (2) will replace the connection to go to another host of your chosing (3) instead.
+
+For example, this can be used to redirect to a server that is known not to enforce NLA or it could even redirect to a VM in the control of an attacker.
+
+To enable this feature specify the alternative host's address and port like this:
 ```
 --nla-redirection-host 192.168.1.12 --nla-redirection-port 3389
 ```
