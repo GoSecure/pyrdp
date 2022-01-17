@@ -282,21 +282,46 @@ If key generation didn't work or you want to use a custom key and certificate, y
 pyrdp-mitm.py 192.168.1.10 -k private_key.pem -c certificate.pem
 ```
 
-##### Monster-in-the-Middle NLA/CredSSP connections
-You can also specify the server's key and certificate along with the
-authentication as `ssp` to start an NLA connection against the server:
+##### Monster-in-the-Middle Network Level Authentication (NLA) connections
+Network Level Authentication (NLA) is a security feature available since Windows Vista that adds security to RDP connections.
+NLA relies on the new security support provider CredSSP and is sometimes referred by that name.
+A server that enforces NLA is harder to attack.
+There are three different strategies that can be used:
+
+* Obtain the server's certificate and private key
+* Using a host redirection feature
+* Capture the client's NetNTLMv2 hash and crack it
+
+###### Monster-in-the-Middle NLA
+If we have access to the server's certificate and private key, we can successfully MITM RDP even if NLA is enforced.
+We [documented this attack in our 1.0 release blog post](https://www.gosecure.net/blog/2020/10/20/announcing-pyrdp-1-0/).
+Instructions to [extract the RDP certificate and private key](https://github.com/GoSecure/pyrdp/blob/master/docs/cert-extraction.md) are available on our GitHub.
+
+With the certificate and private key accessible, you just need to set the authentication to `ssp` by adding this on the `pyrdp-mitm.py` command-line:
 ```
---auth ssp
+--auth ssp -c <certificate.pem> -k <private-key.pem>
 ```
 This will enable the possibility to intercept NLA-enforced connections.
 
-##### Alternative host redirection
+###### Alternative host redirection when NLA enforced by server
 If the server you are trying to connect enforces NLA, you can redirect the
 connection to another non-NLA server to keep the connection alive. To enable
-this feature append specify the alternative host's address and port:
+this feature specify the alternative host's address and port:
 ```
 --nla-redirection-host 192.168.1.12 --nla-redirection-port 3389
 ```
+
+This feature was introduced in PyRDP 1.1.0.
+
+###### Capturing NetNTLMv2 hashes
+NetNTLMv2 hashes are useful for an attacker as they can be cracked relatively easily allowing attackers to leverage legitimate RDP access or attempt credentials stuffing.
+Starting with version 1.1.0, PyRDP has the ability to capture the client's NetNTLMv2 hashes via an NLA (CredSSP) connection by carrying the negotiation and capturing the NTLMSSP authentication messages.
+In version 1.2.0 that support was extended to work even if we don't have the server's certificate and private key meaning that the connection will not be successfully MITM'ed.
+This is similar to what Responder does with RDP.
+The captured NetNTLMv2 hash can be found in the `ntlmssp.log` log file and it's
+formatted so cracking tools like John The Ripper or hashcat can ingest it.
+
+This feature is compatible with `--auth ssp` but incompatible with `--nla-redirection-host`.
 
 #### Connecting to the PyRDP player
 If you want to see live RDP connections through the PyRDP player, you will need to specify the IP address and port on which the
@@ -369,16 +394,6 @@ For example, if you expect your payload to take up to 5 seconds to complete, you
 
 This will block the client's input / output for 5 seconds to hide the console and prevent interference.
 After 5 seconds, input / output is restored back to normal.
-
-#### Capturing NetNTLMv2 hashes
-PyRDP has the ability to capture the client's NetNTLMv2 hashes via a NLA
-(CredSSP) connection by carrying the negotiation and capturing the NTLMSSP
-authentication messages. The capturing NetNTLMv2 hashes can be useful for
-research and offensive purposes. As last resort, PyRDP will also try to capture
-hashes from connections where the server enforces NLA but PyRDP was initiated
-as non-NLA (`tls`).
-The captured NetNTLMv2 hash can be found in the `mitm.log` log file and it's
-formatted so cracking tools (ie. John The Ripper) can ingest it.
 
 #### Other MITM arguments
 Run `pyrdp-mitm.py --help` for a full list of arguments.
