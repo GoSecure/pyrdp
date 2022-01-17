@@ -325,6 +325,8 @@ This is similar to what [Responder](https://github.com/lgandx/Responder) does wi
 The captured NetNTLMv2 hash can be found in the `ntlmssp.log` log file and it's
 formatted so cracking tools like [John The Ripper](https://www.openwall.com/john/) or [hashcat](https://hashcat.net/hashcat/) can ingest it.
 
+This technique has been described in details in a blog post: [Capturing RDP NetNTLMv2 Hashes: Attack details and a Technical How-To Guide](https://www.gosecure.net/blog/2022/01/17/capturing-rdp-netntlmv2-hashes-attack-details-and-a-technical-how-to-guide/)
+
 This feature is compatible with `--auth ssp` but incompatible with `--nla-redirection-host`.
 
 #### Connecting to the PyRDP player
@@ -646,6 +648,7 @@ If you plan on using the player, X11 forwarding using an SSH connection would be
 * [Blog: PyRDP on Autopilot](https://www.gosecure.net/blog/2020/02/26/pyrdp-on-autopilot-unattended-credential-harvesting-and-client-side-file-stealing/)
 * [Blog: PyRDP 1.0](https://www.gosecure.net/blog/2020/10/20/announcing-pyrdp-1-0/)
 * [DefCon 2020 Demo Labs](https://www.youtube.com/watch?v=1q2Eo3x3u0g)
+* [Blog: Capturing RDP NetNTLMv2 Hashes: Attack details and a Technical How-To Guide](https://www.gosecure.net/blog/2022/01/17/capturing-rdp-netntlmv2-hashes-attack-details-and-a-technical-how-to-guide/)
 
 
 ## Contributing to PyRDP
