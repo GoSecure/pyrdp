@@ -321,9 +321,9 @@ This feature was introduced in PyRDP 1.1.0.
 NetNTLMv2 hashes are useful for an attacker as they can be cracked relatively easily allowing attackers to leverage legitimate RDP access or attempt credentials stuffing.
 Starting with version 1.1.0, PyRDP has the ability to capture the client's NetNTLMv2 hashes via an NLA (CredSSP) connection by carrying the negotiation and capturing the NTLMSSP authentication messages.
 In version 1.2.0 that support was extended to work even if we don't have the server's certificate and private key meaning that the connection will not be successfully MITM'ed.
-This is similar to what Responder does with RDP.
+This is similar to what [Responder](https://github.com/lgandx/Responder) does with RDP.
 The captured NetNTLMv2 hash can be found in the `ntlmssp.log` log file and it's
-formatted so cracking tools like John The Ripper or hashcat can ingest it.
+formatted so cracking tools like [John The Ripper](https://www.openwall.com/john/) or [hashcat](https://hashcat.net/hashcat/) can ingest it.
 
 This feature is compatible with `--auth ssp` but incompatible with `--nla-redirection-host`.
 
