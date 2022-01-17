@@ -282,6 +282,51 @@ If key generation didn't work or you want to use a custom key and certificate, y
 pyrdp-mitm.py 192.168.1.10 -k private_key.pem -c certificate.pem
 ```
 
+##### Monster-in-the-Middle Network Level Authentication (NLA) connections
+Network Level Authentication (NLA) is a security feature available since Windows Vista that adds security to RDP connections.
+NLA relies on the new security support provider CredSSP and is sometimes referred by that name.
+A server that enforces NLA is harder to attack.
+There are three different strategies that can be used:
+
+* Obtain the server's certificate and private key
+* Using a host redirection feature
+* Capture the client's NetNTLMv2 hash and crack it
+
+###### Monster-in-the-Middle NLA
+If we have access to the server's certificate and private key, we can successfully MITM RDP even if NLA is enforced.
+We [documented this attack in our 1.0 release blog post](https://www.gosecure.net/blog/2020/10/20/announcing-pyrdp-1-0/).
+Instructions to [extract the RDP certificate and private key](https://github.com/GoSecure/pyrdp/blob/master/docs/cert-extraction.md) are available on our GitHub.
+
+With the certificate and private key accessible, you just need to set the authentication to `ssp` by adding this on the `pyrdp-mitm.py` command-line:
+```
+--auth ssp -c <certificate.pem> -k <private-key.pem>
+```
+This will enable the possibility to intercept NLA-enforced connections.
+
+###### Alternative host redirection when NLA enforced by server
+![Diagram that explains NLA redirection](docs/nla-redirection.png)
+
+When PyRDP connects to the destination RDP server (1) if that server enforces NLA then PyRDP (2) will replace the connection to go to another host of your chosing (3) instead.
+
+For example, this can be used to redirect to a server that is known not to enforce NLA or it could even redirect to a VM in the control of an attacker.
+
+To enable this feature specify the alternative host's address and port like this:
+```
+--nla-redirection-host 192.168.1.12 --nla-redirection-port 3389
+```
+
+This feature was introduced in PyRDP 1.1.0.
+
+###### Capturing NetNTLMv2 hashes
+NetNTLMv2 hashes are useful for an attacker as they can be cracked relatively easily allowing attackers to leverage legitimate RDP access or attempt credentials stuffing.
+Starting with version 1.1.0, PyRDP has the ability to capture the client's NetNTLMv2 hashes via an NLA (CredSSP) connection by carrying the negotiation and capturing the NTLMSSP authentication messages.
+In version 1.2.0 that support was extended to work even if we don't have the server's certificate and private key meaning that the connection will not be successfully MITM'ed.
+This is similar to what [Responder](https://github.com/lgandx/Responder) does with RDP.
+The captured NetNTLMv2 hash can be found in the `ntlmssp.log` log file and it's
+formatted so cracking tools like [John The Ripper](https://www.openwall.com/john/) or [hashcat](https://hashcat.net/hashcat/) can ingest it.
+
+This feature is compatible with `--auth ssp` but incompatible with `--nla-redirection-host`.
+
 #### Connecting to the PyRDP player
 If you want to see live RDP connections through the PyRDP player, you will need to specify the IP address and port on which the
 player is listening using the `-i` and `-d` arguments. Note: the port argument is optional, the default port is 3000.
