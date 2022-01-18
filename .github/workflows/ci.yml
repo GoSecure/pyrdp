@@ -33,12 +33,17 @@ jobs:
 
   install-and-test-ubuntu:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # Lets try to keep testing an LTS python and latest python
+        python-version: ['3.7', '3.10']
 
+    name: Install and test on Ubuntu with Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v1
         with:
-          python-version: '3.7' # Version range or exact version of a Python version to use, using semvers version range syntax.
+          python-version: ${{ matrix.python-version }}
           architecture: 'x64'
 
       - name: Python version
