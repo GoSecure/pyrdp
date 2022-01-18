@@ -48,6 +48,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Added an automated JSON conversion test to CI configuration with some validation ({uri-issue}369[#369])
 * Added an automated replay conversion test to CI configuration ({uri-issue}369[#369])
 * Test refactoring to allow running most GitHub CI tests locally when developing ({uri-issue}368[#368])
+* Added Python 3.10 to CI test configuration ({uri-issue}387[#387])
 
 
 == v1.1.0 - 2021-08-05
