@@ -28,11 +28,6 @@ RUN pip3 --no-cache-dir install -U pip wheel
 
 # Install dependencies only (speeds repetitive builds)
 COPY requirements-slim.txt /pyrdp/requirements.txt
-# The following allows us to install the cryptography package.
-# Eventually we will add rust to our compile-image and build with rust but
-# rust's cargo is broken on docker ARM right now and we will wait until
-# upstream is fixed.
-ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
 RUN cd /pyrdp && pip3 --no-cache-dir install -r requirements.txt
 
 # Compile only our C extension and install
