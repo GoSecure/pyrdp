@@ -215,6 +215,8 @@ Afterwards, you can execute PyRDP by invoking the `pyrdp` docker container. See 
 Cross-platform builds can be achieved using `buildx`:
 
 ```
+docker buildx create --name mybuilder --use --platform linux/amd64,linux/arm64
+docker buildx inspect --bootstrap
 docker buildx build --platform linux/arm,linux/amd64 -t pyrdp -f Dockerfile.slim .
 ```
 
