@@ -40,9 +40,13 @@ class FileMapping:
         self.file.write(data)
         self.written = True
 
-    def getSha1Hash(self):
+    def getShaHash(self):
         with open(self.dataPath, "rb") as f:
-            sha1 = hashlib.sha1()
+            # Note: In early 2022 we switched to sha256 for file hashes. If you
+            #       want to use sha1, uncomment the next line and comment the
+            #       other one below.
+            #hash = hashlib.sha1()
+            hash = hashlib.sha256()
 
             while True:
                 buffer = f.read(65536)
@@ -50,9 +54,9 @@ class FileMapping:
                 if len(buffer) == 0:
                     break
 
-                sha1.update(buffer)
+                hash.update(buffer)
 
-        return sha1.hexdigest()
+        return hash.hexdigest()
 
     def finalize(self):
         if self.file.closed:
@@ -61,7 +65,7 @@ class FileMapping:
         self.log.debug("Closing file %(path)s", {"path": self.dataPath})
         self.file.close()
 
-        fileHash = self.getSha1Hash()
+        fileHash = self.getShaHash()
 
         # Go up one directory because files are saved to outDir / tmp while we're downloading them
         hashPath = (self.dataPath.parents[1] / fileHash)
@@ -82,7 +86,7 @@ class FileMapping:
             # Make the symlink relative so you can move the output folder around and it will still work.
             self.filesystemPath.symlink_to(Path(os.path.relpath(hashPath, self.filesystemPath.parent)))
 
-            self.log.info("SHA1 '%(path)s' = '%(shasum)s'", {
+            self.log.info("SHA-256 '%(path)s' = '%(shasum)s'", {
                 "path": str(self.filesystemPath.relative_to(self.filesystemDir)), "shasum": fileHash
             })
 

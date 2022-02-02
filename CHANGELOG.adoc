@@ -11,6 +11,11 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 == v1.2.0 - 2021-09-??
 
+=== Backwards Compatibility Changes
+
+* Collected files are now stored as their SHA-256 hash value instead of SHA-1 ({uri-issue}389[#389])
+* The log field `shasum` now holds the SHA-256 hash value of files instead of SHA-1 ({uri-issue}389[#389])
+
 === Security
 
 * Backported security fixes from rdesktop to our Python C extension doing RLE processing.
