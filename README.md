@@ -242,7 +242,7 @@ pyrdp_output/
 │   ├── WinDev2108Eval.crt
 │   └── WinDev2108Eval.pem
 ├── files
-│   ├── 3dc9575a72ea896a3a910af8f4e43c92939a4421
+│   ├── e91c6a5eb3ca15df5a5cb4cf4ebb6f33b2d379a3a12d7d6de8c412d4323feb4c
 ├── filesystems
 │   ├── Kimberly835337
 │   │   └── device1
@@ -265,7 +265,7 @@ pyrdp_output/
 ```
 
 * `certs/` contains the certificates generated stored using the `CN` of the certificate as the file name
-* `files/` contains all files captured and are deduplicated by saving them using the SHA1 hash of the content as the filename
+* `files/` contains all files captured and are deduplicated by saving them using the SHA-256 hash of the content as the filename
 * `filesystems/` contains a recreation of the filesystem of the targets classified by session IDs.
    To save space on similar sessions, files are symbolic links to the actual files under `files/`.
 * `logs/` contains all the various logs with most in both JSON and plaintext formats:
