@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018-2020 GoSecure Inc.
+# Copyright (C) 2018-2022 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -252,6 +252,8 @@ class RDPVersion(IntEnum):
     RDP10_6 = 0x8000B
     RDP10_7 = 0x8000C
     RDP10_8 = 0x8000d
+    RDP10_9 = 0x8000e
+    RDP10_10 = 0x8000f
 
 
 class ColorDepth(IntEnum):
