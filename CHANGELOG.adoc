@@ -18,6 +18,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 === Enhancements
 
+* Support for RDP version 10.9 and 10.10 ({uri-issue}396[#396], {uri-issue}397[#397])
 * Capture and log NetNTLMv2 hash if the server enforces NLA and we don't have the NLA redirection attack activated ({uri-issue}367[#367], {uri-issue}358[#358])
 * `pyrdp-convert` video conversion is now 6x faster! (See {uri-issue}349[#349])
 * `pyrdp-convert` video format can be viewed during encoding and will play even if the conversion process crashes or is halted ({uri-issue}352[#352], {uri-issue}353[#353])
