@@ -1,14 +1,15 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018, 2019, 2022 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
 from typing import Dict, List, Optional
 
-from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketID, DeviceType, FileAttributes, \
-    FileCreateDisposition, FileCreateOptions, FileShareAccess, FileSystemInformationClass, MajorFunction, MinorFunction, \
-    RDPDRCapabilityType
+from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketID, \
+    DeviceType, FileAccessMask, FileAttributes, FileCreateDisposition, \
+    FileCreateOptions, FileShareAccess, FileSystemInformationClass, \
+    MajorFunction, MinorFunction, RDPDRCapabilityType
 from pyrdp.pdu import PDU
 
 
@@ -57,7 +58,7 @@ class DeviceCreateRequestPDU(DeviceIORequestPDU):
     """
 
     def __init__(self, deviceID: int, fileID: int, completionID: int, minorFunction: int,
-                 desiredAccess: int, allocationSize: int, fileAttributes: FileAttributes, sharedAccess: FileShareAccess,
+                 desiredAccess: FileAccessMask, allocationSize: int, fileAttributes: FileAttributes, sharedAccess: FileShareAccess,
                  createDisposition: FileCreateDisposition, createOptions: FileCreateOptions, path: str):
         super().__init__(deviceID, fileID, completionID, MajorFunction.IRP_MJ_CREATE, minorFunction)
         self.desiredAccess = desiredAccess

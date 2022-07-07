@@ -8,9 +8,10 @@ from io import BytesIO
 from typing import Dict, List, Union
 
 from pyrdp.core import decodeUTF16LE, Uint16LE, Uint32LE, Uint64LE, Uint8
-from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketID, DeviceType, FileAttributes, \
-    FileCreateDisposition, FileCreateOptions, FileShareAccess, FileSystemInformationClass, GeneralCapabilityVersion, \
-    MajorFunction, MinorFunction, RDPDRCapabilityType
+from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketID, \
+    DeviceType, FileAccessMask, FileAttributes, FileCreateDisposition, \
+    FileCreateOptions, FileShareAccess, FileSystemInformationClass, \
+    GeneralCapabilityVersion, MajorFunction, MinorFunction, RDPDRCapabilityType
 from pyrdp.parser import Parser
 from pyrdp.pdu import DeviceAnnounce, DeviceCloseRequestPDU, DeviceCloseResponsePDU, DeviceCreateRequestPDU, \
     DeviceCreateResponsePDU, DeviceDirectoryControlResponsePDU, DeviceIORequestPDU, DeviceIOResponsePDU, \
@@ -318,7 +319,7 @@ class DeviceRedirectionParser(Parser):
 
 
     def parseDeviceCreateRequest(self, deviceID: int, fileID: int, completionID: int, minorFunction: int, stream: BytesIO) -> DeviceCreateRequestPDU:
-        desiredAccess = Uint32LE.unpack(stream)
+        desiredAccess = FileAccessMask(Uint32LE.unpack(stream))
         allocationSize = Uint64LE.unpack(stream)
         fileAttributes = FileAttributes(Uint32LE.unpack(stream))
         sharedAccess = FileShareAccess(Uint32LE.unpack(stream))
