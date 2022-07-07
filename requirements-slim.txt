@@ -19,6 +19,6 @@ rsa==4.8
 scapy==2.4.5
 service-identity==21.1.0
 six==1.16.0
-Twisted==22.2.0
+Twisted==22.4.0
 typing_extensions==4.0.1
 zope.interface==5.4.0
