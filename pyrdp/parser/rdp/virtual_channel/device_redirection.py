@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018, 2019, 2021 GoSecure Inc.
+# Copyright (C) 2018-2022 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -507,7 +507,7 @@ class DeviceRedirectionParser(Parser):
 
     def parseFileDirectoryInformation(self, data: bytes) -> List[FileDirectoryInformation]:
         stream = BytesIO(data)
-        information: [FileDirectoryInformation] = []
+        information: List[FileDirectoryInformation] = []
 
         while stream.tell() < len(data):
             nextEntryOffset = Uint32LE.unpack(stream)
@@ -547,7 +547,7 @@ class DeviceRedirectionParser(Parser):
 
 
     def writeFileDirectoryInformation(self, information: List[FileDirectoryInformation], stream: BytesIO):
-        dataList: [bytes] = []
+        dataList: List[bytes] = []
 
         for info in information:
             substream = BytesIO()
@@ -571,7 +571,7 @@ class DeviceRedirectionParser(Parser):
 
     def parseFileFullDirectoryInformation(self, data: bytes) -> List[FileFullDirectoryInformation]:
         stream = BytesIO(data)
-        information: [FileFullDirectoryInformation] = []
+        information: List[FileFullDirectoryInformation] = []
 
         while stream.tell() < len(data):
             nextEntryOffset = Uint32LE.unpack(stream)
@@ -612,7 +612,7 @@ class DeviceRedirectionParser(Parser):
 
 
     def writeFileFullDirectoryInformation(self, information: List[FileFullDirectoryInformation], stream: BytesIO):
-        dataList: [bytes] = []
+        dataList: List[bytes] = []
 
         for info in information:
             substream = BytesIO()
@@ -637,7 +637,7 @@ class DeviceRedirectionParser(Parser):
 
     def parseFileBothDirectoryInformation(self, data: bytes) -> List[FileBothDirectoryInformation]:
         stream = BytesIO(data)
-        information: [FileBothDirectoryInformation] = []
+        information: List[FileBothDirectoryInformation] = []
 
         while stream.tell() < len(data):
             nextEntryOffset = Uint32LE.unpack(stream)
@@ -683,7 +683,7 @@ class DeviceRedirectionParser(Parser):
 
 
     def writeFileBothDirectoryInformation(self, information: List[FileBothDirectoryInformation], stream: BytesIO):
-        dataList: [bytes] = []
+        dataList: List[bytes] = []
 
         for info in information:
             substream = BytesIO()
@@ -712,7 +712,7 @@ class DeviceRedirectionParser(Parser):
 
     def parseFileNamesInformation(self, data: bytes) -> List[FileNamesInformation]:
         stream = BytesIO(data)
-        information: [FileNamesInformation] = []
+        information: List[FileNamesInformation] = []
 
         while stream.tell() < len(data):
             nextEntryOffset = Uint32LE.unpack(stream)
@@ -733,7 +733,7 @@ class DeviceRedirectionParser(Parser):
 
 
     def writeFileNamesInformation(self, information: List[FileNamesInformation], stream: BytesIO):
-        dataList: [bytes] = []
+        dataList: List[bytes] = []
 
         for info in information:
             substream = BytesIO()
