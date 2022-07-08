@@ -3,7 +3,8 @@
 # Copyright (C) 2019-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-from PySide2.QtGui import QResizeEvent
+from PySide2.QtCore import Qt
+from PySide2.QtGui import QResizeEvent, QKeyEvent
 from PySide2.QtWidgets import QApplication, QWidget
 
 from pyrdp.layer import PlayerLayer
@@ -13,7 +14,6 @@ from pyrdp.player.Replay import Replay, ReplayReader
 from pyrdp.player.ReplayBar import ReplayBar
 from pyrdp.player.ReplayThread import ReplayThread
 from pyrdp.ui import QRemoteDesktop
-
 
 class ReplayTab(BaseTab):
     """
@@ -101,3 +101,12 @@ class ReplayTab(BaseTab):
         """
         newScale = self.scrollViewer.viewport().height() / self.widget.sessionHeight
         self.widget.scale(newScale)
+
+    def keyPressEvent(self, event: QKeyEvent):
+        """
+        Called every time a key is pressed on the Replay tab
+        :param event: the key event holding key info
+        """
+        if event.key() == Qt.Key.Key_Space:
+            self.controlBar.button.setPlaying(not self.controlBar.button.playing)
+            self.controlBar.onButtonClicked()

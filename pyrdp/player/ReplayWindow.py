@@ -6,6 +6,7 @@
 
 from typing import Dict
 
+from PySide2.QtCore import Qt
 from PySide2.QtGui import QResizeEvent
 from PySide2.QtWidgets import QWidget
 
@@ -29,6 +30,7 @@ class ReplayWindow(BaseWindow):
         tab = ReplayTab(fileName, parent=self)
         self.addTab(tab, fileName)
         self.log.debug("Loading replay file %(arg1)s", {"arg1": fileName})
+        tab.viewer.setFocus(Qt.MouseFocusReason)
         if autoplay:
             tab.play()
 
