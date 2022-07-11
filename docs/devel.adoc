@@ -49,3 +49,10 @@ docker images (latest, slim), on linux, on Windows
 * Update version in `setup.py` (+1 bugfix, append '.dev0') and commit
 * commit msg: Begin development on next release
 
+
+== Logging
+
+By default we log to stdout and in JSON format. Please use the recommended
+logging style to best leverage the JSON output:
+
+https://docs.python.org/3/howto/logging-cookbook.html#formatting-styles
