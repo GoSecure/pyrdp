@@ -5,8 +5,6 @@
 #
 from io import BytesIO
 
-import typing
-
 from pyrdp.core import FilePositionGuard
 from pyrdp.exceptions import ParsingError
 from pyrdp.pdu import PDU
