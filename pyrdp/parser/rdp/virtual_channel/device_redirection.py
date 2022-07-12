@@ -345,7 +345,11 @@ class DeviceRedirectionParser(Parser):
         )
 
     def writeDeviceCreateRequest(self, pdu: DeviceCreateRequestPDU, stream: BytesIO):
-        path = (pdu.path + "\x00").encode("utf-16le")
+        # A null path *does not* include the null terminator in its length
+        if len(pdu.path) == 0:
+            path = b''
+        else:
+            path = (pdu.path + "\x00").encode("utf-16le")
 
         Uint32LE.pack(pdu.desiredAccess, stream)
         Uint64LE.pack(pdu.allocationSize, stream)
@@ -443,14 +447,19 @@ class DeviceRedirectionParser(Parser):
             stream.write(pdu.payload)
         else:
             self.informationClassForParsingResponse[pdu.completionID] = pdu.informationClass
-            path = (pdu.path + "\x00").encode("utf-16le")
 
             Uint32LE.pack(pdu.informationClass, stream)
             Uint8.pack(pdu.initialQuery, stream)
-            Uint32LE.pack(len(path), stream)
-            stream.write(b"\x00" * 23)
-            stream.write(path)
 
+            # A null path *does not* include the null terminator in its length
+            if len(pdu.path) == 0:
+                stream.write(b"\x00" * 4) # 32-bit path length (empty)
+                stream.write(b"\x00" * 23) # protocol required padding
+            else:
+                path = (pdu.path + "\x00").encode("utf-16le")
+                Uint32LE.pack(len(path), stream)
+                stream.write(b"\x00" * 23) # protocol required padding
+                stream.write(path)
 
     def parseDirectoryControlResponse(self, deviceID: int, completionID: int, ioStatus: int, stream: BytesIO) -> DeviceIOResponsePDU:
         minorFunction = self.minorFunctionsForParsingResponse.pop(completionID, None)
