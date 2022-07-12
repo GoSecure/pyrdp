@@ -379,7 +379,7 @@ class DeviceRedirectionParser(Parser):
 
     def writeDeviceCreateResponse(self, pdu: DeviceCreateResponsePDU, stream: BytesIO):
         Uint32LE.pack(pdu.fileID, stream)
-        Uint8.pack(pdu.information)
+        Uint8.pack(pdu.information, stream)
 
 
 
