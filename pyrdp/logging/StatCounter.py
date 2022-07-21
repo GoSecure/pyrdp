@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019-2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -110,6 +110,15 @@ class STAT:
 
     CLIPBOARD_PASTE = "clipboardPastes"
     # Number of times data has been pasted by either end
+
+    DYNAMIC_CHANNEL = "dynamicChannel"
+    # Number of Dynamic Virtual Channel PDUs coming from either end
+
+    DYNAMIC_CHANNEL_CLIENT = "dynamicChannelClient"
+    # Number of Dynamic Virtual Channel PDUs coming from the client
+
+    DYNAMIC_CHANNEL_SERVER = "dynamicChannelServer"
+    # Number of Dynamic Virtual Channel PDUs coming from the server
 
 
 class StatCounter:

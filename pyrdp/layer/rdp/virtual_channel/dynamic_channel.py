@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018, 2020 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -13,5 +13,5 @@ class DynamicChannelLayer(Layer):
     Layer to receive and send DynamicChannel channel (drdynvc) packets.
     """
 
-    def __init__(self, parser = DynamicChannelParser()):
+    def __init__(self, parser: DynamicChannelParser):
         super().__init__(parser)

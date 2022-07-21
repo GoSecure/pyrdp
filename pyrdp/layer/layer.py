@@ -1,11 +1,11 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018, 2019, 2021 GoSecure Inc.
+# Copyright (C) 2018-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
 from abc import ABCMeta, abstractmethod
-from typing import Union
+from typing import List, Union
 
 from pyrdp.core import EventEngine, ObservedBy, Observer, Subject
 from pyrdp.exceptions import UnknownPDUTypeError, ParsingError
@@ -162,7 +162,7 @@ class LayerChainItem(ByteSender, metaclass=ABCMeta):
         self.next: BaseLayer = None
 
     @staticmethod
-    def chain(first: 'LayerChainItem', second: Union['BaseLayer', 'LayerChainItem'], *layers: [Union['BaseLayer', 'LayerChainItem']]):
+    def chain(first: 'LayerChainItem', second: Union['BaseLayer', 'LayerChainItem'], *layers: List[Union['BaseLayer', 'LayerChainItem']]):
         """
         Chain a series of layers together by calling setNext iteratively.
         :param first: first layer in the chain.
