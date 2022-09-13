@@ -23,7 +23,7 @@ class FastPathEvent(PDU):
 
 
 class FastPathPDU(SegmentationPDU):
-    def __init__(self, header: int, events: [FastPathEvent]):
+    def __init__(self, header: int, events: List[FastPathEvent]):
         super().__init__(b"")
         self.header = header
         self.events = events

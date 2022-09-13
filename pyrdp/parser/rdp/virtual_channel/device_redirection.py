@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018, 2019, 2021 GoSecure Inc.
+# Copyright (C) 2018-2022 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -8,9 +8,10 @@ from io import BytesIO
 from typing import Dict, List, Union
 
 from pyrdp.core import decodeUTF16LE, Uint16LE, Uint32LE, Uint64LE, Uint8
-from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketID, DeviceType, FileAttributes, \
-    FileCreateDisposition, FileCreateOptions, FileShareAccess, FileSystemInformationClass, GeneralCapabilityVersion, \
-    MajorFunction, MinorFunction, RDPDRCapabilityType
+from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketID, \
+    DeviceType, FileAccessMask, FileAttributes, FileCreateDisposition, \
+    FileCreateOptions, FileShareAccess, FileSystemInformationClass, \
+    GeneralCapabilityVersion, MajorFunction, MinorFunction, RDPDRCapabilityType
 from pyrdp.parser import Parser
 from pyrdp.pdu import DeviceAnnounce, DeviceCloseRequestPDU, DeviceCloseResponsePDU, DeviceCreateRequestPDU, \
     DeviceCreateResponsePDU, DeviceDirectoryControlResponsePDU, DeviceIORequestPDU, DeviceIOResponsePDU, \
@@ -318,7 +319,7 @@ class DeviceRedirectionParser(Parser):
 
 
     def parseDeviceCreateRequest(self, deviceID: int, fileID: int, completionID: int, minorFunction: int, stream: BytesIO) -> DeviceCreateRequestPDU:
-        desiredAccess = Uint32LE.unpack(stream)
+        desiredAccess = FileAccessMask(Uint32LE.unpack(stream))
         allocationSize = Uint64LE.unpack(stream)
         fileAttributes = FileAttributes(Uint32LE.unpack(stream))
         sharedAccess = FileShareAccess(Uint32LE.unpack(stream))
@@ -344,7 +345,11 @@ class DeviceRedirectionParser(Parser):
         )
 
     def writeDeviceCreateRequest(self, pdu: DeviceCreateRequestPDU, stream: BytesIO):
-        path = (pdu.path + "\x00").encode("utf-16le")
+        # A null path *does not* include the null terminator in its length
+        if len(pdu.path) == 0:
+            path = b''
+        else:
+            path = (pdu.path + "\x00").encode("utf-16le")
 
         Uint32LE.pack(pdu.desiredAccess, stream)
         Uint64LE.pack(pdu.allocationSize, stream)
@@ -374,7 +379,7 @@ class DeviceRedirectionParser(Parser):
 
     def writeDeviceCreateResponse(self, pdu: DeviceCreateResponsePDU, stream: BytesIO):
         Uint32LE.pack(pdu.fileID, stream)
-        Uint8.pack(pdu.information)
+        Uint8.pack(pdu.information, stream)
 
 
 
@@ -442,14 +447,19 @@ class DeviceRedirectionParser(Parser):
             stream.write(pdu.payload)
         else:
             self.informationClassForParsingResponse[pdu.completionID] = pdu.informationClass
-            path = (pdu.path + "\x00").encode("utf-16le")
 
             Uint32LE.pack(pdu.informationClass, stream)
             Uint8.pack(pdu.initialQuery, stream)
-            Uint32LE.pack(len(path), stream)
-            stream.write(b"\x00" * 23)
-            stream.write(path)
 
+            # A null path *does not* include the null terminator in its length
+            if len(pdu.path) == 0:
+                stream.write(b"\x00" * 4) # 32-bit path length (empty)
+                stream.write(b"\x00" * 23) # protocol required padding
+            else:
+                path = (pdu.path + "\x00").encode("utf-16le")
+                Uint32LE.pack(len(path), stream)
+                stream.write(b"\x00" * 23) # protocol required padding
+                stream.write(path)
 
     def parseDirectoryControlResponse(self, deviceID: int, completionID: int, ioStatus: int, stream: BytesIO) -> DeviceIOResponsePDU:
         minorFunction = self.minorFunctionsForParsingResponse.pop(completionID, None)
@@ -507,7 +517,7 @@ class DeviceRedirectionParser(Parser):
 
     def parseFileDirectoryInformation(self, data: bytes) -> List[FileDirectoryInformation]:
         stream = BytesIO(data)
-        information: [FileDirectoryInformation] = []
+        information: List[FileDirectoryInformation] = []
 
         while stream.tell() < len(data):
             nextEntryOffset = Uint32LE.unpack(stream)
@@ -547,7 +557,7 @@ class DeviceRedirectionParser(Parser):
 
 
     def writeFileDirectoryInformation(self, information: List[FileDirectoryInformation], stream: BytesIO):
-        dataList: [bytes] = []
+        dataList: List[bytes] = []
 
         for info in information:
             substream = BytesIO()
@@ -571,7 +581,7 @@ class DeviceRedirectionParser(Parser):
 
     def parseFileFullDirectoryInformation(self, data: bytes) -> List[FileFullDirectoryInformation]:
         stream = BytesIO(data)
-        information: [FileFullDirectoryInformation] = []
+        information: List[FileFullDirectoryInformation] = []
 
         while stream.tell() < len(data):
             nextEntryOffset = Uint32LE.unpack(stream)
@@ -612,7 +622,7 @@ class DeviceRedirectionParser(Parser):
 
 
     def writeFileFullDirectoryInformation(self, information: List[FileFullDirectoryInformation], stream: BytesIO):
-        dataList: [bytes] = []
+        dataList: List[bytes] = []
 
         for info in information:
             substream = BytesIO()
@@ -637,7 +647,7 @@ class DeviceRedirectionParser(Parser):
 
     def parseFileBothDirectoryInformation(self, data: bytes) -> List[FileBothDirectoryInformation]:
         stream = BytesIO(data)
-        information: [FileBothDirectoryInformation] = []
+        information: List[FileBothDirectoryInformation] = []
 
         while stream.tell() < len(data):
             nextEntryOffset = Uint32LE.unpack(stream)
@@ -683,7 +693,7 @@ class DeviceRedirectionParser(Parser):
 
 
     def writeFileBothDirectoryInformation(self, information: List[FileBothDirectoryInformation], stream: BytesIO):
-        dataList: [bytes] = []
+        dataList: List[bytes] = []
 
         for info in information:
             substream = BytesIO()
@@ -712,7 +722,7 @@ class DeviceRedirectionParser(Parser):
 
     def parseFileNamesInformation(self, data: bytes) -> List[FileNamesInformation]:
         stream = BytesIO(data)
-        information: [FileNamesInformation] = []
+        information: List[FileNamesInformation] = []
 
         while stream.tell() < len(data):
             nextEntryOffset = Uint32LE.unpack(stream)
@@ -733,7 +743,7 @@ class DeviceRedirectionParser(Parser):
 
 
     def writeFileNamesInformation(self, information: List[FileNamesInformation], stream: BytesIO):
-        dataList: [bytes] = []
+        dataList: List[bytes] = []
 
         for info in information:
             substream = BytesIO()

@@ -6,7 +6,7 @@
 from collections import defaultdict
 from logging import LoggerAdapter
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 from functools import partial
 
 from pyrdp.enum import FastPathInputType, FastPathOutputType, MouseButton, PlayerPDUType, PointerFlag, ScanCodeTuple
@@ -83,16 +83,16 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
             self.handlers[pdu.header](pdu)
 
 
-    def sendInputEvents(self, events: [FastPathInputEvent]):
+    def sendInputEvents(self, events: List[FastPathInputEvent]):
         pdu = FastPathPDU(0, events)
         self.recorder.record(pdu, PlayerPDUType.FAST_PATH_INPUT, True)
         self.server.sendPDU(pdu)
 
-    def sendOutputEvents(self, events: [FastPathOutputEvent]):
+    def sendOutputEvents(self, events: List[FastPathOutputEvent]):
         pdu = FastPathPDU(0, events)
         self.client.sendPDU(pdu)
 
-    def sendKeys(self, keys: [ScanCodeTuple]):
+    def sendKeys(self, keys: List[ScanCodeTuple]):
         for released in [False, True]:
             for key in keys:
                 self.handleKeyboard(PlayerKeyboardPDU(0, key.code, released, key.extended))

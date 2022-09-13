@@ -1,5 +1,7 @@
 = Debugging recipes
 
+Don't Google, search in the master PDF downloadable from here: https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/5073f4ed-1e93-45e1-b039-6e30c385867c
+
 == Debugging from the docker container
 
 Build the container (or use an existing tag):
@@ -38,3 +40,76 @@ Run `c` to continue on loading breakpoint:
 
 ipdb> c
 ```
+
+== Protocol-level Debugging
+
+I used that recipe when troubleshooting reproducible Device Redirection issues.
+In the proper parser layer, add print statements of the raw bytes both at the
+parser (`doParse()`) and the writer (`write()`) level. Here's an example patch:
+
+    --- a/pyrdp/parser/rdp/virtual_channel/device_redirection.py
+    +++ b/pyrdp/parser/rdp/virtual_channel/device_redirection.py
+    @@ -108,23 +108,31 @@ class DeviceRedirectionParser(Parser):
+            packetID = DeviceRedirectionPacketID(Uint16LE.unpack(stream))
+
+             if component == DeviceRedirectionComponent.RDPDR_CTYP_CORE and packetID in self.parsers.keys():
+    -            return self.parsers[packetID](stream)
+    +            ret = self.parsers[packetID](stream)
+    +            print(f"Component-specific parser returned\nPDU: {ret}\nRaw bytes: {data.hex()}")
+    +            return ret
+    +            #return self.parsers[packetID](stream)
+             else:
+    -            return DeviceRedirectionPDU(component, packetID, payload=stream.read())
+    +            ret = DeviceRedirectionPDU(component, packetID, payload=stream.read())
+    +            print(f"Generic parser returned\nPDU: {ret}\nRaw bytes: {data.hex()}")
+    +            return ret
+    +            #return DeviceRedirectionPDU(component, packetID, payload=stream.read())
+
+             def write(self, pdu: DeviceRedirectionPDU) -> bytes:
+                 stream = BytesIO()
+                 Uint16LE.pack(pdu.component, stream)
+                 Uint16LE.pack(pdu.packetID, stream)
+
+    +        #import ipdb; ipdb.set_trace()
+             if pdu.component == DeviceRedirectionComponent.RDPDR_CTYP_CORE and pdu.packetID in self.writers.keys():
+                 self.writers[pdu.packetID](pdu, stream)
+    +            print(f"Component-specific writer\nPDU: {pdu}\nRaw bytes: {stream.getvalue().hex()}")
+             else:
+                 stream.write(pdu.payload)
+    +            print(f"Generic writer\nPDU: {pdu}\nRaw bytes: {stream.getvalue().hex()}")
+
+             return stream.getvalue()
+
+
+Then run `pyrdp-mitm.py` with `| tee -a raw-logs.txt` and filter for the raw bytes
+lines and compare one line to the next. I'm doing this inside a ipython notebook
+with the following script:
+
+    # Prepare
+    !grep "Raw bytes" io-raw-bytes.log > io-raw-bytes-only.log
+
+    with open("io-raw-bytes-only.log") as _f:
+        first = _f.readline()
+        while first:
+            second = _f.readline()
+            if first != second:
+                print(first)
+                print(second)
+            first = _f.readline()
+
+Lines that don't match should be investigated because it means that we are not
+sending what we are receiving.
+
+
+== Wireshark
+
+Using the "Decode As" feature and TLS master secrets from the `ssl.log` logfile you can analyze the RDP traffic in Wireshark.
+For "Decode As" the inner protocol should be set to TPKT this will be automatic for port 3389.
+
+Olivier faced problems numerous times with wireshark where encapsulation would stay on TPKT instead of RDP or other RDP-related inner protocols.
+Resetting Wireshark's user configuration fixed the issue.
+Moving `~/.wireshark/` was enough.
+
+Extracting a single VirtualChannel (id 1004 for DeviceRedirection) raw bytes:
+
+    -d tls.port==13389,tpkt -T fields -e rdp.virtualChannelData -2 "t124.channelId == 1004"

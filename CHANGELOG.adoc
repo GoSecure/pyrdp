@@ -33,7 +33,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Minor CLI improvements
 * Improved type hints
 * Updated instructions to extract the RDP certificate and private key ({uri-issue}345[#345])
-* Documentation updates ({uri-issue}335[#335], {uri-issue}339[#339], {uri-issue}340[#340], {uri-issue}360[#360], {uri-issue}371[#371], {uri-issue}381[#381], {uri-issue}383[#383], {uri-issue}384[#384])
+* Documentation updates ({uri-issue}335[#335], {uri-issue}339[#339], {uri-issue}340[#340], {uri-issue}360[#360], {uri-issue}371[#371], {uri-issue}381[#381], {uri-issue}383[#383], {uri-issue}384[#384], {uri-issue}408[#408])
 * Replaced unmaintained dependency notify2 with py-notifier ({uri-issue}363[#363], {uri-issue}365[#365])
 * Some Python 3.10 compatibility work ({uri-issue}366[#366], {uri-issue}380[#380])
 
@@ -45,6 +45,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Fixed NLA redirection problems if original target and NLA redirection target are the same ({uri-issue}342[#342], {uri-issue}343[#343])
 * Added a missing dependency for the GUI on Ubuntu 20.04 LTS ({uri-issue}348[#348], {uri-issue}351[#351], {uri-issue}355[#355])
 * No longer assuming every connection will have VirtualChannels ({uri-issue}375[#375])
+* Some minor protocol-level fixes ({uri-issue}408[#408])
 
 === Infrastructure
 
