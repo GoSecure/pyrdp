@@ -22,6 +22,9 @@ class MITMConfig:
         self.targetPort: int = None
         """The RDP server's port"""
 
+        self.listenAddress: str = "0.0.0.0"
+        """The address to listen on."""
+
         self.listenPort: int = 3389
         """The port to bind for listening."""
 

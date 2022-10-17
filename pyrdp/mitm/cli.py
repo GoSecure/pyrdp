@@ -76,6 +76,7 @@ def showConfiguration(config: MITMConfig):
 def buildArgParser():
     parser = argparse.ArgumentParser()
     parser.add_argument("target", help="IP:port of the target RDP machine (ex: 192.168.1.10:3390)", nargs='?', default=None)
+    parser.add_argument("-a", "--address", help="Address to listen on (default: 0.0.0.0)", default="0.0.0.0")
     parser.add_argument("-l", "--listen", help="Port number to listen on (default: 3389)", default=3389)
     parser.add_argument("-o", "--output", help="Output folder", default="pyrdp_output")
     parser.add_argument("-i", "--destination-ip",
@@ -181,6 +182,7 @@ def configure(cmdline=None) -> MITMConfig:
     config.targetHost = targetHost
     config.targetPort = targetPort
     config.privateKeyFileName = key
+    config.listenAddress = args.address
     config.listenPort = int(args.listen)
     config.certificateFileName = certificate
     config.attackerHost = args.destination_ip

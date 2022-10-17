@@ -37,13 +37,13 @@ def main():
         except Exception:
             logger.warning('Unable to set transparent socket. Are you running as root?')
 
-    s.bind(('0.0.0.0', config.listenPort))
+    s.bind((config.listenAddress, config.listenPort))
     s.listen()  # Non-blocking.
     reactor.adoptStreamPort(s.fileno(), socket.AF_INET, MITMServerFactory(config))
     s.close()  # reactor creates a copy of the fd.
 
-    message = "MITM Server listening on 0.0.0.0:%(port)d"
-    params = {"port": config.listenPort}
+    message = "MITM Server listening on %(address)s:%(port)d"
+    params = {"address": config.listenAddress, "port": config.listenPort}
 
     if "HOST_IP" in os.environ:
         message += ". Host IP: %(host_ip)s"
