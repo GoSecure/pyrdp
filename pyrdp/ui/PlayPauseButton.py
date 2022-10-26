@@ -20,6 +20,7 @@ class PlayPauseButton(QPushButton):
         self.pauseText = pauseText
         self.playing = False
         self.setPlaying(self.playing)
+        self.setFixedWidth(100)
 
     def onClick(self):
         self.setPlaying(not self.playing)
