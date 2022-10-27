@@ -35,6 +35,7 @@ class Recorder:
         }
 
         self.topLayers = []
+        self.openFileLayers = []
         self.recordFilename = None
 
         for transport in transports:
@@ -51,6 +52,9 @@ class Recorder:
         player = PlayerLayer()
         player.setPrevious(transportLayer)
         self.topLayers.append(player)
+
+        if isinstance(transportLayer, FileLayer):
+            self.openFileLayers.append(transportLayer)
 
     def setParser(self, messageType: PlayerPDUType, parser: Parser):
         """
@@ -80,6 +84,11 @@ class Recorder:
 
     def getCurrentTimeStamp(self) -> int:
         return PlayerLayer.timeStampFunction()
+
+    def finalize(self):
+        """When the recording is finished"""
+        for layer in self.openFileLayers:
+            layer.close()
 
 
 class FileLayer(LayerChainItem):
@@ -114,3 +123,7 @@ class FileLayer(LayerChainItem):
             self.fd.write(data)
         else:
             log.error("Recording file handle closed, cannot write message: %(message)s", {"message": data})
+
+    def close(self):
+        if self.fd:
+            self.fd.close()

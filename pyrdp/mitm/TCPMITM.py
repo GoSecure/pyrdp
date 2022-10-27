@@ -99,6 +99,7 @@ class TCPMITM:
         if self.recorder.recordFilename:
             self.statCounter.logReport(self.log, {"replayFilename":
                                                   self.recorder.recordFilename})
+            self.recorder.finalize()
         else:
             self.statCounter.logReport(self.log)
 
