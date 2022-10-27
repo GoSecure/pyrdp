@@ -30,6 +30,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * `pyrdp-convert` can now handle exported PDUs (decrypted pcaps) with multiple sessions in them ({uri-issue}313[#313], {uri-issue}368[#368])
 * `pyrdp-convert` can now extract session information including keyboard and mouse movement information in JSON from pcap and PDUs ({uri-issue}331[#331], {uri-issues}366[#366])
 * `pyrdp-convert` has better success messages, error reporting and exit status ({uri-issue}361[#361], {uri-issue}369[#369])
+* `pyrdp-mitm` added `--address` argument to choose the IP address where PyRDP is listening ({uri-issue}411[#411], {uri-issue}412[#412])
 * Minor CLI improvements
 * Improved type hints
 * Updated instructions to extract the RDP certificate and private key ({uri-issue}345[#345])
