@@ -99,10 +99,10 @@ class TCPMITM:
         if self.recorder.recordFilename:
             self.statCounter.logReport(self.log, {"replayFilename":
                                                   self.recorder.recordFilename})
-            self.recorder.finalize()
         else:
             self.statCounter.logReport(self.log)
 
+        self.recorder.finalize()
         self.server.disconnect(True)
         self.state.clientIp = None
 
@@ -123,6 +123,7 @@ class TCPMITM:
         """
 
         self.recordConnectionClose()
+        self.recorder.finalize()
         self.log.info("Server connection closed. %(reason)s", {"reason": reason.value})
         self.client.disconnect(True)
 
