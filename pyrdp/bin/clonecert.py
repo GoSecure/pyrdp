@@ -2,10 +2,11 @@
 
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018, 2019, 2022 GoSecure Inc.
+# Copyright (C) 2018-2023 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 # Need to install this reactor before importing any other code
+# ruff: noqa: E402
 import asyncio
 import sys
 # We need a special asyncio loop on Windows above Python 3.8. See #316
