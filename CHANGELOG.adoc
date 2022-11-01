@@ -59,7 +59,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Added an automated replay conversion test to CI configuration ({uri-issue}369[#369])
 * Test refactoring to allow running most GitHub CI tests locally when developing ({uri-issue}368[#368])
 * Added Python 3.10 to CI test configuration ({uri-issue}387[#387])
-* Updated our dependencies to the latest stable versions ({uri-issue}386[#386], {uri-issue}391[#391], {uri-issue}400[#400], {uri-issue}414[#414])
+* Updated our dependencies to the latest stable versions ({uri-issue}386[#386], {uri-issue}391[#391], {uri-issue}400[#400], {uri-issue}414[#414], {uri-issue}417[#417])
 
 
 == v1.1.0 - 2021-08-05
