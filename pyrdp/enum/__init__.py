@@ -22,4 +22,5 @@ from pyrdp.enum.virtual_channel.device_redirection import CreateOption, DeviceRe
     FileCreateDisposition, FileCreateOptions, FileShareAccess, FileSystemInformationClass, GeneralCapabilityVersion, \
     IOOperationSeverity, MajorFunction, MinorFunction, RDPDRCapabilityType
 from pyrdp.enum.virtual_channel.virtual_channel import VirtualChannelPDUFlag
+from pyrdp.enum.windows import NTSTATUS
 from pyrdp.enum.x224 import X224PDUType

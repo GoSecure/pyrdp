@@ -11,7 +11,7 @@ from pyrdp.core import ObservedBy, Observer, Subject
 from pyrdp.enum import CreateOption, DeviceRedirectionPacketID, DeviceType, DirectoryAccessMask, FileAccessMask, \
     FileAttributes, \
     FileCreateDisposition, FileCreateOptions, FileShareAccess, FileSystemInformationClass, IOOperationSeverity, \
-    MajorFunction, MinorFunction
+    MajorFunction, MinorFunction, NTSTATUS
 from pyrdp.layer import DeviceRedirectionLayer
 from pyrdp.logging.StatCounter import StatCounter, STAT
 from pyrdp.mitm.FileMapping import FileMapping

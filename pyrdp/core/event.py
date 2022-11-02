@@ -1,12 +1,12 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019, 2022 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
 import asyncio
 import operator
-from typing import Callable, Dict
+from typing import Callable, Dict, List
 
 
 class Event:
@@ -118,7 +118,7 @@ class EventEngine:
         """
         Create a new (empty) event engine.
         """
-        self.events: [Event] = []
+        self.events: List[Event] = []
 
     def processObject(self, obj):
         """
