@@ -190,6 +190,10 @@ class DeviceRedirectionMITM(Subject):
 
             if pdu.majorFunction in self.responseHandlers:
                 self.responseHandlers[pdu.majorFunction](requestPDU, pdu)
+            # Good place to debug
+            #else:
+            #    self.log.warning("No handler was triggered for this IO request: %(requestPDU)s. Response: %(responsePDU)s", {"responsePDU": repr(pdu), "requestPDU": repr(requestPDU)})
+
         else:
             self.log.error("Received IO response to unknown request #%(completionID)d", {"completionID": pdu.completionID})
 
