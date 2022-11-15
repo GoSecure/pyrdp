@@ -113,3 +113,9 @@ Moving `~/.wireshark/` was enough.
 Extracting a single VirtualChannel (id 1004 for DeviceRedirection) raw bytes:
 
     -d tls.port==13389,tpkt -T fields -e rdp.virtualChannelData -2 "t124.channelId == 1004"
+
+
+== AsyncIO Debugging
+
+asyncio code is harder to debug.
+When you think the bug is related to asyncio, like strange hangs, you can see some strategies here: https://docs.python.org/3/library/asyncio-dev.html
