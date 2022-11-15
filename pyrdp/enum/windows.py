@@ -10,6 +10,19 @@
 from enum import IntEnum
 
 
+class NtStatusSeverity(IntEnum):
+    """
+    [MS-ERREF]: Windows Error Codes
+    https://msdn.microsoft.com/en-us/library/cc231199.aspx
+    [MS-ERREF]: NTSTATUS
+    https://msdn.microsoft.com/en-us/library/cc231200.aspx
+    """
+    STATUS_SEVERITY_SUCCESS = 0x0
+    STATUS_SEVERITY_INFORMATIONAL = 0x1
+    STATUS_SEVERITY_WARNING = 0x2
+    STATUS_SEVERITY_ERROR = 0x3
+
+
 class NTSTATUS(IntEnum):
     """
     [MS-ERREF]: Windows Error Codes

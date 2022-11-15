@@ -8,15 +8,15 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock, MagicMock, patch
 
-from pyrdp.enum import CreateOption, FileAccessMask, IOOperationSeverity, DeviceRedirectionPacketID, MajorFunction, \
-    MinorFunction
+from pyrdp.enum import CreateOption, FileAccessMask, DeviceRedirectionPacketID, MajorFunction, \
+    MinorFunction, NtStatusSeverity
 from pyrdp.logging.StatCounter import StatCounter, STAT
 from pyrdp.mitm.DeviceRedirectionMITM import DeviceRedirectionMITM
 from pyrdp.pdu import DeviceIOResponsePDU, DeviceRedirectionPDU
 
 
 def MockIOError():
-    ioError = Mock(deviceID = 0, completionID = 0, ioStatus = IOOperationSeverity.STATUS_SEVERITY_ERROR << 30)
+    ioError = Mock(deviceID = 0, completionID = 0, ioStatus = NtStatusSeverity.STATUS_SEVERITY_ERROR << 30)
     return ioError
 
 

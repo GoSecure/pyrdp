@@ -10,8 +10,8 @@ from typing import Dict, Optional, Union
 from pyrdp.core import ObservedBy, Observer, Subject
 from pyrdp.enum import CreateOption, DeviceRedirectionPacketID, DeviceType, DirectoryAccessMask, FileAccessMask, \
     FileAttributes, \
-    FileCreateDisposition, FileCreateOptions, FileShareAccess, FileSystemInformationClass, IOOperationSeverity, \
-    MajorFunction, MinorFunction, NTSTATUS
+    FileCreateDisposition, FileCreateOptions, FileShareAccess, FileSystemInformationClass, \
+    MajorFunction, MinorFunction, NTSTATUS, NtStatusSeverity
 from pyrdp.layer import DeviceRedirectionLayer
 from pyrdp.logging.StatCounter import StatCounter, STAT
 from pyrdp.mitm.FileMapping import FileMapping
@@ -177,7 +177,7 @@ class DeviceRedirectionMITM(Subject):
         elif key in self.currentIORequests:
             requestPDU = self.currentIORequests.pop(key)
 
-            if pdu.ioStatus >> 30 == IOOperationSeverity.STATUS_SEVERITY_ERROR:
+            if pdu.ioStatus >> 30 == NtStatusSeverity.STATUS_SEVERITY_ERROR:
                 self.statCounter.increment(STAT.DEVICE_REDIRECTION_IOERROR)
                 self.log.warning("Received an IO Response with an error IO status: %(responsePDU)s for request %(requestPDU)s", {"responsePDU": repr(pdu), "requestPDU": repr(requestPDU)})
 
