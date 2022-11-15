@@ -179,7 +179,14 @@ class DeviceRedirectionMITM(Subject):
 
             if pdu.ioStatus >> 30 == NtStatusSeverity.STATUS_SEVERITY_ERROR:
                 self.statCounter.increment(STAT.DEVICE_REDIRECTION_IOERROR)
-                self.log.warning("Received an IO Response with an error IO status: %(responsePDU)s for request %(requestPDU)s", {"responsePDU": repr(pdu), "requestPDU": repr(requestPDU)})
+                # log only for unexpected errors since "no such files" and "no more files" are frequent:
+                # "no such files" for all attempts at fetching .desktop.ini
+                # "no more files" when directory listings are finished
+                if pdu.ioStatus not in [NTSTATUS.STATUS_NO_SUCH_FILE,
+                                        NTSTATUS.STATUS_NO_MORE_FILES]:
+                    self.log.warning("Received an IO Response with an error IO status: "
+                                     "%(responsePDU)s for request %(requestPDU)s",
+                                     {"responsePDU": repr(pdu), "requestPDU": repr(requestPDU)})
 
             if pdu.majorFunction in self.responseHandlers:
                 self.responseHandlers[pdu.majorFunction](requestPDU, pdu)
