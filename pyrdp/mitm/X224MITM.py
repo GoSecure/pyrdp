@@ -168,7 +168,9 @@ class X224MITM:
         self.client.sendPDU(pdu)
 
     def onClientError(self, pdu: X224ErrorPDU):
+        self.log.warn("X224 PDU Client Error %(pdu)s", {"pdu": pdu})
         self.server.sendPDU(pdu)
 
     def onServerError(self, pdu: X224ErrorPDU):
+        self.log.warn("X224 PDU Server Error %(pdu)s", {"pdu": pdu})
         self.client.sendPDU(pdu)
