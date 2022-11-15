@@ -114,6 +114,32 @@ Extracting a single VirtualChannel (id 1004 for DeviceRedirection) raw bytes:
 
     -d tls.port==13389,tpkt -T fields -e rdp.virtualChannelData -2 "t124.channelId == 1004"
 
+=== Decrypt a regular (non-intercepted by PyRDP) RDP Session
+
+Weaken the Windows' cryptography by removing all ciphersuite with ephemeral diffie-helman or DSA.
+Perform a packet capture.
+Open it with the Windows' RDP private key properly configured in Wireshark.
+
+The rough steps are:
+
+In `gpedit.msc` change the cipher list (and order) in following policy:
+
+    Computer Configuration\Administrative Templates\Network\SSL Configuration Settings\SSL Cipher Suite Order
+
+Click enable, then you can access the list and remove all entries with ECDHE and/or ECDSA in it.
+
+You need to restart afterwards.
+
+Extract the private key (see NLA instructions in `./cert-extraction.md`)
+
+Then you can decrypt with wireshark by setting the key.
+
+Fully documented instructions:
+* https://unit42.paloaltonetworks.com/wireshark-tutorial-decrypting-rdp-traffic/
+
+References:
+* https://docs.microsoft.com/en-us/windows-server/security/tls/manage-tls#configuring-tls-cipher-suite-order
+
 
 == AsyncIO Debugging
 
