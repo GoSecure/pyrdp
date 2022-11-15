@@ -163,8 +163,6 @@ class DeviceRedirectionParser(Parser):
         Uint32LE.pack(len(pdu.deviceData), stream)
         stream.write(pdu.deviceData)
 
-
-
     def parseClientCapabilities(self, stream: BytesIO) -> DeviceRedirectionClientCapabilitiesPDU:
         capabilities = self.parseCapabilities(stream)
         return DeviceRedirectionClientCapabilitiesPDU(capabilities)
@@ -381,7 +379,6 @@ class DeviceRedirectionParser(Parser):
     def writeDeviceCreateResponse(self, pdu: DeviceCreateResponsePDU, stream: BytesIO):
         Uint32LE.pack(pdu.fileID, stream)
         Uint8.pack(pdu.information, stream)
-
 
 
     def parseDeviceReadRequest(self, deviceID: int, fileID: int, completionID: int, minorFunction: int, stream: BytesIO) -> DeviceReadRequestPDU:
