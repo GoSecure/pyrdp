@@ -9,7 +9,7 @@ from typing import Dict, List, Optional
 from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketID, \
     DeviceType, FileAccessMask, FileAttributes, FileCreateDisposition, \
     FileCreateOptions, FileShareAccess, FileSystemInformationClass, \
-    MajorFunction, MinorFunction, RDPDRCapabilityType
+    MajorFunction, MinorFunction, RDPDRCapabilityType, NTSTATUS
 from pyrdp.pdu import PDU
 
 
@@ -43,7 +43,7 @@ class DeviceIOResponsePDU(DeviceRedirectionPDU):
     https://msdn.microsoft.com/en-us/library/cc241334.aspx
     """
 
-    def __init__(self, majorFunction: Optional[MajorFunction], deviceID: int, completionID: int, ioStatus: int, payload=b""):
+    def __init__(self, majorFunction: Optional[MajorFunction], deviceID: int, completionID: int, ioStatus: NTSTATUS, payload=b""):
         super().__init__(DeviceRedirectionComponent.RDPDR_CTYP_CORE, DeviceRedirectionPacketID.PAKID_CORE_DEVICE_IOCOMPLETION)
         self.majorFunction = majorFunction
         self.deviceID = deviceID
@@ -75,7 +75,7 @@ class DeviceCreateResponsePDU(DeviceIOResponsePDU):
     https://msdn.microsoft.com/en-us/library/cc241335.aspx
     """
 
-    def __init__(self, deviceID: int, completionID: int, ioStatus: int, fileID: int, information: int):
+    def __init__(self, deviceID: int, completionID: int, ioStatus: NTSTATUS, fileID: int, information: int):
         super().__init__(MajorFunction.IRP_MJ_CREATE, deviceID, completionID, ioStatus)
         self.fileID = fileID
         self.information = information
@@ -98,7 +98,7 @@ class DeviceReadResponsePDU(DeviceIOResponsePDU):
     https://msdn.microsoft.com/en-us/library/cc241337.aspx
     """
 
-    def __init__(self, deviceID: int, completionID: int, ioStatus: int, readData: bytes):
+    def __init__(self, deviceID: int, completionID: int, ioStatus: NTSTATUS, readData: bytes):
         super().__init__(MajorFunction.IRP_MJ_READ, deviceID, completionID, ioStatus, readData)
 
 
@@ -116,7 +116,7 @@ class DeviceCloseResponsePDU(DeviceIOResponsePDU):
     https://msdn.microsoft.com/en-us/library/cc241336.aspx
     """
 
-    def __init__(self, deviceID: int, completionID: int, ioStatus: int):
+    def __init__(self, deviceID: int, completionID: int, ioStatus: NTSTATUS):
         super().__init__(MajorFunction.IRP_MJ_CLOSE, deviceID, completionID, ioStatus)
 
 
@@ -184,13 +184,13 @@ class DeviceQueryDirectoryRequestPDU(DeviceIORequestPDU):
 
 
 class DeviceDirectoryControlResponsePDU(DeviceIOResponsePDU):
-    def __init__(self, minorFunction: MinorFunction, deviceID: int, completionID: int, ioStatus: int, payload: bytes = b""):
+    def __init__(self, minorFunction: MinorFunction, deviceID: int, completionID: int, ioStatus: NTSTATUS, payload: bytes = b""):
         super().__init__(MajorFunction.IRP_MJ_DIRECTORY_CONTROL, deviceID, completionID, ioStatus, payload)
         self.minorFunction = minorFunction
 
 
 class DeviceQueryDirectoryResponsePDU(DeviceDirectoryControlResponsePDU):
-    def __init__(self, deviceID: int, completionID: int, ioStatus: int, informationClass: FileSystemInformationClass, fileInformation: List[FileInformationBase], endByte: bytes):
+    def __init__(self, deviceID: int, completionID: int, ioStatus: NTSTATUS, informationClass: FileSystemInformationClass, fileInformation: List[FileInformationBase], endByte: bytes):
         super().__init__(MinorFunction.IRP_MN_QUERY_DIRECTORY, deviceID, completionID, ioStatus)
         self.informationClass = informationClass
         self.fileInformation = fileInformation

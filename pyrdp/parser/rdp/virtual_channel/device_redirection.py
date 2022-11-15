@@ -11,7 +11,8 @@ from pyrdp.core import decodeUTF16LE, Uint16LE, Uint32LE, Uint64LE, Uint8
 from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketID, \
     DeviceType, FileAccessMask, FileAttributes, FileCreateDisposition, \
     FileCreateOptions, FileShareAccess, FileSystemInformationClass, \
-    GeneralCapabilityVersion, MajorFunction, MinorFunction, RDPDRCapabilityType
+    GeneralCapabilityVersion, MajorFunction, MinorFunction, \
+    RDPDRCapabilityType, NTSTATUS
 from pyrdp.parser import Parser
 from pyrdp.pdu import DeviceAnnounce, DeviceCloseRequestPDU, DeviceCloseResponsePDU, DeviceCreateRequestPDU, \
     DeviceCreateResponsePDU, DeviceDirectoryControlResponsePDU, DeviceIORequestPDU, DeviceIOResponsePDU, \
@@ -296,7 +297,7 @@ class DeviceRedirectionParser(Parser):
     def parseDeviceIOResponse(self, stream: BytesIO) -> DeviceIOResponsePDU:
         deviceID = Uint32LE.unpack(stream)
         completionID = Uint32LE.unpack(stream)
-        ioStatus = Uint32LE.unpack(stream)
+        ioStatus = NTSTATUS(Uint32LE.unpack(stream))
 
         majorFunction = self.majorFunctionsForParsingResponse.pop(completionID, None)
 
@@ -361,7 +362,7 @@ class DeviceRedirectionParser(Parser):
         stream.write(path)
 
 
-    def parseDeviceCreateResponse(self, deviceID: int, completionID: int, ioStatus: int, stream: BytesIO) -> DeviceCreateResponsePDU:
+    def parseDeviceCreateResponse(self, deviceID: int, completionID: int, ioStatus: NTSTATUS, stream: BytesIO) -> DeviceCreateResponsePDU:
         """
         The information field is not yet parsed (it's optional).
         This one is a bit special since we need to look at previous packet before parsing it as
@@ -396,7 +397,7 @@ class DeviceRedirectionParser(Parser):
         stream.write(b"\x00" * 20)  # Padding
 
 
-    def parseDeviceReadResponse(self, deviceID: int, completionID: int, ioStatus: int, stream: BytesIO) -> DeviceReadResponsePDU:
+    def parseDeviceReadResponse(self, deviceID: int, completionID: int, ioStatus: NTSTATUS, stream: BytesIO) -> DeviceReadResponsePDU:
         length = Uint32LE.unpack(stream)
         payload = stream.read(length)
 
@@ -415,7 +416,7 @@ class DeviceRedirectionParser(Parser):
         stream.write(b"\x00" * 32)  # Padding
 
 
-    def parseDeviceCloseResponse(self, deviceID: int, completionID: int, ioStatus: int, stream: BytesIO) -> DeviceCloseResponsePDU:
+    def parseDeviceCloseResponse(self, deviceID: int, completionID: int, ioStatus: NTSTATUS, stream: BytesIO) -> DeviceCloseResponsePDU:
         stream.read(4)  # Padding
         return DeviceCloseResponsePDU(deviceID, completionID, ioStatus)
 
@@ -461,7 +462,7 @@ class DeviceRedirectionParser(Parser):
                 stream.write(b"\x00" * 23) # protocol required padding
                 stream.write(path)
 
-    def parseDirectoryControlResponse(self, deviceID: int, completionID: int, ioStatus: int, stream: BytesIO) -> DeviceIOResponsePDU:
+    def parseDirectoryControlResponse(self, deviceID: int, completionID: int, ioStatus: NTSTATUS, stream: BytesIO) -> DeviceIOResponsePDU:
         minorFunction = self.minorFunctionsForParsingResponse.pop(completionID, None)
 
         if minorFunction is None:

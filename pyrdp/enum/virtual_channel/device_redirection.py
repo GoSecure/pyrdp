@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018, 2022 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -58,16 +58,6 @@ class MinorFunction(IntEnum):
     """
     IRP_MN_QUERY_DIRECTORY = 0x00000001
     IRP_MN_NOTIFY_CHANGE_DIRECTORY = 0x00000002
-
-
-class IOOperationSeverity(IntEnum):
-    """
-    https://msdn.microsoft.com/en-us/library/cc231200.aspx
-    """
-    STATUS_SEVERITY_SUCCESS = 0x0
-    STATUS_SEVERITY_INFORMATIONAL = 0x1
-    STATUS_SEVERITY_WARNING = 0x2
-    STATUS_SEVERITY_ERROR = 0x3
 
 
 class CreateOption(IntEnum):

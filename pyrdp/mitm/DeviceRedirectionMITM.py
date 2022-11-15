@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019-2021 GoSecure Inc.
+# Copyright (C) 2019-2022 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -10,8 +10,8 @@ from typing import Dict, Optional, Union
 from pyrdp.core import ObservedBy, Observer, Subject
 from pyrdp.enum import CreateOption, DeviceRedirectionPacketID, DeviceType, DirectoryAccessMask, FileAccessMask, \
     FileAttributes, \
-    FileCreateDisposition, FileCreateOptions, FileShareAccess, FileSystemInformationClass, IOOperationSeverity, \
-    MajorFunction, MinorFunction
+    FileCreateDisposition, FileCreateOptions, FileShareAccess, FileSystemInformationClass, \
+    MajorFunction, MinorFunction, NTSTATUS, NtStatusSeverity
 from pyrdp.layer import DeviceRedirectionLayer
 from pyrdp.logging.StatCounter import StatCounter, STAT
 from pyrdp.mitm.FileMapping import FileMapping
@@ -177,12 +177,23 @@ class DeviceRedirectionMITM(Subject):
         elif key in self.currentIORequests:
             requestPDU = self.currentIORequests.pop(key)
 
-            if pdu.ioStatus >> 30 == IOOperationSeverity.STATUS_SEVERITY_ERROR:
+            if pdu.ioStatus >> 30 == NtStatusSeverity.STATUS_SEVERITY_ERROR:
                 self.statCounter.increment(STAT.DEVICE_REDIRECTION_IOERROR)
-                self.log.warning("Received an IO Response with an error IO status: %(responsePDU)s for request %(requestPDU)s", {"responsePDU": repr(pdu), "requestPDU": repr(requestPDU)})
+                # log only for unexpected errors since "no such files" and "no more files" are frequent:
+                # "no such files" for all attempts at fetching .desktop.ini
+                # "no more files" when directory listings are finished
+                if pdu.ioStatus not in [NTSTATUS.STATUS_NO_SUCH_FILE,
+                                        NTSTATUS.STATUS_NO_MORE_FILES]:
+                    self.log.warning("Received an IO Response with an error IO status: "
+                                     "%(responsePDU)s for request %(requestPDU)s",
+                                     {"responsePDU": repr(pdu), "requestPDU": repr(requestPDU)})
 
             if pdu.majorFunction in self.responseHandlers:
                 self.responseHandlers[pdu.majorFunction](requestPDU, pdu)
+            # Good place to debug
+            #else:
+            #    self.log.warning("No handler was triggered for this IO request: %(requestPDU)s. Response: %(responsePDU)s", {"responsePDU": repr(pdu), "requestPDU": repr(requestPDU)})
+
         else:
             self.log.error("Received IO response to unknown request #%(completionID)d", {"completionID": pdu.completionID})
 
@@ -214,8 +225,9 @@ class DeviceRedirectionMITM(Subject):
 
         isFileRead = request.desiredAccess & (FileAccessMask.GENERIC_READ | FileAccessMask.FILE_READ_DATA) != 0
         isDirectory = request.createOptions & CreateOption.FILE_NON_DIRECTORY_FILE == 0
+        fileExists = (response.ioStatus != NTSTATUS.STATUS_NO_SUCH_FILE)
 
-        if isFileRead and not isDirectory:
+        if fileExists and isFileRead and not isDirectory:
             mapping = FileMapping.generate(request.path, self.config.fileDir, self.deviceRoot(response.deviceID), self.log)
             key = (response.deviceID, response.fileID)
             self.mappings[key] = mapping

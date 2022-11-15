@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018-2021 GoSecure Inc.
+# Copyright (C) 2018-2022 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 # flake8: noqa
@@ -20,6 +20,7 @@ from pyrdp.enum.virtual_channel.clipboard import ClipboardFormatName, ClipboardF
 from pyrdp.enum.virtual_channel.device_redirection import CreateOption, DeviceRedirectionComponent, \
     DeviceRedirectionPacketID, DeviceType, DirectoryAccessMask, FileAccessMask, FileAttributes, \
     FileCreateDisposition, FileCreateOptions, FileShareAccess, FileSystemInformationClass, GeneralCapabilityVersion, \
-    IOOperationSeverity, MajorFunction, MinorFunction, RDPDRCapabilityType
+    MajorFunction, MinorFunction, RDPDRCapabilityType
 from pyrdp.enum.virtual_channel.virtual_channel import VirtualChannelPDUFlag
+from pyrdp.enum.windows import NTSTATUS, NtStatusSeverity
 from pyrdp.enum.x224 import X224PDUType
