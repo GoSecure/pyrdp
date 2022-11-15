@@ -44,10 +44,7 @@ class DeviceRedirectionMITMObserver(Observer):
 class DeviceRedirectionMITM(Subject):
     """
     MITM component for the device redirection channel.
-    It saves files transferred over RDP to a local directory. The files aren't named after their remote name to avoid
-    conflicts. Rather, they are given a random name, and the mapping to their remote path is given by the mapping.json
-    file. Each unique file (identified by its hash) is saved only once. Duplicates are removed to avoid filling the drive
-    with identical files.
+    It saves files transferred over RDP to a local directory.
     """
 
     FORGED_COMPLETION_ID = 1000000
