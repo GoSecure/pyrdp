@@ -2,29 +2,27 @@
 
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018-2021 GoSecure Inc.
+# Copyright (C) 2018-2022 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-
-# asyncio needs to be imported first to ensure that the reactor is
-# installed properly. ***DO NOT RE-ORDER***.
-import asyncio  # noqa
-
+# Need to install this reactor before importing any other code
+import asyncio
 from twisted.internet import asyncioreactor
+asyncioreactor.install(asyncio.new_event_loop())
 
-asyncioreactor.install(asyncio.get_event_loop())
+from pathlib import Path
+import argparse
+import logging
+import logging.handlers
+import os
+import sys
 
 from pyrdp.core import settings  # noqa
 from pyrdp.logging import LOGGER_NAMES, NotifyHandler, configure as configureLoggers  # noqa
 from pyrdp.player import HAS_GUI  # noqa
 from pyrdp.player.config import DEFAULTS  # noqa
 
-from pathlib import Path  # noqa
-import argparse  # noqa
-import logging  # noqa
-import logging.handlers  # noqa
-import sys  # noqa
-import os  # noqa
+
 # Workaround a macOS bug: https://bugreports.qt.io/browse/QTBUG-87014
 os.environ['QT_MAC_WANTS_LAYER']='1'
 if HAS_GUI:
