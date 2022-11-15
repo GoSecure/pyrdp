@@ -330,18 +330,22 @@ class RDPMITM:
         :param server: MCS channel for the server side
         """
 
-        clientSecurity = self.state.createSecurityLayer(ParserMode.SERVER, True)
         clientVirtualChannel = VirtualChannelLayer()
         clientLayer = ClipboardLayer()
-        serverSecurity = self.state.createSecurityLayer(ParserMode.CLIENT, True)
         serverVirtualChannel = VirtualChannelLayer()
         serverLayer = ClipboardLayer()
 
         clientLayer.addObserver(LayerLogger(self.getClientLog(MCSChannelName.CLIPBOARD)))
         serverLayer.addObserver(LayerLogger(self.getServerLog(MCSChannelName.CLIPBOARD)))
 
-        LayerChainItem.chain(client, clientSecurity, clientVirtualChannel, clientLayer)
-        LayerChainItem.chain(server, serverSecurity, serverVirtualChannel, serverLayer)
+        if self.state.useTLS:
+            LayerChainItem.chain(client, clientVirtualChannel, clientLayer)
+            LayerChainItem.chain(server, serverVirtualChannel, serverLayer)
+        else:
+            clientSecurity = self.state.createSecurityLayer(ParserMode.SERVER, True)
+            serverSecurity = self.state.createSecurityLayer(ParserMode.CLIENT, True)
+            LayerChainItem.chain(client, clientSecurity, clientVirtualChannel, clientLayer)
+            LayerChainItem.chain(server, serverSecurity, serverVirtualChannel, serverLayer)
 
         if self.config.disableActiveClipboardStealing:
             mitm = PassiveClipboardStealer(self.config, clientLayer, serverLayer, self.getLog(MCSChannelName.CLIPBOARD),
@@ -358,18 +362,22 @@ class RDPMITM:
         :param server: MCS channel for the server side
         """
 
-        clientSecurity = self.state.createSecurityLayer(ParserMode.SERVER, True)
         clientVirtualChannel = VirtualChannelLayer(activateShowProtocolFlag=False)
         clientLayer = DeviceRedirectionLayer()
-        serverSecurity = self.state.createSecurityLayer(ParserMode.CLIENT, True)
         serverVirtualChannel = VirtualChannelLayer(activateShowProtocolFlag=False)
         serverLayer = DeviceRedirectionLayer()
 
         clientLayer.addObserver(LayerLogger(self.getClientLog(MCSChannelName.DEVICE_REDIRECTION)))
         serverLayer.addObserver(LayerLogger(self.getServerLog(MCSChannelName.DEVICE_REDIRECTION)))
 
-        LayerChainItem.chain(client, clientSecurity, clientVirtualChannel, clientLayer)
-        LayerChainItem.chain(server, serverSecurity, serverVirtualChannel, serverLayer)
+        if self.state.useTLS:
+            LayerChainItem.chain(client, clientVirtualChannel, clientLayer)
+            LayerChainItem.chain(server, serverVirtualChannel, serverLayer)
+        else:
+            clientSecurity = self.state.createSecurityLayer(ParserMode.SERVER, True)
+            serverSecurity = self.state.createSecurityLayer(ParserMode.CLIENT, True)
+            LayerChainItem.chain(client, clientSecurity, clientVirtualChannel, clientLayer)
+            LayerChainItem.chain(server, serverSecurity, serverVirtualChannel, serverLayer)
 
         deviceRedirection = DeviceRedirectionMITM(clientLayer, serverLayer, self.getLog(MCSChannelName.DEVICE_REDIRECTION), self.statCounter, self.state, self.tcp)
         self.channelMITMs[client.channelID] = deviceRedirection
@@ -387,13 +395,17 @@ class RDPMITM:
         :param server: MCS channel for the server side
         """
 
-        clientSecurity = self.state.createSecurityLayer(ParserMode.SERVER, True)
         clientLayer = RawLayer()
-        serverSecurity = self.state.createSecurityLayer(ParserMode.CLIENT, True)
         serverLayer = RawLayer()
 
-        LayerChainItem.chain(client, clientSecurity, clientLayer)
-        LayerChainItem.chain(server, serverSecurity, serverLayer)
+        if self.state.useTLS:
+            LayerChainItem.chain(client, clientLayer)
+            LayerChainItem.chain(server, serverLayer)
+        else:
+            clientSecurity = self.state.createSecurityLayer(ParserMode.SERVER, True)
+            serverSecurity = self.state.createSecurityLayer(ParserMode.CLIENT, True)
+            LayerChainItem.chain(client, clientSecurity, clientLayer)
+            LayerChainItem.chain(server, serverSecurity, serverLayer)
 
         mitm = VirtualChannelMITM(clientLayer, serverLayer, self.statCounter)
         self.channelMITMs[client.channelID] = mitm
