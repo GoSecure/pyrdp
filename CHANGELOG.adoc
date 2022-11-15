@@ -36,7 +36,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Updated instructions to extract the RDP certificate and private key ({uri-issue}345[#345])
 * Documentation updates ({uri-issue}335[#335], {uri-issue}339[#339], {uri-issue}340[#340], {uri-issue}360[#360], {uri-issue}371[#371], {uri-issue}381[#381], {uri-issue}383[#383], {uri-issue}384[#384], {uri-issue}408[#408], {uri-issue}420[#420])
 * Replaced unmaintained dependency notify2 with py-notifier ({uri-issue}363[#363], {uri-issue}365[#365])
-* Some Python 3.10 compatibility work ({uri-issue}366[#366], {uri-issue}380[#380])
+* Some Python 3.10 compatibility work ({uri-issue}366[#366], {uri-issue}380[#380], {uri-issue}421[#421])
 * Enable play/pause replay on the Player by pressing the Space key ({uri-issue}403[#403]).
 
 === Bug fixes
