@@ -414,10 +414,16 @@ class DeviceRedirectionParser(Parser):
 
 
     def parseDeviceCloseResponse(self, deviceID: int, completionID: int, ioStatus: NTSTATUS, stream: BytesIO) -> DeviceCloseResponsePDU:
+        # NOTE: Even if the specification disagrees, we are sometimes getting
+        #       one extra byte here. It doesn't seem to matter though.
         stream.read(4)  # Padding
         return DeviceCloseResponsePDU(deviceID, completionID, ioStatus)
 
     def writeDeviceCloseResponse(self, _: DeviceCloseResponsePDU, stream: BytesIO):
+        # NOTE: Even if the specification disagrees, we are sometimes getting
+        #       one extra byte in the DviceCloseResponse. We might need to
+        #       send it one day.
+        #stream.write(b"\x00" * 5)  # Padding
         stream.write(b"\x00" * 4)  # Padding
 
 
