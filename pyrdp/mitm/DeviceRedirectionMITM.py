@@ -225,8 +225,9 @@ class DeviceRedirectionMITM(Subject):
 
         isFileRead = request.desiredAccess & (FileAccessMask.GENERIC_READ | FileAccessMask.FILE_READ_DATA) != 0
         isDirectory = request.createOptions & CreateOption.FILE_NON_DIRECTORY_FILE == 0
+        fileExists = (response.ioStatus != NTSTATUS.STATUS_NO_SUCH_FILE)
 
-        if isFileRead and not isDirectory:
+        if fileExists and isFileRead and not isDirectory:
             mapping = FileMapping.generate(request.path, self.config.fileDir, self.deviceRoot(response.deviceID), self.log)
             key = (response.deviceID, response.fileID)
             self.mappings[key] = mapping
