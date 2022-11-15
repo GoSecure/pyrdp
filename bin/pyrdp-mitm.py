@@ -2,23 +2,23 @@
 
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018-2021 GoSecure Inc.
+# Copyright (C) 2018-2022 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+# Need to install this reactor before importing any other code
 import asyncio
+from twisted.internet import asyncioreactor
+asyncioreactor.install(asyncio.new_event_loop())
+
 import logging
 import os
+import socket
 
-# Need to install this reactor before importing other twisted code
-from twisted.internet import asyncioreactor
-
-asyncioreactor.install(asyncio.get_event_loop())
 from twisted.internet import reactor
 
 from pyrdp.core.mitm import MITMServerFactory
 from pyrdp.mitm.cli import showConfiguration, configure
 from pyrdp.logging import LOGGER_NAMES
-import socket
 
 
 def main():
