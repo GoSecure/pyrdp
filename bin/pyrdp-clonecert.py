@@ -2,15 +2,13 @@
 
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018, 2019 GoSecure Inc.
+# Copyright (C) 2018, 2019, 2022 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-
+# Need to install this reactor before importing any other code
 import asyncio
-
 from twisted.internet import asyncioreactor
-
-asyncioreactor.install(asyncio.get_event_loop())
+asyncioreactor.install(asyncio.new_event_loop())
 
 import argparse
 import logging
