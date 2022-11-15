@@ -1,9 +1,10 @@
 #
 # Copyright (c) 2014-2015 Sylvain Peyrefitte
+# Copyright (c) 2018, 2019, 2022 GoSecure Inc.
 #
-# This file is part of rdpy.
+# This file is part of rdpy and PyRDP.
 #
-# rdpy is free software: you can redistribute it and/or modify
+# PyRDP is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
@@ -225,3 +226,13 @@ def writeOctetStream(bytes: bytes, minValue: int = 0) -> bytes:
         mlength = length - minValue
     
     return writeLength(mlength) + bytes
+
+def writeOctetStreamAlternate(bytes: bytes) -> bytes:
+    """
+    Pack a PER octect stream with the alternate read length indicator
+    :param bytes: octet stream
+    Currently unused, implemented to match exactly what was sent by mstsc.exe
+    on the wire.
+    """
+    length = len(bytes)
+    return Uint16BE.pack(length | 0x8000) + bytes
