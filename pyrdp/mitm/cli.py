@@ -130,6 +130,7 @@ def buildArgParser():
                         action="store_true")
     parser.add_argument("--nla-redirection-host", help="Redirection target ip if NLA is enforced", default=None)
     parser.add_argument("--nla-redirection-port", help="Redirection target port if NLA is enforced", type=int, default=None)
+    parser.add_argument("--ssp-challenge", help="Set challenge for SSP authentictation (e.g. 1122334455667788)", type=str, default=None)
 
     return parser
 
@@ -170,6 +171,10 @@ def configure(cmdline=None) -> MITMConfig:
         sys.stderr.write('Error: please provide both --nla-redirection-host and --nla-redirection-port\n')
         sys.exit(1)
 
+    if args.ssp_challenge is not None and len(args.ssp_challenge) != 16:
+        sys.stderr.write('Error: please provide a challenge with 16 characters (64 bits)\n')
+        sys.exit(1)
+
     if args.target:
         targetHost, targetPort = parseTarget(args.target)
     else:
@@ -201,6 +206,7 @@ def configure(cmdline=None) -> MITMConfig:
     config.useGdi = not args.no_gdi
     config.redirectionHost = args.nla_redirection_host
     config.redirectionPort = args.nla_redirection_port
+    config.sspChallenge = args.ssp_challenge
 
     payload = None
     powershell = None
