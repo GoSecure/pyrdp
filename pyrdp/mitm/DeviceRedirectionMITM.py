@@ -218,7 +218,9 @@ class DeviceRedirectionMITM(Subject):
         :param request: the device create request
         :param response: the device IO response to the request
         """
-        self.log.debug("Handling a DeviceCreateRequest. Path: '%(path)s'", {"path": request.path})
+        # The following will sometimes stacktrace because request is a
+        # DeviceIORequestPDU without a path attribute instead of DeviceCreateRequestPDU
+        #self.log.debug("Handling a DeviceCreateRequest. Path: '%(path)s'", {"path": request.path})
 
         isFileRead = request.desiredAccess & (FileAccessMask.GENERIC_READ | FileAccessMask.FILE_READ_DATA) != 0
         isDirectory = request.createOptions & CreateOption.FILE_NON_DIRECTORY_FILE == 0
