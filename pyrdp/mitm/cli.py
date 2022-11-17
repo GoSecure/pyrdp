@@ -130,7 +130,7 @@ def buildArgParser():
                         action="store_true")
     parser.add_argument("--nla-redirection-host", help="Redirection target ip if NLA is enforced", default=None)
     parser.add_argument("--nla-redirection-port", help="Redirection target port if NLA is enforced", type=int, default=None)
-    parser.add_argument("--ssp-challenge", help="Set challenge for SSP authentictation (e.g. 1122334455667788)", type=str, default=None)
+    parser.add_argument("--ssp-challenge", help="Set challenge for SSP authentictation (e.g. 1122334455667788). Incompatible with --auth ssp.", type=str, default=None)
 
     return parser
 
@@ -169,6 +169,12 @@ def configure(cmdline=None) -> MITMConfig:
 
     if (args.nla_redirection_host is None) != (args.nla_redirection_port is None):
         sys.stderr.write('Error: please provide both --nla-redirection-host and --nla-redirection-port\n')
+        sys.exit(1)
+
+    if args.ssp_challenge is not None and "ssp" in args.auth:
+        sys.stderr.write('Error: Using a fixed challenge does not work with --auth ssp which is meant to specify an NLA bypass. '
+                         'Without --auth ssp, an authentication downgrade attack will be attempted and if it is not possible, '
+                         'the hash will be stolen with the fixed challenge.\n')
         sys.exit(1)
 
     if args.ssp_challenge is not None and len(args.ssp_challenge) != 16:
