@@ -7,7 +7,9 @@
 import asyncio
 import datetime
 import typing
+import ssl
 
+from OpenSSL import crypto
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol
 
@@ -218,7 +220,20 @@ class RDPMITM:
                 self.log.error("Failed to connect to recording host: timeout expired")
 
     def doClientTls(self):
-        cert = self.server.tcp.transport.getPeerCertificate()
+        if self.state.isRedirected():
+            self.log.info(
+                "Fetching certificate of the original host %(host)s:%(port)d because of NLA redirection",
+                {
+                    "host": self.state.config.targetHost,
+                    "port": self.state.config.targetPort,
+                },
+            )
+            pem = ssl.get_server_certificate(
+                (self.state.config.targetHost, self.state.config.targetPort)
+            )
+            cert = crypto.load_certificate(crypto.FILETYPE_PEM, pem)
+        else:
+            cert = self.server.tcp.transport.getPeerCertificate()
         if not cert:
             # Wait for server certificate
             reactor.callLater(1, self.doClientTls)

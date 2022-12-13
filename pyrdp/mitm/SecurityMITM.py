@@ -78,6 +78,9 @@ class SecurityMITM:
             "clientAddress": clientAddress
         })
 
+        if self.state.fakeServer is not None:
+            self.state.fakeServer.set_username(pdu.username)
+
         self.recorder.record(pdu, PlayerPDUType.CLIENT_INFO)
 
         # If set, replace the provided username and password to connect the user regardless of

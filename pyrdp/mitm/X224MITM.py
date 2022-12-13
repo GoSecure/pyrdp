@@ -128,7 +128,14 @@ class X224MITM:
                 # Disconnect from current server
                 self.disconnector()
 
-                if self.state.canRedirect():
+                if self.state.config.fakeServer:
+                    # Activate configuration
+                    self.state.useFakeServer()
+                    self.log.info("The server forces the use of NLA. Launched local RDP server on %(host)s:%(port)d", {
+                        "host": self.state.effectiveTargetHost,
+                        "port": self.state.effectiveTargetPort
+                    })
+                elif self.state.canRedirect():
                     self.log.info("The server forces the use of NLA. Using redirection host: %(redirectionHost)s:%(redirectionPort)d", {
                         "redirectionHost": self.state.config.redirectionHost,
                         "redirectionPort": self.state.config.redirectionPort
