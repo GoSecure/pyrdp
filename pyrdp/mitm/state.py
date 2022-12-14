@@ -14,7 +14,6 @@ from pyrdp.parser import createFastPathParser
 from pyrdp.pdu import ClientChannelDefinition
 from pyrdp.security import RC4CrypterProxy, SecuritySettings
 from pyrdp.mitm import MITMConfig
-from pyrdp.mitm.FakeServer import FakeServer
 
 
 class RDPMITMState:
@@ -135,6 +134,7 @@ class RDPMITMState:
         self.effectiveTargetPort = self.config.redirectionPort
 
     def useFakeServer(self):
+        from pyrdp.mitm.FakeServer import FakeServer
         self.fakeServer = FakeServer()
         self.effectiveTargetHost = "127.0.0.1"
         self.effectiveTargetPort = self.fakeServer.port
