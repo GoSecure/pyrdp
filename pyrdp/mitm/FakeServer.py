@@ -67,7 +67,7 @@ class FakeLoginScreen:
         # username entry
         self.entry_username = Entry(
             self.root,
-            font=("Segoe UI", 13),
+            font=("DejaVu Sans", 16),
             bd=2,
             bg="white",
             insertofftime=600,
@@ -85,7 +85,7 @@ class FakeLoginScreen:
         self.entry_password = Entry(
             self.root,
             show="•",
-            font=("Segoe UI", 20),
+            font=("DejaVu Sans", 20),
             bd=2,
             bg="white",
             insertofftime=600,
