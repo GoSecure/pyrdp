@@ -10,7 +10,7 @@ from pyvirtualdisplay import Display
 from pyrdp.logging import log  # TODO: this logs to GLOBAL and not to the session, setup proper logging
 
 BACKGROUND_COLOR = "#044a91"
-BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+IMAGES_DIR = os.path.dirname(__file__) + "/images"
 
 
 class FakeLoginScreen:
@@ -33,7 +33,7 @@ class FakeLoginScreen:
         self.frame_count = 50
         self.frames = [
             PhotoImage(
-                file=BASE_DIR + "/images/WindowsLoadingScreenSmall.gif",
+                file=IMAGES_DIR + "/WindowsLoadingScreenSmall.gif",
                 format=f"gif -index {i}",
                 master=self.root,
             )
@@ -46,7 +46,7 @@ class FakeLoginScreen:
     def _set_background(self, width=1920, height=1080):
         # background file
         self.background_image = Image.open(
-            BASE_DIR + "/images/WindowsLockScreen.png"
+            IMAGES_DIR + "/WindowsLockScreen.png"
         ).resize((width, height))
         self.background = ImageTk.PhotoImage(self.background_image, master=self.root)
 
@@ -99,7 +99,7 @@ class FakeLoginScreen:
 
         # login button - the image must be assigned to self to avoid garbage collection
         self.image_button_login = PhotoImage(
-            file=BASE_DIR + "/images/LoginButton.png", master=self.root
+            file=IMAGES_DIR + "/LoginButton.png", master=self.root
         )
         self.button_login = Button(
             self.root,

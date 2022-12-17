@@ -21,7 +21,7 @@ setup(name='pyrdp',
     packages=setuptools.find_packages(include=["pyrdp", "pyrdp.*"]),
     package_data={
         "pyrdp": ["mitm/crawler_config/*.txt"],
-        "": ["*.default.ini"]
+        "": ["*.default.ini", "mitm/images/*"],
     },
     ext_modules=[Extension('rle', ['ext/rle.c'])],
     scripts=[
