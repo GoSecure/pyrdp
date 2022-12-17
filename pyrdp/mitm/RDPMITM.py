@@ -78,7 +78,7 @@ class RDPMITM:
         self.statCounter = StatCounter()
         """Class to keep track of connection-related statistics such as # of mouse events, # of output events, etc."""
 
-        self.state = state if state is not None else RDPMITMState(self.config, self.log.sessionID)
+        self.state = state if state is not None else RDPMITMState(self.config, self.log.sessionID, self.getLog)
         """The MITM state"""
 
         self.client = RDPLayerSet()

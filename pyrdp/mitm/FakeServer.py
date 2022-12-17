@@ -7,14 +7,16 @@ import os, random, shutil, socket, subprocess, threading, time
 from tkinter import *
 from PIL import Image, ImageTk
 from pyvirtualdisplay import Display
-from pyrdp.logging import log  # TODO: this logs to GLOBAL and not to the session, setup proper logging
+
+from logging import LoggerAdapter
 
 BACKGROUND_COLOR = "#044a91"
 IMAGES_DIR = os.path.dirname(__file__) + "/images"
 
 
 class FakeLoginScreen:
-    def __init__(self, width=1920, height=1080):
+    def __init__(self, log: LoggerAdapter, width=1920, height=1080):
+        self.log = log
         self.clicked = False
 
         # root window
@@ -130,11 +132,10 @@ class FakeLoginScreen:
         self.clicked = True
         self.username = self.entry_username.get()
         self.password = self.entry_password.get()
-        log.info(
+        self.log.info(
             "Obtained %(username)s:%(password)s in fake server",
             {"username": self.username, "password": self.password},
         )
-        print(f"Obtained {self.username}:{self.password} in fake server")
         # block pressing enter
         self.root.unbind("<Return>")
         # replace background (didn't find a less clunky way)
@@ -162,8 +163,10 @@ class FakeLoginScreen:
 
 
 class FakeServer(threading.Thread):
-    def __init__(self):
+    def __init__(self, log: LoggerAdapter):
         super().__init__()
+        self.log = log
+
         self._launch_display()
 
         self.fakeLoginScreen = None
@@ -190,7 +193,7 @@ class FakeServer(threading.Thread):
 
     def _launch_rdp_server(self):
         # TODO check if port is not already taken
-        log.info(
+        self.log.info(
             "Launching freerdp-shadow-cli (RDP Server) on port %(port)d",
             {"port": self.port},
         )
@@ -210,17 +213,19 @@ class FakeServer(threading.Thread):
         ctr = 0
         threshold = 5
         while sock.connect_ex(("127.0.0.1", self.port)) != 0:
-            log.info("Fake server is not running yet")
+            self.log.info("Fake server is not running yet")
             time.sleep(0.1)
             if ctr > threshold:
-                log.info("RDP server process did not launch within time, retrying...")
+                self.log.info(
+                    "RDP server process did not launch within time, retrying..."
+                )
                 self.rdp_server_process.kill()
                 self._launch_rdp_server()
                 break
         sock.close()
 
     def run(self):
-        self.fakeLoginScreen = FakeLoginScreen()
+        self.fakeLoginScreen = FakeLoginScreen(self.log)
         self.fakeLoginScreen.show()
         username = self.fakeLoginScreen.username
         password = self.fakeLoginScreen.password
