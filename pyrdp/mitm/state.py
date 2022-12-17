@@ -139,7 +139,9 @@ class RDPMITMState:
 
     def useFakeServer(self):
         from pyrdp.mitm.FakeServer import FakeServer
-        self.fakeServer = FakeServer(self.getLog(""))
+        self.fakeServer = FakeServer(
+            self.config.targetHost, self.config.targetPort, self.getLog("")
+        )
         self.effectiveTargetHost = "127.0.0.1"
         self.effectiveTargetPort = self.fakeServer.port
         self.fakeServer.start()

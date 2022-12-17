@@ -163,8 +163,10 @@ class FakeLoginScreen:
 
 
 class FakeServer(threading.Thread):
-    def __init__(self, log: LoggerAdapter):
+    def __init__(self, targetHost: str, targetPort: int, log: LoggerAdapter):
         super().__init__()
+        self.targetHost = targetHost
+        self.targetPort = targetPort
         self.log = log
 
         self._launch_display()
@@ -233,7 +235,8 @@ class FakeServer(threading.Thread):
 
         rdp_client_cmd = [
             shutil.which("xfreerdp"),
-            "/v:192.168.251.12",  # TODO make dynamic,
+            "/v:" + self.targetHost,
+            "/p:" + str(self.targetPort),
             "/u:" + username,
             "/p:" + password,
             "/cert:ignore",
