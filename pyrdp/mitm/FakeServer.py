@@ -15,8 +15,7 @@ IMAGES_DIR = os.path.dirname(__file__) + "/images"
 
 
 class FakeLoginScreen:
-    def __init__(self, log: LoggerAdapter, width=1920, height=1080):
-        self.log = log
+    def __init__(self, width=1920, height=1080):
         self.clicked = False
 
         # root window
@@ -132,10 +131,6 @@ class FakeLoginScreen:
         self.clicked = True
         self.username = self.entry_username.get()
         self.password = self.entry_password.get()
-        self.log.info(
-            "Obtained %(username)s:%(password)s in fake server",
-            {"username": self.username, "password": self.password},
-        )
         # block pressing enter
         self.root.unbind("<Return>")
         # replace background (didn't find a less clunky way)
@@ -227,10 +222,14 @@ class FakeServer(threading.Thread):
         sock.close()
 
     def run(self):
-        self.fakeLoginScreen = FakeLoginScreen(self.log)
+        self.fakeLoginScreen = FakeLoginScreen()
         self.fakeLoginScreen.show()
         username = self.fakeLoginScreen.username
         password = self.fakeLoginScreen.password
+        self.log.info(
+            "Obtained %(username)s:%(password)s in fake server",
+            {"username": username, "password": password},
+        )
         self.fakeLoginScreen = None
 
         rdp_client_cmd = [
