@@ -4,6 +4,7 @@
 # Licensed under the GPLv3 or later.
 #
 import os, random, shutil, socket, subprocess, threading, time
+
 from tkinter import *
 from PIL import Image, ImageTk
 from pyvirtualdisplay import Display
