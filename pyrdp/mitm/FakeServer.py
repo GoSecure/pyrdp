@@ -3,7 +3,7 @@
 # Copyright (C) 2022
 # Licensed under the GPLv3 or later.
 #
-import os, random, shutil, socket, subprocess, threading, time
+import multiprocessing, os, random, shutil, socket, subprocess, threading, time
 
 from tkinter import *
 from PIL import Image, ImageTk
@@ -173,21 +173,18 @@ class FakeServer(threading.Thread):
         self._launch_rdp_server()
 
     def _launch_display(self, width=1920, height=1080):
-        self.display = Display(
-            backend="xephyr",
-            size=(width, height),
-            extra_args=["-no-host-grab", "-noreset"],
-        )  # noreset for xsetroot required
+        self.display = Display(backend="xvfb", size=(width, height))
         self.display.start()
+        # activate environment variables
         self.display.env()
         # set background to windows blue
-        self.xsetroot_process = subprocess.Popen(
-            [
-                shutil.which("xsetroot"),
-                "-solid",
-                BACKGROUND_COLOR,
-            ]
-        )
+        def background():
+            tk = Tk()
+            tk.geometry(f"{width}x{height}")
+            tk.configure(bg=BACKGROUND_COLOR)
+            tk.mainloop()
+
+        multiprocessing.Process(target=background).start()
 
     def _launch_rdp_server(self):
         # TODO check if port is not already taken
