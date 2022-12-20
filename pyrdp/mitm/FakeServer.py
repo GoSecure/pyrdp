@@ -181,7 +181,7 @@ class FakeServer(threading.Thread):
 
         self.fakeLoginScreen = None
 
-        self.port = 3389 + random.randint(1, 10000)
+        self.port = random.randint(49152, 65535)  # ephemeral ports
         self._launch_rdp_server()
 
     def _launch_display(self, width=1920, height=1080):
