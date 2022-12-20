@@ -70,3 +70,14 @@ echo ===================================================
 echo Verify that the replay file exists
 file -E "20200319000716_192.168.38.1:20989-192.168.38.1:3389.pyrdp"
 rm "20200319000716_192.168.38.1:20989-192.168.38.1:3389.pyrdp"
+
+echo ===================================================
+echo pyrdp-convert.py regression issue 428
+${PREPEND}pyrdp-convert.py test/files/test_convert_428.pyrdp -f mp4
+echo
+
+echo ===================================================
+echo Verify the MP4 file
+file test_convert_428.mp4 | grep "MP4 Base Media"
+rm test_convert_428.mp4
+echo
