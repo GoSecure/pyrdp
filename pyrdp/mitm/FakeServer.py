@@ -302,15 +302,21 @@ class FakeServer(threading.Thread):
     def check_submit(self):
         self.fakeLoginScreen.check_submit()
 
+    def is_ready(self):
+        return self.fakeLoginScreen is not None
+
+    def wait_ready(self):
+        # wait until the server and the login screen is initialized
+        while not self.is_ready():
+            time.sleep(0.01)
+
     def set_username(self, username: str):
-        # FIXME: properly solve this concurrency
-        if self.fakeLoginScreen is None:
-            time.sleep(0.1)
-        if self.fakeLoginScreen is not None:
-            self.fakeLoginScreen.set_username(username)
-            self.check_submit()
+        self.wait_ready()
+        self.fakeLoginScreen.set_username(username)
+        self.check_submit()
 
     def set_password(self, password: str):
+        self.wait_ready()
         self.fakeLoginScreen.set_password(password)
         self.check_submit()
 
