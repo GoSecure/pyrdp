@@ -21,6 +21,8 @@ else
 	PREPEND="coverage run --append bin/"
 fi
 
+export QT_QPA_PLATFORM=offscreen
+
 echo ===================================================
 echo pyrdp-player.py read a replay in headless mode test
 ${PREPEND}pyrdp-player.py --headless test/files/test_session.replay
@@ -68,3 +70,14 @@ echo ===================================================
 echo Verify that the replay file exists
 file -E "20200319000716_192.168.38.1:20989-192.168.38.1:3389.pyrdp"
 rm "20200319000716_192.168.38.1:20989-192.168.38.1:3389.pyrdp"
+
+echo ===================================================
+echo pyrdp-convert.py regression issue 428
+${PREPEND}pyrdp-convert.py test/files/test_convert_428.pyrdp -f mp4
+echo
+
+echo ===================================================
+echo Verify the MP4 file
+file test_convert_428.mp4 | grep "MP4 Base Media"
+rm test_convert_428.mp4
+echo

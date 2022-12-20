@@ -73,6 +73,12 @@ jobs:
           pathSource: test/files/test_files.zip
           pathTarget: test/files
 
+      - name: Extract test file for regression test 428
+        uses: DuckSoft/extract-7z-action@v1.0
+        with:
+          pathSource: test/files/test_convert_428.zip
+          pathTarget: test/files
+
       - name: Integration Test with a prerecorded PCAP.
         working-directory: ./
         run: coverage run test/test_prerecorded.py
