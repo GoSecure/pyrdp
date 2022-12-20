@@ -198,6 +198,28 @@ class FakeServer(threading.Thread):
 
         multiprocessing.Process(target=background).start()
 
+    def _subprocess(self, cmd: [str], env=None):
+        process = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+        )
+
+        _format_line = lambda l: l.decode().rstrip()
+
+        def _log_stdout():
+            with process.stdout as stdout:
+                for line in iter(stdout.readline, b""):
+                    self.log.info(_format_line(line))
+
+        multiprocessing.Process(target=_log_stdout).start()
+
+        def _log_stderr():
+            with process.stderr as stderr:
+                for line in iter(stderr.readline, b""):
+                    self.log.error(_format_line(line))
+
+        multiprocessing.Process(target=_log_stderr).start()
+        return process
+
     def _launch_rdp_server(self):
         # TODO check if port is not already taken
         self.log.info(
@@ -211,8 +233,7 @@ class FakeServer(threading.Thread):
             "/sec:tls",
             "-auth",
         ]
-        self.rdp_server_process = subprocess.Popen(rdp_server_cmd)
-        # TODO: fix cert on fake server
+        self.rdp_server_process = self._subprocess(rdp_server_cmd)
 
         # wait for the server to accept connections
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -253,11 +274,12 @@ class FakeServer(threading.Thread):
             "-toggle-fullscreen",
             "/log-level:ERROR",
         ]
-        self.rdp_client_process = subprocess.run(rdp_client_cmd)
+        self.rdp_client_process = self._subprocess(rdp_client_cmd)
+        self.rdp_client_process.wait()
         self.terminate()
 
     def resize(self, width: int, height: int):
-        subprocess.run(
+        process = self._subprocess(
             [
                 "xdotool",
                 "search",
@@ -269,6 +291,7 @@ class FakeServer(threading.Thread):
             ],
             env={"DISPLAY": ":0"},
         )
+        process.wait()
         if self.fakeLoginScreen is not None:
             self.fakeLoginScreen.resize(width, height)
 
