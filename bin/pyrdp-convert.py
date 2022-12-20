@@ -63,6 +63,10 @@ if __name__ == "__main__":
     if not HAS_GUI and args.format == "mp4":
         sys.stderr.write("Error: MP4 conversion requires the full PyRDP installation.")
         sys.exit(1)
+    elif HAS_GUI and args.format == "mp4":
+        # Initialize QT because QBitmap will segfault without it (#378, #428)
+        from PySide2.QtWidgets import QApplication
+        app = QApplication()
 
     logging.basicConfig(level=logging.CRITICAL)
     logging.getLogger("scapy").setLevel(logging.ERROR)

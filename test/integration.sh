@@ -21,6 +21,8 @@ else
 	PREPEND="coverage run --append bin/"
 fi
 
+export QT_QPA_PLATFORM=offscreen
+
 echo ===================================================
 echo pyrdp-player.py read a replay in headless mode test
 ${PREPEND}pyrdp-player.py --headless test/files/test_session.replay
