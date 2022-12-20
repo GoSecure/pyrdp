@@ -164,9 +164,8 @@ class FakeServer(threading.Thread):
         self.targetHost = targetHost
         self.targetPort = targetPort
         self.log = SessionLogger(
-            logging.getLogger(LOGGER_NAMES.MITM_FAKE_SERVER), sessionID
-        )
-        self.log.info("test")
+            logging.getLogger(LOGGER_NAMES.MITM), sessionID
+        ).createChild("fake_server")
 
         self._launch_display()
 

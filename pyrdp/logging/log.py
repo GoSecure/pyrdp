@@ -17,7 +17,6 @@ class LOGGER_NAMES:
     PYRDP = "pyrdp"
     MITM = f"{PYRDP}.mitm"
     MITM_CONNECTIONS = f"{MITM}.connections"
-    MITM_FAKE_SERVER = f"{MITM}.fake_server"
     PLAYER = f"{PYRDP}.player"
     PLAYER_UI = f"{PLAYER}.ui"
     NTLMSSP = f"ntlmssp"
