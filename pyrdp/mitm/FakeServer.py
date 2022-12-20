@@ -274,7 +274,6 @@ class FakeServer(threading.Thread):
         # TODO: the user sees "An internal error has occurred."
         for proc in (
             self.rdp_server_process,
-            self.xsetroot_process,
             self.rdp_client_process,
         ):
             if not isinstance(proc, subprocess.CompletedProcess):
