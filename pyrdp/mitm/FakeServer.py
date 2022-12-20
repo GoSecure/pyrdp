@@ -3,13 +3,13 @@
 # Copyright (C) 2022
 # Licensed under the GPLv3 or later.
 #
-import multiprocessing, os, random, shutil, socket, subprocess, threading, time
+import logging, multiprocessing, os, random, shutil, socket, subprocess, threading, time
 
 from tkinter import *
 from PIL import Image, ImageTk
 from pyvirtualdisplay import Display
 
-from logging import LoggerAdapter
+from pyrdp.logging import SessionLogger, LOGGER_NAMES
 
 BACKGROUND_COLOR = "#044a91"
 IMAGES_DIR = os.path.dirname(__file__) + "/images"
@@ -159,11 +159,14 @@ class FakeLoginScreen:
 
 
 class FakeServer(threading.Thread):
-    def __init__(self, targetHost: str, targetPort: int, log: LoggerAdapter):
+    def __init__(self, targetHost: str, targetPort: int = 3389, sessionID: str = None):
         super().__init__()
         self.targetHost = targetHost
         self.targetPort = targetPort
-        self.log = log
+        self.log = SessionLogger(
+            logging.getLogger(LOGGER_NAMES.MITM_FAKE_SERVER), sessionID
+        )
+        self.log.info("test")
 
         self._launch_display()
 

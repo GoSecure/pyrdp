@@ -4,13 +4,12 @@
 # Licensed under the GPLv3 or later.
 #
 
-from typing import Callable, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from Crypto.PublicKey import RSA
 
 from pyrdp.enum import NegotiationProtocols, ParserMode
 from pyrdp.layer import FastPathLayer, SecurityLayer, TLSSecurityLayer
-from pyrdp.logging import SessionLogger
 from pyrdp.parser import createFastPathParser
 from pyrdp.pdu import ClientChannelDefinition
 from pyrdp.security import RC4CrypterProxy, SecuritySettings
@@ -22,7 +21,7 @@ class RDPMITMState:
     State object for the RDP MITM. This is for data that needs to be shared across components.
     """
 
-    def __init__(self, config: MITMConfig, sessionID: str, getLog: Callable[[str], SessionLogger]):
+    def __init__(self, config: MITMConfig, sessionID: str):
         self.requestedProtocols: Optional[NegotiationProtocols] = None
         """The original request protocols"""
 
@@ -94,9 +93,6 @@ class RDPMITMState:
         self.fakeServer = None
         """The current fake server"""
 
-        self.getLog = getLog
-        """Function to create additional loggers"""
-
         self.securitySettings.addObserver(self.crypters[ParserMode.CLIENT])
         self.securitySettings.addObserver(self.crypters[ParserMode.SERVER])
 
@@ -139,8 +135,11 @@ class RDPMITMState:
 
     def useFakeServer(self):
         from pyrdp.mitm.FakeServer import FakeServer
+
         self.fakeServer = FakeServer(
-            self.config.targetHost, self.config.targetPort, self.getLog("")
+            self.config.targetHost,
+            targetPort=self.config.targetPort,
+            sessionID=self.sessionID,
         )
         self.effectiveTargetHost = "127.0.0.1"
         self.effectiveTargetPort = self.fakeServer.port
