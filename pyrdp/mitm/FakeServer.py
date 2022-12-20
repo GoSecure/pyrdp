@@ -160,6 +160,10 @@ class FakeLoginScreen:
         # quit
         self.root.destroy()
 
+    def check_submit(self):
+        if len(self.entry_username.get()) > 0 and len(self.entry_password.get()) > 0:
+            self.button_login.invoke()
+
     def show_loading_animation(self, index):
         if index == self.frame_count:
             self.root.destroy()
@@ -295,22 +299,24 @@ class FakeServer(threading.Thread):
         if self.fakeLoginScreen is not None:
             self.fakeLoginScreen.resize(width, height)
 
+    def check_submit(self):
+        self.fakeLoginScreen.check_submit()
+
     def set_username(self, username: str):
         # FIXME: properly solve this concurrency
         if self.fakeLoginScreen is None:
             time.sleep(0.1)
         if self.fakeLoginScreen is not None:
             self.fakeLoginScreen.set_username(username)
+        self.check_submit()
 
     def set_password(self, password: str):
         self.fakeLoginScreen.set_password(password)
+        self.check_submit()
 
     def terminate(self):
         # TODO: the user sees "An internal error has occurred."
-        for proc in (
-            self.rdp_server_process,
-            self.rdp_client_process,
-        ):
+        for proc in (self.rdp_server_process, self.rdp_client_process):
             if not isinstance(proc, subprocess.CompletedProcess):
                 proc.kill()
         self.display.stop()
