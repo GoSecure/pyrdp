@@ -123,10 +123,20 @@ class FakeLoginScreen:
         self.root.geometry(f"{width}x{height}")
         self._set_background(width, height)
 
+    def set_entry(self, entry: str, value: str):
+        if entry == "username":
+            entry = self.entry_username
+        elif entry == "password":
+            entry = self.entry_password
+        entry.delete(0, END)
+        entry.insert(0, value)
+
     def set_username(self, username: str):
-        self.entry_username.delete(0, END)
-        self.entry_username.insert(0, username)
+        self.set_entry("username", username)
         self.entry_password.focus()
+
+    def set_password(self, password: str):
+        self.set_entry("password", password)
 
     def on_click(self, event=None):
         self.clicked = True
@@ -268,6 +278,9 @@ class FakeServer(threading.Thread):
             time.sleep(0.1)
         if self.fakeLoginScreen is not None:
             self.fakeLoginScreen.set_username(username)
+
+    def set_password(self, password: str):
+        self.fakeLoginScreen.set_password(password)
 
     def terminate(self):
         # TODO: the user sees "An internal error has occurred."
