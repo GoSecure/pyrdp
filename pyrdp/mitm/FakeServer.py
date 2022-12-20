@@ -308,7 +308,7 @@ class FakeServer(threading.Thread):
             time.sleep(0.1)
         if self.fakeLoginScreen is not None:
             self.fakeLoginScreen.set_username(username)
-        self.check_submit()
+            self.check_submit()
 
     def set_password(self, password: str):
         self.fakeLoginScreen.set_password(password)
@@ -318,5 +318,6 @@ class FakeServer(threading.Thread):
         # TODO: the user sees "An internal error has occurred."
         for proc in (self.rdp_server_process, self.rdp_client_process):
             if not isinstance(proc, subprocess.CompletedProcess):
+                self.log.info("Killing process %(name)s", {"name": " ".join(proc.args)})
                 proc.kill()
         self.display.stop()
