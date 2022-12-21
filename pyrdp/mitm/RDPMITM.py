@@ -238,6 +238,9 @@ class RDPMITM:
             # Wait for server certificate
             reactor.callLater(1, self.doClientTls)
 
+        if cert.get_subject().commonName != self.config.targetHost:
+            cert.get_subject().commonName = self.config.targetHost
+
         # Clone certificate if necessary.
         if self.certs:
             privKey, certFile = self.certs.lookup(cert)
