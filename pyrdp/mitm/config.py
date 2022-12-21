@@ -91,6 +91,9 @@ class MITMConfig:
         self.redirectionPort = None
         """Port of the redirection host"""
 
+        self.fakeServer: bool = False
+        """Whether to use the fake server or not"""
+
     @property
     def replayDir(self) -> Path:
         """
