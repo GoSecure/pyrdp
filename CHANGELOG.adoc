@@ -6,10 +6,20 @@
 This document provides a high-level view of the changes introduced in {project-name} by release.
 For a detailed view of what has changed, refer to the {uri-repo}/commits/master[commit history] on GitHub.
 
-== <master> - <unreleased>
 
+== v1.2.0 - 2022-12-23
 
-== v1.2.0 - 2021-09-??
+The Rudolph Desktop Protocol!
+
+Release highlights:
+
+* Net-NTLMv2 Hash Capture
+* 6x faster `pyrdp-convert`
+* RDP Version 10.9 and 10.10 supported
+* Python 3.10 support
+* Plugged memory leak and fixed important long-standing bugs
+
+Full list of changes follows.
 
 === Backwards Compatibility Changes
 
@@ -29,7 +39,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * `pyrdp-convert` video conversion is now 6x faster! (See {uri-issue}349[#349])
 * `pyrdp-convert` video format can be viewed during encoding and will play even if the conversion process crashes or is halted ({uri-issue}352[#352], {uri-issue}353[#353])
 * `pyrdp-convert` can now handle exported PDUs (decrypted pcaps) with multiple sessions in them ({uri-issue}313[#313], {uri-issue}368[#368])
-* `pyrdp-convert` can now extract session information including keyboard and mouse movement information in JSON from pcap and PDUs ({uri-issue}331[#331], {uri-issues}366[#366])
+* `pyrdp-convert` can now extract session information including keyboard and mouse movement information in JSON from pcap and PDUs ({uri-issue}331[#331], {uri-issue}366[#366])
 * `pyrdp-convert` has better success messages, error reporting and exit status ({uri-issue}361[#361], {uri-issue}369[#369])
 * `pyrdp-mitm` added `--address` argument to choose the IP address where PyRDP is listening ({uri-issue}411[#411], {uri-issue}412[#412])
 * Minor CLI improvements
@@ -46,7 +56,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Fixed a memory leak in the bitmap decoding routine preventing the conversion or the replay of very large captures ({uri-issue}352[#352], {uri-issue}353[#353])
 * Fixed `pyrdp-player` on macOS platforms ({uri-issue}362[#362])
 * Fixed `pyrdp-convert` pcap processing when victim IP and MITM IP are the same ({uri-issue}366[#366])
-* Fixed a `pyrdp-convert` segmentation fault in QT in some MP4 conversions ({uri-issue}378[#378], {uri-issue}428[#428], {uri=issue}429[#429])
+* Fixed a `pyrdp-convert` segmentation fault in QT in some MP4 conversions ({uri-issue}378[#378], {uri-issue}428[#428], {uri-issue}429[#429])
 * Fixed NLA redirection problems if original target and NLA redirection target are the same ({uri-issue}342[#342], {uri-issue}343[#343])
 * Fixed leak of file descriptors due to missing close on replay file recording ({uri-issue}392[#392], {uri-issue}413[#413], {uri-issue}415[#415])
 * Added a missing dependency for the GUI on Ubuntu 20.04 LTS ({uri-issue}348[#348], {uri-issue}351[#351], {uri-issue}355[#355])
@@ -63,6 +73,14 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Test refactoring to allow running most GitHub CI tests locally when developing ({uri-issue}368[#368])
 * Added Python 3.10 to CI test configuration ({uri-issue}387[#387])
 * Updated our dependencies to the latest stable versions ({uri-issue}386[#386], {uri-issue}391[#391], {uri-issue}400[#400], {uri-issue}414[#414], {uri-issue}417[#417])
+
+=== Credits
+
+Thanks to the following people who contributed to this release:
+
+Alexandre Beaulieu (@alxbl), Lisandro Ubiedo (@lubiedo), Francis Labelle
+(@xshill),Lukas Kupczyk (@lkupczyk), Olivier Bilodeau (@obilodeau), simonhuang
+(@thelongestusernameofall), Jonas (@spameier) and https://flare.systems/[Flare Systems]
 
 
 == v1.1.0 - 2021-08-05
