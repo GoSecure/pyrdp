@@ -12,7 +12,7 @@ import setuptools
 from distutils.core import Extension, setup
 
 setup(name='pyrdp',
-    version='1.1.1.dev0',
+    version='1.2.0',
     description='Remote Desktop Protocol Monster-in-the-Middle tool and Python library',
     long_description="""Remote Desktop Protocol Monster-in-the-Middle tool and Python library""",
     author='Émilio Gonzalez, Francis Labelle, Olivier Bilodeau, Alexandre Beaulieu',
