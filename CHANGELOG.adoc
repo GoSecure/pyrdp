@@ -11,7 +11,9 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 The Rudolph Desktop Protocol!
 
-Release highlights:
+Read the release blog post: https://www.gosecure.net/blog/2022/12/23/a-new-pyrdp-release-the-rudolph-desktop-protocol/
+
+=== Release Highlights
 
 * Net-NTLMv2 Hash Capture
 * 6x faster `pyrdp-convert`
