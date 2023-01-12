@@ -7,9 +7,9 @@
 import asyncio
 import datetime
 import typing
-import ssl
+import socket
 
-from OpenSSL import crypto
+from OpenSSL import SSL, crypto
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol
 
@@ -228,10 +228,12 @@ class RDPMITM:
                     "port": self.state.config.targetPort,
                 },
             )
-            pem = ssl.get_server_certificate(
-                (self.state.config.targetHost, self.state.config.targetPort)
-            )
-            cert = crypto.load_certificate(crypto.FILETYPE_PEM, pem)
+            # Use context from pyrdp
+            context = ClientTLSContext().getContext()
+            connection = SSL.Connection(context, socket.socket(socket.AF_INET, socket.SOCK_STREAM))
+            connection.connect((self.state.config.targetHost, self.state.config.targetPort))
+            connection.do_handshake()
+            cert = connection.get_peer_certificate()
         else:
             cert = self.server.tcp.transport.getPeerCertificate()
         if not cert:
