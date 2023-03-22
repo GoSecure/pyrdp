@@ -160,7 +160,8 @@ commands.
 The steps are almost the same. There are two additional prerequisites.
 
 1. A working Python environment ([python.org installer recommended](https://www.python.org/downloads/windows/))
-2. [OpenSSL](https://wiki.openssl.org/index.php/Binaries). Make sure it is reachable from your `$PATH`.
+2. [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+3. [OpenSSL](https://wiki.openssl.org/index.php/Binaries). Make sure it is reachable from your `$PATH`.
 
 Then, create your virtual environment in PyRDP's directory:
 
