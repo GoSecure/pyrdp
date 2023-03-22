@@ -159,14 +159,14 @@ commands.
 
 The steps are almost the same. There are two additional prerequisites.
 
-1. Any C compiler
+1. A working Python environment ([python.org installer recommended](https://www.python.org/downloads/windows/))
 2. [OpenSSL](https://wiki.openssl.org/index.php/Binaries). Make sure it is reachable from your `$PATH`.
 
 Then, create your virtual environment in PyRDP's directory:
 
 ```
 cd pyrdp
-python3 -m venv venv
+python -m venv venv
 ```
 
 *DO NOT* use the root PyRDP directory for the virtual environment folder (`python3 -m venv .`). You will make a mess,
@@ -181,11 +181,16 @@ venv\Scripts\activate
 Finally, you can install the project with Pip:
 
 ```
-pip3 install -U pip setuptools wheel
-pip3 install -U -e ".[full]"
+python -m pip install -U pip setuptools wheel
+pip install -U -e ".[full]"
 ```
 
 This should install all the dependencies required to run PyRDP.
+For example, to open the player:
+
+```
+python venv\Scripts\pyrdp-player.py
+```
 
 If you ever want to leave your virtual environment, you can simply deactivate it:
 
