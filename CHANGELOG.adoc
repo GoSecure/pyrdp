@@ -7,6 +7,13 @@ This document provides a high-level view of the changes introduced in {project-n
 For a detailed view of what has changed, refer to the {uri-repo}/commits/master[commit history] on GitHub.
 
 
+== v<unreleased> - <date>
+
+=== Enhancements
+
+* Support for RDP version 10.11 ({uri-issue}433[#433])
+
+
 == v1.2.0 - 2022-12-23
 
 The Rudolph Desktop Protocol!
