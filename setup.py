@@ -47,7 +47,7 @@ setup(name='pyrdp',
     extras_require={
         "full": [
             'wheel>=0.34.2',
-            'av>=8,<9',
+            'av>=8,<11',
             'PySide2>=5.12,<6',
             'qimage2ndarray>=1.6,<2',
             'py-notifier>=0.3.0',
