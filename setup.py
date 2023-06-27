@@ -42,7 +42,7 @@ setup(name='pyrdp',
         'rsa>=4,<5',
         'scapy>=2.4,<3',
         'service_identity>=18',
-        'twisted>=18',
+        'twisted>=21.2.0',
     ],
     extras_require={
         "full": [
