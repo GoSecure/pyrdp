@@ -12,6 +12,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 === Enhancements
 
 * Support for RDP version 10.11 ({uri-issue}433[#433])
+* Support for Python 3.11 by updating PyAV to get pre-built binary wheels ({uri-issue}437[#437], {uri-issue}438[#438])
 
 
 == v1.2.0 - 2022-12-23
