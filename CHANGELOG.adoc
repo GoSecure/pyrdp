@@ -14,6 +14,16 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Support for RDP version 10.11 ({uri-issue}433[#433])
 * Support for Python 3.11 by updating PyAV to get pre-built binary wheels ({uri-issue}437[#437], {uri-issue}438[#438])
 
+=== Bug fixes
+
+* Fixed pyrdp-player support for Windows on Python 3.8+ ({uri-issue}316[#316], {uri-issue}439[#439])
+* Updated Twisted's minimum version to 21.2.0 due to ({uri-issue}316[#316])
+
+=== Infrastructure
+
+* Added Python 3.10 tests on Windows to CI test configuration ({uri-issue}439[#439])
+* Replaced Python 3.10 with Python 3.11 for CI test configuration ({uri-issue}438[#438])
+
 
 == v1.2.0 - 2022-12-23
 
