@@ -109,7 +109,8 @@ class PassiveClipboardStealer:
         if pdu.flags == FileContentsFlags.SIZE:
             if pdu.lindex < len(self.files):
                 fd = self.files[pdu.lindex]
-                self.log.info('Starting transfer for file "%s" ClipId=%d', fd.filename, pdu.clipId)
+                self.log.info("Starting transfer for file '%(filename)s', clipId=%(clipId)d",
+                              {"filename": fd.filename, "clipId": pdu.clipId})
 
                 if pdu.streamId in self.transfers:
                     self.log.warning('File transfer already started')
@@ -123,11 +124,13 @@ class PassiveClipboardStealer:
                 cbTimeout = reactor.callLater(TRANSFER_TIMEOUT, partial(self.onTransferTimedOut, pdu.streamId))
                 self.timeouts[pdu.streamId] = cbTimeout
             else:
-                self.log.info('Request for uknown file! (list index=%d)', pdu.lindex)
+                self.log.info('Request for unknown file! (list index=%(lIndex)d)',
+                              {'lIndex': pdu.lindex})
 
         elif pdu.flags == FileContentsFlags.RANGE:
             if pdu.streamId not in self.transfers:
-                self.log.warning('FileContentsRequest for unknown transfer (streamId=%d)', pdu.streamId)
+                self.log.warning('FileContentsRequest for unknown transfer (streamId=%(streamId)d)',
+                                 {"streamId": pdu.streamId})
             else:
                 self.refreshTimeout(pdu.streamId)
                 self.transfers[pdu.streamId].onRequest(pdu)
@@ -136,14 +139,16 @@ class PassiveClipboardStealer:
 
     def onFileContentsResponse(self, pdu: FileContentsResponsePDU):
         if pdu.streamId not in self.transfers:
-            self.log.warning('FileContentsResponse for unknown transfer (streamId=%d)', pdu.streamId)
+            self.log.warning('FileContentsResponse for unknown transfer (streamId=%(streamId)d)',
+                             {"streamId": pdu.streamId})
         else:
             self.refreshTimeout(pdu.streamId)
 
             done = self.transfers[pdu.streamId].onResponse(pdu)
             if done:
                 xfer = self.transfers[pdu.streamId]
-                self.log.info('Transfer completed for file "%s" location: "%s"', xfer.info.filename, xfer.localname)
+                self.log.info("Transfer completed for file '%(filename)s', saved to: '%(localPath)s'",
+                              {"filename": xfer.info.filename, "localPath": xfer.localname})
                 del self.transfers[pdu.streamId]
 
                 # Remove the timeout since the transfer is done.
@@ -160,7 +165,8 @@ class PassiveClipboardStealer:
             # transfer has been completed. The latter should never happen due to the way
             # twisted's reactor works.
             xfer = self.transfers[streamId]
-            self.log.warn('Transfer timed out for "%s" (location: "%s")', xfer.info.filename, xfer.localname)
+            self.log.warn("Transfer timed out for '%(filename)s' saved to: '%(localPath)s'",
+                          {"filename": xfer.info.filename, "localPath": xfer.localname})
             del self.transfers[streamId]
             del self.timeouts[streamId]
 
@@ -173,10 +179,6 @@ class PassiveClipboardStealer:
             # FIXME: There is currently no concept of transfer direction.
             if len(pdu.files) > 0:
                 self.files = pdu.files
-                self.log.info('---- Received Clipboard Files ----')
-                for f in self.files:
-                    self.log.info(f.filename)
-                self.log.info('-------------------------')
 
             if pdu.formatId == ClipboardFormatNumber.GENERIC.value:
                 clipboardData = self.decodeClipboardData(pdu.requestedFormatData)
