@@ -7,6 +7,10 @@
 #
 # Need to install this reactor before importing any other code
 import asyncio
+import sys
+# We need a special asyncio loop on Windows above Python 3.8. See #316
+if (sys.platform == "win32" and sys.version_info.major == 3 and sys.version_info.minor >= 8):
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 from twisted.internet import asyncioreactor
 asyncioreactor.install(asyncio.new_event_loop())
 
