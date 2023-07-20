@@ -17,7 +17,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 === Bug fixes
 
 * JSON logging of files captured via the clipboard was fixed ({uri-issue}441[#441])
-* Fixed pyrdp-player support for Windows on Python 3.8+ ({uri-issue}316[#316], {uri-issue}439[#439])
+* Fixed support for Windows on Python 3.8+ ({uri-issue}316[#316], {uri-issue}439[#439], {uri-issue}444[#444])
 * Updated Twisted's minimum version to 21.2.0 due to ({uri-issue}316[#316])
 
 === Infrastructure
