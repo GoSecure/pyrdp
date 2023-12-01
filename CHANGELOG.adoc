@@ -13,6 +13,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 * Support for RDP version 10.11 ({uri-issue}433[#433])
 * Support for Python 3.11 by updating PyAV to get pre-built binary wheels ({uri-issue}437[#437], {uri-issue}438[#438])
+* MITM start and termination log messages are now part of the JSON logs ({uri-issue}447[#447])
 
 === Bug fixes
 
