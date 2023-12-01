@@ -100,6 +100,8 @@ sudo apt install python3 python3-pip python3-dev python3-setuptools python3-venv
         libgl1-mesa-glx \
         libnotify-bin \
         libxkbcommon-x11-0 libxcb-xinerama0 \
+        libxcb-icccm4 libxcb-image0 libxcb-util1 libxcb-keysyms1 \
+        libxcb-randr0 libxcb-render-util0 \
         libavformat-dev libavcodec-dev libavdevice-dev \
         libavutil-dev libswscale-dev libswresample-dev libavfilter-dev
 
