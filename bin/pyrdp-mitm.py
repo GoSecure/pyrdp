@@ -27,7 +27,7 @@ from pyrdp.logging import LOGGER_NAMES
 
 def main():
     config = configure()
-    logger = logging.getLogger(LOGGER_NAMES.PYRDP)
+    logger = logging.getLogger(LOGGER_NAMES.MITM_CONNECTIONS)
 
     # Create a listening socket to accept connections.
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
