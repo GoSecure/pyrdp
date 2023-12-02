@@ -130,6 +130,7 @@ def buildArgParser():
                         action="store_true")
     parser.add_argument("--nla-redirection-host", help="Redirection target ip if NLA is enforced", default=None)
     parser.add_argument("--nla-redirection-port", help="Redirection target port if NLA is enforced", type=int, default=None)
+    parser.add_argument("--nla-fake-server", help="Launch fake server (local rdp server + xfreerdp client) if NLA is enforced", action="store_true")
     parser.add_argument("--ssp-challenge", help="Set challenge for SSP authentictation (e.g. 1122334455667788). Incompatible with --auth ssp.", type=str, default=None)
 
     return parser
@@ -170,6 +171,9 @@ def configure(cmdline=None) -> MITMConfig:
     if (args.nla_redirection_host is None) != (args.nla_redirection_port is None):
         sys.stderr.write('Error: please provide both --nla-redirection-host and --nla-redirection-port\n')
         sys.exit(1)
+
+    if args.nla_fake_server and args.nla_redirection_host:
+        sys.stderr.write('Error: fake server is not compatible with NLA redirection, because the redirection will happen to localhost')
 
     if args.ssp_challenge is not None and "ssp" in args.auth:
         sys.stderr.write('Error: Using a fixed challenge does not work with --auth ssp which is meant to specify an NLA bypass. '
@@ -212,6 +216,9 @@ def configure(cmdline=None) -> MITMConfig:
     config.useGdi = not args.no_gdi
     config.redirectionHost = args.nla_redirection_host
     config.redirectionPort = args.nla_redirection_port
+    if args.nla_fake_server:
+        config.redirectionHost = "127.0.0.1"
+        config.fakeServer = args.nla_fake_server
     config.sspChallenge = args.ssp_challenge
 
     payload = None

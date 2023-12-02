@@ -90,6 +90,9 @@ class RDPMITMState:
         self.ntlmCapture = False
         """Hijack connection from server and capture NTML hash"""
 
+        self.fakeServer = None
+        """The current fake server"""
+
         self.securitySettings.addObserver(self.crypters[ParserMode.CLIENT])
         self.securitySettings.addObserver(self.crypters[ParserMode.SERVER])
 
@@ -121,8 +124,23 @@ class RDPMITMState:
         return None not in [self.config.redirectionHost, self.config.redirectionPort] and not self.isRedirected()
 
     def isRedirected(self) -> bool:
-        return self.effectiveTargetHost == self.config.redirectionHost and self.effectiveTargetPort == self.config.redirectionPort
+        return (
+            self.effectiveTargetHost == self.config.redirectionHost
+            and self.effectiveTargetPort == self.config.redirectionPort
+        ) or self.fakeServer is not None
 
     def useRedirectionHost(self):
         self.effectiveTargetHost = self.config.redirectionHost
         self.effectiveTargetPort = self.config.redirectionPort
+
+    def useFakeServer(self):
+        from pyrdp.mitm.FakeServer import FakeServer
+
+        self.fakeServer = FakeServer(
+            self.config.targetHost,
+            targetPort=self.config.targetPort,
+            sessionID=self.sessionID,
+        )
+        self.effectiveTargetHost = "127.0.0.1"
+        self.effectiveTargetPort = self.fakeServer.port
+        self.fakeServer.start()
