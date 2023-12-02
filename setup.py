@@ -32,7 +32,7 @@ setup(name='pyrdp',
     ],
     install_requires=[
         'appdirs>=1,<2',
-        'cryptography>=3.3.2,<37',
+        'cryptography>=3.3.2,<40',
         'names>=0,<1',
         'progressbar2>=3.20,<5',
         'pyasn1>=0,<1',
