@@ -57,7 +57,7 @@ Homepage = "https://github.com/GoSecure/pyrdp"
 
 [project.optional-dependencies]
 full = ['wheel>=0.34.2',
-       'av>=8,<9',
+       'av>=11,<12',
        'PySide2>=5.12,<6',
        'qimage2ndarray>=1.6,<2',
        'py-notifier>=0.3.0',
