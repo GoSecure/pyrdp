@@ -10,7 +10,7 @@ readme = "README.md"
 #license = "GPL-3.0-or-later"
 # TODO automatically pull from this in the code
 version = "1.2.1.dev0"
-requires-python = ">=3.6"
+requires-python = ">=3.7"
 authors = [
     { name = "Olivier Bilodeau", email = "obilodeau@gosecure.net" },
     { name = "Émilio Gonzalez" },
@@ -27,7 +27,6 @@ classifiers = [
     "Operating System :: POSIX",
     "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
