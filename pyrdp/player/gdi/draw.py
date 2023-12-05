@@ -20,7 +20,7 @@ from pyrdp.parser.rdp.orders.primary import DstBlt, PatBlt, ScrBlt, DrawNineGrid
     FastIndex, PolygonSc, PolygonCb, PolyLine, FastGlyph, EllipseSc, EllipseCb, GlyphIndex, Brush, \
     BACKMODE_TRANSPARENT
 
-from pyrdp.ui import QRemoteDesktop, RDPBitmapToQtImage
+from pyrdp.ui import RDPBitmapToQtImage
 
 from .cache import BitmapCache, BrushCache, PaletteCache, GlyphCache, GlyphEntry
 from .raster import set_rop3, set_rop2

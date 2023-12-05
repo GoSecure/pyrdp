@@ -96,7 +96,7 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
 
         self.jobsQueue.add(job)
 
-        if self.currentDownload == None:
+        if self.currentDownload is None:
             self.dispatchDownload()
 
     def dispatchDownload(self):

@@ -218,7 +218,7 @@ class FileSystemWidget(QWidget, DirectoryObserver):
 
         dialog = None
         if directoryPath == "":
-            QMessageBox.critical(self, "Download folder", f"Please select a valid folder. Aborting download.")
+            QMessageBox.critical(self, "Download folder", "Please select a valid folder. Aborting download.")
             return
 
         directoryPath += f"/{selectedFolder.name}"
@@ -226,7 +226,7 @@ class FileSystemWidget(QWidget, DirectoryObserver):
         try:
             os.mkdir(directoryPath)
         except FileExistsError:
-            QMessageBox.critical(self, "Download folder", f"Folder already exist. Make sure to select an empty directory. Aborting download.")
+            QMessageBox.critical(self, "Download folder", "Folder already exist. Make sure to select an empty directory. Aborting download.")
             return
 
         dialog = FileDownloadDialog(remotePath, directoryPath, True, self)

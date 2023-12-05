@@ -7,7 +7,6 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QResizeEvent, QKeyEvent
 from PySide6.QtWidgets import QApplication, QWidget
 
-from pyrdp.layer import PlayerLayer
 from pyrdp.player.BaseTab import BaseTab
 from pyrdp.player.PlayerEventHandler import PlayerEventHandler
 from pyrdp.player.Replay import Replay, ReplayReader
