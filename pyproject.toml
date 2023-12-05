@@ -7,9 +7,7 @@ build-backend = "setuptools.build_meta"
 name = "pyrdp"
 description = "Remote Desktop Protocol (RDP) Monster-in-the-Middle tool and Python library"
 readme = "README.md"
-#license = "GPL-3.0-or-later"
-# TODO automatically pull from this in the code
-version = "1.2.1.dev0"
+version = "2.0.0.rc1"
 requires-python = ">=3.7"
 authors = [
     { name = "Olivier Bilodeau", email = "obilodeau@gosecure.net" },
