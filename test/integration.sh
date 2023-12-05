@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2022 GoSecure Inc.
+# Copyright (C) 2022-2023 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 # We extracted a set of important tests that were run as part of a GitHub
@@ -16,21 +16,28 @@ set -e
 
 # Sets how to launch commands. GitHub workflows sets the CI environment variable
 if [[ -z "${CI}" ]]; then
-	PREPEND=""
+	SOURCE="local"
 else
-	PREPEND="coverage run --append bin/"
+	SOURCE="ci"
 fi
+
+declare -A ENTRYPOINT
+
+ENTRYPOINT["player","local"]="pyrdp-player"
+ENTRYPOINT["player","ci"]="coverage run --append -m pyrdp.bin.player"
+ENTRYPOINT["convert","local"]="pyrdp-convert"
+ENTRYPOINT["convert","ci"]="coverage run --append -m pyrdp.bin.convert"
 
 export QT_QPA_PLATFORM=offscreen
 
 echo ===================================================
-echo pyrdp-player.py read a replay in headless mode test
-${PREPEND}pyrdp-player.py --headless test/files/test_session.replay
+echo pyrdp-player read a replay in headless mode test
+${ENTRYPOINT["player",${SOURCE}]} --headless test/files/test_session.replay
 echo
 
 echo ===================================================
-echo pyrdp-convert.py to MP4
-${PREPEND}pyrdp-convert.py test/files/test_convert.pyrdp -f mp4
+echo pyrdp-convert to MP4
+${ENTRYPOINT["convert",${SOURCE}]} test/files/test_convert.pyrdp -f mp4
 echo
 
 echo ===================================================
@@ -40,8 +47,8 @@ rm test_convert.mp4
 echo
 
 echo ===================================================
-echo pyrdp-convert.py replay to JSON
-${PREPEND}pyrdp-convert.py test/files/test_convert.pyrdp -f json
+echo pyrdp-convert replay to JSON
+${ENTRYPOINT["convert",${SOURCE}]} test/files/test_convert.pyrdp -f json
 echo
 
 echo ===================================================
@@ -51,8 +58,8 @@ rm test_convert.json
 echo
 
 echo ===================================================
-echo pyrdp-convert.py PCAP to JSON
-${PREPEND}pyrdp-convert.py test/files/test_session.pcap -f json
+echo pyrdp-convert PCAP to JSON
+${ENTRYPOINT["convert",${SOURCE}]} test/files/test_session.pcap -f json
 echo
 
 echo ===================================================
@@ -62,8 +69,8 @@ rm "20200319000716_192.168.38.1:20989-192.168.38.1:3389.json"
 echo
 
 echo ===================================================
-echo pyrdp-convert.py PCAP to replay
-${PREPEND}pyrdp-convert.py test/files/test_session.pcap -f replay
+echo pyrdp-convert PCAP to replay
+${ENTRYPOINT["convert",${SOURCE}]} test/files/test_session.pcap -f replay
 echo
 
 echo ===================================================
@@ -73,7 +80,7 @@ rm "20200319000716_192.168.38.1:20989-192.168.38.1:3389.pyrdp"
 
 echo ===================================================
 echo pyrdp-convert.py regression issue 428
-${PREPEND}pyrdp-convert.py test/files/test_convert_428.pyrdp -f mp4
+${ENTRYPOINT["convert",${SOURCE}]} test/files/test_convert_428.pyrdp -f mp4
 echo
 
 echo ===================================================

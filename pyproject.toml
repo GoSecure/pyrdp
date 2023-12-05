@@ -1,0 +1,85 @@
+[build-system]
+# can't use setuptools-scm for docker builds w/o a git tree
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyrdp"
+description = "Remote Desktop Protocol (RDP) Monster-in-the-Middle tool and Python library"
+readme = "README.md"
+#license = "GPL-3.0-or-later"
+# TODO automatically pull from this in the code
+version = "1.2.1.dev0"
+requires-python = ">=3.7"
+authors = [
+    { name = "Olivier Bilodeau", email = "obilodeau@gosecure.net" },
+    { name = "Émilio Gonzalez" },
+    { name = "Francis Labelle" },
+    { name = "Alexandre Beaulieu" },
+]
+keywords = ["RDP", "MITM", "interception", "attack", "pentest", "honeypots"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Environment :: X11 Applications :: Qt",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Natural Language :: English",
+    "Operating System :: POSIX",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Communications",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    'appdirs>=1,<2',
+    'cryptography>=3.3.2,<37',
+    'names>=0,<1',
+    'progressbar2>=3.20,<5',
+    'pyasn1>=0,<1',
+    'pycryptodome>=3.5,<4',
+    'pyopenssl>=19,<22',
+    'pytz',
+    'rsa>=4,<5',
+    'scapy>=2.4,<3',
+    'service_identity>=18',
+    'twisted>=18'
+]
+
+[project.optional-dependencies]
+full = [
+    'wheel>=0.34.2',
+    'av>=8,<12',
+    'PySide2>=5.12,<6',
+    'qimage2ndarray>=1.6,<2',
+    'py-notifier>=0.3.0',
+    'win10toast>=0.9;platform_system=="Windows"',
+]
+
+[project.urls]
+Homepage = "https://github.com/GoSecure/pyrdp"
+
+[project.scripts]
+pyrdp-clonecert = "pyrdp.bin.clonecert:main"
+pyrdp-mitm = "pyrdp.bin.mitm:main"
+pyrdp-player = "pyrdp.bin.player:main"
+pyrdp-convert = "pyrdp.bin.convert:main"
+
+[project.gui-scripts]
+pyrdp-player-gui = "pyrdp.bin.player:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pyrdp*", "twisted*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.txt", "*.ini", "twisted/*.py"]
+
+[tool.ruff.extend-per-file-ignores]
+"__init__.py" = ["F401"]

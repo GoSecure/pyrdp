@@ -3,7 +3,6 @@ branch = True
 source =
     pyrdp
     twisted
-    bin
 
 [report]
 # Regexes for lines to exclude from consideration

@@ -1,10 +1,10 @@
 # PyRDP Convert
 
-`pyrdp-convert.py` is a helper tool to help manipulate network traces and PyRDP session replay files.
+`pyrdp-convert` is a helper tool to help manipulate network traces and PyRDP session replay files.
 It supports conversions of network captures or replay files into various formats.
 This document contains format-specific notes.
 
-Use `pyrdp-convert.py -h` for a full list of supported arguments and formats.
+Use `pyrdp-convert -h` for a full list of supported arguments and formats.
 
 
 ## MP4

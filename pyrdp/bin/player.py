@@ -6,6 +6,7 @@
 # Licensed under the GPLv3 or later.
 #
 # Need to install this reactor before importing any other code
+# ruff: noqa: E402
 import asyncio
 import sys
 # We need a special asyncio loop on Windows above Python 3.8. See #316

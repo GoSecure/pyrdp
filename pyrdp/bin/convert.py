@@ -2,7 +2,7 @@
 
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2020-2022 GoSecure Inc.
+# Copyright (C) 2020-2023 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 import argparse
@@ -16,7 +16,7 @@ from pyrdp.convert.utils import HANDLERS, loadSecrets
 from pyrdp.player import HAS_GUI
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("input", help="Path to a .pcap or .pyrdp file. "
                                       "Converting from a .pcap will always extract file transfer artifacts in addition to the actual replay.")
@@ -98,3 +98,6 @@ if __name__ == "__main__":
 
     exitCode = converter.process()
     sys.exit(exitCode)
+
+if __name__ == "__main__":
+    main()
