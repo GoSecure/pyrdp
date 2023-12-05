@@ -19,23 +19,27 @@ RUN python3 -m venv /opt/venv
 # Make sure we use the virtualenv:
 ENV PATH="/opt/venv/bin:$PATH"
 
+# Python packaging tooling evolved quickly, we need to get latest, especially on old Pythons
+RUN pip --no-cache-dir install -U pip setuptools wheel
+
 # Install dependencies only (speeds repetitive builds)
 COPY requirements.txt /pyrdp/requirements.txt
 RUN cd /pyrdp && \
-    pip3 install wheel && \
-    pip3 --no-cache-dir install --default-timeout=100 -r requirements.txt
+    pip --no-cache-dir install --default-timeout=100 -r requirements.txt
 
 # Compile only our C extension and install
 # This way changes to source tree will not trigger full images rebuilds
-COPY ext/rle.c /pyrdp/ext/rle.c
-COPY setup.py /pyrdp/setup.py
-COPY pyproject.toml /pyrdp/pyproject.toml
+COPY ext/rle.c /pyrdp/ext/
+COPY setup.py /pyrdp/
+COPY README.md /pyrdp/
+COPY pyproject.toml /pyrdp/
+COPY pyrdp/ /pyrdp/pyrdp/
 RUN cd /pyrdp \
-    && pip3 --no-cache-dir install '.[full]'
+    && pip --no-cache-dir install '.[full]'
 
 
 # Handles runtime only (minimize size for distribution)
-FROM ubuntu:20.04 AS docker-image
+FROM ubuntu:20.04 AS runtime-image
 
 # Install runtime dependencies except pre-built venv
 ARG DEBIAN_FRONTEND=noninteractive
@@ -62,6 +66,11 @@ RUN useradd --create-home --home-dir /home/pyrdp pyrdp
 
 # Make sure we use the virtualenv
 ENV PATH="/opt/venv/bin:$PATH"
+
+# Install python source
+# NOTE: we are no longer doing this in the compile image to avoid long image rebuilds in development
+COPY --from=compile-image /pyrdp /pyrdp
+COPY pyrdp/ /pyrdp/pyrdp/
 
 USER pyrdp
 

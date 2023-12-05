@@ -1,5 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0", "setuptools-scm"]
+# can't use setuptools-scm for docker builds w/o a git tree
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -76,4 +77,7 @@ pyrdp-player-gui = "pyrdp.bin.player:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["pyrdp"]
+include = ["pyrdp*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.txt", "*.ini"]
