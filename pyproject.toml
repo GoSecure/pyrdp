@@ -11,10 +11,10 @@ readme = "README.md"
 version = "1.2.1.dev0"
 requires-python = ">=3.6"
 authors = [
-  { name = "Olivier Bilodeau", email = "obilodeau@gosecure.net" },
-  { name = "Émilio Gonzalez" },
-  { name = "Francis Labelle" },
-  { name = "Alexandre Beaulieu" },
+    { name = "Olivier Bilodeau", email = "obilodeau@gosecure.net" },
+    { name = "Émilio Gonzalez" },
+    { name = "Francis Labelle" },
+    { name = "Alexandre Beaulieu" },
 ]
 keywords = ["RDP", "MITM", "interception", "attack", "pentest", "honeypots"]
 classifiers = [
@@ -52,17 +52,18 @@ dependencies = [
     'twisted>=18'
 ]
 
+[project.optional-dependencies]
+full = [
+    'wheel>=0.34.2',
+    'av>=8,<12',
+    'PySide2>=5.12,<6',
+    'qimage2ndarray>=1.6,<2',
+    'py-notifier>=0.3.0',
+    'win10toast>=0.9;platform_system=="Windows"',
+]
+
 [project.urls]
 Homepage = "https://github.com/GoSecure/pyrdp"
-
-[project.optional-dependencies]
-full = ['wheel>=0.34.2',
-       'av>=11,<12',
-       'PySide2>=5.12,<6',
-       'qimage2ndarray>=1.6,<2',
-       'py-notifier>=0.3.0',
-       'win10toast>=0.9;platform_system=="Windows"',
-]
 
 [project.scripts]
 pyrdp-clonecert = "pyrdp.bin.clonecert:main"
