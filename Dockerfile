@@ -29,9 +29,9 @@ RUN cd /pyrdp && \
 # This way changes to source tree will not trigger full images rebuilds
 COPY ext/rle.c /pyrdp/ext/rle.c
 COPY setup.py /pyrdp/setup.py
+COPY pyproject.toml /pyrdp/pyproject.toml
 RUN cd /pyrdp \
-    && python setup.py build_ext \
-    && python setup.py install_lib
+    && pip3 --no-cache-dir install '.[full]'
 
 
 # Handles runtime only (minimize size for distribution)
@@ -66,9 +66,9 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Install python source and package
 # NOTE: we are no longer doing this in the compile image to avoid long image rebuilds in development
 COPY --from=compile-image /pyrdp /pyrdp
-COPY bin/ /pyrdp/bin/
 COPY pyrdp/ /pyrdp/pyrdp/
 COPY setup.py /pyrdp/setup.py
+COPY pyproject.toml /pyrdp/pyproject.toml
 RUN cd /pyrdp \
     && python setup.py install
 

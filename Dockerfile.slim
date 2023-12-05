@@ -24,7 +24,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Required for ARM builds
 # Building dependencies didn't work without an upgraded pip and wheel on ARM
-RUN pip3 --no-cache-dir install -U pip wheel
+RUN pip3 --no-cache-dir install -U pip setuptools wheel
 
 # Install dependencies only (speeds repetitive builds)
 COPY requirements-slim.txt /pyrdp/requirements.txt
@@ -63,7 +63,6 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Install python source and package
 # NOTE: we are no longer doing this in the compile image to avoid long image rebuilds in development
 COPY --from=compile-image /pyrdp /pyrdp
-COPY bin/ /pyrdp/bin/
 COPY pyrdp/ /pyrdp/pyrdp/
 COPY setup.py /pyrdp/setup.py
 RUN cd /pyrdp \
