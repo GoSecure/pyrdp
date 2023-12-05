@@ -45,6 +45,20 @@ docker images (latest, slim), on linux, on Windows
 * sections, vim's: `%s/^=== \(.*\)$/## \1/gc`
 * asciidoc links to markdown with vim: `%s/link:\([^\[]\+\)\(\[[^\[]\+\]\)/\2(\1)/gc`
 
+.Upload binaries to PyPI
+
+Instructions are partially from: https://cibuildwheel.readthedocs.io/en/stable/deliver-to-pypi/#manual-method
+
+    rm -rf dist/
+    # Make a source distribution
+    pipx run build --sdist
+
+* Download packages built (called artifacts) by the https://github.com/GoSecure/pyrdp/actions/workflows/wheels.yml[Build workflow on GitHub] that are from the release commit
+* Extract the zip in the dist/ directory
+
+    # Upload using 'twine'
+    pipx run twine upload dist/*
+
 .Post-release
 * Update version in `pyproject.toml` (+1 bugfix, append '.dev0') and commit
 * commit msg: Begin development on next release
