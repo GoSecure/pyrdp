@@ -35,6 +35,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Replaced Python 3.10 with Python 3.11 for CI test configuration ({uri-issue}438[#438])
 * Added Ubuntu 20.04 in CI test configuration
 * Using cibuildwheel for cross-platform and cross-python builds Windows, Linux, macOS ({uri-issue}451[#451])
+* Deprecation cleanup in CI ({uri-issue}452[#452])
 
 
 == v1.2.0 - 2022-12-23
