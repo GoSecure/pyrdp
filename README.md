@@ -59,9 +59,9 @@ research use cases in mind.
 
 
 ## Supported Systems
-PyRDP should work on Python 3.6 and up on the x86-64, ARM and ARM64 platforms.
+PyRDP should work on Python 3.7 and up on the x86-64, ARM and ARM64 platforms.
 
-This tool has been tested to work on Python 3.6 on Linux (Ubuntu 18.04, 20.04), Raspberry Pi and Windows
+This tool has been tested to work on Python 3.7 on Linux (Ubuntu 20.04, 22.04), Raspberry Pi and Windows
 (see section [Installing on Windows](#installing-on-windows)). It has not been tested on macOS.
 
 ## Installing
