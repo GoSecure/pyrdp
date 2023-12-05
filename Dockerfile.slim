@@ -32,15 +32,17 @@ RUN cd /pyrdp && pip3 --no-cache-dir install -r requirements.txt
 
 # Compile only our C extension and install
 # This way changes to source tree will not trigger full images rebuilds
-COPY ext/rle.c /pyrdp/ext/rle.c
-COPY setup.py /pyrdp/setup.py
+COPY ext/rle.c /pyrdp/ext/
+COPY setup.py /pyrdp/
+COPY README.md /pyrdp/
+COPY pyproject.toml /pyrdp/
+COPY pyrdp/ /pyrdp/pyrdp/
 RUN cd /pyrdp \
-    && python setup.py build_ext \
-    && python setup.py install_lib
+    && pip --no-cache-dir install .
 
 
 # Handles runtime only (minimize size for distribution)
-FROM ubuntu:20.04 AS docker-image
+FROM ubuntu:20.04 AS runtime-image
 
 # Install runtime dependencies except pre-built venv
 ARG DEBIAN_FRONTEND=noninteractive
@@ -64,9 +66,6 @@ ENV PATH="/opt/venv/bin:$PATH"
 # NOTE: we are no longer doing this in the compile image to avoid long image rebuilds in development
 COPY --from=compile-image /pyrdp /pyrdp
 COPY pyrdp/ /pyrdp/pyrdp/
-COPY setup.py /pyrdp/setup.py
-RUN cd /pyrdp \
-    && python setup.py install
 
 USER pyrdp
 
