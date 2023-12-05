@@ -77,7 +77,7 @@ pyrdp-player-gui = "pyrdp.bin.player:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["pyrdp*"]
+include = ["pyrdp*", "twisted*"]
 
 [tool.setuptools.package-data]
-"*" = ["*.txt", "*.ini"]
+"*" = ["*.txt", "*.ini", "twisted/*.py"]
