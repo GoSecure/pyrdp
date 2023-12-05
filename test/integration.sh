@@ -18,7 +18,7 @@ set -e
 if [[ -z "${CI}" ]]; then
 	PREPEND=""
 else
-	PREPEND="coverage run --append bin/"
+	PREPEND="coverage run --append "
 fi
 
 export QT_QPA_PLATFORM=offscreen
