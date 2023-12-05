@@ -4,7 +4,7 @@
 # Licensed under the GPLv3 or later.
 #
 
-from PySide2.QtCore import QTimer
+from PySide6.QtCore import QTimer
 
 from pyrdp.core import Sequencer
 

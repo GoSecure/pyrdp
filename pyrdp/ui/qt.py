@@ -30,9 +30,9 @@ QRemoteDesktop is a widget use for render in rdpy
 import rle
 from io import BytesIO
 
-from PySide2.QtCore import QEvent, QPoint, Qt, Signal
-from PySide2.QtGui import QColor, QImage, QMatrix, QPainter
-from PySide2.QtWidgets import QWidget
+from PySide6.QtCore import QEvent, QPoint, Qt, Signal
+from PySide6.QtGui import QColor, QImage, QTransform, QPainter
+from PySide6.QtWidgets import QWidget
 
 from pyrdp.logging import log
 from pyrdp.player.ImageHandler import ImageHandler
@@ -56,7 +56,7 @@ def RDPBitmapToQtImage(width: int, height: int, bitsPerPixel: int, isCompressed:
             image = QImage(buf, width, height, QImage.Format_RGB555)
         else:
             buf = data
-            image = QImage(buf, width, height, QImage.Format_RGB555).transformed(QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
+            image = QImage(buf, width, height, QImage.Format_RGB555).transformed(QTransform(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
     
     elif bitsPerPixel == 16:
         if isCompressed:
@@ -64,7 +64,7 @@ def RDPBitmapToQtImage(width: int, height: int, bitsPerPixel: int, isCompressed:
             image = QImage(buf, width, height, QImage.Format_RGB16)
         else:
             buf = data
-            image = QImage(buf, width, height, QImage.Format_RGB16).transformed(QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
+            image = QImage(buf, width, height, QImage.Format_RGB16).transformed(QTransform(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
     
     elif bitsPerPixel == 24:
         if isCompressed:
@@ -82,7 +82,7 @@ def RDPBitmapToQtImage(width: int, height: int, bitsPerPixel: int, isCompressed:
             image = QImage(buf, width, height, QImage.Format_RGB888)
         else:
             buf = data
-            image = QImage(buf, width, height, QImage.Format_RGB888).transformed(QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
+            image = QImage(buf, width, height, QImage.Format_RGB888).transformed(QTransform(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
             
     elif bitsPerPixel == 32:
         if isCompressed:
@@ -90,7 +90,7 @@ def RDPBitmapToQtImage(width: int, height: int, bitsPerPixel: int, isCompressed:
             image = QImage(buf, width, height, QImage.Format_RGB32)
         else:
             buf = data
-            image = QImage(buf, width, height, QImage.Format_RGB32).transformed(QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
+            image = QImage(buf, width, height, QImage.Format_RGB32).transformed(QTransform(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
     elif bitsPerPixel == 8:
         if isCompressed:
             _buf = rle.bitmap_decompress(data, width, height, 1)
@@ -98,7 +98,7 @@ def RDPBitmapToQtImage(width: int, height: int, bitsPerPixel: int, isCompressed:
             image = QImage(buf, width, height, QImage.Format_RGB16)
         else:
             buf = convert8bppTo16bpp(data)
-            image = QImage(buf, width, height, QImage.Format_RGB16).transformed(QMatrix(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
+            image = QImage(buf, width, height, QImage.Format_RGB16).transformed(QTransform(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
     else:
         log.error("Receive image in bad format")
         image = QImage(width, height, QImage.Format_RGB32)

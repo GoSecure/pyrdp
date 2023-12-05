@@ -5,9 +5,9 @@
 #
 from typing import Dict
 
-from PySide2.QtCore import QObject
-from PySide2.QtGui import QIcon
-from PySide2.QtWidgets import QFileIconProvider, QListWidgetItem
+from PySide6.QtCore import QObject
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QFileIconProvider, QListWidgetItem
 
 from pyrdp.player.filesystem import FileSystemItemType
 

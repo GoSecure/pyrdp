@@ -25,8 +25,8 @@ from pyrdp.ui import QRemoteDesktop, RDPBitmapToQtImage
 from .cache import BitmapCache, BrushCache, PaletteCache, GlyphCache, GlyphEntry
 from .raster import set_rop3, set_rop2
 
-from PySide2.QtCore import Qt, QPoint
-from PySide2.QtGui import QImage, QPainter, QColor, QPixmap, QBrush, QPen, QPolygon
+from PySide6.QtCore import Qt, QPoint
+from PySide6.QtGui import QImage, QPainter, QColor, QPixmap, QBrush, QPen, QPolygon
 
 from pyrdp.player.ImageHandler import ImageHandler
 

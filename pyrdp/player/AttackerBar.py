@@ -6,8 +6,8 @@
 
 import logging
 
-from PySide2.QtCore import Signal
-from PySide2.QtWidgets import QHBoxLayout, QWidget, QSpacerItem, QSizePolicy
+from PySide6.QtCore import Signal
+from PySide6.QtWidgets import QHBoxLayout, QWidget, QSpacerItem, QSizePolicy
 
 from pyrdp.logging import LOGGER_NAMES
 from pyrdp.ui import PlayPauseButton

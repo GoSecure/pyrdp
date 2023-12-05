@@ -4,9 +4,9 @@
 # Licensed under the GPLv3 or later.
 #
 
-from PySide2.QtCore import QObject
-from PySide2.QtGui import QTextCursor
-from PySide2.QtWidgets import QTextEdit
+from PySide6.QtCore import QObject
+from PySide6.QtGui import QTextCursor
+from PySide6.QtWidgets import QTextEdit
 
 from pyrdp.pdu import PlayerPDU
 from pyrdp.enum import CapabilityType
@@ -15,7 +15,7 @@ from pyrdp.player.RenderingEventHandler import RenderingEventHandler
 from pyrdp.logging import log
 
 
-class PlayerEventHandler(QObject, RenderingEventHandler):
+class PlayerEventHandler(RenderingEventHandler, QObject):
     """
     Qt Rendering Sink.
 

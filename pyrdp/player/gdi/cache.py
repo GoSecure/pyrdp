@@ -9,8 +9,8 @@ GDI Cache Management Layer.
 """
 
 from typing import List
-from PySide2.QtCore import QSize
-from PySide2.QtGui import QBrush, QImage, QBitmap
+from PySide6.QtCore import QSize
+from PySide6.QtGui import QBrush, QImage, QBitmap
 
 from pyrdp.parser.rdp.orders.common import Glyph
 

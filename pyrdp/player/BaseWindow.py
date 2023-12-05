@@ -7,8 +7,8 @@
 import logging
 from typing import Dict
 
-from PySide2.QtGui import QKeySequence
-from PySide2.QtWidgets import QShortcut, QTabWidget, QWidget
+from PySide6.QtGui import QAction, QKeySequence
+from PySide6.QtWidgets import QTabWidget, QWidget
 
 from pyrdp.logging import LOGGER_NAMES
 
@@ -26,7 +26,12 @@ class BaseWindow(QTabWidget):
         self.tabCloseRequested.connect(self.onTabCloseRequest)
         self.log = logging.getLogger(LOGGER_NAMES.PLAYER)
         self.options = options
-        self.closeTabShortcut = QShortcut(QKeySequence("Ctrl+W"), self, self.onCtrlW)
+
+        # close Tab
+        closeTabAction = QAction("Close Tab", self)
+        closeTabAction.setShortcut(QKeySequence("Ctrl+W"))
+        closeTabAction.triggered.connect(self.onCtrlW)
+        self.addAction(closeTabAction)
 
     def onTabClosed(self, index: int):
         """

@@ -6,8 +6,8 @@
 
 from typing import Optional
 
-from PySide2.QtCore import Qt
-from PySide2.QtGui import QKeyEvent
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QKeyEvent
 
 SCANCODE_MAPPING = {
     Qt.Key.Key_Escape: 0x01,

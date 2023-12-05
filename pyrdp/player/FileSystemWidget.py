@@ -7,8 +7,9 @@
 from pathlib import Path
 from typing import Optional
 
-from PySide2.QtCore import QObject, QPoint, Qt, Signal
-from PySide2.QtWidgets import QAction, QFileDialog, QFrame, QLabel, QListWidget, QMenu, QMessageBox, QVBoxLayout, QWidget
+from PySide6.QtCore import QObject, QPoint, Qt, Signal
+from PySide6.QtGui import QAction
+from PySide6.QtWidgets import QFileDialog, QFrame, QLabel, QListWidget, QMenu, QMessageBox, QVBoxLayout, QWidget
 
 from pyrdp.player.FileDownloadDialog import FileDownloadDialog
 from pyrdp.player.filesystem import Directory, DirectoryObserver, File, FileSystemItemType

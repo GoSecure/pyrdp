@@ -5,8 +5,8 @@
 #
 import logging
 
-from PySide2.QtCore import Qt, Signal
-from PySide2.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QSizePolicy, QSlider, QSpacerItem, \
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QSizePolicy, QSlider, QSpacerItem, \
     QVBoxLayout, QWidget
 
 from pyrdp.logging import LOGGER_NAMES

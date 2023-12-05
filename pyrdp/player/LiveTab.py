@@ -6,8 +6,8 @@
 
 import asyncio
 
-from PySide2.QtCore import Qt
-from PySide2.QtWidgets import QHBoxLayout, QWidget
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QHBoxLayout, QWidget
 
 from pyrdp.mitm.PlayerLayerSet import AsyncIOPlayerLayerSet
 from pyrdp.player.AttackerBar import AttackerBar

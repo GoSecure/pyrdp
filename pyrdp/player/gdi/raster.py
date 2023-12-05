@@ -4,7 +4,7 @@
 # Licensed under the GPLv3 or later.
 #
 
-from PySide2.QtGui import QPainter
+from PySide6.QtGui import QPainter
 
 # All raster operations defined by [MS-RDPEGDI] Section 2.2.2.2.1.1.1.7
 BLACKNESS = 0x00

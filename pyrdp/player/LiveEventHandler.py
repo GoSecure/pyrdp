@@ -7,8 +7,8 @@ from logging import LoggerAdapter
 from pathlib import Path, PosixPath
 from typing import BinaryIO, Dict, Union
 
-from PySide2.QtCore import Signal
-from PySide2.QtWidgets import QTextEdit
+from PySide6.QtCore import Signal
+from PySide6.QtWidgets import QTextEdit
 
 from pyrdp.enum import DeviceType, PlayerPDUType
 from pyrdp.layer import PlayerLayer

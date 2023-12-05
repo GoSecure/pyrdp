@@ -13,7 +13,7 @@ import logging
 
 import av
 import qimage2ndarray
-from PySide2.QtGui import QImage, QPainter, QColor
+from PySide6.QtGui import QImage, QPainter, QColor
 
 
 class MP4Image(ImageHandler):

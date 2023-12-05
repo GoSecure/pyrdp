@@ -6,8 +6,8 @@
 
 import logging
 
-from PySide2.QtCore import Qt
-from PySide2.QtWidgets import QScrollArea, QTextEdit, QVBoxLayout, QWidget
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QScrollArea, QTextEdit, QVBoxLayout, QWidget
 
 from pyrdp.logging import LOGGER_NAMES
 from pyrdp.ui import QRemoteDesktop

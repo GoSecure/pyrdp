@@ -32,7 +32,7 @@ from pyrdp.player.config import DEFAULTS  # noqa
 os.environ['QT_MAC_WANTS_LAYER']='1'
 if HAS_GUI:
     from pyrdp.player import MainWindow
-    from PySide2.QtWidgets import QApplication
+    from PySide6.QtWidgets import QApplication
 
 
 def enableNotifications(logger):
@@ -85,8 +85,8 @@ def main():
         enableNotifications(logger)
 
     if not HAS_GUI and not args.headless:
-        logger.error('Headless mode is not specified and PySide2 is not installed.'
-                     ' Install PySide2 to use the graphical user interface.')
+        logger.error('Headless mode is not specified and PySide6 is not installed.'
+                     ' Install PySide6 to use the graphical user interface.')
         sys.exit(127)
 
     if not args.headless:

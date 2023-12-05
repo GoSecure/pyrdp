@@ -3,9 +3,9 @@
 # Copyright (C) 2019-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-from PySide2.QtCore import Qt
-from PySide2.QtGui import QResizeEvent, QKeyEvent
-from PySide2.QtWidgets import QApplication, QWidget
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QResizeEvent, QKeyEvent
+from PySide6.QtWidgets import QApplication, QWidget
 
 from pyrdp.layer import PlayerLayer
 from pyrdp.player.BaseTab import BaseTab

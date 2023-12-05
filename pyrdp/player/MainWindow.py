@@ -5,8 +5,9 @@
 #
 from typing import List
 
-from PySide2.QtCore import Qt, Signal
-from PySide2.QtWidgets import QAction, QFileDialog, QInputDialog, QMainWindow, QTabWidget
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QAction
+from PySide6.QtWidgets import QFileDialog, QInputDialog, QMainWindow, QTabWidget
 
 from pyrdp.player import BaseTab
 from pyrdp.player.LiveWindow import LiveWindow
