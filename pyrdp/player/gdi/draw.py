@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2021 GoSecure Inc.
+# Copyright (C) 2021-2023 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
