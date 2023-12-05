@@ -16,6 +16,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 === Enhancements
 
+* Pre-built binaries available on PyPI for Linux, Windows and macOS! ({uri-issue}451[#451])
 * Support for RDP version 10.11 ({uri-issue}433[#433])
 * Support for Python 3.11 by updating PyAV to get pre-built binary wheels ({uri-issue}437[#437], {uri-issue}438[#438])
 * MITM start and termination log messages are now part of the JSON logs ({uri-issue}447[#447])
@@ -33,6 +34,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Added Python 3.10 tests on Windows to CI test configuration ({uri-issue}439[#439])
 * Replaced Python 3.10 with Python 3.11 for CI test configuration ({uri-issue}438[#438])
 * Added Ubuntu 20.04 in CI test configuration
+* Using cibuildwheel for cross-platform and cross-python builds Windows, Linux, macOS ({uri-issue}451[#451])
 
 
 == v1.2.0 - 2022-12-23
