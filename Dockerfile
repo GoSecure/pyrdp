@@ -63,15 +63,6 @@ RUN useradd --create-home --home-dir /home/pyrdp pyrdp
 # Make sure we use the virtualenv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Install python source and package
-# NOTE: we are no longer doing this in the compile image to avoid long image rebuilds in development
-COPY --from=compile-image /pyrdp /pyrdp
-COPY pyrdp/ /pyrdp/pyrdp/
-COPY setup.py /pyrdp/setup.py
-COPY pyproject.toml /pyrdp/pyproject.toml
-RUN cd /pyrdp \
-    && python setup.py install
-
 USER pyrdp
 
 # UTF-8 support on the console output (for pyrdp-player)
