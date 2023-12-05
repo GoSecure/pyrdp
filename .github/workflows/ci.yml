@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Build Docker image
       run: docker build -t pyrdp .
     - name: "Smoke test docker image: pyrdp-convert"
@@ -39,10 +39,10 @@ jobs:
         python-version: ['3.7', '3.11']
 
     runs-on: ${{ matrix.os }}
-    name: Install and test on Ubuntu ${{ matrix.os }} with Python ${{ matrix.python-version }}
+    name: Ubuntu ${{ matrix.os }} with Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v1
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
           architecture: 'x64'
@@ -110,10 +110,10 @@ jobs:
         # FIXME: Windows with 3.11 doesn't work since PySide2 isn't supported. see #436
         python-version: ['3.7', '3.10']
 
-    name: Install and test on Windows with Python ${{ matrix.python-version }}
+    name: Windows with Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v1
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
           architecture: 'x64'

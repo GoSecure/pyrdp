@@ -33,6 +33,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Added Python 3.10 tests on Windows to CI test configuration ({uri-issue}439[#439])
 * Replaced Python 3.10 with Python 3.11 for CI test configuration ({uri-issue}438[#438])
 * Added Ubuntu 20.04 in CI test configuration
+* Deprecation cleanup in CI ({uri-issue}452[#452])
 
 
 == v1.2.0 - 2022-12-23
