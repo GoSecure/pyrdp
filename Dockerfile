@@ -46,6 +46,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 \
         python3-distutils \
         # GUI and notifications stuff
         libgl1-mesa-glx libxcb-xinerama0 \
+        libxcb-icccm4 libxcb-image0 libxcb-util1 libxcb-keysyms1 \
+        libxcb-randr0 libxcb-render-util0 \
         libxkbcommon-x11-0 \
         libnotify-bin \
         # Runtime requirement for PyAV (pyrdp-convert to MP4)
