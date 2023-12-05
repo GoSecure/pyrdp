@@ -147,11 +147,11 @@ jobs:
 
       - name: pyrdp-player read a replay in headless mode test
         working-directory: ./
-        run: coverage run --append bin/pyrdp-player --headless test/files/test_session.replay
+        run: coverage run --append -m pyrdp.bin.player --headless test/files/test_session.replay
 
       - name: pyrdp-convert to MP4
         working-directory: ./
-        run: coverage run --append bin/pyrdp-convert test/files/test_convert.pyrdp -f mp4
+        run: coverage run --append -m pyrdp.bin.convert test/files/test_convert.pyrdp -f mp4
 
       - name: Verify the MP4 file
         working-directory: ./
