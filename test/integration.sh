@@ -16,21 +16,28 @@ set -e
 
 # Sets how to launch commands. GitHub workflows sets the CI environment variable
 if [[ -z "${CI}" ]]; then
-	PREPEND=""
+	SOURCE="local"
 else
-	PREPEND="coverage run --append "
+	SOURCE="ci"
 fi
+
+declare -A ENTRYPOINT
+
+ENTRYPOINT["player","local"]="pyrdp-player"
+ENTRYPOINT["player","ci"]="coverage run --append -m pyrdp.bin.player"
+ENTRYPOINT["convert","local"]="pyrdp-convert"
+ENTRYPOINT["convert","ci"]="coverage run --append -m pyrdp.bin.convert"
 
 export QT_QPA_PLATFORM=offscreen
 
 echo ===================================================
 echo pyrdp-player read a replay in headless mode test
-${PREPEND}pyrdp-player --headless test/files/test_session.replay
+${ENTRYPOINT["player",${SOURCE}]} --headless test/files/test_session.replay
 echo
 
 echo ===================================================
 echo pyrdp-convert to MP4
-${PREPEND}pyrdp-convert test/files/test_convert.pyrdp -f mp4
+${ENTRYPOINT["convert",${SOURCE}]} test/files/test_convert.pyrdp -f mp4
 echo
 
 echo ===================================================
@@ -41,7 +48,7 @@ echo
 
 echo ===================================================
 echo pyrdp-convert replay to JSON
-${PREPEND}pyrdp-convert test/files/test_convert.pyrdp -f json
+${ENTRYPOINT["convert",${SOURCE}]} test/files/test_convert.pyrdp -f json
 echo
 
 echo ===================================================
@@ -52,7 +59,7 @@ echo
 
 echo ===================================================
 echo pyrdp-convert PCAP to JSON
-${PREPEND}pyrdp-convert test/files/test_session.pcap -f json
+${ENTRYPOINT["convert",${SOURCE}]} test/files/test_session.pcap -f json
 echo
 
 echo ===================================================
@@ -63,7 +70,7 @@ echo
 
 echo ===================================================
 echo pyrdp-convert PCAP to replay
-${PREPEND}pyrdp-convert test/files/test_session.pcap -f replay
+${ENTRYPOINT["convert",${SOURCE}]} test/files/test_session.pcap -f replay
 echo
 
 echo ===================================================
@@ -73,7 +80,7 @@ rm "20200319000716_192.168.38.1:20989-192.168.38.1:3389.pyrdp"
 
 echo ===================================================
 echo pyrdp-convert.py regression issue 428
-${PREPEND}pyrdp-convert.py test/files/test_convert_428.pyrdp -f mp4
+${ENTRYPOINT["convert",${SOURCE}]} test/files/test_convert_428.pyrdp -f mp4
 echo
 
 echo ===================================================
