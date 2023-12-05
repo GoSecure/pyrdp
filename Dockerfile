@@ -49,7 +49,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 \
         # Required for the setup.py install and progressbar (required by pyrdp-convert)
         python3-distutils \
         # GUI and notifications stuff
-        libgl1-mesa-glx libxcb-xinerama0 \
+        libgl1-mesa-glx libegl1 libxcb-xinerama0 \
         libxcb-icccm4 libxcb-image0 libxcb-util1 libxcb-keysyms1 \
         libxcb-randr0 libxcb-render-util0 \
         libxkbcommon-x11-0 \
