@@ -80,3 +80,6 @@ include = ["pyrdp*", "twisted*"]
 
 [tool.setuptools.package-data]
 "*" = ["*.txt", "*.ini", "twisted/*.py"]
+
+[tool.ruff.extend-per-file-ignores]
+"__init__.py" = ["F401"]
