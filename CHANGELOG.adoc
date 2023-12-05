@@ -32,6 +32,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Project packaging modernized, getting rid of `pkg_resources` deprecation warnings ({uri-issue}416[#416], {uri-issue}440[#440])
 * Added Python 3.10 tests on Windows to CI test configuration ({uri-issue}439[#439])
 * Replaced Python 3.10 with Python 3.11 for CI test configuration ({uri-issue}438[#438])
+* Added Ubuntu 20.04 in CI test configuration
 
 
 == v1.2.0 - 2022-12-23
