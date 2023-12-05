@@ -71,7 +71,7 @@ ip route add local default dev lo table $TABLE_ID
 Then launch PyRDP. In this case it should be launched like this:
 
 ```
-pyrdp-mitm.py --transparent 10.2.2.2
+pyrdp-mitm --transparent 10.2.2.2
 ```
 
 
@@ -301,7 +301,7 @@ iptables -t mangle -A PREROUTING -s $SERVER_IP -m tcp -p tcp --sport 3389 \
 Then launch PyRDP. In this case it should be launched like this:
 
 ```
-pyrdp-mitm.py --transparent $SERVER_IP
+pyrdp-mitm --transparent $SERVER_IP
 ```
 
 ### Stop

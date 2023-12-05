@@ -6,7 +6,7 @@ NOTE: This is a work in progress
 
 .Update dependencies
 
-For developement and normal installation we rely on `setup.py` with loose dependencies.
+For developement and normal installation we rely on `pyproject.toml` with loose dependencies.
 For docker images we rely on `requirements.txt` and `requirements-slim.txt` with strict dependencies.
 It is important to keep both approaches in sync and to peridiocally update the requirements files (like before releases).
 See https://github.com/GoSecure/pyrdp/pull/219[the PR where we improved our use of the docker cache] for the reasoning behind this approach.
@@ -30,7 +30,7 @@ docker images (latest, slim), on linux, on Windows
     git log <tag>.. --format="%aN" --reverse | perl -e 'my %dedupe; while (<STDIN>) { print unless $dedupe{$_}++}' | sort
 
 .Prepare release commit
-* Update version in `setup.py`
+* Update version in `pyproject.toml`
 * commit msg: Prepare %version% release
 * You can optionally do a release commit (with `--allow-empty` if needed) msg: Release %version%
 
@@ -46,7 +46,7 @@ docker images (latest, slim), on linux, on Windows
 * asciidoc links to markdown with vim: `%s/link:\([^\[]\+\)\(\[[^\[]\+\]\)/\2(\1)/gc`
 
 .Post-release
-* Update version in `setup.py` (+1 bugfix, append '.dev0') and commit
+* Update version in `pyproject.toml` (+1 bugfix, append '.dev0') and commit
 * commit msg: Begin development on next release
 
 

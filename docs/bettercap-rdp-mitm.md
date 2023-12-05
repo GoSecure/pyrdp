@@ -44,11 +44,11 @@ Assuming that you installed PyRDP using a venv, you need to activate your PyRDP 
 
 Start bettercap with :
 
-    sudo bettercap -iface <interface> -caplet <caplet> -eval "set rdp.proxy.command $(which pyrdp-mitm.py)"
+    sudo bettercap -iface <interface> -caplet <caplet> -eval "set rdp.proxy.command $(which pyrdp-mitm)"
 
 Basic example :
 
-    sudo bettercap -iface wlp2s0 -caplet rdp-proxy/rdp-sniffer.cap -eval "set rdp.proxy.command $(which pyrdp-mitm.py)"
+    sudo bettercap -iface wlp2s0 -caplet rdp-proxy/rdp-sniffer.cap -eval "set rdp.proxy.command $(which pyrdp-mitm)"
 
 ## Caplets
 

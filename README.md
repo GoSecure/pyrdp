@@ -192,7 +192,7 @@ This should install all the dependencies required to run PyRDP.
 For example, to open the player:
 
 ```
-python venv\Scripts\pyrdp-player.py
+python venv\Scripts\pyrdp-player
 ```
 
 If you ever want to leave your virtual environment, you can simply deactivate it:
@@ -232,12 +232,12 @@ docker buildx build --platform linux/arm,linux/amd64 -t pyrdp -f Dockerfile.slim
 ## Using PyRDP
 
 ### Using the PyRDP Monster-in-the-Middle
-Use `pyrdp-mitm.py <ServerIP>` or `pyrdp-mitm.py <ServerIP>:<ServerPort>` to run the MITM.
+Use `pyrdp-mitm <ServerIP>` or `pyrdp-mitm <ServerIP>:<ServerPort>` to run the MITM.
 
 Assuming you have an RDP server running on `192.168.1.10` and listening on port 3389, you would run:
 
 ```
-pyrdp-mitm.py 192.168.1.10
+pyrdp-mitm 192.168.1.10
 ```
 
 When running the MITM for the first time a directory called `pyrdp_output/`
@@ -289,7 +289,7 @@ If key generation didn't work or you want to use a custom key and certificate, y
 `-c` and `-k` arguments:
 
 ```
-pyrdp-mitm.py 192.168.1.10 -k private_key.pem -c certificate.pem
+pyrdp-mitm 192.168.1.10 -k private_key.pem -c certificate.pem
 ```
 
 ##### Monster-in-the-Middle Network Level Authentication (NLA) connections
@@ -344,7 +344,7 @@ If you want to see live RDP connections through the PyRDP player, you will need 
 player is listening using the `-i` and `-d` arguments. Note: the port argument is optional, the default port is 3000.
 
 ```
-pyrdp-mitm.py 192.168.1.10 -i 127.0.0.1 -d 3000
+pyrdp-mitm 192.168.1.10 -i 127.0.0.1 -d 3000
 ```
 
 ##### Connecting to a PyRDP player when the MITM is running on a server
@@ -355,7 +355,7 @@ port as arguments to the MITM. For example, if port 4000 on the server is forwar
 this would be the command to use:
 
 ```
-pyrdp-mitm.py 192.168.1.10 -i 127.0.0.1 -d 4000
+pyrdp-mitm 192.168.1.10 -i 127.0.0.1 -d 4000
 ```
 
 #### Running payloads on new connections
@@ -412,7 +412,7 @@ This will block the client's input / output for 5 seconds to hide the console an
 After 5 seconds, input / output is restored back to normal.
 
 #### Other MITM arguments
-Run `pyrdp-mitm.py --help` for a full list of arguments.
+Run `pyrdp-mitm --help` for a full list of arguments.
 
 ##### `--no-downgrade`
 
@@ -461,7 +461,7 @@ support can be added as required. (Make sure that the trace does not contain sen
 [gdi]: https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpegdi/745f2eee-d110-464c-8aca-06fc1814f6ad
 
 ### Using the PyRDP Player
-Use `pyrdp-player.py` to run the player.
+Use `pyrdp-player` to run the player.
 
 #### Playing a replay file
 You can use the menu to open a new replay file: File > Open.
@@ -469,14 +469,14 @@ You can use the menu to open a new replay file: File > Open.
 You can also open replay files when launching the player:
 
 ```
-pyrdp-player.py <FILE1> <FILE2> ...
+pyrdp-player <FILE1> <FILE2> ...
 ```
 
 #### Listening for live connections
 The player always listens for live connections. By default, the listening port is 3000, but it can be changed:
 
 ```
-pyrdp-player.py -p <PORT>
+pyrdp-player -p <PORT>
 ```
 
 #### Changing the listening address
@@ -484,11 +484,11 @@ By default, the player only listens to connections coming from the local machine
 to other machines. If you still want to change the listening address, you can do it with `-b`:
 
 ```
-pyrdp-player.py -b <ADDRESS>
+pyrdp-player -b <ADDRESS>
 ```
 
 #### Other player arguments
-Run `pyrdp-player.py --help` for a full list of arguments.
+Run `pyrdp-player --help` for a full list of arguments.
 
 ### Using the PyRDP Certificate Cloner
 
@@ -502,10 +502,10 @@ you're trying to trick a legitimate user into going through your MITM. Using a c
 certificate could increase your success rate.
 
 #### Cloning a certificate
-You can clone a certificate by using `pyrdp-clonecert.py`:
+You can clone a certificate by using `pyrdp-clonecert`:
 
 ```
-pyrdp-clonecert.py 192.168.1.10 cert.pem -o key.pem
+pyrdp-clonecert 192.168.1.10 cert.pem -o key.pem
 ```
 
 The `-o` parameter defines the path name to use for the generated private key.
@@ -514,11 +514,11 @@ The `-o` parameter defines the path name to use for the generated private key.
 If you want to use your own private key instead of generating a new one:
 
 ```
-pyrdp-clonecert.py 192.168.1.10 cert.pem -i input_key.pem
+pyrdp-clonecert 192.168.1.10 cert.pem -i input_key.pem
 ```
 
 #### Other cloner arguments
-Run `pyrdp-clonecert.py --help` for a full list of arguments.
+Run `pyrdp-clonecert --help` for a full list of arguments.
 
 ### Using PyRDP Convert
 
@@ -535,19 +535,19 @@ The following outputs are supported:
 
 - MP4 video file
 - JSON: a sequence of low-level events serialized in JSON format
-- Replay file compatible with `pyrdp-player.py`
+- Replay file compatible with `pyrdp-player`
 
 Encrypted (TLS) network captures require the TLS master secrets to be provided using `--secrets ssl.log`.
 
 ```
 # Export the session coming client 10.2.0.198 to a .pyrdp file.
-pyrdp-convert.py --src 10.2.0.198 --secrets ssl.log -o path/to/output capture.pcap
+pyrdp-convert --src 10.2.0.198 --secrets ssl.log -o path/to/output capture.pcap
 
 # Or as an MP4 video
-pyrdp-convert.py --src 10.2.0.198 --secrets ssl.log -o path/to/output -f mp4 capture.pcap
+pyrdp-convert --src 10.2.0.198 --secrets ssl.log -o path/to/output -f mp4 capture.pcap
 
 # List the sessions in a network trace, along with the decryptable ones.
-pyrdp-convert.py --list-only capture.pcap
+pyrdp-convert --list-only capture.pcap
 ```
 
 Note that MP4 conversion requires libavcodec and ffmpeg, so this may require extra steps on Windows.
@@ -609,7 +609,7 @@ In most of the monster-in-the-middle cases you will need to map a port of your h
 For example, to listen on 3389 (RDP's default port) on all interfaces, use:
 
 ```
-docker run -p 3389:3389 gosecure/pyrdp pyrdp-mitm.py 192.168.1.10
+docker run -p 3389:3389 gosecure/pyrdp pyrdp-mitm 192.168.1.10
 ```
 
 #### Logs and Artifacts Storage
@@ -617,7 +617,7 @@ docker run -p 3389:3389 gosecure/pyrdp pyrdp-mitm.py 192.168.1.10
 To store the PyRDP output permanently (logs, files, etc.), add the `--volume` (`-v`) option to the previous command. In this example we store the files relatively to the current directory in `pyrdp_output`:
 
 ```
-docker run -v $PWD/pyrdp_output:/home/pyrdp/pyrdp_output -p 3389:3389 gosecure/pyrdp pyrdp-mitm.py 192.168.1.10
+docker run -v $PWD/pyrdp_output:/home/pyrdp/pyrdp_output -p 3389:3389 gosecure/pyrdp pyrdp-mitm 192.168.1.10
 ```
 
 Make sure that your destination directory is owned by a user with a UID of 1000, otherwise you will get permission denied errors.
@@ -628,7 +628,7 @@ If you are the only non-root user on the system, usually your user will be assig
 If you want PyRDP to log the host IP address in its logs, you can set the `HOST_IP` environment variable when using `docker run`:
 
 ```
-docker run -p 3389:3389 -e HOST_IP=192.168.1.9 gosecure/pyrdp pyrdp-mitm.py 192.168.1.10
+docker run -p 3389:3389 -e HOST_IP=192.168.1.9 gosecure/pyrdp pyrdp-mitm 192.168.1.10
 ```
 
 #### Using the GUI Player in Docker
@@ -639,7 +639,7 @@ You also need to expose the host's network and prevent Qt from using the MIT-SHM
 To do so, add the `-e` and `--net` options to the run command:
 
 ```
-docker run -e DISPLAY=$DISPLAY -e QT_X11_NO_MITSHM=1 --net=host gosecure/pyrdp pyrdp-player.py
+docker run -e DISPLAY=$DISPLAY -e QT_X11_NO_MITSHM=1 --net=host gosecure/pyrdp pyrdp-player
 ```
 
 Keep in mind that exposing the host's network to docker can compromise the isolation between your container and the host.

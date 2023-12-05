@@ -35,6 +35,6 @@ It requires Administrative privileges on the target server and the use of Mimika
 
 > **NOTE**: If `token::elevate` doesn't work. Make sure you are running mimikatz as SYSTEM (ie: under `psexec -s cmd.exe`)
 
-You can now run `pyrdp-mitm.py` by specifying `-k privkey.key -c pubkey.pem` and PyRDP will serve the same certificate as the server.
+You can now run `pyrdp-mitm` by specifying `-k privkey.key -c pubkey.pem` and PyRDP will serve the same certificate as the server.
 With the certificate and the private key, RDP servers with Network Level Authentication (NLA) enabled can be MITM.
 Use `--auth ssp` to do that.
