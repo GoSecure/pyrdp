@@ -21,12 +21,14 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Support for RDP version 10.11 ({uri-issue}433[#433])
 * Support for Python 3.11 by updating PyAV to get pre-built binary wheels ({uri-issue}437[#437], {uri-issue}438[#438])
 * MITM start and termination log messages are now part of the JSON logs ({uri-issue}447[#447])
+* Docker images are now based on Ubuntu 22.04 and dependencies were minimized ({uri-issue}455[#455])
+* Documented how to run `pyrdp-convert` through a Docker container ({uri-issue}455[#455])
 
 === Bug fixes
 
 * JSON logging of files captured via the clipboard was fixed ({uri-issue}441[#441])
 * Fixed support for Windows on Python 3.8+ ({uri-issue}316[#316], {uri-issue}439[#439], {uri-issue}444[#444])
-* Updated Twisted's minimum version to 21.2.0 due to ({uri-issue}316[#316])
+* Updated Twisted's minimum version to 23 ({uri-issue}316[#316], {uri-issue}455[#455])
 * Added more missing dependencies for the GUI on Ubuntu 20.04 LTS ({uri-issue}448[#448])
 * Fixed installation issue on Windows with Python 3.11 ({uri-issue}436[#436])
 
@@ -34,8 +36,8 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 * Project packaging modernized, getting rid of `pkg_resources` deprecation warnings ({uri-issue}416[#416], {uri-issue}440[#440])
 * Added Python 3.10 tests on Windows to CI test configuration ({uri-issue}439[#439])
-* Replaced Python 3.10 with Python 3.11 for CI test configuration ({uri-issue}438[#438])
-* Added Ubuntu 20.04 in CI test configuration
+* Then replaced Python 3.10 with Python 3.11 for CI test configuration ({uri-issue}438[#438])
+* Also added Ubuntu 20.04, 22.04 and Python 3.12 in CI test configurations ({uri-issue}455[#455])
 * Using cibuildwheel for cross-platform and cross-python builds Windows, Linux, macOS ({uri-issue}451[#451])
 * Deprecation cleanup in CI ({uri-issue}452[#452])
 * Updated our dependencies to the latest stable versions ({uri-issue}454[#454])
