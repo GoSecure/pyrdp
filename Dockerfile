@@ -1,19 +1,12 @@
 # Handles compiling and package installation
-FROM ubuntu:20.04 AS compile-image
+FROM ubuntu:22.04 AS compile-image
 
 # Install build dependencies
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        python3 python3-pip \
-        # Required for local pip install
-        python3-setuptools \
-        # Required for venv setup
-        python3-venv \
+        python3 python3-pip python3-venv \
         # Required to build RLE module
-        build-essential python3-dev \
-        # Required to build PyAV (pyrdp-convert to MP4)
-        libavformat-dev libavcodec-dev libavdevice-dev \
-        libavutil-dev libswscale-dev libswresample-dev libavfilter-dev
+        build-essential python3-dev
 
 RUN python3 -m venv /opt/venv
 # Make sure we use the virtualenv:
@@ -35,27 +28,23 @@ COPY README.md /pyrdp/
 COPY pyproject.toml /pyrdp/
 COPY pyrdp/ /pyrdp/pyrdp/
 RUN cd /pyrdp \
-    && pip --no-cache-dir install '.[full]'
+    && pip --no-cache-dir install --no-deps '.[full]'
 
 
 # Handles runtime only (minimize size for distribution)
-FROM ubuntu:20.04 AS runtime-image
+FROM ubuntu:22.04 AS runtime-image
 
 # Install runtime dependencies except pre-built venv
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends python3 \
         # To generate certificates
         openssl \
-        # Required for the setup.py install and progressbar (required by pyrdp-convert)
-        python3-distutils \
         # GUI and notifications stuff
-        libgl1-mesa-glx libegl1 libxcb-xinerama0 \
-        libxcb-icccm4 libxcb-image0 libxcb-util1 libxcb-keysyms1 \
-        libxcb-randr0 libxcb-render-util0 \
-        libxkbcommon-x11-0 \
+        libegl1 libxcb-cursor0 libxkbcommon-x11-0 libxcb-icccm4 libxcb-keysyms1 \
         libnotify-bin \
         # Runtime requirement for PyAV (pyrdp-convert to MP4)
         libavcodec58 libavdevice58 \
+        # minimize image size
         && rm -rf /var/lib/apt/lists/*
 
 # Copy preinstalled dependencies from compile image
@@ -64,13 +53,8 @@ COPY --from=compile-image /opt/venv /opt/venv
 # Create user
 RUN useradd --create-home --home-dir /home/pyrdp pyrdp
 
-# Make sure we use the virtualenv
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Install python source
-# NOTE: we are no longer doing this in the compile image to avoid long image rebuilds in development
+# Copy python source
 COPY --from=compile-image /pyrdp /pyrdp
-COPY pyrdp/ /pyrdp/pyrdp/
 
 USER pyrdp
 
