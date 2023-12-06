@@ -1,0 +1,5 @@
+graft test
+graft docs
+
+global-include *.adoc
+global-include *.md
