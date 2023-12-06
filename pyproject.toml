@@ -47,7 +47,7 @@ dependencies = [
     'rsa>=4,<5',
     'scapy>=2.4,<3',
     'service_identity>=18',
-    'twisted>=18'
+    'twisted>=23'
 ]
 
 [project.optional-dependencies]
