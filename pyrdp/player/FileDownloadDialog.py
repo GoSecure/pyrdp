@@ -1,11 +1,11 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019, 2023 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-from PySide2.QtCore import QObject, Qt
-from PySide2.QtGui import QCloseEvent
-from PySide2.QtWidgets import QDialog, QLabel, QMessageBox, QProgressBar, QPushButton, QVBoxLayout
+from PySide6.QtCore import QObject, Qt
+from PySide6.QtGui import QCloseEvent
+from PySide6.QtWidgets import QDialog, QLabel, QMessageBox, QProgressBar, QPushButton, QVBoxLayout
 
 
 class FileDownloadDialog(QDialog):

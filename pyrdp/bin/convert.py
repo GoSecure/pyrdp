@@ -65,8 +65,8 @@ def main():
         sys.exit(1)
     elif HAS_GUI and args.format == "mp4":
         # Initialize QT because QBitmap will segfault without it (#378, #428)
-        from PySide2.QtWidgets import QApplication
-        app = QApplication()
+        from PySide6.QtWidgets import QApplication
+        QApplication()
 
     logging.basicConfig(level=logging.CRITICAL)
     logging.getLogger("scapy").setLevel(logging.ERROR)

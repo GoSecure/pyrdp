@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018, 2023 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -8,7 +8,7 @@ import asyncio
 import logging
 from typing import Callable
 
-from PySide2.QtCore import QThread
+from PySide6.QtCore import QThread
 
 from pyrdp.logging import LOGGER_NAMES
 

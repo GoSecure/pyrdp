@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2021 GoSecure Inc.
+# Copyright (C) 2021-2023 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -20,13 +20,13 @@ from pyrdp.parser.rdp.orders.primary import DstBlt, PatBlt, ScrBlt, DrawNineGrid
     FastIndex, PolygonSc, PolygonCb, PolyLine, FastGlyph, EllipseSc, EllipseCb, GlyphIndex, Brush, \
     BACKMODE_TRANSPARENT
 
-from pyrdp.ui import QRemoteDesktop, RDPBitmapToQtImage
+from pyrdp.ui import RDPBitmapToQtImage
 
 from .cache import BitmapCache, BrushCache, PaletteCache, GlyphCache, GlyphEntry
 from .raster import set_rop3, set_rop2
 
-from PySide2.QtCore import Qt, QPoint
-from PySide2.QtGui import QImage, QPainter, QColor, QPixmap, QBrush, QPen, QPolygon
+from PySide6.QtCore import Qt, QPoint
+from PySide6.QtGui import QImage, QPainter, QColor, QPixmap, QBrush, QPen, QPolygon
 
 from pyrdp.player.ImageHandler import ImageHandler
 

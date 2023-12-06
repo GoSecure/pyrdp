@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2020-2021 GoSecure Inc.
+# Copyright (C) 2020-2023 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -13,7 +13,7 @@ import logging
 
 import av
 import qimage2ndarray
-from PySide2.QtGui import QImage, QPainter, QColor
+from PySide6.QtGui import QImage, QPainter, QColor
 
 
 class MP4Image(ImageHandler):

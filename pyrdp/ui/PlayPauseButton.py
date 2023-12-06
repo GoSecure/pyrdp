@@ -1,11 +1,11 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018, 2023 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
-from PySide2.QtWidgets import QPushButton, QWidget
-from PySide2.QtGui import QIcon
+from PySide6.QtWidgets import QPushButton, QWidget
+from PySide6.QtGui import QIcon
 
 
 class PlayPauseButton(QPushButton):

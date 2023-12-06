@@ -1,14 +1,14 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019, 2020 GoSecure Inc.
+# Copyright (C) 2019-2023 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
 from typing import Dict
 
-from PySide2.QtCore import Qt
-from PySide2.QtGui import QResizeEvent
-from PySide2.QtWidgets import QWidget
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QResizeEvent
+from PySide6.QtWidgets import QWidget
 
 from pyrdp.player.BaseWindow import BaseWindow
 from pyrdp.player.ReplayTab import ReplayTab

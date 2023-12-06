@@ -1,12 +1,13 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018-2020 GoSecure Inc.
+# Copyright (C) 2018-2023 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 from typing import List
 
-from PySide2.QtCore import Qt, Signal
-from PySide2.QtWidgets import QAction, QFileDialog, QInputDialog, QMainWindow, QTabWidget
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QAction
+from PySide6.QtWidgets import QFileDialog, QInputDialog, QMainWindow, QTabWidget
 
 from pyrdp.player import BaseTab
 from pyrdp.player.LiveWindow import LiveWindow

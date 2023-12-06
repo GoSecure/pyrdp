@@ -1,13 +1,13 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019-2023 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
 import logging
 
-from PySide2.QtCore import Signal
-from PySide2.QtWidgets import QHBoxLayout, QWidget, QSpacerItem, QSizePolicy
+from PySide6.QtCore import Signal
+from PySide6.QtWidgets import QHBoxLayout, QWidget, QSpacerItem, QSizePolicy
 
 from pyrdp.logging import LOGGER_NAMES
 from pyrdp.ui import PlayPauseButton

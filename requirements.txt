@@ -17,7 +17,7 @@ pyasn1-modules==0.3.0
 pycparser==2.21
 pycryptodome==3.19.0
 pyOpenSSL==23.3.0
-PySide2==5.15.2.1
+PySide6-Essentials==6.6.1
 python-utils==3.8.1
 pytz==2023.3.post1
 qimage2ndarray==1.10.0

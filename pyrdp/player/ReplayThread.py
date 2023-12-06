@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018-2021 GoSecure Inc.
+# Copyright (C) 2018-2023 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -9,7 +9,7 @@ from enum import IntEnum
 from multiprocessing import Queue
 from time import sleep
 
-from PySide2.QtCore import QThread, Signal
+from PySide6.QtCore import QThread, Signal
 
 from pyrdp.core import Timer
 from pyrdp.player.Replay import Replay

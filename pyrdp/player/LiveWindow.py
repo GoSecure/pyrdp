@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019, 2020 GoSecure Inc.
+# Copyright (C) 2019-2023 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -8,8 +8,8 @@ import asyncio
 from queue import Queue
 from typing import Dict
 
-from PySide2.QtCore import Qt, Signal
-from PySide2.QtWidgets import QApplication, QFileIconProvider, QMessageBox, QWidget
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QApplication, QFileIconProvider, QMessageBox, QWidget
 
 from pyrdp.player.BaseWindow import BaseWindow
 from pyrdp.player.LiveTab import LiveTab

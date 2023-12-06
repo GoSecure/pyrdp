@@ -1,14 +1,15 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019, 2023 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
 from pathlib import Path
 from typing import Optional
 
-from PySide2.QtCore import QObject, QPoint, Qt, Signal
-from PySide2.QtWidgets import QAction, QFileDialog, QFrame, QLabel, QListWidget, QMenu, QMessageBox, QVBoxLayout, QWidget
+from PySide6.QtCore import QObject, QPoint, Qt, Signal
+from PySide6.QtGui import QAction
+from PySide6.QtWidgets import QFileDialog, QFrame, QLabel, QListWidget, QMenu, QMessageBox, QVBoxLayout, QWidget
 
 from pyrdp.player.FileDownloadDialog import FileDownloadDialog
 from pyrdp.player.filesystem import Directory, DirectoryObserver, File, FileSystemItemType
@@ -217,7 +218,7 @@ class FileSystemWidget(QWidget, DirectoryObserver):
 
         dialog = None
         if directoryPath == "":
-            QMessageBox.critical(self, "Download folder", f"Please select a valid folder. Aborting download.")
+            QMessageBox.critical(self, "Download folder", "Please select a valid folder. Aborting download.")
             return
 
         directoryPath += f"/{selectedFolder.name}"
@@ -225,7 +226,7 @@ class FileSystemWidget(QWidget, DirectoryObserver):
         try:
             os.mkdir(directoryPath)
         except FileExistsError:
-            QMessageBox.critical(self, "Download folder", f"Folder already exist. Make sure to select an empty directory. Aborting download.")
+            QMessageBox.critical(self, "Download folder", "Folder already exist. Make sure to select an empty directory. Aborting download.")
             return
 
         dialog = FileDownloadDialog(remotePath, directoryPath, True, self)

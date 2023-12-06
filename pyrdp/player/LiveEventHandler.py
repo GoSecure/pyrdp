@@ -1,14 +1,14 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019, 2023 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 from logging import LoggerAdapter
 from pathlib import Path, PosixPath
 from typing import BinaryIO, Dict, Union
 
-from PySide2.QtCore import Signal
-from PySide2.QtWidgets import QTextEdit
+from PySide6.QtCore import Signal
+from PySide6.QtWidgets import QTextEdit
 
 from pyrdp.enum import DeviceType, PlayerPDUType
 from pyrdp.layer import PlayerLayer
@@ -96,7 +96,7 @@ class LiveEventHandler(PlayerEventHandler, DirectoryObserver):
 
         self.jobsQueue.add(job)
 
-        if self.currentDownload == None:
+        if self.currentDownload is None:
             self.dispatchDownload()
 
     def dispatchDownload(self):

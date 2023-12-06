@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019 GoSecure Inc.
+# Copyright (C) 2019, 2023 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -10,9 +10,9 @@ import platform
 import time
 from typing import Optional, Union
 
-from PySide2.QtCore import QEvent, QObject, Qt
-from PySide2.QtGui import QKeyEvent, QMouseEvent, QWheelEvent
-from PySide2.QtWidgets import QWidget
+from PySide6.QtCore import QEvent, QObject, Qt
+from PySide6.QtGui import QKeyEvent, QMouseEvent, QWheelEvent
+from PySide6.QtWidgets import QWidget
 
 from pyrdp.enum import MouseButton
 from pyrdp.layer import PlayerLayer
@@ -46,7 +46,8 @@ class RDPMITMWidget(QRemoteDesktop):
 
 
     def getMousePosition(self, event: Union[QMouseEvent, QWheelEvent]) -> (int, int):
-        return max(event.x(), 0), max(event.y(), 0)
+        pos = event.position()
+        return max(pos.x(), 0), max(pos.y(), 0)
 
     def mouseMoveEvent(self, event: QMouseEvent):
         if not self.handleEvents or not self.hasFocus():

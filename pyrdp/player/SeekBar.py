@@ -1,11 +1,11 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018 GoSecure Inc.
+# Copyright (C) 2018, 2023 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
-from PySide2.QtWidgets import QWidget, QProgressBar
-from PySide2.QtGui import QMouseEvent
+from PySide6.QtWidgets import QWidget, QProgressBar
+from PySide6.QtGui import QMouseEvent
 
 
 class SeekBar(QProgressBar):
@@ -22,6 +22,6 @@ class SeekBar(QProgressBar):
         self.repaint()
 
     def mousePressEvent(self, event: QMouseEvent):
-        progress = event.x() / self.width()
+        progress = event.position().x() / self.width()
         value = int(progress * self.maximum())
         self.setValue(value)

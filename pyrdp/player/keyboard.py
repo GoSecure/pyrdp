@@ -1,13 +1,13 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2019-2020 GoSecure Inc.
+# Copyright (C) 2019-2023 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
 from typing import Optional
 
-from PySide2.QtCore import Qt
-from PySide2.QtGui import QKeyEvent
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QKeyEvent
 
 SCANCODE_MAPPING = {
     Qt.Key.Key_Escape: 0x01,
