@@ -645,6 +645,20 @@ docker run -e DISPLAY=$DISPLAY -e QT_X11_NO_MITSHM=1 --net=host gosecure/pyrdp p
 Keep in mind that exposing the host's network to docker can compromise the isolation between your container and the host.
 If you plan on using the player, X11 forwarding using an SSH connection would be a more secure way.
 
+#### Converting videos in Docker
+
+The video conversion process relies on PyAV, ffmpeg and QT so you need the regular docker image not the slim one.
+
+You need a volume mount (`-v`) to share files with the container.
+Here we map our local directory with `/shared/` in the container.
+
+```
+docker run -e QT_QPA_PLATFORM=offscreen -v $PWD/:/shared gosecure/pyrdp pyrdp-convert -f mp4 <filename-relative-to-volume-in-/shared/> -o /shared/
+```
+
+The `QT_QPA_PLATFORM=offscreen` environment variable is required [due to a bug documented here](https://github.com/GoSecure/pyrdp/issues/428).
+It tells to QT that it is correct that no display environment is available.
+
 
 ## PyRDP Lore
 
