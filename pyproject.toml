@@ -56,8 +56,8 @@ full = [
     'av>=8,<12',
     'PySide6>=6.3,<7',
     'qimage2ndarray>=1.6,<2',
-    'py-notifier>=0.3.0',
-    'win10toast>=0.9;platform_system=="Windows"',
+    'py-notifier>=0.5.0',
+    'WinToaster>=0.1.0;platform_system=="Windows"',
 ]
 
 [project.urls]
