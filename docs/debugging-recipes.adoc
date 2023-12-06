@@ -145,3 +145,10 @@ References:
 
 asyncio code is harder to debug.
 When you think the bug is related to asyncio, like strange hangs, you can see some strategies here: https://docs.python.org/3/library/asyncio-dev.html
+
+
+== PyRDP Player QT GUI via Docker
+
+Finding what doesn't work can be made a lot easier by adding `--env QT_DEBUG_PLUGINS=1` to the `docker run` invocation.
+
+It's almost always a missing library.
