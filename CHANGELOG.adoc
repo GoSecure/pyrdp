@@ -17,6 +17,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 === Enhancements
 
 * Pre-built binaries available on PyPI for Linux, Windows and macOS! ({uri-issue}451[#451])
+* PyRDP now runs with QT6 which is better supported than QT5 nowadays ({uri-issue}436[#436], {uri-issue}453[#453])
 * Support for RDP version 10.11 ({uri-issue}433[#433])
 * Support for Python 3.11 by updating PyAV to get pre-built binary wheels ({uri-issue}437[#437], {uri-issue}438[#438])
 * MITM start and termination log messages are now part of the JSON logs ({uri-issue}447[#447])
@@ -27,6 +28,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Fixed support for Windows on Python 3.8+ ({uri-issue}316[#316], {uri-issue}439[#439], {uri-issue}444[#444])
 * Updated Twisted's minimum version to 21.2.0 due to ({uri-issue}316[#316])
 * Added more missing dependencies for the GUI on Ubuntu 20.04 LTS ({uri-issue}448[#448])
+* Fixed installation issue on Windows with Python 3.11 ({uri-issue}436[#436])
 
 === Infrastructure
 
