@@ -36,7 +36,7 @@ jobs:
       matrix:
         os: [ubuntu-22.04, ubuntu-20.04]
         # Lets try to keep testing an LTS python and latest python
-        python-version: ['3.7', '3.11']
+        python-version: ['3.7', '3.12']
 
     runs-on: ${{ matrix.os }}
     name: Ubuntu ${{ matrix.os }} with Python ${{ matrix.python-version }}
@@ -107,8 +107,7 @@ jobs:
     strategy:
       matrix:
         # Lets try to keep testing an LTS python and latest python
-        # FIXME: Windows with 3.11 doesn't work since PySide2 isn't supported. see #436
-        python-version: ['3.7', '3.10']
+        python-version: ['3.7', '3.12']
 
     name: Windows with Python ${{ matrix.python-version }}
     steps:
