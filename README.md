@@ -91,12 +91,12 @@ We recommend installing PyRDP in a
 [virtualenv environment](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/)
 to avoid dependency issues.
 
-First, make sure to install the prerequisite packages (on Ubuntu). We provide two types of installs a full one and a
+First, make sure to install the prerequisite packages (these are listed for Ubuntu 22.04, you might need to adjust for other distros). We provide two types of installs a full one and a
 slim one. Install the dependencies according to your use case.
 
 ```
-# Full install (GUI, transcoding to MP4)
-sudo apt install python3 python3-pip python3-dev python3-setuptools python3-venv \
+# Full install (GUI, convert captures to video)
+sudo apt install python3 python3-pip python3-venv \
         build-essential python3-dev git openssl \
         libgl1-mesa-glx \
         libnotify-bin \
@@ -106,8 +106,8 @@ sudo apt install python3 python3-pip python3-dev python3-setuptools python3-venv
         libavformat-dev libavcodec-dev libavdevice-dev \
         libavutil-dev libswscale-dev libswresample-dev libavfilter-dev
 
-# Slim install (no GUI, no transcoding)
-sudo apt install python3 python3-pip python3-setuptools python3-venv \
+# Slim install (no GUI, no conversion to video possible)
+sudo apt install python3 python3-pip python3-venv \
         build-essential python3-dev git openssl
 ```
 
@@ -138,15 +138,15 @@ Finally, you can install the project with Pip:
 ```
 pip3 install -U pip setuptools wheel
 
-# Without GUI and ffmpeg dependencies
+# Without GUI and video conversion dependencies
 pip3 install -U -e .
 
-# With GUI and ffmpeg dependencies
+# With GUI and video conversion dependencies
 pip3 install -U -e '.[full]'
 ```
 
 This should install the dependencies required to run PyRDP. If you choose to
-install without the GUI or ffmpeg dependencies, it will not be possible to use
+install without the GUI or video conversion dependencies, it will not be possible to use
 `pyrdp-player` without headless mode (`--headless`) or `pyrdp-convert` to produce video output.
 
 If you ever want to leave your virtual environment, you can simply deactivate it:
