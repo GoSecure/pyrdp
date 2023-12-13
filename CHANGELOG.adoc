@@ -13,6 +13,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 * All tools lost their `.py` suffix. For example, `pyrdp-mitm.py` is now `pyrdp-mitm`.
 * Requires Python 3.7
+* master Docker container tag renamed devel (master-slim to devel-slim)
 
 === Enhancements
 
@@ -41,6 +42,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Using cibuildwheel for cross-platform and cross-python builds Windows, Linux, macOS ({uri-issue}451[#451])
 * Deprecation cleanup in CI ({uri-issue}452[#452])
 * Updated our dependencies to the latest stable versions ({uri-issue}454[#454])
+* Renamed master branch to main
 
 
 == v1.2.0 - 2022-12-23

@@ -4,7 +4,7 @@ name: Publish Docker images
 on:
   push:
     branches:
-      - 'master'
+      - 'main'
     tags:
       - 'v*'
 
@@ -24,9 +24,12 @@ jobs:
       
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v5
         with:
           images: gosecure/pyrdp
+          tags: |
+            # set devel tag for default branch
+            type=raw,value=devel,enable={{is_default_branch}}
       
       - name: Build and push regular Docker image
         uses: docker/build-push-action@v2
@@ -57,9 +60,12 @@ jobs:
       
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v5
         with:
           images: gosecure/pyrdp
+          tags: |
+            # set devel tag for default branch
+            type=raw,value=devel,enable={{is_default_branch}}
           flavor: |
             suffix=-slim,onlatest=true
 

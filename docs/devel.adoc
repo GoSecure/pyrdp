@@ -11,7 +11,7 @@ For docker images we rely on `requirements.txt` and `requirements-slim.txt` with
 It is important to keep both approaches in sync and to peridiocally update the requirements files (like before releases).
 See https://github.com/GoSecure/pyrdp/pull/219[the PR where we improved our use of the docker cache] for the reasoning behind this approach.
 
-In a clean tree, on master:
+In a clean tree, on main:
 
 * install and load the venv
 * do a `pip freeze > requirements.txt`
