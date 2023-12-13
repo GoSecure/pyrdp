@@ -1,13 +1,13 @@
 # PyRDP
 
-![pipeline status](https://github.com/GoSecure/pyrdp/workflows/Build/badge.svg?branch=master)
+![pipeline status](https://github.com/GoSecure/pyrdp/workflows/Build/badge.svg?branch=main)
 [![Black Hat Arsenal 2019](https://raw.githubusercontent.com/toolswatch/badges/master/arsenal/usa/2019.svg?sanitize=true)](https://www.blackhat.com/us-19/arsenal/schedule/index.html)
 [![Black Hat Arsenal 2021](https://raw.githubusercontent.com/toolswatch/badges/master/arsenal/usa/2021.svg?sanitize=true)](https://www.blackhat.com/us-21/arsenal/schedule/index.html)
 [![Black Hat Arsenal 2022](https://raw.githubusercontent.com/toolswatch/badges/master/arsenal/usa/2022.svg?sanitize=true)](https://www.blackhat.com/us-22/arsenal/schedule/index.html#pyrdp-remote-desktop-protocol-mitm-for-purple-teamers-28021)
 
 PyRDP is a Python Remote Desktop Protocol (RDP) Monster-in-the-Middle (MITM) tool and library.
 
-![PyRDP Logo](https://raw.githubusercontent.com/GoSecure/pyrdp/master/docs/pyrdp-logo.svg?sanitize=true)
+![PyRDP Logo](https://raw.githubusercontent.com/GoSecure/pyrdp/main/docs/pyrdp-logo.svg?sanitize=true)
 
 It features a few tools:
 - RDP Monster-in-the-Middle
@@ -83,7 +83,7 @@ docker pull gosecure/pyrdp:latest-slim
 ```
 
 You can find the list of all our Docker images [on the gosecure/pyrdp DockerHub page](https://hub.docker.com/r/gosecure/pyrdp/tags).
-The `latest` tag refers to the latest released version while the `master` tag is the docker image built out of our `master` branch.
+The `latest` tag refers to the latest released version while the `devel` tag is the docker image built out of our `main` branch.
 
 ### From Git Source
 
@@ -306,7 +306,7 @@ There are three different strategies that can be used:
 ###### Monster-in-the-Middle NLA
 If we have access to the server's certificate and private key, we can successfully MITM RDP even if NLA is enforced.
 We [documented this attack in our 1.0 release blog post](https://www.gosecure.net/blog/2020/10/20/announcing-pyrdp-1-0/).
-Instructions to [extract the RDP certificate and private key](https://github.com/GoSecure/pyrdp/blob/master/docs/cert-extraction.md) are available on our GitHub.
+Instructions to [extract the RDP certificate and private key](https://github.com/GoSecure/pyrdp/blob/main/docs/cert-extraction.md) are available on our GitHub.
 
 With the certificate and private key accessible, you just need to set the authentication to `ssp` by adding this on the `pyrdp-mitm.py` command-line:
 ```
