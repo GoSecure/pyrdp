@@ -1,6 +1,6 @@
 # PyRDP
 
-![pipeline status](https://github.com/GoSecure/pyrdp/workflows/Build/badge.svg?branch=main)
+[![Tests](https://github.com/GoSecure/pyrdp/actions/workflows/ci.yml/badge.svg)](https://github.com/GoSecure/pyrdp/actions/workflows/ci.yml)
 [![Black Hat Arsenal 2019](https://raw.githubusercontent.com/toolswatch/badges/master/arsenal/usa/2019.svg?sanitize=true)](https://www.blackhat.com/us-19/arsenal/schedule/index.html)
 [![Black Hat Arsenal 2021](https://raw.githubusercontent.com/toolswatch/badges/master/arsenal/usa/2021.svg?sanitize=true)](https://www.blackhat.com/us-21/arsenal/schedule/index.html)
 [![Black Hat Arsenal 2022](https://raw.githubusercontent.com/toolswatch/badges/master/arsenal/usa/2022.svg?sanitize=true)](https://www.blackhat.com/us-22/arsenal/schedule/index.html#pyrdp-remote-desktop-protocol-mitm-for-purple-teamers-28021)
