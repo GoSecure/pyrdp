@@ -1,13 +1,13 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2020 GoSecure Inc.
+# Copyright (C) 2020-2023 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 import logging
 import random
 
 from twisted.internet.protocol import ServerFactory
-import names
+import namesgenerator
 
 from pyrdp.mitm import MITMConfig, RDPMITM
 from pyrdp.logging import LOGGER_NAMES, SessionLogger
@@ -25,7 +25,7 @@ class MITMServerFactory(ServerFactory):
         self.config = config
 
     def buildProtocol(self, addr):
-        sessionID = f"{names.get_first_name()}{random.randrange(100000,999999)}"
+        sessionID = f"{namesgenerator.get_random_name()}_{random.randrange(100000,999999)}"
 
         # mainLogger logs in a file and stdout
         mainlogger = logging.getLogger(LOGGER_NAMES.MITM_CONNECTIONS)

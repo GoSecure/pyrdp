@@ -14,6 +14,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * All tools lost their `.py` suffix. For example, `pyrdp-mitm.py` is now `pyrdp-mitm`.
 * Requires Python 3.7
 * master Docker container tag renamed devel (master-slim to devel-slim)
+* The log field `sessionID` changed format from `<firstname><100000-999999>` to `<adjective>_<name>_<1000000-9999999>` ({uri-issue}458[#458])
 
 === Enhancements
 
@@ -24,6 +25,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * MITM start and termination log messages are now part of the JSON logs ({uri-issue}447[#447])
 * Docker images are now based on Ubuntu 22.04 and dependencies were minimized ({uri-issue}455[#455])
 * Documented how to run `pyrdp-convert` through a Docker container ({uri-issue}455[#455])
+* Fixed sessionID duplication caused by a bad name library and added an extra digit ({uri-issue}458[#458], {uri-issue}460[#460])
 
 === Bug fixes
 
