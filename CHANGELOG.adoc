@@ -42,7 +42,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Using cibuildwheel for cross-platform and cross-python builds Windows, Linux, macOS ({uri-issue}451[#451])
 * Deprecation cleanup in CI ({uri-issue}452[#452])
 * Updated our dependencies to the latest stable versions ({uri-issue}454[#454])
-* Renamed master branch to main
+* Renamed master branch to main ({uri-issue}450[#450], {uri-issue}459[#459])
 
 
 == v1.2.0 - 2022-12-23
