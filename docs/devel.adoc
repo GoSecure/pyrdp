@@ -1,5 +1,12 @@
 = Development guide
 
+:toc:
+:toc-placement!:
+
+This is a guide with quick recipes meant for PyRDP developers.
+
+toc::[]
+
 == Install from git source on Linux
 
 We recommend installing PyRDP in a https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/[virtualenv environment] to avoid dependency issues.

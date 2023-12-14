@@ -40,23 +40,21 @@ research use cases in mind.
 
 
 ## Table of Contents
-- [Supported Systems](#supported-systems)
-- [Installing](#installing)
+* [Supported Systems](#supported-systems)
+* [Installing](#installing)
+  * [Using pipx](#using-pipx)
   * [Using the Docker Image](#using-the-docker-image)
-  * [From Git Source](#from-git-source)
-  * [Installing on Windows](#installing-on-windows)
-  * [Building the Docker Image](#building-the-docker-image)
-- [Using PyRDP](#using-pyrdp)
-  * [Using the PyRDP Monster-in-the-Middle](#using-the-pyrdp-monster-in-the-middle)
+* [Using PyRDP](#using-pyrdp)
+  * [Using the PyRDP Monster\-in\-the\-Middle](#using-the-pyrdp-monster-in-the-middle)
   * [Using the PyRDP Player](#using-the-pyrdp-player)
   * [Using the PyRDP Certificate Cloner](#using-the-pyrdp-certificate-cloner)
   * [Using PyRDP Convert](#using-pyrdp-convert)
   * [Configuring PyRDP](#configuring-pyrdp)
   * [Advanced Usage](#advanced-usage)
   * [Docker Specific Usage Instructions](#docker-specific-usage-instructions)
-- [PyRDP Lore](#pyrdp-lore)
-- [Contributing to PyRDP](#contributing-to-pyrdp)
-- [Acknowledgements](#acknowledgements)
+* [PyRDP Lore](#pyrdp-lore)
+* [Contributing to PyRDP](#contributing-to-pyrdp)
+* [Acknowledgements](#acknowledgements)
 
 
 ## Supported Systems
