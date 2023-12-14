@@ -19,8 +19,8 @@ from pyrdp.pdu import ClipboardPDU, FormatDataRequestPDU, FormatDataResponsePDU,
 from pyrdp.parser.rdp.virtual_channel.clipboard import FileDescriptor
 from pyrdp.recording import Recorder
 from pyrdp.mitm.config import MITMConfig
+from pyrdp.mitm.FileMapping import FileMapping
 
-from twisted.internet.interfaces import IDelayedCall
 from twisted.internet import reactor  # Import the current reactor.
 
 
@@ -52,7 +52,8 @@ class PassiveClipboardStealer:
         self.transfers = {}
         self.timeouts = {}  # Track active timeout monitoring tasks.
 
-        self.fileDir = f"{self.config.fileDir}/{self.state.sessionID}"
+        self.filesRoot = self.config.fileDir / self.state.sessionID
+        #self.filesystemRoot = self.config.filesystemDir / self.state.sessionID
 
         self.client.createObserver(
             onPDUReceived = self.onClientPDUReceived,
@@ -113,12 +114,14 @@ class PassiveClipboardStealer:
                               {"filename": fd.filename, "clipId": pdu.clipId})
 
                 if pdu.streamId in self.transfers:
-                    self.log.warning('File transfer already started')
+                    self.log.warning("File transfer already started file '%(filename)s', clipId=%(clipId)d",
+                                     {"filename": fd.filename, "clipId": pdu.clipId})
 
-                fpath = Path(self.fileDir)
+                fpath = self.filesRoot
                 fpath.mkdir(parents=True, exist_ok=True)
 
-                self.transfers[pdu.streamId] = FileTransfer(fpath, fd, pdu.size)
+                self.transfers[pdu.streamId] = FileTransferMappingProxy(fd, self.config.fileDir, self.filesRoot, self.log, pdu.size)
+                #self.transfers[pdu.streamId] = FileTransfer(fpath, fd, pdu.size)
 
                 # Track transfer timeout to prevent hung transfers.
                 cbTimeout = reactor.callLater(TRANSFER_TIMEOUT, partial(self.onTransferTimedOut, pdu.streamId))
@@ -148,7 +151,7 @@ class PassiveClipboardStealer:
             if done:
                 xfer = self.transfers[pdu.streamId]
                 self.log.info("Transfer completed for file '%(filename)s', saved to: '%(localPath)s'",
-                              {"filename": xfer.info.filename, "localPath": xfer.localname})
+                              {"filename": xfer.info.filename, "localPath": str(xfer.getFileHash())})
                 del self.transfers[pdu.streamId]
 
                 # Remove the timeout since the transfer is done.
@@ -165,8 +168,9 @@ class PassiveClipboardStealer:
             # transfer has been completed. The latter should never happen due to the way
             # twisted's reactor works.
             xfer = self.transfers[streamId]
+            xfer.onDisconnection()
             self.log.warn("Transfer timed out for '%(filename)s' saved to: '%(localPath)s'",
-                          {"filename": xfer.info.filename, "localPath": xfer.localname})
+                          {"filename": xfer.info.filename, "localPath": str(xfer.getDataPath())})
             del self.transfers[streamId]
             del self.timeouts[streamId]
 
@@ -236,32 +240,19 @@ class ActiveClipboardStealer(PassiveClipboardStealer):
         destination.sendPDU(formatDataRequestPDU)
         self.forwardNextDataResponse = False
 
-
-class FileTransfer:
-    """Encapsulate the state of a clipboard file transfer."""
-    def __init__(self, dst: Path, info: FileDescriptor, size: int):
-        self.info = info
+class FileTransferMappingProxy():
+    """Encapsulate the state of a clipboard file transfer but proxies to FileMapping for storage and logging consistency"""
+    def __init__(self, fd: FileDescriptor, outDir: Path, filesRoot: Path, log: LoggerAdapter, size: int):
+        self.info = fd
         self.size = size
         self.transferred: int = 0
-        self.data = b''
         self.prev = None  # Pending file content request.
-
-        self.localname = dst / Path(info.filename).name  # Avoid path traversal.
-
-        # Handle duplicates.
-        c = 1
-        localname = self.localname
-        while localname.exists():
-            localname = self.localname.parent / f'{self.localname.stem}_{c}{self.localname.suffix}'
-            c += 1
-        self.localname = localname
-
-        self.handle = open(str(self.localname), 'wb')
+        self.fileMapping = FileMapping.generate("/" + fd.filename, outDir, filesRoot, log)
 
     def onRequest(self, pdu: FileContentsRequestPDU):
         # TODO: Handle out of order ranges. Are they even possible?
         self.prev = pdu
-
+    
     def onResponse(self, pdu: FileContentsResponsePDU) -> bool:
         """
         Handle file data.
@@ -276,11 +267,20 @@ class FileTransfer:
 
         received = len(pdu.data)
 
-        self.handle.write(pdu.data)
+        self.fileMapping.write(pdu.data)
         self.transferred += received
 
         if self.transferred == self.size:
-            self.handle.close()
+            self.fileMapping.finalize()
             return True
 
         return False
+
+    def getFileHash(self) -> str:
+        return self.fileMapping.fileHash
+
+    def getDataPath(self) -> Path:
+        return self.fileMapping.dataPath
+
+    def onDisconnection(self, reason):
+        return self.fileMapping.onDisconnection(reason)
