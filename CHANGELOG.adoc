@@ -16,6 +16,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * master Docker container tag renamed devel (master-slim to devel-slim)
 * The log field `sessionID` changed format from `<firstname><100000-999999>` to `<adjective>_<name>_<1000000-9999999>` ({uri-issue}458[#458])
 * Stolen clipboard files are now stored hashed under the files/ hierarchy without sessionId and linked from filesystems/<sessionID>/clipboard/ hierarchy ({uri-issue}338[#338])
+* Python project name is now pyrdp-mitm since pyrdp was taken on PyPI ({uri-issue}456[#456])
 
 === Enhancements
 
