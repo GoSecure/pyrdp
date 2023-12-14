@@ -22,7 +22,7 @@ class FileMappingTest(unittest.TestCase):
     def createMapping(self, mkdir: MagicMock, mkstemp: MagicMock, mock_open_object):
         mkstemp.return_value = (1, str(self.outDir / "tmp" / "tmp_test"))
         mapping = FileMapping.generate("/test", self.outDir, Path("filesystems"), self.log)
-        mapping.getShaHash = Mock(return_value = self.hash)
+        mapping._getShaHash = Mock(return_value = self.hash)
         mapping.file.closed = False
         return mapping, mkdir, mkstemp, mock_open_object
 

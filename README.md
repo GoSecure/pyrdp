@@ -178,13 +178,16 @@ pyrdp_output/
 │   └── WinDev2108Eval.pem
 ├── files
 │   ├── e91c6a5eb3ca15df5a5cb4cf4ebb6f33b2d379a3a12d7d6de8c412d4323feb4c
+│   ├── b14b26b7d02c85e74ab4f0d847553b2fdfaf8bc616f7c3efcc4771aeddd55700
 ├── filesystems
-│   ├── Kimberly835337
+│   ├── romantic_kalam_8214773
 │   │   └── device1
-│   └── Stephen215343
+│   │   └── clipboard
+|           └── priv-esc.exe -> ../../../files/b14b26b7d02c85e74ab4f0d847553b2fdfaf8bc616f7c3efcc4771aeddd55700
+│   └── happy_stonebraker_1992243
 │       ├── device1
 │       └── device2
-|           └── Users/User/3D Objects/desktop.ini
+|           └── Users/User/3D Objects/desktop.ini -> ../../../../../../e91c6a5eb3ca15df5a5cb4cf4ebb6f33b2d379a3a12d7d6de8c412d4323feb4c
 ├── logs
 │   ├── crawl.json
 │   ├── crawl.log
@@ -195,8 +198,8 @@ pyrdp_output/
 │   ├── player.log
 │   └── ssl.log
 └── replays
-    ├── rdp_replay_20210826_12-15-33_512_Stephen215343.pyrdp
-    └── rdp_replay_20211125_12-55-42_352_Kimberly835337.pyrdp
+    ├── rdp_replay_20231214_01-20-28_965_happy_stonebraker_1992243.pyrdp
+    └── rdp_replay_20231214_00-42-24_295_romantic_kalam_8214773.pyrdp
 ```
 
 * `certs/` contains the certificates generated stored using the `CN` of the certificate as the file name

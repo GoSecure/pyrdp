@@ -31,6 +31,8 @@ class FileMapping:
         self.filesystemDir = filesystemDir
         self.log = log
         self.written = False
+        # only available once finalized (since we hash to find the name we can't know ahead of time)
+        self.fileHash: str = None
 
     def seek(self, offset: int):
         if not self.file.closed:
@@ -40,7 +42,7 @@ class FileMapping:
         self.file.write(data)
         self.written = True
 
-    def getShaHash(self):
+    def _getShaHash(self):
         with open(self.dataPath, "rb") as f:
             # Note: In early 2022 we switched to sha256 for file hashes. If you
             #       want to use sha1, uncomment the next line and comment the
@@ -65,10 +67,10 @@ class FileMapping:
         self.log.debug("Closing file %(path)s", {"path": self.dataPath})
         self.file.close()
 
-        fileHash = self.getShaHash()
+        self.fileHash = self._getShaHash()
 
         # Go up one directory because files are saved to outDir / tmp while we're downloading them
-        hashPath = (self.dataPath.parents[1] / fileHash)
+        hashPath = (self.dataPath.parents[1] / self.fileHash)
 
         # Don't keep the file if we haven't written anything to it or it's a duplicate, otherwise rename and move to files dir
         if not self.written or hashPath.exists():
@@ -87,7 +89,7 @@ class FileMapping:
             self.filesystemPath.symlink_to(Path(os.path.relpath(hashPath, self.filesystemPath.parent)))
 
             self.log.info("SHA-256 '%(path)s' = '%(shasum)s'", {
-                "path": str(self.filesystemPath.relative_to(self.filesystemDir)), "shasum": fileHash
+                "path": str(self.filesystemPath.relative_to(self.filesystemDir)), "shasum": self.fileHash
             })
 
     def onDisconnection(self, reason):
