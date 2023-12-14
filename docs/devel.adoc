@@ -1,11 +1,9 @@
 = Development guide
-
-:toc:
-:toc-placement!:
+:toc: preamble
+:toclevels: 2
+:!toc-title:
 
 This is a guide with quick recipes meant for PyRDP developers.
-
-toc::[]
 
 == Install from git source on Linux
 
