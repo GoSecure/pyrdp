@@ -1,5 +1,130 @@
 = Development guide
 
+== Install from git source on Linux
+
+We recommend installing PyRDP in a https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/[virtualenv environment] to avoid dependency issues.
+
+First, make sure to install the prerequisite packages (these are listed for Ubuntu 22.04, you might need to adjust for other distros). We provide two types of installs a full one and a
+slim one. Install the dependencies according to your use case.
+
+```
+# Full install (GUI, convert captures to video)
+sudo apt install python3 python3-pip python3-venv \
+        build-essential python3-dev git openssl \
+        libgl1-mesa-glx \
+        libnotify-bin \
+        libxkbcommon-x11-0 libxcb-xinerama0 \
+        libxcb-icccm4 libxcb-image0 libxcb-util1 libxcb-keysyms1 \
+        libxcb-randr0 libxcb-render-util0 \
+        libavformat-dev libavcodec-dev libavdevice-dev \
+        libavutil-dev libswscale-dev libswresample-dev libavfilter-dev
+
+# Slim install (no GUI, no conversion to video possible)
+sudo apt install python3 python3-pip python3-venv \
+        build-essential python3-dev git openssl
+```
+
+Grab PyRDP's source code:
+
+```
+git clone https://github.com/gosecure/pyrdp.git
+```
+
+Then, create your virtual environment in the `venv` directory inside PyRDP's directory:
+
+```
+cd pyrdp
+python3 -m venv venv
+```
+
+*DO NOT* use the root PyRDP directory for the virtual environment folder (`python3 -m venv .`). You will make a mess,
+and using a directory name like `venv` is more standard anyway.
+
+Before installing the dependencies, you need to activate your virtual environment:
+
+```
+source venv/bin/activate
+```
+
+Finally, you can install the project with Pip:
+
+```
+pip3 install -U pip setuptools wheel
+
+# Without GUI and video conversion dependencies
+pip3 install -U -e .
+
+# With GUI and video conversion dependencies
+pip3 install -U -e '.[full]'
+```
+
+This should install the dependencies required to run PyRDP. If you choose to
+install without the GUI or video conversion dependencies, it will not be possible to use
+`pyrdp-player` without headless mode (`--headless`) or `pyrdp-convert` to produce video output.
+
+
+== Install from git source on Windows
+
+The steps are almost the same. There are two additional prerequisites.
+
+1. A working Python environment https://www.python.org/downloads/windows/[python.org installer recommended]
+2. https://visualstudio.microsoft.com/visual-cpp-build-tools/[Microsoft C++ Build Tools]
+3. https://wiki.openssl.org/index.php/Binaries[OpenSSL]. Make sure it is reachable from your `$PATH`.
+
+Then, create your virtual environment in PyRDP's directory:
+
+```
+cd pyrdp
+python -m venv venv
+```
+
+*DO NOT* use the root PyRDP directory for the virtual environment folder (`python3 -m venv .`). You will make a mess,
+and using a directory name like `venv` is more standard anyway.
+
+Before installing the dependencies, you need to activate your virtual environment:
+
+```
+venv\Scripts\activate
+```
+
+Finally, you can install the project with Pip:
+
+```
+python -m pip install -U pip setuptools wheel
+pip install -U -e ".[full]"
+```
+
+This should install all the dependencies required to run PyRDP.
+For example, to open the player:
+
+```
+python venv\Scripts\pyrdp-player
+```
+
+
+== Building the Docker Image
+
+First of all, build the image by executing this command at the root of PyRDP (where Dockerfile is located):
+
+```
+docker build -t pyrdp .
+```
+
+As an alternative we have a slimmer image without the GUI and ffmpeg dependencies:
+
+```
+docker build -f Dockerfile.slim -t pyrdp .
+```
+
+Cross-platform builds can be achieved using `buildx`:
+
+```
+docker buildx create --name mybuilder --use --platform linux/amd64,linux/arm64
+docker buildx inspect --bootstrap
+docker buildx build --platform linux/arm,linux/amd64 -t pyrdp -f Dockerfile.slim .
+```
+
+
 == Making a release
 
 NOTE: This is a work in progress
