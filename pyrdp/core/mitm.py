@@ -25,7 +25,7 @@ class MITMServerFactory(ServerFactory):
         self.config = config
 
     def buildProtocol(self, addr):
-        sessionID = f"{namesgenerator.get_random_name()}_{random.randrange(100000,999999)}"
+        sessionID = f"{namesgenerator.get_random_name()}_{random.randrange(1000000,9999999)}"
 
         # mainLogger logs in a file and stdout
         mainlogger = logging.getLogger(LOGGER_NAMES.MITM_CONNECTIONS)
