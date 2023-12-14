@@ -27,6 +27,6 @@ services:
       # The path before the ':' is the destination of the log on the host side.
      - ./pyrdp_log:/home/pyrdp/log
      # Place the command you want to execute here:
-     # ex: pyrdp-player.py
-     # ex: pyrdp-mitm.py
-    command: ["pyrdp-mitm.py", "-h"]
+     # ex: pyrdp-player
+     # ex: pyrdp-mitm
+    command: ["pyrdp-mitm", "-h"]

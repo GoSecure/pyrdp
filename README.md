@@ -40,32 +40,102 @@ research use cases in mind.
 
 
 ## Table of Contents
-- [Supported Systems](#supported-systems)
-- [Installing](#installing)
+* [Supported Systems](#supported-systems)
+* [Installing](#installing)
+  * [Using pipx](#using-pipx)
   * [Using the Docker Image](#using-the-docker-image)
-  * [From Git Source](#from-git-source)
-  * [Installing on Windows](#installing-on-windows)
-  * [Building the Docker Image](#building-the-docker-image)
-- [Using PyRDP](#using-pyrdp)
-  * [Using the PyRDP Monster-in-the-Middle](#using-the-pyrdp-monster-in-the-middle)
+* [Using PyRDP](#using-pyrdp)
+  * [Using the PyRDP Monster\-in\-the\-Middle](#using-the-pyrdp-monster-in-the-middle)
   * [Using the PyRDP Player](#using-the-pyrdp-player)
   * [Using the PyRDP Certificate Cloner](#using-the-pyrdp-certificate-cloner)
   * [Using PyRDP Convert](#using-pyrdp-convert)
   * [Configuring PyRDP](#configuring-pyrdp)
   * [Advanced Usage](#advanced-usage)
   * [Docker Specific Usage Instructions](#docker-specific-usage-instructions)
-- [PyRDP Lore](#pyrdp-lore)
-- [Contributing to PyRDP](#contributing-to-pyrdp)
-- [Acknowledgements](#acknowledgements)
+* [PyRDP Lore](#pyrdp-lore)
+* [Contributing to PyRDP](#contributing-to-pyrdp)
+* [Acknowledgements](#acknowledgements)
 
 
 ## Supported Systems
 PyRDP should work on Python 3.7 and up on the x86-64, ARM and ARM64 platforms.
 
-This tool has been tested to work on Python 3.7 on Linux (Ubuntu 20.04, 22.04), Raspberry Pi and Windows
-(see section [Installing on Windows](#installing-on-windows)). It has not been tested on macOS.
+This tool has been tested to work on Python 3.7 on Linux (Ubuntu 20.04, 22.04), Raspberry Pi and Windows. It has not been tested on macOS.
+
 
 ## Installing
+
+Two installation techniques are recommended via `pipx` or using docker containers.
+Installing from source or building docker containers yourself is covered in the [development documentation](docs/devel.adoc).
+
+### Using pipx
+
+#### Dependencies
+
+##### Linux
+
+First, make sure to install the prerequisite packages (these are listed for Ubuntu 22.04, you might need to adjust for other distros). We provide two types of installs a full one and a
+slim one. Install the dependencies according to your use case.
+
+```
+# Full install (GUI, convert captures to video)
+sudo apt install python3 python3-pip python3-venv \
+        build-essential python3-dev openssl \
+        libegl1 libxcb-cursor0 libxkbcommon-x11-0 libxcb-icccm4 libxcb-keysyms1 \
+        libnotify-bin \
+        libavcodec58 libavdevice58
+
+# Slim install (no GUI, no conversion to video possible)
+sudo apt install python3 python3-pip python3-venv \
+        build-essential python3-dev git openssl
+```
+
+This should install the dependencies required to run PyRDP. If you choose to
+install without the GUI or video conversion dependencies, it will not be possible to use
+`pyrdp-player` without headless mode (`--headless`) or `pyrdp-convert` to produce video output.
+
+Make sure you have `pipx` installed. On Ubuntu 22.04:
+
+```
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+```
+
+##### Windows
+
+Make sure you have Python installed.
+Windows Store Python didn't work for me on Windows 11.
+We recommend installing Python via [Scoop](https://scoop.sh/).
+
+```
+scoop install python # if not installed already
+scoop install pipx
+pipx ensurepath
+```
+
+Log out and log back in (to update your PATH).
+
+##### Other OS
+
+To install `pipx` on other operating systems see here: https://github.com/pypa/pipx#install-pipx
+
+
+#### Install
+
+For the full PyRDP experience with the QT GUI and the ability to convert captures to video:
+
+```
+pipx install pyrdp-mitm[full]
+```
+
+For the compact version meant to be run in headless environments (servers, RaspberryPi):
+
+```
+pipx install pyrdp-mitm
+```
+
+You are ready to go! See the [usage instructions](#using-pyrdp).
+
 
 ### Using the Docker Image
 
@@ -84,150 +154,6 @@ docker pull gosecure/pyrdp:latest-slim
 
 You can find the list of all our Docker images [on the gosecure/pyrdp DockerHub page](https://hub.docker.com/r/gosecure/pyrdp/tags).
 The `latest` tag refers to the latest released version while the `devel` tag is the docker image built out of our `main` branch.
-
-### From Git Source
-
-We recommend installing PyRDP in a
-[virtualenv environment](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/)
-to avoid dependency issues.
-
-First, make sure to install the prerequisite packages (these are listed for Ubuntu 22.04, you might need to adjust for other distros). We provide two types of installs a full one and a
-slim one. Install the dependencies according to your use case.
-
-```
-# Full install (GUI, convert captures to video)
-sudo apt install python3 python3-pip python3-venv \
-        build-essential python3-dev git openssl \
-        libgl1-mesa-glx \
-        libnotify-bin \
-        libxkbcommon-x11-0 libxcb-xinerama0 \
-        libxcb-icccm4 libxcb-image0 libxcb-util1 libxcb-keysyms1 \
-        libxcb-randr0 libxcb-render-util0 \
-        libavformat-dev libavcodec-dev libavdevice-dev \
-        libavutil-dev libswscale-dev libswresample-dev libavfilter-dev
-
-# Slim install (no GUI, no conversion to video possible)
-sudo apt install python3 python3-pip python3-venv \
-        build-essential python3-dev git openssl
-```
-
-Grab PyRDP's source code:
-
-```
-git clone https://github.com/gosecure/pyrdp.git
-```
-
-Then, create your virtual environment in the `venv` directory inside PyRDP's directory:
-
-```
-cd pyrdp
-python3 -m venv venv
-```
-
-*DO NOT* use the root PyRDP directory for the virtual environment folder (`python3 -m venv .`). You will make a mess,
-and using a directory name like `venv` is more standard anyway.
-
-Before installing the dependencies, you need to activate your virtual environment:
-
-```
-source venv/bin/activate
-```
-
-Finally, you can install the project with Pip:
-
-```
-pip3 install -U pip setuptools wheel
-
-# Without GUI and video conversion dependencies
-pip3 install -U -e .
-
-# With GUI and video conversion dependencies
-pip3 install -U -e '.[full]'
-```
-
-This should install the dependencies required to run PyRDP. If you choose to
-install without the GUI or video conversion dependencies, it will not be possible to use
-`pyrdp-player` without headless mode (`--headless`) or `pyrdp-convert` to produce video output.
-
-If you ever want to leave your virtual environment, you can simply deactivate it:
-
-```
-deactivate
-```
-
-Note that you will have to activate your environment every time you want to have the PyRDP scripts available as shell
-commands.
-
-### Installing on Windows
-
-The steps are almost the same. There are two additional prerequisites.
-
-1. A working Python environment ([python.org installer recommended](https://www.python.org/downloads/windows/))
-2. [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
-3. [OpenSSL](https://wiki.openssl.org/index.php/Binaries). Make sure it is reachable from your `$PATH`.
-
-Then, create your virtual environment in PyRDP's directory:
-
-```
-cd pyrdp
-python -m venv venv
-```
-
-*DO NOT* use the root PyRDP directory for the virtual environment folder (`python3 -m venv .`). You will make a mess,
-and using a directory name like `venv` is more standard anyway.
-
-Before installing the dependencies, you need to activate your virtual environment:
-
-```
-venv\Scripts\activate
-```
-
-Finally, you can install the project with Pip:
-
-```
-python -m pip install -U pip setuptools wheel
-pip install -U -e ".[full]"
-```
-
-This should install all the dependencies required to run PyRDP.
-For example, to open the player:
-
-```
-python venv\Scripts\pyrdp-player
-```
-
-If you ever want to leave your virtual environment, you can simply deactivate it:
-
-```
-deactivate
-```
-
-Note that you will have to activate your environment every time you want to have the PyRDP scripts available as shell
-commands.
-
-### Building the Docker Image
-
-First of all, build the image by executing this command at the root of PyRDP (where Dockerfile is located):
-
-```
-docker build -t pyrdp .
-```
-
-As an alternative we have a slimmer image without the GUI and ffmpeg dependencies:
-
-```
-docker build -f Dockerfile.slim -t pyrdp .
-```
-
-Afterwards, you can execute PyRDP by invoking the `pyrdp` docker container. See [Usage instructions](#using-pyrdp) and the [Docker specific instructions](#docker-specific-usage-instructions) for details.
-
-Cross-platform builds can be achieved using `buildx`:
-
-```
-docker buildx create --name mybuilder --use --platform linux/amd64,linux/arm64
-docker buildx inspect --bootstrap
-docker buildx build --platform linux/arm,linux/amd64 -t pyrdp -f Dockerfile.slim .
-```
 
 
 ## Using PyRDP
