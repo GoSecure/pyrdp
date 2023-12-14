@@ -256,7 +256,7 @@ class FileTransferMappingProxy():
     def onRequest(self, pdu: FileContentsRequestPDU):
         # TODO: Handle out of order ranges. Are they even possible?
         self.prev = pdu
-    
+
     def onResponse(self, pdu: FileContentsResponsePDU) -> bool:
         """
         Handle file data.
