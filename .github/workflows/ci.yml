@@ -54,13 +54,12 @@ jobs:
 
       - name: Update apt
         run: sudo apt update -y
-      - name: Install setuptools
-        run: sudo apt install python3-setuptools
       - name: Install PyRDP dependencies
-        run: sudo apt install libgl1-mesa-glx libegl1 git python3-dev
-      - name: Install wheel
-        working-directory: .
-        run: pip install wheel
+        run: |
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends \
+              build-essential python3-dev \
+              libegl1 libxcb-cursor0 libxkbcommon-x11-0 libxcb-icccm4 libxcb-keysyms1 \
+              libavcodec58 libavdevice58
       - name: Install PyRDP
         working-directory: .
         run: pip install -U -e .[full]
@@ -121,9 +120,6 @@ jobs:
         run: python --version
       - name: Pip version
         run: pip --version
-      - name: Install wheel
-        working-directory: .
-        run: pip install wheel
       - name: Install PyRDP
         working-directory: .
         run: pip install -U -e .[full]
