@@ -603,6 +603,9 @@ It tells to QT that it is correct that no display environment is available.
 * [Blog: PyRDP 1.0](https://www.gosecure.net/blog/2020/10/20/announcing-pyrdp-1-0/)
 * [DefCon 2020 Demo Labs](https://www.youtube.com/watch?v=1q2Eo3x3u0g)
 * [Blog: Capturing RDP NetNTLMv2 Hashes: Attack details and a Technical How-To Guide](https://www.gosecure.net/blog/2022/01/17/capturing-rdp-netntlmv2-hashes-attack-details-and-a-technical-how-to-guide/)
+* [BlackHat USA Arsenal 2021 Slides](https://gosecure.github.io/presentations/2021-08-05_blackhat-usa/BlackHat-USA-21-Arsenal-PyRDP-OlivierBilodeau.pdf)
+* [Presentation: I Watched You Roll the Die: Unparalleled RDP Monitoring Reveal Attackers' Tradecraft](http://i.blackhat.com/BH-US-23/Presentations/US-23-Bilodeau-I-Watched-You-Roll-the-Die-Unparalleled-RDP-Monitoring.pdf) at BlackHat USA 2023
+
 
 
 ## Contributing to PyRDP
