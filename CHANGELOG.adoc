@@ -7,7 +7,17 @@ This document provides a high-level view of the changes introduced in {project-n
 For a detailed view of what has changed, refer to the {uri-repo}/commits/master[commit history] on GitHub.
 
 
-== v<unreleased> - <date>
+== v2.0.0 - 2023-12-22
+
+Winter's Break[ing changes]
+
+=== Release Highlights
+
+* PyPI pre-built packages for Linux, Windows and macOS (easier installation)
+* Ported to QT6
+* Docker images based on Ubuntu 22.04
+
+Full list of changes follows.
 
 === Backwards Compatibility Changes
 
@@ -48,6 +58,12 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 * Deprecation cleanup in CI ({uri-issue}452[#452])
 * Updated our dependencies to the latest stable versions ({uri-issue}454[#454])
 * Renamed master branch to main ({uri-issue}450[#450], {uri-issue}459[#459])
+
+=== Credits
+
+Thanks to the following people who contributed to this release:
+
+@kszafran, Mason Shi (@Mas0nShi), Olivier Bilodeau (@obilodeau) and @plonxyz
 
 
 == v1.2.0 - 2022-12-23
