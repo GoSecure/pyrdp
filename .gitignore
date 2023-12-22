@@ -19,7 +19,7 @@ venv*/
 dist/
 build/
 rdpy.egg-info/
-pyrdp.egg-info/
+pyrdp_mitm.egg-info/
 rle*.so
 
 # AsciiDoc
