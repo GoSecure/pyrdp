@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 name = "pyrdp-mitm"
 description = "Remote Desktop Protocol (RDP) Monster-in-the-Middle tool and Python library"
 readme = "README.md"
-version = "2.0.0.rc3"
+version = "2.0.0"
 requires-python = ">=3.7"
 authors = [
     { name = "Olivier Bilodeau", email = "obilodeau@gosecure.net" },
