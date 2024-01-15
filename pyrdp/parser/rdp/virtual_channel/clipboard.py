@@ -51,6 +51,7 @@ class ClipboardParser(Parser):
         posLo = Uint32LE.unpack(stream)
         posHi = Uint32LE.unpack(stream)
         cbRequested = Uint32LE.unpack(stream)
+        # clipDataId is optional per-spec [MS-RDPECLIP] Section 2.2.5.3
         # xfreeRDP (and maybe other non-Windows clients?) don't send a clipDataId.
         # Currently we don't use clipDataId for anything, so we can safely just set it to 0.
         try:
