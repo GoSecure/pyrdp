@@ -6,6 +6,12 @@
 This document provides a high-level view of the changes introduced in {project-name} by release.
 For a detailed view of what has changed, refer to the {uri-repo}/commits/master[commit history] on GitHub.
 
+== <unreleased> - <date>
+
+=== Bug fixes
+
+* Clipboard file transfers compatibility with non-mstsc clients ({uri-issue}464[#464])
+
 
 == v2.0.0 - 2023-12-22
 
