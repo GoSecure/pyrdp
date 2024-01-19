@@ -28,6 +28,18 @@ class ReplayBar(QWidget):
 
         self.log = logging.getLogger(LOGGER_NAMES.PLAYER)
 
+        # pretty display capture duration
+        self.duration = duration
+        self.duration_hours = int(self.duration // 3600)
+        remaining_seconds = int(self.duration % 3600)
+        minutes = int(remaining_seconds // 60)
+        seconds = int(remaining_seconds % 60)
+        if self.duration_hours > 0:
+            self.duration_pretty = "{:d}:{:02d}:{:02d}".format(
+                                    self.duration_hours, minutes, seconds)
+        else:
+            self.duration_pretty = "{:02d}:{:02d}".format(minutes, seconds)
+
         self.button = PlayPauseButton()
         self.button.setMaximumWidth(100)
         self.button.clicked.connect(self.onButtonClicked)
@@ -36,8 +48,10 @@ class ReplayBar(QWidget):
 
         self.timeSlider = SeekBar()
         self.timeSlider.setMinimum(0)
-        self.timeSlider.setMaximum(int(duration * 1000))
+        self.timeSlider.setMaximum(int(self.duration * 1000))
         self.timeSlider.valueChanged.connect(self.onSeek)
+
+        self.timeLabel = QLabel(self.formatTimeLabel(0))
 
         self.speedLabel = QLabel("Speed: 1x")
 
@@ -59,6 +73,7 @@ class ReplayBar(QWidget):
         horizontal = QHBoxLayout()
         horizontal.addWidget(self.button)
         horizontal.addWidget(self.timeSlider)
+        horizontal.addWidget(self.timeLabel)
         vertical.addLayout(horizontal)
 
         self.setLayout(vertical)
@@ -82,3 +97,20 @@ class ReplayBar(QWidget):
         self.log.debug("Slider changed value: %(arg1)d", {"arg1": speed})
         self.speedLabel.setText("Speed: {}x".format(speed))
         self.speedChanged.emit(speed)
+
+    def onTimeChanged(self, currentTime: float):
+        if currentTime >= self.duration:
+            currentTime = self.duration
+
+        self.timeLabel.setText(self.formatTimeLabel(currentTime))
+
+    def formatTimeLabel(self, current: float) -> str:
+        hours = int(current // 3600)
+        remaining_seconds = int(current % 3600)
+        minutes = int(remaining_seconds // 60)
+        seconds = int(remaining_seconds % 60)
+        if self.duration_hours > 0:
+            return "{:d}:{:02d}:{:02d} / {}".format(
+                hours, minutes, seconds, self.duration_pretty)
+        else:
+            return "{:02d}:{:02d} / {}".format(minutes, seconds, self.duration_pretty)

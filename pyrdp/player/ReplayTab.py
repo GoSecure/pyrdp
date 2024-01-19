@@ -70,6 +70,7 @@ class ReplayTab(BaseTab):
         self.controlBar.timeSlider.blockSignals(True)
         self.controlBar.timeSlider.setValue(int(currentTime * 1000))
         self.controlBar.timeSlider.blockSignals(False)
+        self.controlBar.onTimeChanged(currentTime)
 
     def clear(self):
         """
