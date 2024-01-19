@@ -65,7 +65,7 @@ class Replay:
             self.duration = (timestamps[-1] - referenceTime) / 1000.0
 
     def __len__(self):
-        return len(self.events)
+        return len(self.getSortedEvents())
 
     def __iter__(self):
         return ReplayReader(self)
@@ -79,12 +79,24 @@ class Replay:
         """
         return [e for _, events in sorted(self.events.items(), key=lambda pair: pair[0]) for e in events]
 
+    def getEventStream(self):
+        """
+        Transform events (dict of list, timestamp: [positions], without repetition)
+        into an iterable eventStream (list of tuples, [(timestamp, position), ...], with repetition)
+        """
+        return [(timestamp, pos)
+                for timestamp, positions in sorted(self.events.items(), key=lambda pair: pair[0])
+                for pos in positions
+        ]
+
 
 class ReplayReader:
     def __init__(self, replay: Replay):
         self.replay = replay
         self.timestamps = self.replay.getSortedTimestamps()
         self.eventPositions = self.replay.getSortedEvents()
+        self.eventStream = self.replay.getEventStream()
+
         self.player = PlayerLayer()
         self.observer = self.player.createObserver(onPDUReceived = lambda: None)
         self.n = 0
@@ -122,8 +134,7 @@ class ReplayReader:
         if self.n >= len(self.replay):
             raise StopIteration
 
-        timestamp = self.timestamps[self.n]
-        position = self.eventPositions[self.n]
+        timestamp, position = self.eventStream[self.n]
         event = self.readEvent(position)
 
         self.n += 1
