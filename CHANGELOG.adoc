@@ -8,9 +8,14 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 == <unreleased> - <date>
 
+=== Enhancements
+
+* Player GUI displays playback time and recording duration ({uri-issue}467[#467])
+
 === Bug fixes
 
 * Clipboard file transfers compatibility with non-mstsc clients ({uri-issue}464[#464])
+* Some replay files when converted would be cut short ({uri-issue}466[#466])
 
 
 == v2.0.0 - 2023-12-22
