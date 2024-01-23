@@ -8,6 +8,8 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 == v2.1.0 - 2024-01-23
 
+Quality of [Serpent] Life
+
 === Enhancements
 
 * Player GUI displays playback time and recording duration ({uri-issue}467[#467])
