@@ -170,11 +170,6 @@ docker images (latest, slim), on linux, on Windows
 
 .Push your changes (don't forget the tag!)
 
-.Make a release on github (from changelog and copy sections themes from previous releases)
-* linkify issues with vim's: `%s/{uri-issue}\d\+\[#\(\d\+\)\]/#\1/gc`
-* sections, vim's: `%s/^=== \(.*\)$/## \1/gc`
-* asciidoc links to markdown with vim: `%s/link:\([^\[]\+\)\(\[[^\[]\+\]\)/\2(\1)/gc`
-
 .Upload binaries to PyPI
 
 Instructions are partially from: https://cibuildwheel.readthedocs.io/en/stable/deliver-to-pypi/#manual-method
@@ -188,6 +183,12 @@ Instructions are partially from: https://cibuildwheel.readthedocs.io/en/stable/d
 
     # Upload using 'twine'
     pipx run twine upload dist/*
+
+.Make a release on github (from changelog and copy sections themes from previous releases)
+* linkify issues with vim's: `%s/{uri-issue}\d\+\[#\(\d\+\)\]/#\1/gc`
+* sections, vim's: `%s/^=== \(.*\)$/## \1/gc`
+* asciidoc links to markdown with vim: `%s/link:\([^\[]\+\)\(\[[^\[]\+\]\)/\2(\1)/gc`
+* include build artifacts generated previously (everything in dist/)
 
 .Post-release
 * Update version in `pyproject.toml` (+1 bugfix, append '.dev0') and commit
