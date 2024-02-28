@@ -237,7 +237,7 @@ If we have access to the server's certificate and private key, we can successful
 We [documented this attack in our 1.0 release blog post](https://www.gosecure.net/blog/2020/10/20/announcing-pyrdp-1-0/).
 Instructions to [extract the RDP certificate and private key](https://github.com/GoSecure/pyrdp/blob/main/docs/cert-extraction.md) are available on our GitHub.
 
-With the certificate and private key accessible, you just need to set the authentication to `ssp` by adding this on the `pyrdp-mitm.py` command-line:
+With the certificate and private key accessible, you just need to set the authentication to `ssp` by adding this on the `pyrdp-mitm` command-line:
 ```
 --auth ssp -c <certificate.pem> -k <private-key.pem>
 ```
