@@ -19,6 +19,7 @@ class Replay:
     """
 
     def __init__(self, file: BinaryIO):
+        currentMsgIndex = 0
         self.events: Dict[int, List[int]] = {}
         self.file = file
 
@@ -36,7 +37,9 @@ class Replay:
             # Register PDUs as they are parsed by the layer
             def registerEvent(pdu: PlayerPDU):
                 nonlocal currentMessagePosition
-                events[pdu.timestamp].append(currentMessagePosition)
+                nonlocal currentMsgIndex
+                events[currentMsgIndex].append(currentMessagePosition)
+                currentMsgIndex = currentMsgIndex + 1
 
             # Register the offset of every event in the file.
             player = PlayerLayer()
