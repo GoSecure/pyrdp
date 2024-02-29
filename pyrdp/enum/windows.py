@@ -28,6 +28,16 @@ class NTSTATUS(IntEnum):
     [MS-ERREF]: Windows Error Codes
     https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/87fba13e-bf06-450e-83b1-9241dc81e781
     """
+    @classmethod
+    # Some Clients can return other Error codes. Rather than hardcode 1000s
+    # of possible Status codes Just handle the ones we need to and create a catch-all
+    # for the ones we don't care about so we don't throw an exception.
+    def _missing_(cls, value):
+        other = NTSTATUS(0x00000000)
+        other._name_ = "STATUS_PYRDP_FAILURE"
+        other._value_ = value
+        return other
+
     STATUS_SUCCESS       = 0x00000000
     STATUS_NO_MORE_FILES = 0x80000006
     STATUS_NO_SUCH_FILE  = 0xC000000F
