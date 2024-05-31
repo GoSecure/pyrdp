@@ -90,7 +90,7 @@ class BasicFastPathParser(BasicSecurityParser):
             except KeyboardInterrupt:
                 raise
             except Exception:
-                log.error("Exception occurred when receiving: %(data)s", {"data": hexlify(eventData)})
+                log.error("Exception occurred when receiving: %(exceptionData)s", {"exceptionData": hexlify(eventData)})
                 raise
 
             events.append(event)

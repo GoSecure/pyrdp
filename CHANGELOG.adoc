@@ -11,6 +11,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 === Enhancements
 
 * Handles unknown NTSTATUS gracefully ({uri-issue}471[#471])
+* JSON logs field change: data becomes exceptionData
 
 
 == v2.1.0 - 2024-01-23
