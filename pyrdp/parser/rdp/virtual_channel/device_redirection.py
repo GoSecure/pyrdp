@@ -13,6 +13,7 @@ from pyrdp.enum import DeviceRedirectionComponent, DeviceRedirectionPacketID, \
     FileCreateOptions, FileShareAccess, FileSystemInformationClass, \
     GeneralCapabilityVersion, MajorFunction, MinorFunction, \
     RDPDRCapabilityType, NTSTATUS
+from pyrdp.logging import log
 from pyrdp.parser import Parser
 from pyrdp.pdu import DeviceAnnounce, DeviceCloseRequestPDU, DeviceCloseResponsePDU, DeviceCreateRequestPDU, \
     DeviceCreateResponsePDU, DeviceDirectoryControlResponsePDU, DeviceIORequestPDU, DeviceIOResponsePDU, \
@@ -296,6 +297,8 @@ class DeviceRedirectionParser(Parser):
         deviceID = Uint32LE.unpack(stream)
         completionID = Uint32LE.unpack(stream)
         ioStatus = NTSTATUS(Uint32LE.unpack(stream))
+        if ioStatus._name_ == "STATUS_PYRDP_FAILURE":
+            log.error("Unknown NTSTATUS value: %(value)", {"value": ioStatus._value_})
 
         majorFunction = self.majorFunctionsForParsingResponse.pop(completionID, None)
 
