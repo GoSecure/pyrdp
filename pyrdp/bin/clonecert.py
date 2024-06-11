@@ -2,7 +2,7 @@
 
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018-2023 GoSecure Inc.
+# Copyright (C) 2018-2024 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 # Need to install this reactor before importing any other code
@@ -18,6 +18,7 @@ asyncioreactor.install(asyncio.new_event_loop())
 import argparse
 import logging
 import sys
+from importlib.metadata import version
 
 import OpenSSL
 from twisted.application.reactors import Reactor
@@ -111,6 +112,13 @@ def prepareLoggers(logLevel: int):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-V",
+        "--version",
+        help="Show the PyRDP version and exit",
+        action="version",
+        version=f"PyRDP version v{version('pyrdp-mitm')}"
+    )
     parser.add_argument("host", help="RDP host to clone")
     parser.add_argument("out_file", help="Output certificate file name")
     parser.add_argument("-p", "--port", help="RDP port of the host (default 3389)", default=3389, type=int)
