@@ -49,7 +49,7 @@ def RDPBitmapToQtImage(width: int, height: int, bitsPerPixel: int, isCompressed:
     """
     image = None
     buf = None
-    
+
     if bitsPerPixel == 15:
         if isCompressed:
             buf = rle.bitmap_decompress(data, width, height, 2)
@@ -57,7 +57,7 @@ def RDPBitmapToQtImage(width: int, height: int, bitsPerPixel: int, isCompressed:
         else:
             buf = data
             image = QImage(buf, width, height, QImage.Format_RGB555).transformed(QTransform(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
-    
+
     elif bitsPerPixel == 16:
         if isCompressed:
             buf = rle.bitmap_decompress(data, width, height, 2)
@@ -65,7 +65,7 @@ def RDPBitmapToQtImage(width: int, height: int, bitsPerPixel: int, isCompressed:
         else:
             buf = data
             image = QImage(buf, width, height, QImage.Format_RGB16).transformed(QTransform(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
-    
+
     elif bitsPerPixel == 24:
         if isCompressed:
             buf = rle.bitmap_decompress(data, width, height, 3)
@@ -83,7 +83,7 @@ def RDPBitmapToQtImage(width: int, height: int, bitsPerPixel: int, isCompressed:
         else:
             buf = data
             image = QImage(buf, width, height, QImage.Format_RGB888).transformed(QTransform(1.0, 0.0, 0.0, -1.0, 0.0, 0.0))
-            
+
     elif bitsPerPixel == 32:
         if isCompressed:
             buf = rle.bitmap_decompress(data, width, height, 4)
@@ -106,7 +106,7 @@ def RDPBitmapToQtImage(width: int, height: int, bitsPerPixel: int, isCompressed:
 
 
 def convert8bppTo16bpp(buf: bytes):
-    """
+    r"""
     WARNING: The actual 8bpp images work by using a color palette, which this method does not use.
     This method instead tries to transform indices into colors. This results in a weird looking image,
     but it can still be useful to see whats happening ¯\_(ツ)_/¯

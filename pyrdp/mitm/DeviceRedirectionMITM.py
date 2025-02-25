@@ -312,7 +312,7 @@ class DeviceRedirectionMITM(Subject):
         return completionID
 
     def sendForgedDirectoryListing(self, deviceID: int, path: str) -> int:
-        """
+        r"""
         Send a forged directory listing request. Returns a request ID that can be used by the caller to keep track of which
         file belongs to which directory. Results are sent by using the DeviceRedirectionMITMObserver interface.
         :param deviceID: ID of the target device.
