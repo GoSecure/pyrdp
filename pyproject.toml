@@ -55,7 +55,7 @@ dependencies = [
 [project.optional-dependencies]
 full = [
     'wheel>=0.34.2',
-    'av>=8,<12',
+    'av>=8,<15',
     'PySide6>=6.3,<7',
     'qimage2ndarray>=1.6,<2',
     'py-notifier>=0.5.0',
