@@ -36,7 +36,7 @@ jobs:
       matrix:
         os: [ubuntu-22.04, ubuntu-20.04]
         # Lets try to keep testing an LTS python and latest python
-        python-version: ['3.7', '3.12']
+        python-version: ['3.7', '3.12', '3.13']
 
     runs-on: ${{ matrix.os }}
     name: Ubuntu ${{ matrix.os }} with Python ${{ matrix.python-version }}
@@ -106,7 +106,7 @@ jobs:
     strategy:
       matrix:
         # Lets try to keep testing an LTS python and latest python
-        python-version: ['3.7', '3.12']
+        python-version: ['3.7', '3.12', '3.13']
 
     name: Windows with Python ${{ matrix.python-version }}
     steps:

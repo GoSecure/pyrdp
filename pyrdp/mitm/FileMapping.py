@@ -7,9 +7,9 @@
 import hashlib
 import os
 import tempfile
+import typing
 from logging import LoggerAdapter
 from pathlib import Path
-from typing import io
 
 
 class FileMapping:
@@ -18,7 +18,7 @@ class FileMapping:
     transferred over RDP.
     """
 
-    def __init__(self, file: io.BinaryIO, dataPath: Path, filesystemPath: Path, filesystemDir: Path, log: LoggerAdapter):
+    def __init__(self, file: typing.BinaryIO, dataPath: Path, filesystemPath: Path, filesystemDir: Path, log: LoggerAdapter):
         """
         :param file: the file handle for dataPath
         :param dataPath: path where the file is actually saved
