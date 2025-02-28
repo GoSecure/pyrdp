@@ -10,6 +10,7 @@ from pyrdp.player.ImageHandler import ImageHandler
 from pyrdp.player.RenderingEventHandler import RenderingEventHandler
 
 import logging
+from math import floor
 
 import av
 import qimage2ndarray
@@ -38,7 +39,7 @@ class MP4Image(ImageHandler):
 
 class MP4EventHandler(RenderingEventHandler):
 
-    def __init__(self, filename: str, fps=30, progress=None):
+    def __init__(self, filename: str, fps=25, progress=None):
         """
         Construct an event handler that outputs to an Mp4 file.
 
@@ -57,16 +58,17 @@ class MP4EventHandler(RenderingEventHandler):
         #       we could probably batch the encoding of several frames and benefit from threads
         #       but trying this as-is lead to no gains
         #       (actually a degradation but that could be statistically irrelevant)
-        #self.stream.thread_count = 4
+        # self.stream.thread_count = 4
         self.stream.pix_fmt = 'yuv420p'
         self.progress = progress
         self.scale = False
         self.mouse = (0, 0)
         self.fps = fps
-        self.delta = 1000 // fps  # ms per frame
+        self.delta = 1000 / fps  # ms per frame
         self.log = logging.getLogger(__name__)
         self.log.info('Begin MP4 export to %s: %d FPS', filename, fps)
         self.timestamp = self.prevTimestamp = None
+        self.drift = 0  # Support non-integer frame rates.
 
         super().__init__(MP4Image())
 
@@ -84,12 +86,17 @@ class MP4EventHandler(RenderingEventHandler):
             dt = self.delta
         else:
             dt = self.timestamp - self.prevTimestamp  # ms
-        nframes = (dt // self.delta)
-        if nframes > 0:
-            for _ in range(nframes):
+
+        # Prevent drifting when fps doesn't perfectly divide a second.
+        nframes = (dt / self.delta) + self.drift
+        nwhole = floor(nframes)
+        self.drift = nframes - nwhole  # update drift.
+
+        if nwhole > 0:  # Only take whole frames.
+            for _ in range(nwhole):
                 self.writeFrame()
             self.prevTimestamp = ts
-            self.log.debug('Rendered %d still frame(s)', nframes)
+            self.log.debug('Rendered %d still frame(s) Drift=%f', nwhole, self.drift)
 
     def cleanup(self):
         # Add one second worth of padding so that the video doesn't end too abruptly.
