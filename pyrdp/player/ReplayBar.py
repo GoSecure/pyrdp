@@ -56,7 +56,7 @@ class ReplayBar(QWidget):
         self.timeSlider.valueChanged.connect(self.onSeek)
 
         self.timeLabel = QLabel(self.formatTimeLabel(0))
-        self.absoluteDateTimeLabel = QLabel(self.formatCurrentTimeLabel(0))
+        self.absoluteDateTimeLabel = QLabel(self.formatAbsoluteDateTimeLabel(0))
 
         self.speedLabel = QLabel("Speed: 1x")
 
@@ -79,7 +79,7 @@ class ReplayBar(QWidget):
         horizontal.addWidget(self.button)
         horizontal.addWidget(self.timeSlider)
         horizontal.addWidget(self.timeLabel)
-        horizontal.addWidget(self.playTimeLabel)
+        horizontal.addWidget(self.absoluteDateTimeLabel)
         vertical.addLayout(horizontal)
 
         self.setLayout(vertical)
