@@ -40,7 +40,7 @@ class ReplayTab(BaseTab):
         self.thread.clearNeeded.connect(self.clear)
         self.thread.start()
 
-        self.controlBar = ReplayBar(replay.duration)
+        self.controlBar = ReplayBar(replay.duration, replay.referenceTime)
         self.controlBar.play.connect(self.thread.play)
         self.controlBar.pause.connect(self.thread.pause)
         self.controlBar.seek.connect(self.thread.seek)

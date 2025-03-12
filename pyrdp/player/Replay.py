@@ -62,7 +62,10 @@ class Replay:
                 relativeTimestamp = absoluteTimestamp - referenceTime
                 self.events[relativeTimestamp] = events[absoluteTimestamp]
 
-            self.duration = (timestamps[-1] - referenceTime) / 1000.0
+            # Calculate total duration of replay steam
+            self.duration = (timestamps[-1] - referenceTime) / 1000.0            
+            # Keep the referenceTime epoch as absolute starting point of the replay
+            self.referenceTime = referenceTime
 
     def __len__(self):
         return len(self.getSortedEvents())
