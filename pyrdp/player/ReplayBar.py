@@ -3,6 +3,7 @@
 # Copyright (C) 2018-2024 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+import datetime
 import logging
 
 from PySide6.QtCore import Qt, Signal
@@ -23,11 +24,14 @@ class ReplayBar(QWidget):
     seek = Signal(float)
     speedChanged = Signal(int)
 
-    def __init__(self, duration: float, parent: QWidget = None):
+    def __init__(self, duration: float, referenceTime: int, parent: QWidget = None):
         super().__init__(parent)
 
         self.log = logging.getLogger(LOGGER_NAMES.PLAYER)
-
+        
+        # absolute capture starting point
+        self.referenceTime = referenceTime
+        
         # pretty display capture duration
         self.duration = duration
         self.duration_hours = int(self.duration // 3600)
@@ -52,6 +56,7 @@ class ReplayBar(QWidget):
         self.timeSlider.valueChanged.connect(self.onSeek)
 
         self.timeLabel = QLabel(self.formatTimeLabel(0))
+        self.absoluteDateTimeLabel = QLabel(self.formatAbsoluteDateTimeLabel(0))
 
         self.speedLabel = QLabel("Speed: 1x")
 
@@ -74,6 +79,7 @@ class ReplayBar(QWidget):
         horizontal.addWidget(self.button)
         horizontal.addWidget(self.timeSlider)
         horizontal.addWidget(self.timeLabel)
+        horizontal.addWidget(self.absoluteDateTimeLabel)
         vertical.addLayout(horizontal)
 
         self.setLayout(vertical)
@@ -101,8 +107,9 @@ class ReplayBar(QWidget):
     def onTimeChanged(self, currentTime: float):
         if currentTime >= self.duration:
             currentTime = self.duration
-
+        
         self.timeLabel.setText(self.formatTimeLabel(currentTime))
+        self.absoluteDateTimeLabel.setText(self.formatAbsoluteDateTimeLabel(currentTime))    
 
     def formatTimeLabel(self, current: float) -> str:
         hours = int(current // 3600)
@@ -114,3 +121,10 @@ class ReplayBar(QWidget):
                 hours, minutes, seconds, self.duration_pretty)
         else:
             return "{:02d}:{:02d} / {}".format(minutes, seconds, self.duration_pretty)
+        
+    def formatAbsoluteDateTimeLabel(self, current: int) -> str:
+        current = current * 1000
+        epoch_time = (self.referenceTime + current)
+        formatted_time = datetime.datetime.fromtimestamp(epoch_time / 1000, tz=datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+
+        return formatted_time
