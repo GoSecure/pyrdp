@@ -10,6 +10,7 @@ For a detailed view of what has changed, refer to the {uri-repo}/commits/master[
 
 === Enhancements
 
+* Information about the date and time of capture was added to the GUI player ({uri-issue}489[#489])
 * Handles unknown NTSTATUS gracefully ({uri-issue}471[#471])
 * JSON logs field change: data becomes exceptionData
 
