@@ -1,6 +1,6 @@
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2020-2022 GoSecure Inc.
+# Copyright (C) 2020-2024 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 
@@ -14,6 +14,7 @@ import logging.handlers
 import os
 import sys
 from base64 import b64encode
+from importlib.metadata import version
 from pathlib import Path
 from typing import Tuple
 
@@ -131,6 +132,13 @@ def buildArgParser():
     parser.add_argument("--nla-redirection-host", help="Redirection target ip if NLA is enforced", default=None)
     parser.add_argument("--nla-redirection-port", help="Redirection target port if NLA is enforced", type=int, default=None)
     parser.add_argument("--ssp-challenge", help="Set challenge for SSP authentictation (e.g. 1122334455667788). Incompatible with --auth ssp.", type=str, default=None)
+    parser.add_argument(
+        "-V",
+        "--version",
+        help="Show the PyRDP version and exit",
+        action="version",
+        version=f"PyRDP version v{version('pyrdp-mitm')}"
+    )
 
     return parser
 
