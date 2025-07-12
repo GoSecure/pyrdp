@@ -33,6 +33,8 @@ class DynamicChannelParser(Parser):
             channelName = ""
             char = stream.read(1).decode()
             while char != "\x00":
+                if len(char) == 0:
+                    raise ValueError("Channel name is not null-terminated")
                 channelName += char
                 char = stream.read(1).decode()
             return CreateRequestPDU(cbid, sp, channelId, channelName)
