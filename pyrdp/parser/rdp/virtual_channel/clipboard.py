@@ -105,6 +105,8 @@ class ClipboardParser(Parser):
 
             while lastChar != b"\x00\x00":
                 lastChar = stream.read(2)
+                if len(lastChar) < 2:
+                    raise ValueError("Format name is not null-terminated")
                 formatName += lastChar
 
             self.formats[formatId] = LongFormatName(formatId, formatName)
