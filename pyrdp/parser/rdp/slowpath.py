@@ -196,6 +196,10 @@ class SlowPathParser(Parser):
             lengthCapability = Uint16LE.unpack(stream.read(2))
             capabilityData = stream.read(lengthCapability - 4)
             capability = Capability(capabilitySetType, capabilityData)
+            if capabilitySetType == 6:
+                # Workaround for XRDP returning bad capability type
+                # ref https://github.com/GoSecure/pyrdp/issues/294
+                continue
             capabilitySets[CapabilityType(capabilitySetType)] = capability
 
         # Fully parse the General capability set
