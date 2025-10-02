@@ -31,6 +31,9 @@ class RDPMITMState:
         self.useTLS = False
         """Whether the connection uses TLS or not"""
 
+        self.usedNLA = False
+        """Whether NLA (CredSSP) was used for authentication"""
+
         self.securitySettings = SecuritySettings()
         """The security settings for the connection"""
 
