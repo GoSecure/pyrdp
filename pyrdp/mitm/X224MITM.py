@@ -43,14 +43,14 @@ class X224MITM:
         self.originalNegotiationRequest: Optional[NegotiationRequestPDU] = None
 
         self.client.createObserver(
-            onConnectionRequest = self.onConnectionRequest,
-            onDisconnectRequest = self.onClientDisconnectRequest,
-            onError = self.onClientError
+            onConnectionRequest=self.onConnectionRequest,
+            onDisconnectRequest=self.onClientDisconnectRequest,
+            onError=self.onClientError
         )
 
         self.server.createObserver(
-            onConnectionConfirm = self.onConnectionConfirm,
-            onDisconnectRequest = self.onServerDisconnectRequest,
+            onConnectionConfirm=self.onConnectionConfirm,
+            onDisconnectRequest=self.onServerDisconnectRequest,
             onError=self.onServerError
         )
 
@@ -106,7 +106,7 @@ class X224MITM:
         """
 
         await self.connector()
-        self.server.sendConnectionRequest(payload = payload)
+        self.server.sendConnectionRequest(payload=payload)
 
     def onConnectionConfirm(self, pdu: X224ConnectionConfirmPDU):
         """
@@ -138,18 +138,22 @@ class X224MITM:
                     self.state.useRedirectionHost()
                 else:
                     # If we are not configured to redirect then we should capture the NTLM hash
-                    self.log.info("Server requires CredSSP/NLA and we are not configured to support it. Attempting to capture client's NTLM hashes.")
+                    self.log.info(
+                        "Server requires CredSSP/NLA and we are not configured to support it. Attempting to capture client's NTLM hashes.")
                     self.state.ntlmCapture = True
 
                 self.onConnectionRequest(self.originalConnectionRequest)
                 return
             else:
-                self.log.info("The server failed the negotiation. Error: %(error)s", {"error": NegotiationFailureCode.getMessage(response.failureCode)})
+                self.log.info("The server failed the negotiation. Error: %(error)s", {
+                              "error": NegotiationFailureCode.getMessage(response.failureCode)})
                 payload = pdu.payload
         elif self.state.ntlmCapture:
-            payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, NegotiationProtocols.CRED_SSP))
+            payload = parser.write(NegotiationResponsePDU(
+                NegotiationType.TYPE_RDP_NEG_RSP, 0x00, NegotiationProtocols.CRED_SSP))
         else:
-            payload = parser.write(NegotiationResponsePDU(NegotiationType.TYPE_RDP_NEG_RSP, 0x00, response.selectedProtocols))
+            payload = parser.write(NegotiationResponsePDU(
+                NegotiationType.TYPE_RDP_NEG_RSP, 0x00, response.selectedProtocols))
 
         # FIXME: This should be done based on what authentication method the server selected, not on what
         #        the client supports.
@@ -162,9 +166,22 @@ class X224MITM:
             self.client.sendConnectionConfirm(payload, source=0x1234)
 
     def onClientDisconnectRequest(self, pdu: X224DisconnectRequestPDU):
-        self.server.sendPDU(pdu)
+        """Handle client disconnect - keep server alive if session is hijacked"""
+        self.state.clientConnected = False
+
+        if self.state.isHijacked:
+            # Session is hijacked - keep server connection alive
+            self.log.info("Client disconnected during hijacked session - keeping server connection alive")
+
+            # Notify attacker of client state change
+            if self.state.attackerMITM:
+                self.state.attackerMITM.notifyClientStateChange()
+        else:
+            # Normal disconnect - forward to server
+            self.server.sendPDU(pdu)
 
     def onServerDisconnectRequest(self, pdu: X224DisconnectRequestPDU):
+        """Handle server disconnect - always forward to client"""
         self.client.sendPDU(pdu)
 
     def onClientError(self, pdu: X224ErrorPDU):
@@ -174,3 +191,9 @@ class X224MITM:
     def onServerError(self, pdu: X224ErrorPDU):
         self.log.warn("X224 PDU Server Error %(pdu)s", {"pdu": pdu})
         self.client.sendPDU(pdu)
+
+    def disconnectServer(self):
+        """Disconnect from the server (used when releasing control after client disconnect)"""
+        self.log.info("Disconnecting from server")
+        disconnect_pdu = X224DisconnectRequestPDU(0, 0, 0, b"")
+        self.server.sendPDU(disconnect_pdu)

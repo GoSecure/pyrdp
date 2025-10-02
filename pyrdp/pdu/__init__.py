@@ -10,7 +10,7 @@ from pyrdp.pdu.mcs import MCSAttachUserConfirmPDU, MCSAttachUserRequestPDU, MCSC
     MCSChannelJoinRequestPDU, MCSConnectInitialPDU, MCSConnectResponsePDU, MCSDisconnectProviderUltimatumPDU, \
     MCSDomainParams, MCSErectDomainRequestPDU, MCSPDU, MCSSendDataIndicationPDU, MCSSendDataRequestPDU
 from pyrdp.pdu.pdu import PDU
-from pyrdp.pdu.player import Color, PlayerBitmapPDU, PlayerConnectionClosePDU, PlayerDeviceMappingPDU, \
+from pyrdp.pdu.player import Color, PlayerBitmapPDU, PlayerClientStatePDU, PlayerConnectionClosePDU, PlayerDeviceMappingPDU, \
     PlayerDirectoryListingRequestPDU, PlayerDirectoryListingResponsePDU, PlayerFileDescription, \
     PlayerFileDownloadCompletePDU, PlayerFileDownloadRequestPDU, PlayerFileDownloadResponsePDU, \
     PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, \

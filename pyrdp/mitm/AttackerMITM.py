@@ -10,13 +10,14 @@ from typing import Dict, List, Optional
 from functools import partial
 
 from pyrdp.enum import FastPathInputType, FastPathOutputType, MouseButton, PlayerPDUType, PointerFlag, ScanCodeTuple
+from pyrdp.enum.player import ClientState
 from pyrdp.layer import FastPathLayer, PlayerLayer
 from pyrdp.mitm.DeviceRedirectionMITM import DeviceRedirectionMITM, DeviceRedirectionMITMObserver
 from pyrdp.mitm.MITMRecorder import MITMRecorder
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.parser import BitmapParser
 from pyrdp.pdu import BitmapUpdateData, DeviceAnnounce, FastPathBitmapEvent, FastPathInputEvent, FastPathMouseEvent, \
-    FastPathOutputEvent, FastPathPDU, FastPathScanCodeEvent, FastPathUnicodeEvent, PlayerBitmapPDU, \
+    FastPathOutputEvent, FastPathPDU, FastPathScanCodeEvent, FastPathUnicodeEvent, PlayerBitmapPDU, PlayerClientStatePDU, \
     PlayerDeviceMappingPDU, PlayerDirectoryListingRequestPDU, PlayerDirectoryListingResponsePDU, PlayerFileDescription, \
     PlayerFileDownloadCompletePDU, PlayerFileDownloadRequestPDU, PlayerFileDownloadResponsePDU, \
     PlayerForwardingStatePDU, PlayerKeyboardPDU, PlayerMouseButtonPDU, PlayerMouseMovePDU, PlayerMouseWheelPDU, \
@@ -53,8 +54,11 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
         self.directoryListingLists = defaultdict(list)
 
         self.attacker.createObserver(
-            onPDUReceived = self.onPDUReceived,
+            onPDUReceived=self.onPDUReceived,
         )
+
+        # Register this AttackerMITM in state for disconnect notifications
+        self.state.attackerMITM = self
 
         self.handlers = {
             PlayerPDUType.MOUSE_MOVE: self.handleMouseMove,
@@ -77,11 +81,9 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
 
         self.deviceRedirection = deviceRedirection
 
-
     def onPDUReceived(self, pdu: PlayerPDU):
         if pdu.header in self.handlers:
             self.handlers[pdu.header](pdu)
-
 
     def sendInputEvents(self, events: List[FastPathInputEvent]):
         pdu = FastPathPDU(0, events)
@@ -97,7 +99,6 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
             for key in keys:
                 self.handleKeyboard(PlayerKeyboardPDU(0, key.code, released, key.extended))
 
-
     def sendOne(self, x, y):
         self.handleText(PlayerTextPDU(0, x, y))
         return 25
@@ -111,7 +112,6 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
 
         return seq
 
-
     def handleMouseMove(self, pdu: PlayerMouseMovePDU):
         eventHeader = FastPathInputType.FASTPATH_INPUT_EVENT_MOUSE << 5
         flags = PointerFlag.PTRFLAGS_MOVE
@@ -120,7 +120,6 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
 
         event = FastPathMouseEvent(eventHeader, flags, x, y)
         self.sendInputEvents([event])
-
 
     def handleMouseButton(self, pdu: PlayerMouseButtonPDU):
         mapping = {
@@ -140,7 +139,6 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
         event = FastPathMouseEvent(eventHeader, flags, x, y)
         self.sendInputEvents([event])
 
-
     def handleMouseWheel(self, pdu: PlayerMouseWheelPDU):
         eventHeader = FastPathInputType.FASTPATH_INPUT_EVENT_MOUSE << 5
         flags = PointerFlag.PTRFLAGS_WHEEL
@@ -158,7 +156,6 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
         event = FastPathMouseEvent(eventHeader, flags, x, y)
         self.sendInputEvents([event])
 
-
     def handleKeyboard(self, pdu: PlayerKeyboardPDU):
         event = FastPathScanCodeEvent(2 if pdu.extended else 0, pdu.code, pdu.released)
         self.sendInputEvents([event])
@@ -167,11 +164,28 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
         event = FastPathUnicodeEvent(pdu.character, pdu.released)
         self.sendInputEvents([event])
 
-
     def handleForwardingState(self, pdu: PlayerForwardingStatePDU):
+        """Handle forwarding state changes and update hijacking status"""
+        wasHijacked = self.state.isHijacked
+
         self.state.forwardInput = pdu.forwardInput
         self.state.forwardOutput = pdu.forwardOutput
 
+        # Update hijacking state: hijacked when both inputs are disabled
+        self.state.isHijacked = not pdu.forwardInput and not pdu.forwardOutput
+
+        # Send client state update on hijacking change
+        if wasHijacked != self.state.isHijacked:
+            if self.state.isHijacked:
+                self.log.info("Session hijacking started")
+                self.notifyClientStateChange()
+            else:
+                self.log.info("Session hijacking released")
+                # If client disconnected during hijacking, disconnect server
+                if not self.state.clientConnected and self.state.x224MITM:
+                    self.state.x224MITM.disconnectServer()
+                else:
+                    self.notifyClientStateChange()
 
     def handleBitmap(self, pdu: PlayerBitmapPDU):
         bpp = 32
@@ -180,19 +194,18 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
         # RDP expects bitmap data in bottom-up, left-to-right
         # See: https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-rdpbcgr/84a3d4d2-5523-4e49-9a48-33952c559485
         for y in range(pdu.height):
-            pixels = pdu.pixels[y * pdu.width * 4 : (y + 1) * pdu.width * 4]
+            pixels = pdu.pixels[y * pdu.width * 4: (y + 1) * pdu.width * 4]
             bitmap = BitmapUpdateData(0, y, pdu.width, y + 1, pdu.width, 1, bpp, flags, pixels)
             bitmapData = BitmapParser().writeBitmapUpdateData([bitmap])
             event = FastPathBitmapEvent(FastPathOutputType.FASTPATH_UPDATETYPE_BITMAP, None, [], bitmapData)
             self.sendOutputEvents([event])
 
-
     def onDeviceAnnounce(self, device: DeviceAnnounce):
         self.devices[device.deviceID] = device
 
-        pdu = PlayerDeviceMappingPDU(self.attacker.getCurrentTimeStamp(), device.deviceID, device.deviceType, device.preferredDOSName)
+        pdu = PlayerDeviceMappingPDU(self.attacker.getCurrentTimeStamp(), device.deviceID,
+                                     device.deviceType, device.preferredDOSName)
         self.recorder.record(pdu, pdu.header)
-
 
     def handleFileDownloadRequest(self, pdu: PlayerFileDownloadRequestPDU):
         path = pdu.path.replace("/", "\\")
@@ -224,7 +237,6 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
 
         self.attacker.sendPDU(pdu)
         self.fileDownloadRequests.pop(requestID, None)
-
 
     def handleDirectoryListingRequest(self, pdu: PlayerDirectoryListingRequestPDU):
         if self.deviceRedirection is None:
@@ -266,3 +278,14 @@ class AttackerMITM(DeviceRedirectionMITMObserver):
         directoryList = self.directoryListingLists[requestID]
         pdu = PlayerDirectoryListingResponsePDU(self.attacker.getCurrentTimeStamp(), deviceID, directoryList)
         self.attacker.sendPDU(pdu)
+
+    def notifyClientStateChange(self):
+        """Send client state update to the attacker/player"""
+        if self.state.clientConnected:
+            state = ClientState.ACTIVE if self.state.isHijacked else ClientState.IDLE
+        else:
+            state = ClientState.DISCONNECTED
+
+        pdu = PlayerClientStatePDU(self.attacker.getCurrentTimeStamp(), state)
+        self.attacker.sendPDU(pdu)
+        self.log.debug(f"Client state changed to {state.name}")

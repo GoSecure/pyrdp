@@ -7,6 +7,7 @@
 from typing import List
 
 from pyrdp.enum import DeviceType, PlayerPDUType
+from pyrdp.enum.player import ClientState
 from pyrdp.enum.player import MouseButton
 from pyrdp.pdu.pdu import PDU
 
@@ -106,6 +107,7 @@ class Color:
         self.b = b
         self.a = a
 
+
 class PlayerBitmapPDU(PlayerPDU):
     """
     PDU definition for bitmap events.
@@ -189,6 +191,7 @@ class PlayerFileDownloadRequestPDU(PlayerPDU):
         self.deviceID = deviceID
         self.path = path
 
+
 class PlayerFileDownloadResponsePDU(PlayerPDU):
     def __init__(self, timestamp: int, deviceID: int, path: str, offset: int, payload: bytes):
         """
@@ -204,6 +207,7 @@ class PlayerFileDownloadResponsePDU(PlayerPDU):
         self.path = path
         self.offset = offset
 
+
 class PlayerFileDownloadCompletePDU(PlayerPDU):
     def __init__(self, timestamp: int, deviceID: int, path: str, error: int):
         """
@@ -217,3 +221,17 @@ class PlayerFileDownloadCompletePDU(PlayerPDU):
         self.deviceID = deviceID
         self.path = path
         self.error = error
+
+
+class PlayerClientStatePDU(PlayerPDU):
+    """
+    PDU to notify the player of client connection state changes.
+    """
+
+    def __init__(self, timestamp: int, clientState: 'ClientState'):
+        """
+        :param timestamp: time stamp for this PDU.
+        :param clientState: current state of the client connection (IDLE, ACTIVE, DISCONNECTED).
+        """
+        super().__init__(PlayerPDUType.CLIENT_STATE, timestamp, b"")
+        self.clientState = clientState
