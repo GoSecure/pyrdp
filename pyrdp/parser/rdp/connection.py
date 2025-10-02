@@ -16,8 +16,9 @@ from pyrdp.enum import ColorDepth, ConnectionDataType, ConnectionType, DesktopOr
     EncryptionMethod, HighColorDepth, RDPVersion, ServerCertificateType
 from pyrdp.exceptions import ParsingError, UnknownPDUTypeError, ExploitError
 from pyrdp.parser.parser import Parser
-from pyrdp.pdu import ClientChannelDefinition, ClientClusterData, ClientCoreData, ClientDataPDU, ClientNetworkData, \
-    ClientSecurityData, ProprietaryCertificate, ServerCoreData, ServerDataPDU, ServerNetworkData, ServerSecurityData
+from pyrdp.pdu import ClientChannelDefinition, ClientClusterData, ClientCoreData, ClientDataPDU, \
+    ClientMonitorAttributes, ClientMonitorData, ClientMonitorDefinition, ClientNetworkData, ClientSecurityData, \
+    ProprietaryCertificate, ServerCoreData, ServerDataPDU, ServerNetworkData, ServerSecurityData
 
 
 class ClientConnectionParser(Parser):
@@ -32,6 +33,7 @@ class ClientConnectionParser(Parser):
             ConnectionDataType.CLIENT_SECURITY: self.parseClientSecurityData,
             ConnectionDataType.CLIENT_NETWORK: self.parseClientNetworkData,
             ConnectionDataType.CLIENT_CLUSTER: self.parseClientClusterData,
+            ConnectionDataType.CLIENT_MONITOR: self.parseClientMonitorData,
         }
 
         self.writers = {
@@ -39,6 +41,7 @@ class ClientConnectionParser(Parser):
             ConnectionDataType.CLIENT_SECURITY: self.writeClientSecurityData,
             ConnectionDataType.CLIENT_NETWORK: self.writeClientNetworkData,
             ConnectionDataType.CLIENT_CLUSTER: self.writeClientClusterData,
+            ConnectionDataType.CLIENT_MONITOR: self.writeClientMonitorData,
 
         }
 
@@ -51,9 +54,10 @@ class ClientConnectionParser(Parser):
         security = None
         network = None
         cluster = None
+        monitor = None
 
         stream = BytesIO(data)
-        while stream.tell() != len(stream.getvalue()) and (core is None or security is None or network is None or cluster is None):
+        while stream.tell() != len(stream.getvalue()):
             structure = self.parseStructure(stream)
 
             if structure.header == ConnectionDataType.CLIENT_CORE:
@@ -64,11 +68,13 @@ class ClientConnectionParser(Parser):
                 network = structure
             elif structure.header == ConnectionDataType.CLIENT_CLUSTER:
                 cluster = structure
+            elif structure.header == ConnectionDataType.CLIENT_MONITOR:
+                monitor = structure
 
             if len(stream.getvalue()) == 0:
                 break
 
-        return ClientDataPDU(core, security, network, cluster)
+        return ClientDataPDU(core, security, network, cluster, monitor)
 
     def parseStructure(self, stream: BytesIO) -> typing.Union[ClientCoreData, ClientNetworkData, ClientSecurityData, ClientClusterData]:
         header = Uint16LE.unpack(stream)
@@ -182,6 +188,9 @@ class ClientConnectionParser(Parser):
         if pdu.clusterData:
             self.writeStructure(stream, pdu.clusterData)
 
+        if pdu.monitorData:
+            self.writeStructure(stream, pdu.monitorData)
+
         return stream.getvalue()
 
     def writeStructure(self, stream: BytesIO, data: typing.Union[ClientCoreData, ClientNetworkData, ClientSecurityData, ClientClusterData]):
@@ -248,6 +257,86 @@ class ClientConnectionParser(Parser):
     def writeClientClusterData(self, stream: BytesIO, cluster: ClientClusterData):
         stream.write(Uint32LE.pack(cluster.flags))
         stream.write(Uint32LE.pack(cluster.redirectedSessionID))
+
+    def parseClientMonitorData(self, stream: BytesIO) -> ClientMonitorData:
+        """
+        Parse TS_UD_CS_MONITOR structure from MS-RDPBCGR 2.2.1.3.6
+        :param stream: BytesIO stream containing monitor data
+        :return: ClientMonitorData object
+        """
+        stream = StrictStream(stream)
+
+        flags = Uint32LE.unpack(stream)
+        monitorCount = Uint32LE.unpack(stream)
+
+        monitors = []
+        for _ in range(monitorCount):
+            left = Uint32LE.unpack(stream)
+            top = Uint32LE.unpack(stream)
+            right = Uint32LE.unpack(stream)
+            bottom = Uint32LE.unpack(stream)
+            monitorFlags = Uint32LE.unpack(stream)
+            monitors.append(ClientMonitorDefinition(left, top, right, bottom, monitorFlags))
+
+        monitorData = ClientMonitorData(flags, monitors)
+
+        # Parse optional monitor attributes (TS_MONITOR_ATTRIBUTES)
+        try:
+            monitorAttributeSize = Uint32LE.unpack(stream)
+            attributeMonitorCount = Uint32LE.unpack(stream)
+
+            monitorData.monitorAttributeSize = monitorAttributeSize
+            monitorData.monitorAttributes = []
+
+            for _ in range(attributeMonitorCount):
+                physicalWidth = Uint32LE.unpack(stream)
+                physicalHeight = Uint32LE.unpack(stream)
+                orientation = Uint32LE.unpack(stream)
+                desktopScaleFactor = Uint32LE.unpack(stream)
+                deviceScaleFactor = Uint32LE.unpack(stream)
+                monitorData.monitorAttributes.append(
+                    ClientMonitorAttributes(
+                        physicalWidth, physicalHeight, orientation,
+                        desktopScaleFactor, deviceScaleFactor
+                    )
+                )
+        except EOFError:
+            # Monitor attributes are optional
+            pass
+
+        return monitorData
+
+    def writeClientMonitorData(self, monitorData: ClientMonitorData) -> bytes:
+        """
+        Write TS_UD_CS_MONITOR structure
+        :param monitorData: ClientMonitorData object
+        :return: Serialized bytes
+        """
+        stream = BytesIO()
+
+        Uint32LE.pack(monitorData.flags, stream)
+        Uint32LE.pack(monitorData.monitorCount, stream)
+
+        for monitor in monitorData.monitors:
+            Uint32LE.pack(monitor.left, stream)
+            Uint32LE.pack(monitor.top, stream)
+            Uint32LE.pack(monitor.right, stream)
+            Uint32LE.pack(monitor.bottom, stream)
+            Uint32LE.pack(monitor.flags, stream)
+
+        # Write monitor attributes if present
+        if monitorData.monitorAttributeSize is not None and monitorData.monitorAttributes:
+            Uint32LE.pack(monitorData.monitorAttributeSize, stream)
+            Uint32LE.pack(len(monitorData.monitorAttributes), stream)
+
+            for attrs in monitorData.monitorAttributes:
+                Uint32LE.pack(attrs.physicalWidth, stream)
+                Uint32LE.pack(attrs.physicalHeight, stream)
+                Uint32LE.pack(attrs.orientation, stream)
+                Uint32LE.pack(attrs.desktopScaleFactor, stream)
+                Uint32LE.pack(attrs.deviceScaleFactor, stream)
+
+        return stream.getvalue()
 
 
 class ServerConnectionParser(Parser):
