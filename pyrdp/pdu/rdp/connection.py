@@ -5,7 +5,7 @@
 #
 
 import socket
-from typing import Optional
+from typing import List, Optional
 
 from Crypto.PublicKey.RSA import RsaKey
 
@@ -140,13 +140,46 @@ class ClientClusterData:
         self.redirectedSessionID = redirectedSessionID
 
 
+class ClientMonitorDefinition:
+    """TS_MONITOR_DEF structure from MS-RDPBCGR 2.2.1.3.6.1"""
+    def __init__(self, left: int, top: int, right: int, bottom: int, flags: int):
+        self.left = left
+        self.top = top
+        self.right = right
+        self.bottom = bottom
+        self.flags = flags
+
+
+class ClientMonitorAttributes:
+    """TS_MONITOR_ATTRIBUTES structure from MS-RDPBCGR 2.2.1.3.6.1"""
+    def __init__(self, physicalWidth: int, physicalHeight: int, orientation: int,
+                 desktopScaleFactor: int, deviceScaleFactor: int):
+        self.physicalWidth = physicalWidth
+        self.physicalHeight = physicalHeight
+        self.orientation = orientation
+        self.desktopScaleFactor = desktopScaleFactor
+        self.deviceScaleFactor = deviceScaleFactor
+
+
+class ClientMonitorData:
+    """TS_UD_CS_MONITOR structure from MS-RDPBCGR 2.2.1.3.6"""
+    def __init__(self, flags: int, monitors: List[ClientMonitorDefinition]):
+        self.header = ConnectionDataType.CLIENT_MONITOR
+        self.flags = flags
+        self.monitorCount = len(monitors)
+        self.monitors = monitors
+        self.monitorAttributeSize: Optional[int] = None
+        self.monitorAttributes: Optional[List[ClientMonitorAttributes]] = None
+
+
 class ClientDataPDU(PDU):
-    def __init__(self, coreData: ClientCoreData, securityData: ClientSecurityData, networkData: ClientNetworkData, clusterData: Optional[ClientClusterData]):
+    def __init__(self, coreData: ClientCoreData, securityData: ClientSecurityData, networkData: ClientNetworkData, clusterData: Optional[ClientClusterData], monitorData: Optional[ClientMonitorData] = None):
         PDU.__init__(self)
         self.coreData = coreData
         self.securityData = securityData
         self.networkData = networkData
         self.clusterData = clusterData
+        self.monitorData = monitorData
 
     @staticmethod
     def generate(serverSelectedProtocol: NegotiationProtocols,

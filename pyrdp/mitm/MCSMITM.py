@@ -128,6 +128,9 @@ class MCSMITM:
 
         self.log.info("Client hostname %(clientName)s", {"clientName": rdpClientDataPDU.coreData.clientName.strip("\x00")})
 
+        # Log client fingerprinting data (Issue #225)
+        self._logClientFingerprint(rdpClientDataPDU)
+
         self.server.sendPDU(serverMCSPDU)
 
     def onConnectResponse(self, pdu: MCSConnectResponsePDU):
@@ -271,3 +274,55 @@ class MCSMITM:
         :param pdu: the disconnect provider ultimatum
         """
         self.client.sendPDU(pdu)
+    def _logClientFingerprint(self, clientData):
+        """
+        Log client fingerprinting data for identification purposes.
+        Logs monitor configuration and physical dimensions.
+        """
+        core = clientData.coreData
+
+        # Log client product ID if available
+        if core.clientProductId is not None:
+            self.log.info("Client Product ID: %(productId)s", {"productId": core.clientProductId})
+
+        if core.clientDigProductId is not None and core.clientDigProductId.strip("\x00"):
+            self.log.info("Client Digital Product ID: %(digProductId)s", {"digProductId": core.clientDigProductId.strip("\x00")})
+
+        # Log physical display dimensions if available
+        if core.desktopPhysicalWidth is not None and core.desktopPhysicalHeight is not None:
+            self.log.info("Desktop physical size: %(width)smm x %(height)smm",
+                         {"width": core.desktopPhysicalWidth, "height": core.desktopPhysicalHeight})
+
+        if core.desktopOrientation is not None:
+            orientation_names = {0: "Landscape", 90: "Portrait", 180: "Landscape (flipped)", 270: "Portrait (flipped)"}
+            orientation = orientation_names.get(core.desktopOrientation, f"Unknown ({core.desktopOrientation})")
+            self.log.info("Desktop orientation: %(orientation)s", {"orientation": orientation})
+
+        if core.desktopScaleFactor is not None:
+            self.log.info("Desktop scale factor: %(scale)s%%", {"scale": core.desktopScaleFactor})
+
+        if core.deviceScaleFactor is not None:
+            self.log.info("Device scale factor: %(scale)s%%", {"scale": core.deviceScaleFactor})
+
+        # Log monitor data if available
+        if clientData.monitorData:
+            monitor_data = clientData.monitorData
+            self.log.info("Monitor count: %(count)s", {"count": monitor_data.monitorCount})
+
+            for i, monitor in enumerate(monitor_data.monitors):
+                width = monitor.right - monitor.left
+                height = monitor.bottom - monitor.top
+                is_primary = " (primary)" if monitor.flags & 1 else ""
+                self.log.info("Monitor %(index)s: %(width)sx%(height)s at (%(left)s,%(top)s)%(primary)s",
+                             {"index": i + 1, "width": width, "height": height,
+                              "left": monitor.left, "top": monitor.top, "primary": is_primary})
+
+            # Log physical monitor attributes if available
+            if monitor_data.monitorAttributes:
+                for i, attrs in enumerate(monitor_data.monitorAttributes):
+                    self.log.info("Monitor %(index)s physical: %(width)smm x %(height)smm, orientation=%(orientation)s, "
+                                 "desktop_scale=%(dscale)s%%, device_scale=%(vscale)s%%",
+                                 {"index": i + 1, "width": attrs.physicalWidth, "height": attrs.physicalHeight,
+                                  "orientation": attrs.orientation, "dscale": attrs.desktopScaleFactor,
+                                  "vscale": attrs.deviceScaleFactor})
+
