@@ -54,21 +54,34 @@ class NLAHandler(SegmentationObserver):
 
         if signatureOffset != -1:
             message: NTLMSSPPDU = self.ntlmSSPParser.parse(data)
-            self.ntlmSSPState.setMessage(message)
 
             if message.messageType == NTLMSSPMessageType.NEGOTIATE_MESSAGE and self.ntlmCapture:
+                # Reset state on new negotiation to prevent stale state from previous connection
+                # This fixes issue #465: silent connection errors on reconnection
+                if not self.ntlmSSPState:
+                    self.log.info("Creating new NTLMSSP state for NLA capture")
+                    self.ntlmSSPState = NTLMSSPState()
+                else:
+                    # Clear any stale authentication data from previous connection
+                    self.log.debug("Resetting NTLMSSP state for new negotiation")
+                    self.ntlmSSPState.authenticate = None
+
                 rawChallenge = self.getChallenge()
                 self.log.debug("NTLMSSP Negotiation")
                 challenge: NTLMSSPChallengePDU = NTLMSSPChallengePDU(rawChallenge)
-                
-                # There might be no state if server side connection was shutdown
-                if not self.ntlmSSPState:
-                    self.ntlmSSPState = NTLMSSPState()
+
+                self.ntlmSSPState.setMessage(message)
                 self.ntlmSSPState.setMessage(challenge)
                 self.ntlmSSPState.challenge.serverChallenge = rawChallenge
                 data = self.ntlmSSPParser.writeNTLMSSPChallenge('WINNT', rawChallenge)
-            
-            if message.messageType == NTLMSSPMessageType.AUTHENTICATE_MESSAGE:
+            elif message.messageType == NTLMSSPMessageType.AUTHENTICATE_MESSAGE:
+                # Validate state before using it
+                if not self.ntlmSSPState or not self.ntlmSSPState.challenge:
+                    self.log.error("Received AUTHENTICATE message without prior CHALLENGE. Connection state may be corrupted.")
+                    # Still forward the message but log the error for debugging
+                    self.sink.sendBytes(data)
+                    return
+
                 message: NTLMSSPAuthenticatePDU
                 user = message.user
                 domain = message.domain
@@ -82,5 +95,11 @@ class NLAHandler(SegmentationObserver):
                 self.log.info("[!] NTLMSSP Hash: %(ntlmSSPHash)s", {
                     "ntlmSSPHash": (ntlmSSPHash)
                 })
+
+                self.ntlmSSPState.setMessage(message)
+            else:
+                # For other message types, just update state
+                if self.ntlmSSPState:
+                    self.ntlmSSPState.setMessage(message)
 
         self.sink.sendBytes(data)
