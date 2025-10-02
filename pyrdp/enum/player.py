@@ -32,6 +32,7 @@ class PlayerPDUType(IntEnum):
     FILE_DOWNLOAD_REQUEST = 18  # File download request from the player
     FILE_DOWNLOAD_RESPONSE = 19  # File download response to the player
     FILE_DOWNLOAD_COMPLETE = 20  # File download completion notification to the player
+    CLIENT_STATE = 21  # Client connection state update (idle, active, disconnected)
 
 
 class MouseButton(IntEnum):
@@ -41,3 +42,12 @@ class MouseButton(IntEnum):
     LEFT_BUTTON = 1
     RIGHT_BUTTON = 2
     MIDDLE_BUTTON = 3
+
+
+class ClientState(IntEnum):
+    """
+    Client connection states for UI display
+    """
+    IDLE = 0  # Client connected but not actively interacting
+    ACTIVE = 1  # Client actively sending input
+    DISCONNECTED = 2  # Client has disconnected

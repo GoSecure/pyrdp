@@ -9,6 +9,7 @@ from typing import Dict, List, Optional
 from Crypto.PublicKey import RSA
 
 from pyrdp.enum import NegotiationProtocols, ParserMode
+from pyrdp.enum.player import ClientState
 from pyrdp.layer import FastPathLayer, SecurityLayer, TLSSecurityLayer
 from pyrdp.parser import createFastPathParser
 from pyrdp.pdu import ClientChannelDefinition
@@ -89,6 +90,21 @@ class RDPMITMState:
 
         self.ntlmCapture = False
         """Hijack connection from server and capture NTML hash"""
+
+        self.isHijacked = False
+        """Whether an attacker is currently controlling the session"""
+
+        self.clientConnected = True
+        """Whether the original client is still connected"""
+
+        self.clientState = ClientState.IDLE
+        """Current state of the client connection for UI display"""
+
+        self.attackerMITM = None
+        """Reference to AttackerMITM for state change notifications"""
+
+        self.x224MITM = None
+        """Reference to X224MITM for disconnect handling"""
 
         self.securitySettings.addObserver(self.crypters[ParserMode.CLIENT])
         self.securitySettings.addObserver(self.crypters[ParserMode.SERVER])
