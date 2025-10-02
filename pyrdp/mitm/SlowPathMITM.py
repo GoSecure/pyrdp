@@ -64,6 +64,15 @@ class SlowPathMITM(BasePathMITM):
         :param pdu: the confirm active PDU
         """
 
+        # Log successful authentication when session becomes active
+        if not self.state.loggedIn:
+            authMethod = "NLA" if self.state.usedNLA else "TLS"
+            self.log.info("RDP Session successfully authenticated using %(authMethod)s", {
+                "authMethod": authMethod,
+                "sessionEstablished": True
+            })
+            self.state.loggedIn = True
+
         if self.state.config.downgrade:
 
             # Disable surface commands

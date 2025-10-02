@@ -24,11 +24,13 @@ class NLAHandler(SegmentationObserver):
     This also logs the hash of NLA connection attempts.
     """
 
-    def __init__(self, sink: IntermediateLayer, state: NTLMSSPState, log: logging.LoggerAdapter, ntlmCapture: bool = False, challenge: str = None):
+    def __init__(self, sink: IntermediateLayer, state: NTLMSSPState, log: logging.LoggerAdapter,
+                 ntlmCapture: bool = False, challenge: str = None, rdpState=None):
         """
         Create a new NLA Handler.
         sink: layer to forward packets to.
         state: NTLMSSPState that is shared between both the client-facing handler and the server-facing handler.
+        rdpState: RDPMITMState to track authentication method.
         """
 
         super().__init__()
@@ -38,6 +40,7 @@ class NLAHandler(SegmentationObserver):
         self.ntlmCapture = ntlmCapture
         self.challenge = challenge
         self.log = log
+        self.rdpState = rdpState
 
     def getChallenge(self):
         """
@@ -60,14 +63,14 @@ class NLAHandler(SegmentationObserver):
                 rawChallenge = self.getChallenge()
                 self.log.debug("NTLMSSP Negotiation")
                 challenge: NTLMSSPChallengePDU = NTLMSSPChallengePDU(rawChallenge)
-                
+
                 # There might be no state if server side connection was shutdown
                 if not self.ntlmSSPState:
                     self.ntlmSSPState = NTLMSSPState()
                 self.ntlmSSPState.setMessage(challenge)
                 self.ntlmSSPState.challenge.serverChallenge = rawChallenge
                 data = self.ntlmSSPParser.writeNTLMSSPChallenge('WINNT', rawChallenge)
-            
+
             if message.messageType == NTLMSSPMessageType.AUTHENTICATE_MESSAGE:
                 message: NTLMSSPAuthenticatePDU
                 user = message.user
@@ -82,5 +85,9 @@ class NLAHandler(SegmentationObserver):
                 self.log.info("[!] NTLMSSP Hash: %(ntlmSSPHash)s", {
                     "ntlmSSPHash": (ntlmSSPHash)
                 })
+
+                # Mark that NLA was used for authentication
+                if self.rdpState is not None:
+                    self.rdpState.usedNLA = True
 
         self.sink.sendBytes(data)
