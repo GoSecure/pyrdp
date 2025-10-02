@@ -8,7 +8,7 @@ import asyncio
 from queue import Queue
 from typing import Dict
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import QApplication, QFileIconProvider, QMessageBox, QWidget
 
 from pyrdp.player.BaseWindow import BaseWindow
@@ -34,6 +34,10 @@ class LiveWindow(BaseWindow):
         self.connectionReceived.connect(self.createLivePlayerTab)
         self.queue = Queue()
         self.updateCountSignal = updateCountSignal
+
+        # Auto-close configuration: timeout in milliseconds (default 5 seconds)
+        # Set to 0 to disable auto-close
+        self.autoCloseTimeout = options.get('autoCloseTimeout', 5000)
 
     def onConnection(self) -> asyncio.Protocol:
         self.connectionReceived.emit()
@@ -66,11 +70,32 @@ class LiveWindow(BaseWindow):
         self.server.stop()
 
     def onConnectionClosed(self, tab: LiveTab):
+        """
+        Handle connection closed event.
+        Renames tab with ' - Closed' suffix and schedules auto-close if enabled.
+        """
         index = self.indexOf(tab)
         text = self.tabText(index)
         name = text + self.closedTabText
         self.setTabText(index, name)
         self.eventHandler.cleanup()
+
+        # Schedule auto-close after timeout if enabled
+        if self.autoCloseTimeout > 0:
+            QTimer.singleShot(self.autoCloseTimeout, lambda: self.autoCloseTab(tab))
+
+    def autoCloseTab(self, tab: LiveTab):
+        """
+        Automatically close a disconnected tab.
+        Handles case where tab may have been manually closed before timer fires.
+        """
+        index = self.indexOf(tab)
+
+        # Check if tab still exists (may have been manually closed)
+        if index != -1:
+            # Close the tab without confirmation
+            self.removeTab(index)
+            self.updateCountSignal.emit()
 
     def sendKeySequence(self, keys: [Qt.Key]):
         tab: LiveTab = self.currentWidget()
