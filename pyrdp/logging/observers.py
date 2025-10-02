@@ -114,7 +114,7 @@ class SlowPathLogger(LoggingObserver, SlowPathObserver):
                 if pdu.errorInfo != ErrorInfo.ERRINFO_NONE:
                     errorInfoText = ErrorInfo.getText(pdu.errorInfo)
 
-                    if pdu.errorInfo in [ErrorInfo.ERRINFO_LOGOFF_BY_USER]:
+                    if pdu.errorInfo in [ErrorInfo.ERRINFO_LOGOFF_BY_USER, ErrorInfo.ERRINFO_RPC_INITIATED_DISCONNECT_BYUSER]:
                         self.log.info("%(description)s", {"description": errorInfoText})
                     else:
                         self.log.error("RDP Error Info: %(description)s", {"description": errorInfoText})
