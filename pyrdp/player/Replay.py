@@ -6,9 +6,10 @@
 
 import os
 from collections import defaultdict
-from typing import BinaryIO, Dict, List, Optional
+from typing import BinaryIO, Dict, List, Optional, Set
 
 from pyrdp.core import FilePositionGuard
+from pyrdp.enum import PlayerPDUType
 from pyrdp.layer import PlayerLayer
 from pyrdp.pdu import PlayerPDU
 
@@ -63,7 +64,7 @@ class Replay:
                 self.events[relativeTimestamp] = events[absoluteTimestamp]
 
             # Calculate total duration of replay steam
-            self.duration = (timestamps[-1] - referenceTime) / 1000.0            
+            self.duration = (timestamps[-1] - referenceTime) / 1000.0
             # Keep the referenceTime epoch as absolute starting point of the replay
             self.referenceTime = referenceTime
 
@@ -91,6 +92,14 @@ class Replay:
                 for timestamp, positions in sorted(self.events.items(), key=lambda pair: pair[0])
                 for pos in positions
         ]
+
+    def iterTimeConsumingEvents(self):
+        """
+        Returns an iterator over only time-consuming events (BITMAP, FAST_PATH_OUTPUT).
+        Useful for more accurate progress bar ETA since these events take significantly
+        longer to process than others.
+        """
+        return FilteredReplayReader(self, {PlayerPDUType.BITMAP, PlayerPDUType.FAST_PATH_OUTPUT})
 
 
 class ReplayReader:
@@ -138,6 +147,47 @@ class ReplayReader:
             raise StopIteration
 
         timestamp, position = self.eventStream[self.n]
+        event = self.readEvent(position)
+
+        self.n += 1
+        return event, timestamp
+
+
+class FilteredReplayReader(ReplayReader):
+    """
+    ReplayReader that only yields events matching specific PDU types.
+    Used to filter for time-consuming events (e.g., BITMAP, FAST_PATH_OUTPUT)
+    to provide more accurate progress bar ETA.
+    """
+
+    def __init__(self, replay: Replay, pdu_types: Set[PlayerPDUType]):
+        """
+        Initialize a filtered replay reader.
+
+        :param replay: The Replay object to read from.
+        :param pdu_types: Set of PlayerPDUType values to include in iteration.
+        """
+        super().__init__(replay)
+        self.pdu_types = pdu_types
+
+        # Pre-filter the event stream to only include matching PDU types
+        self.filteredStream = []
+        for timestamp, position in self.eventStream:
+            event = self.readEvent(position)
+            if event.header in self.pdu_types:
+                self.filteredStream.append((timestamp, position))
+
+        self.n = 0
+
+    def __len__(self):
+        """Return the count of filtered events."""
+        return len(self.filteredStream)
+
+    def __next__(self):
+        if self.n >= len(self.filteredStream):
+            raise StopIteration
+
+        timestamp, position = self.filteredStream[self.n]
         event = self.readEvent(position)
 
         self.n += 1
