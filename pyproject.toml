@@ -70,6 +70,7 @@ pyrdp-clonecert = "pyrdp.bin.clonecert:main"
 pyrdp-mitm = "pyrdp.bin.mitm:main"
 pyrdp-player = "pyrdp.bin.player:main"
 pyrdp-convert = "pyrdp.bin.convert:main"
+pyrdp-tproxy-setup = "pyrdp.bin.tproxy_setup:main"
 
 [project.gui-scripts]
 pyrdp-player-gui = "pyrdp.bin.player:main"
