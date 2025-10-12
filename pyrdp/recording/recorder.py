@@ -3,10 +3,11 @@
 # Copyright (C) 2018-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
-
+from os import name
 from io import BufferedIOBase
 from pathlib import Path
 from typing import Dict, List, Optional, Union
+from re import match
 
 from pyrdp.enum import ParserMode, PlayerPDUType
 from pyrdp.layer import LayerChainItem, PlayerLayer
@@ -104,9 +105,14 @@ class FileLayer(LayerChainItem):
         # Buffer data until we have enough bytes for a meaningful replay.
         self.pending = b''
 
-        self.filename = fileName
-        self.filename = str(self.filename).replace(":", "_")
-        
+        self.filename = str(fileName)
+        matches_found = match(r'^[A-Za-z]:\\', self.filename)
+        if name == 'nt' and matches_found:
+            prefix = matches_found.group(0)
+            self.filename = prefix + self.filename[len(prefix):].replace(':', '_')
+        else:
+            self.filename = self.filename.replace(":", "_")
+
         self.fd: BufferedIOBase = None
 
     def sendBytes(self, data: bytes):
