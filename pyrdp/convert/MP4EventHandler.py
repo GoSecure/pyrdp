@@ -38,27 +38,21 @@ class MP4Image(ImageHandler):
 
 class MP4EventHandler(RenderingEventHandler):
 
-    def __init__(self, filename: str, fps=30, progress=None):
+    def __init__(self, filename: str, fps=10, progress=None):
         """
         Construct an event handler that outputs to an Mp4 file.
 
         :param filename: The output file to write to.
-        :param fps: The frame rate (30 recommended).
+        :param fps: The frame rate (10 recommended for forensic captures).
         :param progress: An optional callback (sig: `() -> ()`) whenever a frame is muxed.
         """
         self.filename = filename
-        # The movflags puts the encoder in an MP4 Streaming Format. This has two benefits:
-        # - recover partial videos in case of a pyrdp-convert crash
-        # - reduce memory consumption (especially for long captures)
-        # See: https://ffmpeg.org/ffmpeg-formats.html#mov_002c-mp4_002c-ismv
-        self.mp4 = f = av.open(filename, 'w', options={'movflags': 'frag_keyframe+empty_moov'})
+        # faststart moves the moov atom to the front for seekable playback.
+        self.mp4 = f = av.open(filename, 'w', options={'movflags': 'faststart'})
         self.stream = f.add_stream('h264', rate=fps)
-        # TODO: this undocumented PyAV stream feature needs to be properly investigated
-        #       we could probably batch the encoding of several frames and benefit from threads
-        #       but trying this as-is lead to no gains
-        #       (actually a degradation but that could be statistically irrelevant)
-        #self.stream.thread_count = 4
         self.stream.pix_fmt = 'yuv420p'
+        self.stream.options = {'preset': 'ultrafast'}
+        self.stream.gop_size = fps * 5  # Keyframe every 5s for seeking
         self.progress = progress
         self.scale = False
         self.mouse = (0, 0)
@@ -67,6 +61,10 @@ class MP4EventHandler(RenderingEventHandler):
         self.log = logging.getLogger(__name__)
         self.log.info('Begin MP4 export to %s: %d FPS', filename, fps)
         self.timestamp = self.prevTimestamp = None
+        # PTS counter in stream time_base units for correct playback timing
+        self.pts = 0
+        # Track whether the surface has changed since the last encoded frame
+        self.dirty = False
 
         super().__init__(MP4Image())
 
@@ -81,17 +79,33 @@ class MP4EventHandler(RenderingEventHandler):
         self.timestamp = ts
 
         if self.prevTimestamp is None:
-            dt = self.delta
-        else:
-            dt = self.timestamp - self.prevTimestamp  # ms
-        nframes = (dt // self.delta)
-        if nframes > 0:
-            for _ in range(nframes):
+            # First PDU: encode if surface was rendered
+            if self.dirty:
                 self.writeFrame()
+                self.dirty = False
             self.prevTimestamp = ts
-            self.log.debug('Rendered %d still frame(s)', nframes)
+            return
+
+        dt = self.timestamp - self.prevTimestamp  # ms
+        nframes = (dt // self.delta)
+
+        if nframes > 0:
+            # Frame boundary crossed. Encode one frame if surface changed,
+            # then advance PTS to cover any remaining idle gap.
+            if self.dirty:
+                self.writeFrame()
+                self.dirty = False
+                nframes -= 1  # One frame was just encoded
+            # Skip remaining frames (player holds last frame)
+            self.pts += nframes
+            self.prevTimestamp = ts
 
     def cleanup(self):
+        # Flush any pending dirty frame
+        if self.dirty:
+            self.writeFrame()
+            self.dirty = False
+
         # Add one second worth of padding so that the video doesn't end too abruptly.
         for _ in range(self.fps):
             self.writeFrame()
@@ -126,9 +140,9 @@ class MP4EventHandler(RenderingEventHandler):
         super().onCapabilities(caps)
 
     def onFinishRender(self):
-        # When the screen is updated, always write a frame.
-        self.prevTimestamp = self.timestamp
-        self.writeFrame()
+        # Mark surface as changed. The frame will be encoded at the next
+        # frame boundary in onPDUReceived, batching multiple renders.
+        self.dirty = True
 
     def writeFrame(self):
         w = self.stream.width
@@ -142,8 +156,10 @@ class MP4EventHandler(RenderingEventHandler):
         p.drawEllipse(x, y, 5, 5)
         p.end()
 
-        # Output frame.
+        # Output frame with explicit PTS for correct playback timing.
         frame = av.VideoFrame.from_ndarray(qimage2ndarray.rgb_view(surface))
+        frame.pts = self.pts
+        self.pts += 1
         for packet in self.stream.encode(frame):
             if self.progress:
                 self.progress()
