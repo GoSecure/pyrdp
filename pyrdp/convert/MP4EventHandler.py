@@ -54,7 +54,8 @@ class MP4EventHandler(RenderingEventHandler):
         self.stream.options = {'preset': 'ultrafast'}
         self.stream.gop_size = fps * 5  # Keyframe every 5s for seeking
         self.progress = progress
-        self.scale = False
+        self.padW = 0
+        self.padH = 0
         self.mouse = (0, 0)
         self.fps = fps
         self.delta = 1000 // fps  # ms per frame
@@ -125,18 +126,15 @@ class MP4EventHandler(RenderingEventHandler):
     def onCapabilities(self, caps):
         bmp = caps[CapabilityType.CAPSTYPE_BITMAP]
         (w, h) = (bmp.desktopWidth, bmp.desktopHeight)
+
+        # H264 requires even dimensions. Pad by 1px instead of scaling
+        # every frame (scaling 2556x929 is ~6ms per frame).
+        self.padW = w % 2
+        self.padH = h % 2
+        self.stream.width = w + self.padW
+        self.stream.height = h + self.padH
+
         self.imageHandler.resize(w, h)
-
-        if w % 2 != 0:
-            self.scale = True
-            w += 1
-        if h % 2 != 0:
-            self.scale = True
-            h += 1
-
-        self.stream.width = w
-        self.stream.height = h
-
         super().onCapabilities(caps)
 
     def onFinishRender(self):
@@ -147,10 +145,17 @@ class MP4EventHandler(RenderingEventHandler):
     def writeFrame(self):
         w = self.stream.width
         h = self.stream.height
-        surface = self.imageHandler.screen.scaled(w, h) if self.scale else self.imageHandler.screen.copy()
 
-        # Draw the mouse pointer. Render mouse clicks?
-        p = QPainter(surface)
+        if self.padW or self.padH:
+            # Create even-sized surface and draw screen into it (avoids full scale)
+            surface = QImage(w, h, QImage.Format_ARGB32_Premultiplied)
+            p = QPainter(surface)
+            p.drawImage(0, 0, self.imageHandler.screen)
+        else:
+            surface = self.imageHandler.screen.copy()
+            p = QPainter(surface)
+
+        # Draw the mouse pointer.
         p.setBrush(QColor.fromRgb(255, 255, 0, 180))
         (x, y) = self.mouse
         p.drawEllipse(x, y, 5, 5)
