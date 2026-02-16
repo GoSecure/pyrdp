@@ -24,8 +24,8 @@ from pyrdp.convert.utils import tcp_both, getSessionInfo, findClientRandom, crea
 class PCAPConverter(Converter):
     SESSIONID_FORMAT = "{timestamp}_{src}-{dst}"
 
-    def __init__(self, inputFile: Path, outputPrefix: str, format: str, secrets: Dict = None, srcFilter = None, dstFilter = None, listOnly = False):
-        super().__init__(inputFile, outputPrefix, format)
+    def __init__(self, inputFile: Path, outputPrefix: str, format: str, secrets: Dict = None, srcFilter = None, dstFilter = None, listOnly = False, handler_kwargs: dict = None):
+        super().__init__(inputFile, outputPrefix, format, handler_kwargs=handler_kwargs)
         self.secrets = secrets if secrets is not None else {}
         self.srcFilter = srcFilter if srcFilter is not None else srcFilter
         self.dstFilter = dstFilter if dstFilter is not None else dstFilter
@@ -106,7 +106,7 @@ class PCAPConverter(Converter):
         })
         sessionID = sessionID.replace(":", "_")
 
-        handler, _ = createHandler(self.format, self.outputPrefix + sessionID)
+        handler, _ = createHandler(self.format, self.outputPrefix + sessionID, **self.handler_kwargs)
         replayer = RDPReplayer(handler, self.outputPrefix, sessionID)
 
         print(f"[*] Processing {stream.client} -> {stream.server}")

@@ -74,7 +74,7 @@ def extractInetAddressesFromPDUPacket(packet) -> Tuple[InetAddress, InetAddress]
     return (InetAddress(x.src, x.sport), InetAddress(x.dst, x.dport))
 
 
-def createHandler(format: str, outputFileBase: str, progress=None) -> Tuple[str, str]:
+def createHandler(format: str, outputFileBase: str, progress=None, **kwargs) -> Tuple[str, str]:
     """
     Gets the appropriate handler and returns the filename with extension.
     Returns None if the format is replay.
@@ -87,7 +87,9 @@ def createHandler(format: str, outputFileBase: str, progress=None) -> Tuple[str,
 
     HandlerClass, ext = HANDLERS[format]
     outputFileBase += f".{ext}"
-    return HandlerClass(outputFileBase, progress=progress) if HandlerClass else None, outputFileBase
+    if HandlerClass:
+        return HandlerClass(outputFileBase, progress=progress, **kwargs), outputFileBase
+    return None, outputFileBase
 
 
 class ExportedPDU(Packet):

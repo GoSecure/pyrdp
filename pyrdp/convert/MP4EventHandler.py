@@ -4,7 +4,7 @@
 # Licensed under the GPLv3 or later.
 #
 
-from pyrdp.enum import CapabilityType
+from pyrdp.enum import CapabilityType, PlayerPDUType
 from pyrdp.pdu import PlayerPDU
 from pyrdp.player.ImageHandler import ImageHandler
 from pyrdp.player.RenderingEventHandler import RenderingEventHandler
@@ -38,13 +38,14 @@ class MP4Image(ImageHandler):
 
 class MP4EventHandler(RenderingEventHandler):
 
-    def __init__(self, filename: str, fps=10, progress=None):
+    def __init__(self, filename: str, fps=10, progress=None, idle_skip=0):
         """
         Construct an event handler that outputs to an Mp4 file.
 
         :param filename: The output file to write to.
         :param fps: The frame rate (10 recommended for forensic captures).
         :param progress: An optional callback (sig: `() -> ()`) whenever a frame is muxed.
+        :param idle_skip: Seconds of inactivity before compressing idle gaps (0 = disabled).
         """
         self.filename = filename
         # faststart moves the moov atom to the front for seekable playback.
@@ -66,6 +67,13 @@ class MP4EventHandler(RenderingEventHandler):
         self.pts = 0
         # Track whether the surface has changed since the last encoded frame
         self.dirty = False
+        # Idle skip: based on user input (keyboard/mouse), not screen changes
+        self.idle_skip_ms = idle_skip * 1000 if idle_skip > 0 else 0
+        self.total_skipped_ms = 0
+        self.lastInputTimestamp = None
+        self._in_idle = False
+        self._idle_enter_ts = None
+        self._last_idle_frame_ts = None
 
         super().__init__(MP4Image())
 
@@ -78,16 +86,56 @@ class MP4EventHandler(RenderingEventHandler):
 
         ts = pdu.timestamp
         self.timestamp = ts
+        is_input = pdu.header == PlayerPDUType.FAST_PATH_INPUT
+
+        # Track user input for idle detection
+        if is_input:
+            self.lastInputTimestamp = ts
 
         if self.prevTimestamp is None:
-            # First PDU: encode if surface was rendered
+            # First PDU: assume active at start
+            if self.lastInputTimestamp is None:
+                self.lastInputTimestamp = ts
             if self.dirty:
                 self.writeFrame()
                 self.dirty = False
             self.prevTimestamp = ts
             return
 
-        dt = self.timestamp - self.prevTimestamp  # ms
+        # Check input-idle state
+        input_idle_ms = ts - self.lastInputTimestamp
+        now_idle = self.idle_skip_ms > 0 and input_idle_ms > self.idle_skip_ms
+
+        if now_idle and not self._in_idle:
+            # Entering idle: encode last dirty frame, then freeze
+            self._in_idle = True
+            self._idle_enter_ts = ts
+            self._last_idle_frame_ts = ts
+            if self.dirty:
+                self.writeFrame()
+                self.dirty = False
+
+        if self._in_idle and not now_idle:
+            # Exiting idle (input resumed)
+            self._in_idle = False
+            self.total_skipped_ms += ts - self._idle_enter_ts
+            self.pts += self.fps  # 1s pause in output
+            self.prevTimestamp = ts
+            return
+
+        if self._in_idle:
+            # During idle: encode 1 frame every 10s to capture screen state
+            if self.dirty and (ts - self._last_idle_frame_ts) >= 10000:
+                self.writeFrame()
+                self.dirty = False
+                self._last_idle_frame_ts = ts
+            else:
+                self.dirty = False
+            self.prevTimestamp = ts
+            return
+
+        # Normal (non-idle) processing
+        dt = ts - self.prevTimestamp  # ms
         nframes = (dt // self.delta)
 
         if nframes > 0:
@@ -97,11 +145,23 @@ class MP4EventHandler(RenderingEventHandler):
                 self.writeFrame()
                 self.dirty = False
                 nframes -= 1  # One frame was just encoded
+
+            # True gap (no PDUs at all): compress
+            gap_threshold = int(self.idle_skip_ms / self.delta) if self.idle_skip_ms > 0 else 0
+            if gap_threshold > 0 and nframes > gap_threshold:
+                self.total_skipped_ms += nframes * self.delta
+                nframes = self.fps  # Replace gap with 1s pause
+
             # Skip remaining frames (player holds last frame)
             self.pts += nframes
             self.prevTimestamp = ts
 
     def cleanup(self):
+        # Close out idle state if capture ends while idle
+        if self._in_idle and self._idle_enter_ts and self.timestamp:
+            self.total_skipped_ms += self.timestamp - self._idle_enter_ts
+            self._in_idle = False
+
         # Flush any pending dirty frame
         if self.dirty:
             self.writeFrame()
@@ -116,6 +176,13 @@ class MP4EventHandler(RenderingEventHandler):
             if self.progress:
                 self.progress()
             self.mp4.mux(pkt)
+
+        if self.total_skipped_ms > 0:
+            skipped_s = self.total_skipped_ms / 1000
+            m, s = divmod(int(skipped_s), 60)
+            h, m = divmod(m, 60)
+            self.log.info('Total idle time skipped: %dh %dm %ds (%.1fs)', h, m, s, skipped_s)
+
         self.log.info('Export completed.')
         self.mp4.close()
 
