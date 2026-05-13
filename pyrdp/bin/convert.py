@@ -57,6 +57,14 @@ def main():
         "otherwise the result is output next to the source file with the proper extension. "
         "However if the source of the conversion is a .pcap then this option will create a directory where all files will be stored.",
     )
+    parser.add_argument(
+        "--idle-skip",
+        type=int,
+        default=0,
+        metavar="N",
+        help="Skip idle periods longer than N seconds in MP4 output (0 = disabled, default: 0)",
+    )
+
 
     args = parser.parse_args()
 
@@ -83,15 +91,19 @@ def main():
     else:
         outputPrefix = ""
 
+    handler_kwargs = {}
+    if args.idle_skip > 0:
+        handler_kwargs['idle_skip'] = args.idle_skip
+
     if inputFile.suffix in [".pcap"]:
         secrets = loadSecrets(args.secrets) if args.secrets else None
-        converter = PCAPConverter(inputFile, outputPrefix, args.format, secrets=secrets, srcFilter=args.src, dstFilter=args.dst, listOnly=args.list_only)
+        converter = PCAPConverter(inputFile, outputPrefix, args.format, secrets=secrets, srcFilter=args.src, dstFilter=args.dst, listOnly=args.list_only, handler_kwargs=handler_kwargs)
     elif inputFile.suffix in [".pyrdp"]:
         if args.format == "replay":
             sys.stderr.write("Refusing to convert a replay file to a replay file. Choose another format.")
             sys.exit(1)
 
-        converter = ReplayConverter(inputFile, outputPrefix, args.format)
+        converter = ReplayConverter(inputFile, outputPrefix, args.format, handler_kwargs=handler_kwargs)
     else:
         sys.stderr.write("Unknown file extension. (Supported: .pcap, .pyrdp)")
         sys.exit(1)

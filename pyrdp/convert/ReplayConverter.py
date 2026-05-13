@@ -20,7 +20,7 @@ class ReplayConverter(Converter):
             print(f"[*] Converting '{self.inputFile}' to {self.format.upper()}")
 
             outputFileBase = self.outputPrefix + self.inputFile.stem
-            handler, outputPath = createHandler(self.format, outputFileBase)
+            handler, outputPath = createHandler(self.format, outputFileBase, **self.handler_kwargs)
 
             if not handler:
                 print("The input file is already a replay file. Nothing to do.")
