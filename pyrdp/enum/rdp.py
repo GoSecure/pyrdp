@@ -241,6 +241,17 @@ class ConnectionDataType(IntEnum):
 
 
 class RDPVersion(IntEnum):
+
+    @classmethod
+    # Some Clients can return other version numbers. Rather than hardcode 100s
+    # of possible version codes just handle the ones we need to and create a catch-all
+    # for the ones we don't care about so we don't throw an exception.
+    def _missing_(cls, value):
+        other = RDPVersion(0x80001)
+        other._name_ = "RDP_UNKNOWN"
+        other._value_ = value
+        return other
+
     RDP4 = 0x80001
     RDP5 = 0x80004
     RDP10 = 0x80005
@@ -255,6 +266,7 @@ class RDPVersion(IntEnum):
     RDP10_9 = 0x8000e
     RDP10_10 = 0x8000f
     RDP10_11 = 0x80010
+    RDP10_12 = 0x80011
 
 
 class ColorDepth(IntEnum):
