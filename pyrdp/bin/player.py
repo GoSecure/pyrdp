@@ -2,7 +2,7 @@
 
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2018-2022 GoSecure Inc.
+# Copyright (C) 2018-2024 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 # Need to install this reactor before importing any other code
@@ -16,6 +16,7 @@ from twisted.internet import asyncioreactor
 asyncioreactor.install(asyncio.new_event_loop())
 
 from pathlib import Path
+from importlib.metadata import version
 import argparse
 import logging
 import logging.handlers
@@ -63,6 +64,13 @@ def main():
     parser.add_argument("-F", "--log-filter",
                         help="Only show logs from this logger name (accepts '*' wildcards)", default=None)
     parser.add_argument("--headless", help="Parse a replay without rendering the user interface.", action="store_true")
+    parser.add_argument(
+        "-V",
+        "--version",
+        help="Show the PyRDP version and exit",
+        action="version",
+        version=f"PyRDP version v{version('pyrdp-mitm')}"
+    )
     args = parser.parse_args()
 
     cfg = settings.load(f'{settings.CONFIG_DIR}/player.ini', DEFAULTS)

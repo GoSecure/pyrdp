@@ -2,12 +2,13 @@
 
 #
 # This file is part of the PyRDP project.
-# Copyright (C) 2020-2023 GoSecure Inc.
+# Copyright (C) 2020-2024 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
 import argparse
 import logging
 import sys
+from importlib.metadata import version
 from pathlib import Path
 
 from pyrdp.convert.PCAPConverter import PCAPConverter
@@ -20,6 +21,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("input", help="Path to a .pcap or .pyrdp file. "
                                       "Converting from a .pcap will always extract file transfer artifacts in addition to the actual replay.")
+    parser.add_argument(
+        "-V",
+        "--version",
+        help="Show the PyRDP version and exit",
+        action="version",
+        version=f"PyRDP version v{version('pyrdp-mitm')}"
+    )
     parser.add_argument(
         "-l",
         "--list-only",
