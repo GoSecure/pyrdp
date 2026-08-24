@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v7
     - name: Build Docker image
       run: docker build -t pyrdp .
     - name: "Smoke test docker image: pyrdp-convert"
@@ -41,8 +41,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     name: Ubuntu ${{ matrix.os }} with Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v3
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           architecture: 'x64'
@@ -113,8 +113,8 @@ jobs:
 
     name: Windows with Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v3
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           architecture: 'x64'
